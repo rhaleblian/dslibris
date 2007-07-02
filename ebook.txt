@@ -1,0 +1,25 @@
+Hello, world.
+Here's text on the left page. This font looks proportional. Will this string wrap around to the next line?
+This is the next line.
+
+void 	PA_InitText (u8 screen, u8 bg_select)
+ 	Output text on the gba screen. Works only in modes 0-2
+void 	PA_SetTextTileCol (u8 screen, u8 color)
+ 	Change the text writing color (does not change the current text's color)
+void 	PA_OutputText (u8 screen, u16 x, u16 y, char *text,...)
+ 	Output text on the DS screen. Works only in modes 0-2
+u16 	PA_OutputSimpleText (u8 screen, u16 x, u16 y, const char *text)
+ 	Output simple text on the DS screen. Works only in modes 0-2. Much faster than PA_OutputText, but much more limited... Returns the number of letters
+u32 	PA_BoxTextNoWrap (u8 screen, u16 basex, u16 basey, u16 maxx, u16 maxy, const char *text, u32 limit)
+ 	Output text on the DS screen. This text is limited to a chosen box, and you can chose the number of letters to output (can be used to show 'typed' text, just put 10000 if you want to show all the text...). Returns the number of letters outputed. This function does not support word wrapping
+void 	PA_SetTextCol (u8 screen, u16 r, u16 g, u16 b)
+ 	Change the screen text's default color
+s16 	PA_SmartText (u8 screen, s16 basex, s16 basey, s16 maxx, s16 maxy, char *text, u8 color, u8 size, u8 transp, s32 limit)
+ 	This is a variable width and variable size function to draw text on the screen. It draws on an 8 bit background (see PA_Init8bitBg for more info), and has options such as size, transaprency, and box limits, as well as the color. Only problem : it does not take commands such as d, etc... The function returns the number of characters it outputed
+s16 	PA_CenterSmartText (u8 screen, s16 basex, s16 basey, s16 maxx, s16 maxy, char *text, u8 color, u8 size, u8 transp)
+ 	Basicaly the same as the SmartText function, but this time centered...
+void 	PA_CopyText (char *text1, char *text2)
+ 	Copy one string into another
+void 	PA_InitTextBorders (u8 screen, u8 x1, u8 y1, u8 x2, u8 y2)
+ 	Initialise a text box with it's borders. This makes writing in a delimited area much easier... 
+
