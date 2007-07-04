@@ -40,13 +40,13 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=  -lpa9 -lfat -lnds9
+LIBS	:=  -lfreetype2 -lpa9 -lfat -lnds9
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(DEVKITPRO)/PAlib
+LIBDIRS	:=	$(LIBNDS) $(DEVKITPRO)/PAlib c:/freetype2
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -90,6 +90,10 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
  
 .PHONY: $(BUILD)
+
+$(TARGET).r4ds.nds: $(BUILD)
+	@cp $(TARGET).nds $(TARGET).r4ds.nds
+	dlditool R4tf.dldi $(TARGET).r4ds.nds
  
 #---------------------------------------------------------------------------------
 $(BUILD):
@@ -100,10 +104,17 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(TARGET).arm9 $(TARGET).ds.gba 
- 
+
+fonts:
+	(cd source/gfx; PAGfx.exe)
+	
 run:
 	wmb -data $(CURDIR)/$(TARGET).nds
 
+
+install:
+	cp $(TARGET).r4ds.nds e:/
+	cp ebook.txt e:/
 #---------------------------------------------------------------------------------
 else
  
@@ -111,15 +122,11 @@ DEPENDS	:=	$(OFILES:.o=.d)
  
 #---------------------------------------------------------------------------------
 # main targets
-#---------------------------------------------------------------------------------
-reader.nds : $(OUTPUT).nds
-	@cp $(OUTPUT).nds ../reader.nds
-	dlditool R4tf.dldi ../reader.nds
-	
+#---------------------------------------------------------------------------------	
 $(OUTPUT).nds	: 	$(OUTPUT).arm9
 $(OUTPUT).arm9	:	$(OUTPUT).elf
 $(OUTPUT).elf	:	$(OFILES)
- 
+
 #---------------------------------------------------------------------------------
 %.o	:	%.bin
 #---------------------------------------------------------------------------------
