@@ -1,250 +1,260 @@
-#include <nds.h>
-#include <PA9.h>
-#include <stdio.h>
-#include <sys/dir.h>
-#include <libfat.h>
-#include <ft2build.h>
+/* 	TODO
+parse HTML and strip
+precompute and store pagination
+forward page
+back page
+*/
+
+#include <nds.h>      /* libnds */
+#include <libfat.h>   /* maps stdio to FAT on ARM */
+#include <pa9.h>      /* programmer's arsenal - libnds macros */
+#include <ft2build.h> /* freetype2 - text rendering */
 #include FT_FREETYPE_H
-#include "gfx/all_gfx.c"
-#include "gfx/all_gfx.h"
+#include <expat.h>    /* expat - HTML parsing */
 
-#define FT_FLOOR(x)     (((x) & -64) / 64)
-#define FT_CEIL(x)      ((((x) + 63) & -64) / 64)
-#define FT_FIXED(x)     ((x) * 64) 
-u16 *ft_buffer = BG_GFX;
-u16 ft_buffer_w = SCREEN_WIDTH;
-u16 ft_buffer_h = SCREEN_HEIGHT;
-u32 ft_pen_r = 0;
-u32 ft_pen_g = 0;
-u32 ft_pen_b = 0; 
+#define BUFSIZE 10000
+#define MARGINLEFT 10
+#define MARGINRIGHT 10
+#define MARGINTOP 8
+#define MARGINBOTTOM 10
+#define LINESPACING 12
+#define LETTERSPACING 6
+#define PIXELSIZE 14
+#define PIXELSCALE 32
+#define DPI 72
+#define PAGE_HEIGHT SCREEN_HEIGHT
+#define PAGE_WIDTH SCREEN_WIDTH
 
-#define HEADER 8
-#define MARGIN 16
-#define HEIGHT 192
-#define WIDTH 256
-#define ROTATERH 0
-#define ROTATELH 1
-#define STARTFONT 5
-#define MAXDRAWCHARS 2048
-#define BUFSIZE 128000
+FT_Vector pen;
+u16 *screen0, *screen1, *fb;
+int Eventcnt = 0;
+FT_Library library;
+FT_Error   error;
+FT_Face    face;
+int	curchar;
 
-uint16 font = STARTFONT;
-uint16 rotation = ROTATERH;
-uint16 charstart = 0;
-uint16 charend = 0;
-uint16 charlast = 0;
-uint16 displayleft = 1;
-uint16 displayright = 0;
-char buf[BUFSIZE] = "";
-
-int ftdemo(void) {
-// INIT FreeType2
-    FT_Library library;
-    FT_Error   error;
-    FT_Face    face;
-	FT_Bitmap  *bitmap;
-
-    error = FT_Init_FreeType(&library);
-    if(error)
-        return error;
-
-    error = FT_New_Face(library, "fruitiger.ttf", 0, &face);
-    if(error)
-        return error;
-
-   FT_Set_Pixel_Sizes(face, 0, 14);
-
-
-// RENDER Text
-    const char *string = "Hello universe!";
-    int x = 3;
-    int y = 3; // at [3, 3]
-   
-    int ascent = FT_CEIL(FT_MulFix((face->bbox).yMax, (face->size->metrics).y_scale));
-    y += ascent;      // add ascent to y coordinate
-
-    int i;
-    for(i=0; string[i] != 0; i++)
-    {
-        if(string[i] == ' ')
-        {
-           x += ascent/2;
-            continue;
-        }
-        else if(string[i] == '\n')
-        {
-            y += ascent;
-            continue;
-        }
-        else
-        {
-           FT_Load_Char(face, string[i], FT_LOAD_RENDER | // tell FreeType2 to render internally
-                                           FT_LOAD_TARGET_NORMAL); // grayscale 0-255
-           
-            u8 *src = (u8 *)&(face->glyph->bitmap);
-            u16 *dest = BG_GFX;
-
-            int j, k;
-            u16 *pixel, r, g, b;
-
-            if(bitmap->pitch >= 0)
-            {
-                for(j=0; j<bitmap->rows; j++)
-                {
-                    for(k=0; k<bitmap->width; k++)
-                    {
-                        u8 alpha = src[k]; // 0-255
-                        if(alpha)
-                        {
-                            pixel = &dest[j*ft_buffer_w + k];   // original pixel
-                           
-                            r = ((*pixel)&31)*(255-alpha)     + 255*alpha; // blend algorithm, our color is red
-                            g = ((*pixel>>5)&31)*(255-alpha)  + 0*alpha;
-                            b = ((*pixel>>10)&31)*(255-alpha) + 0*alpha;
-                           
-                            r = (r>>8) & 31; // convert to R5G5B5
-                            g = (g>>8) & 31;
-                            b = (b>>8) & 31;
-                            *pixel = BIT(15) | RGB15(r,g,b); // write pixel
-                        }
-                    }
- //                   src += pitch;
-                }
-            }
-
-           x += FT_CEIL(face->glyph->metrics.width) + 1; // add incorrect but cheap letterspacing
-       }
-    } 
-	return 0;
-}
-
-void init(void) {
-	PA_Init();
-	PA_InitVBL();
-	PA_SetVideoMode(0,1);  // one rotating background
-	PA_SetVideoMode(1,1);  // one rotating background
-	PA_InitText(0,3);
-	PA_InitText(1,3);
-	PA_Init8bitBg(0,3);
-	PA_Init8bitBg(1,3);
-	PA_SetBgPalCol(0,0,PA_RGB(31,31,31));
-	PA_SetBgPalCol(0,1,PA_RGB(0,0,0));
-	PA_SetBgPalCol(1,0,PA_RGB(31,31,31));
-	PA_SetBgPalCol(1,1,PA_RGB(0,0,0));
-	PA_8bitCustomFont(5, fruitiger);
-	PA_8bitCustomFont(6, lucidasans);
-	PA_8bitCustomFont(7, bookantiqua);
-}
-
-void clearpage(uint16 display) {
-	PA_SmartText(display,0,0,256,192,"",0,font,0,MAXDRAWCHARS);
-}
-
-s16 layoutpage(uint16 display, char* text) {
-	return PA_SmartText(display,
-		MARGIN,HEADER,
-		HEIGHT-MARGIN,WIDTH-HEADER,
-		text,1,font,rotation+3,MAXDRAWCHARS);
-}
-
-s16 layoutpageinvisible(uint16 display, char* text) {
-	return PA_SmartText(display,
-		MARGIN,HEADER,
-		HEIGHT-MARGIN,WIDTH-HEADER,
-		text,2,font,2,MAXDRAWCHARS);
-}
-
-void layoutpages(void) {
-	charend = charstart;
-	clearpage(displayleft);
-	charend += layoutpage(displayleft,&(buf[charend]));
-	clearpage(displayright);
-	if(charend < strlen(buf)) {
-		charend += layoutpage(displayright,&(buf[charend]));
-	}
-}
-
-uint16 pageback(void) {
-	char reverse[MAXDRAWCHARS];
-
-	// walk charstart backwards two pages.	
-	if(charstart == 0) return -1;
-	
+void solid(int r, int g, int b) {
 	int i;
-	for(i=0;(i < MAXDRAWCHARS) && (charstart-i >= 0); i++) {
-		reverse[i] = buf[charstart-i];
-	}
-	uint16 count = layoutpageinvisible(displayright,reverse);
-	charstart -=count;
+	for(i=0;i<SCREEN_HEIGHT*SCREEN_WIDTH;i++) fb[i] = RGB15(r,g,b) | BIT(15);
+}
+
+void swapscreen() {
+	if(fb == screen0) fb = screen1;
+	else fb = screen0;
+}
+
+void startpage(FT_Face face) {
+	pen.y = MARGINTOP + FT_MulFix(face->size->metrics.height,face->size->metrics.x_scale)/PIXELSCALE;
+	pen.x = MARGINLEFT;
+}
+
+void newline() {
+	FT_Size_Metrics metrics = face->size->metrics;
+	pen.x = MARGINLEFT;
+	pen.y += FT_MulFix(face->size->metrics.height,metrics.y_scale)/PIXELSCALE;
+}
+
+int draw(int code) {
+	/* x,y is in potrait page space
+	sx, sy is in screen space, rotated */
+
+	FT_Size_Metrics metrics = face->size->metrics;
 	
-	if(charstart <= 0) {
-		charstart = 0;
+	/* ignore returns */
+	if(code == '\r') return 0;
+
+	if(FT_Load_Char(face, code, 
+		 FT_LOAD_RENDER // tell FreeType2 to render internally
+		| FT_LOAD_TARGET_NORMAL // grayscale 0-255
+		)) {
+		solid(31,0,0);
 		return -2;
 	}
+	FT_GlyphSlot glyph = face->glyph;
+	FT_Bitmap bitmap = glyph->bitmap;
 	
-	for(i=0;(i < MAXDRAWCHARS) && (charstart-i >= 0); i++) {
-		reverse[i] = buf[charstart-i];
+	/* space */
+	if(code == '\n' || code == ' ' || code == '\t') {
+		pen.x += FT_MulFix(glyph->advance.x, metrics.x_scale) / PIXELSCALE;
+		return 0;
 	}
-	count = layoutpageinvisible(displayleft,reverse);
-	charstart -=count;
+
+	/* wrap */
+	if(pen.x + bitmap.width > PAGE_WIDTH - MARGINRIGHT) {
+		pen.x = MARGINLEFT;
+		pen.y += FT_MulFix(metrics.height, metrics.y_scale) / PIXELSCALE;
+	}
+	
+	/* off page bottom */
+	if(pen.y > PAGE_HEIGHT-MARGINBOTTOM) {
+		if(fb == screen0) {
+			swapscreen();
+			startpage(face);
+		}
+		else return -1;
+	}
+
+	int gx, gy;
+	for(gy=0; gy<bitmap.rows; gy++) {
+		for(gx=0; gx<bitmap.width; gx++) {
+			/* get antialiased value */
+			int a = bitmap.buffer[gy*bitmap.width+gx];
+			int l = (0*a + (255-a));
+
+			u8 sx = (pen.x+gx+glyph->bitmap_left);
+			u8 sy = (pen.y+gy-glyph->bitmap_top);			
+			fb[sy*SCREEN_WIDTH+sx] = RGB15(l>>3,l>>3,l>>3) | BIT(15);
+		}
+	}
+	
+	/* mark the origin */
+//	fb[pen.y*PAGE_WIDTH+pen.x] = RGB15(31,0,0) | BIT(15);
+	
+	/* advance */
+	pen.x += FT_MulFix(glyph->advance.x, metrics.x_scale)/(PIXELSCALE * .75);
 
 	return 0;
 }
 
-void splash(void) {
+int nextchar(FT_Face face, int code) {
+	FT_UInt index;
+	if(!code) {
+		return FT_Get_First_Char(face, &index);
+	}
+	return FT_Get_Next_Char(face, code, &index);
 }
 
-int main(void) {
-	init();	
-	
-	if(fatInitDefault())
-		strcat(buf,"[fatlib inits.]\n");
-	else
-		strcat(buf,"[fatlib init fails.]\n");
-	
-	FILE *fp = fopen("/ebook.txt","r");
-	if(!fp) {
-		strcat(buf,"[ebook.txt cannot be opened.]\n");
-	} else {
-		strcat(buf,"[opened ebook.txt.]\n");
-		fread(buf, sizeof(char), BUFSIZE, fp);
+void
+default_hndl(void *data, const char *s, int len) {
+	int i;
+	for(i=0;i<len;i++) {
+		draw(s[i]);
 	}
+}  /* End default_hndl */
+
+void
+printcurrent(XML_Parser p) {
+  XML_SetDefaultHandler(p, default_hndl);
+  XML_DefaultCurrent(p);
+  XML_SetDefaultHandler(p, (XML_DefaultHandler) 0);
+}  /* End printcurrent */
+
+void
+start_hndl(void *data, const char *el, const char **attr) {
+/*	draw('<');
+	int i;
+	for(i=0;i<strlen(el);i++) draw(el[i]);
+	draw('>'); */
+}  /* End of start_hndl */
+
+
+void
+end_hndl(void *data, const char *el) {
+/*	draw('<');
+	int i;
+	for(i=0;i<strlen(el);i++) draw(el[i]);
+	draw('/');
+	draw('>'); */
+	if(!stricmp(el,"br")
+		|| !stricmp(el,"title")
+		|| !stricmp(el,"h1")
+		|| !stricmp(el,"h2")
+		|| !stricmp(el,"h3")
+		|| !stricmp(el,"h4")
+		|| !stricmp(el,"hr")) newline();
+}  /* End of end_hndl */
+
+void
+char_hndl(void *data, const char *txt, int txtlen) {
+	int i;
+	for(i=0;i<txtlen;i++) {
+		draw(txt[i]);
+	}
+}  /* End char_hndl */
+
+void
+proc_hndl(void *data, const char *target, const char *pidata) {
+}  /* End proc_hndl */
+
+int main(void){		
+	screen0 = (u16*)BG_BMP_RAM(0);
+	screen1 = (u16*)BG_BMP_RAM_SUB(0);
+	fb = screen0;
+	
+	fatInitDefault();
+	powerON(POWER_ALL);
+	consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31), (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
+	irqInit();
+	irqEnable(IRQ_VBLANK);
+	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);    
+	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+	
+	//initialize the background
+	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+	
+	BACKGROUND.bg3_rotation.xdy = 0;
+	BACKGROUND.bg3_rotation.xdx = 1 << 8;
+	BACKGROUND.bg3_rotation.ydx = 0;
+	BACKGROUND.bg3_rotation.ydy = 1 << 8;
+ 
+	//initialize the sub background
+	BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+	
+	BACKGROUND_SUB.bg3_rotation.xdy = 0;
+	BACKGROUND_SUB.bg3_rotation.xdx = 1 << 8;
+	BACKGROUND_SUB.bg3_rotation.ydx = 0;
+	BACKGROUND_SUB.bg3_rotation.ydy = 1 << 8;
+
+    error = FT_Init_FreeType(&library);
+    if(error) {
+		solid(31,31,0);
+        return error;
+	}
+	error = FT_New_Face(library, "/frutiger.ttf", 0, &face);
+	if(error) {
+		solid(0,0,31);
+        return error;
+	}
+	FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
+
+	XML_Parser p = XML_ParserCreate(NULL);
+	if(!p) { solid(31,0,0); return -10; }
+	XML_Char *buf = (char*)XML_GetBuffer(p, BUFSIZE);
+	
+	FILE *fp = fopen("/coe.htm","r");
+	if(!fp) {
+		solid(31,0,0);
+		fclose(fp);
+		return -2;
+	}
+	int bytes_read = fread(buf, 1, BUFSIZE, fp);
 	fclose(fp);
 
-	layoutpages();
+	XML_UseParserAsHandlerArg(p);
+	XML_SetElementHandler(p, start_hndl, end_hndl);
+	XML_SetCharacterDataHandler(p, char_hndl);
+	XML_SetProcessingInstructionHandler(p, proc_hndl);
+    
+	startpage(face);
+	solid(31,31,31);
+	swapscreen();
+	solid(31,31,31);
+	swapscreen();
+
+	XML_ParseBuffer(p, bytes_read, bytes_read == 0);
+	XML_ParserFree(p);
+	
 	while(1) {
-		if(Pad.Newpress.R) {
-			// page forward
-			if(charend < strlen(buf)) {
-				charstart = charend;
-				layoutpages();
-			}
+		scanKeys();
+ 
+		if(keysDown() & KEY_Y) {
+			lcdSwap();
 		}
-		if(Pad.Newpress.L) {
-			// page backward
-			if(charstart > 0) {
-				pageback();
-				layoutpages();
-			}
-		}
-		if(Pad.Newpress.B) {
-			// go to page 1
-			charstart=0;
-			layoutpages();
-		}
-		if(Pad.Newpress.X) {
-			// rotate
-			rotation = !rotation;
-			displayleft = !displayleft;
-			displayright = !displayright;
-			layoutpages();
-		}
-		if(Pad.Newpress.Y) {
-			font++;
-			font %= 7;
-			layoutpages();
-		}
-		PA_WaitForVBL();
+
+		swiWaitForVBlank();
 	}
-	return 0;
+	
+ 	return 0;
 }
