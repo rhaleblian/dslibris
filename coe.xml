@@ -1,0 +1,401 @@
+<?xml version="1.0"?>
+<HTML
+><HEAD
+><TITLE
+>The Comedy of Errors  </TITLE></HEAD>
+<BODY
+BGCOLOR="#FFFFF2"
+><CENTER
+><B
+>Shakespeare, William, 1564-1616  
+. The Comedy of Errors  </B>
+<BR
+>&gt;
+Electronic Text Center, University of Virginia Library</BR></CENTER>
+<BR
+>&gt;
+<CENTER
+>| <A
+HREF=""
+><B
+>The entire work</B></A> (<B
+> KB</B>)
+ | 
+<A
+HREF="http://etext.lib.virginia.edu/toc/modeng/public/MobCome.html"
+><B
+>Table of Contents for this work</B></A> | </CENTER><CENTER
+>|<B
+> <A
+HREF="/uvaonline.html"
+>All on-line databases</A> | <A
+HREF="/"
+>Etext Center Homepage</A></B> | </CENTER>
+<HR
+>&gt;
+
+      <I
+>About the electronic version</I><BR
+>&gt;<BR
+>&gt;    <BR
+>&gt;<B
+><I
+>The Comedy of Errors  </I></B>      <BR
+>&gt;<B
+>Shakespeare, William, 1564-1616  </B>   <BR
+>&gt;<B
+>Clark, William George, 1821-1878; William Aldis Wright, 1831-1914  </B>         <BR
+>&gt;<BR
+>&gt;Creation of machine-readable version:     Grady Ward, Moby Lexical Project    <BR
+>&gt;<BR
+>&gt;Conversion to TEI.2-conformant markup:     University of Virginia Library Electronic Text Center.         ca. 130 kilobytes       <BR
+CLEAR="left"
+>This version available from the University of Virginia Library     <BR
+>&gt;Charlottesville, Virginia  <BR
+>&gt;      <P
+>Publicly accessible  </P>  <BR
+>&gt;<A
+HREF=" http://etext.lib.virginia.edu/modeng/modengS.browse.html  "
+> http:</A></BR></BR>etext.lib.virginia.edu</BR>modeng</BR></BR>modengS.browse.html    <P
+>copyright 1998, by the Rector and Visitors of the University of Virginia  </P>  <BR
+>&gt;   1998               <BR
+>&gt;Note:  We have been unable to verify conclusively the exact source of this  electronic text, but we believe it to be "The Globe Edition" of the Works of  William Shakespeare edited by William George Clark and William Aldis Wright.  Error checking was done against the 1866 edition noted in the "Source  Description" field.  These texts are public domain.      <HR
+>&gt;<I
+>About the print version</I><BR
+>&gt;<BR
+>&gt;      <BR
+>&gt;<B
+><I
+>The Comedy of Errors  </I></B>  <BR
+>&gt;<B
+><I
+>  </I></B>  <BR
+>&gt;<B
+><I
+>  </I></B>  <BR
+>&gt;<B
+>Shakespeare, William, 1564-1616  </B>   <BR
+>&gt;<B
+>Clark, William George, 1821-1878; William Aldis Wright, 1831-1914  </B>               <P
+>The Globe Edition  </P>     viii, 1075 p. 18 cm.       <BR
+>&gt;MacMillan and Co.     <BR
+>&gt;Cambridge  <BR
+>&gt;   1866     <BR
+>&gt;Print copy consulted: UVa Library, PR2753 .C6 1866                            <P
+>Prepared for the University of Virginia Library Electronic Text Center.  </P>                                     <BR
+>&gt;<B
+>Published: 1592-1594  </B><BR
+>&gt;    <BR
+>&gt;  <BR
+>&gt;English          <TERM
+>fiction    <TERM
+>drama    <TERM
+>masculine    <TERM
+>        <TERM
+>LCSH          <HR
+>&gt;<I
+>Revisions to the electronic version</I>  <BR
+>&gt;   October 1998       corrector     Stephen Ramsay, Electronic Text Center      <DD
+>Added TEI header and tags.  </DD><BR
+>&gt;  <BR
+>&gt;  <BR
+>&gt;<I
+>etextcenter@virginia.edu</I>.  Commercial use prohibited; all usage governed by our Conditions of Use: <A
+HREF="/conditions.html"
+>http:</A></BR></BR>etext.lib.virginia.edu</BR>conditions.html<BR
+>&gt;  <HR
+>&gt;            <BR
+>&gt;  <CENTER
+><H3
+>Dramatis Personae</H3></CENTER>      <BR
+>&gt;  <DD
+>SOLINUS   Duke of Ephesus. (DUKE SOLINUS:)  </DD><BR
+>&gt;  <DD
+>AEGEON   a merchant of Syracuse.  </DD><BR
+>&gt;  <DD
+>ANTIPHOLUS OF EPHESUS, ANTIPHOLUS OF SYRACUSE } twin brothers, and sons to AEgeon and AEmilia.</DD><BR
+>&gt;  <DD
+> DROMIO OF EPHESUS, DROMIO OF SYRACUSE } twin brothers, and attendants on the two Antipholuses.</DD><BR
+>&gt;  <DD
+>BALTHAZAR   a merchant  </DD><BR
+>&gt;  <DD
+>ANGELO   a goldsmith.  </DD><BR
+>&gt;  <DD
+>First Merchant   friend to Antipholus of Syracuse.  </DD><BR
+>&gt;  <DD
+>Second Merchant   to whom Angelo is a debtor.  </DD><BR
+>&gt;  <DD
+>PINCH   a schoolmaster.  </DD><BR
+>&gt;  <DD
+>AEMILIA   wife to AEgeon, an abbess at Ephesus.  </DD><BR
+>&gt;  <DD
+>ADRIANA   wife to Antipholus of Ephesus.  </DD><BR
+>&gt;  <DD
+>LUCIANA   her sister.  </DD><BR
+>&gt;  <DD
+>LUCE   servant to Adriana.  </DD><BR
+>&gt;  <DD
+>A Courtezan.</DD><BR
+>&gt;  <DD
+>Gaoler, Officers, and other Attendants</DD><BR
+>&gt;        <P
+> [<I
+>Scene: Ephesus.</I>]<BR
+>&gt;</BR></P>        <HR
+>&gt;        <BR
+>&gt;  <CENTER
+><H3
+>Act 1</H3></CENTER>    <BR
+>&gt;  <CENTER
+><H3
+>Scene 1</H3></CENTER>    <P
+> [<I
+>A hall in DUKE SOLINUS'S palace.</I>]<BR
+>&gt;    </BR></P><P
+> [<I
+>Enter DUKE SOLINUS, AEGEON, Gaoler, Officers, and other     Attendants</I>]<BR
+>&gt;    </BR></P><BR
+>&gt;<I
+>AEGEON</I><BR
+>&gt;   <P
+>Proceed, Solinus, to procure my fall<BR
+>&gt;  And by the doom of death end woes and all.<BR
+>&gt;      </BR></BR></P><BR
+>&gt;<I
+>DUKE SOLINUS</I><BR
+>&gt;   <P
+>Merchant of Syracuse, plead no more;<BR
+>&gt;  I am not partial to infringe our laws:<BR
+>&gt;  The enmity and discord which of late<BR
+>&gt;  Sprung from the rancorous outrage of your duke<BR
+>&gt;  To merchants, our well-dealing countrymen,<BR
+>&gt;  Who wanting guilders to redeem their lives<BR
+>&gt;  Have seal'd his rigorous statutes with their bloods,<BR
+>&gt;  Excludes all pity from our threatening looks.<BR
+>&gt;  For, since the mortal and intestine jars<BR
+>&gt;  'Twixt thy seditious countrymen and us,<BR
+>&gt;  It hath in solemn synods been decreed<BR
+>&gt;  Both by the Syracusians and ourselves,<BR
+>&gt;  To admit no traffic to our adverse towns Nay, more,<BR
+>&gt;  If any born at Ephesus be seen<BR
+>&gt;  At any Syracusian marts and fairs;<BR
+>&gt;  Again: if any Syracusian born<BR
+>&gt;  Come to the bay of Ephesus, he dies,<BR
+>&gt;  His goods confiscate to the duke's dispose,<BR
+>&gt;  Unless a thousand marks be levied,<BR
+>&gt;  To quit the penalty and to ransom him.<BR
+>&gt;  Thy substance, valued at the highest rate,<BR
+>&gt;  Cannot amount unto a hundred marks;<BR
+>&gt;  Therefore by law thou art condemned to die.<BR
+>&gt;      </BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></P><BR
+>&gt;<I
+>AEGEON</I><BR
+>&gt;   <P
+>Yet this my comfort: when your words are done,<BR
+>&gt;  My woes end likewise with the evening sun.<BR
+>&gt;      </BR></BR></P><BR
+>&gt;<I
+>DUKE SOLINUS</I><BR
+>&gt;   <P
+>Well, Syracusian, say in brief the cause<BR
+>&gt;  Why thou departed'st from thy native home<BR
+>&gt;  And for what cause thou camest to Ephesus.<BR
+>&gt;      </BR></BR></BR></P><BR
+>&gt;<I
+>AEGEON</I><BR
+>&gt;   <P
+>A heavier task could not have been imposed<BR
+>&gt;  Than I to speak my griefs unspeakable:<BR
+>&gt;  Yet, that the world may witness that my end<BR
+>&gt;  Was wrought by nature, not by vile offence,<BR
+>&gt;  I'll utter what my sorrows give me leave.<BR
+>&gt;  In Syracusa was I born, and wed<BR
+>&gt;  Unto a woman, happy but for me,<BR
+>&gt;  And by me, had not our hap been bad.<BR
+>&gt;  With her I lived in joy; our wealth increased<BR
+>&gt;  By prosperous voyages I often made<BR
+>&gt;  To Epidamnum; till my factor's death<BR
+>&gt;  And the great care of goods at random left<BR
+>&gt;  Drew me from kind embracements of my spouse:<BR
+>&gt;  From whom my absence was not six months old<BR
+>&gt;  Before herself, almost at fainting under<BR
+>&gt;  The pleasing punishment that women bear,<BR
+>&gt;  Had made provision for her following me<BR
+>&gt;  And soon and safe arrived where I was.<BR
+>&gt;  There had she not been long, but she became<BR
+>&gt;  A joyful mother of two goodly sons;<BR
+>&gt;  And, which was strange, the one so like the other,<BR
+>&gt;  As could not be distinguish'd but by names.<BR
+>&gt;  That very hour, and in the self-same inn,<BR
+>&gt;  A meaner woman was delivered<BR
+>&gt;  Of such a burden, male twins, both alike:<BR
+>&gt;  Those, -- for their parents were exceeding poor, -- <BR
+>&gt;  I bought and brought up to attend my sons.<BR
+>&gt;  My wife, not meanly proud of two such boys,<BR
+>&gt;  Made daily motions for our home return:<BR
+>&gt;  Unwilling I agreed. Alas! too soon,<BR
+>&gt;  We came aboard.<BR
+>&gt;  A league from Epidamnum had we sail'd,<BR
+>&gt;  Before the always wind-obeying deep<BR
+>&gt;  Gave any tragic instance of our harm:<BR
+>&gt;  But longer did we not retain much hope;<BR
+>&gt;  For what obscured light the heavens did grant<BR
+>&gt;  Did but convey unto our fearful minds<BR
+>&gt;  A doubtful warrant of immediate death;<BR
+>&gt;  Which though myself would gladly have embraced,<BR
+>&gt;  Yet the incessant weepings of my wife,<BR
+>&gt;  Weeping before for what she saw must come,<BR
+>&gt;  And piteous plainings of the pretty babes,<BR
+>&gt;  That mourn'd for fashion, ignorant what to fear,<BR
+>&gt;  Forced me to seek delays for them and me.<BR
+>&gt;  And this it was, for other means was none:<BR
+>&gt;  The sailors sought for safety by our boat,<BR
+>&gt;  And left the ship, then sinking-ripe, to us:<BR
+>&gt;  My wife, more careful for the latter-born,<BR
+>&gt;  Had fasten'd him unto a small spare mast,<BR
+>&gt;  Such as seafaring men provide for storms;<BR
+>&gt;  To him one of the other twins was bound,<BR
+>&gt;  Whilst I had been like heedful of the other:<BR
+>&gt;  The children thus disposed, my wife and I,<BR
+>&gt;  Fixing our eyes on whom our care was fix'd,<BR
+>&gt;  Fasten'd ourselves at either end the mast;<BR
+>&gt;  And floating straight, obedient to the stream,<BR
+>&gt;  Was carried towards Corinth, as we thought.<BR
+>&gt;  At length the sun, gazing upon the earth,<BR
+>&gt;  Dispersed those vapours that offended us;<BR
+>&gt;  And by the benefit of his wished light,<BR
+>&gt;  The seas wax'd calm, and we discovered<BR
+>&gt;  Two ships from far making amain to us,<BR
+>&gt;  Of Corinth that, of Epidaurus this:<BR
+>&gt;  But ere they came, -- O, let me say no more!<BR
+>&gt;  Gather the sequel by that went before.<BR
+>&gt;      </BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></P><BR
+>&gt;<I
+>DUKE SOLINUS</I><BR
+>&gt;   <P
+>Nay, forward, old man; do not break off so;<BR
+>&gt;  For we may pity, though not pardon thee.<BR
+>&gt;      </BR></BR></P><BR
+>&gt;<I
+>AEGEON</I><BR
+>&gt;   <P
+>O, had the gods done so, I had not now<BR
+>&gt;  Worthily term'd them merciless to us!<BR
+>&gt;  For, ere the ships could meet by twice five leagues,<BR
+>&gt;  We were encounterd by a mighty rock;<BR
+>&gt;  Which being violently borne upon,<BR
+>&gt;  Our helpful ship was splitted in the midst;<BR
+>&gt;  So that, in this unjust divorce of us,<BR
+>&gt;  Fortune had left to both of us alike<BR
+>&gt;  What to delight in, what to sorrow for.<BR
+>&gt;  Her part, poor soul! seeming as burdened<BR
+>&gt;  With lesser weight but not with lesser woe,<BR
+>&gt;  Was carried with more speed before the wind;<BR
+>&gt;  And in our sight they three were taken up<BR
+>&gt;  By fishermen of Corinth, as we thought.<BR
+>&gt;  At length, another ship had seized on us;<BR
+>&gt;  And, knowing whom it was their hap to save,<BR
+>&gt;  Gave healthful welcome to their shipwreck'd guests;<BR
+>&gt;  And would have reft the fishers of their prey,<BR
+>&gt;  Had not their bark been very slow of sail;<BR
+>&gt;  And therefore homeward did they bend their course.<BR
+>&gt;  Thus have you heard me sever'd from my bliss;<BR
+>&gt;  That by misfortunes was my life prolong'd,<BR
+>&gt;  To tell sad stories of my own mishaps.<BR
+>&gt;      </BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></P><BR
+>&gt;<I
+>DUKE SOLINUS</I><BR
+>&gt;   <P
+>And for the sake of them thou sorrowest for,<BR
+>&gt;  Do me the favour to dilate at full<BR
+>&gt;  What hath befall'n of them and thee till now.<BR
+>&gt;      </BR></BR></BR></P><BR
+>&gt;<I
+>AEGEON</I><BR
+>&gt;   <P
+>My youngest boy, and yet my eldest care,<BR
+>&gt;  At eighteen years became inquisitive<BR
+>&gt;  After his brother: and importuned me<BR
+>&gt;  That his attendant -- so his case was like,<BR
+>&gt;  Reft of his brother, but retain'd his name -- <BR
+>&gt;  Might bear him company in the quest of him:<BR
+>&gt;  Whom whilst I labour'd of a love to see,<BR
+>&gt;  I hazarded the loss of whom I loved.<BR
+>&gt;  Five summers have I spent in furthest Greece,<BR
+>&gt;  Roaming clean through the bounds of Asia,<BR
+>&gt;  And, coasting homeward, came to Ephesus;<BR
+>&gt;  Hopeless to find, yet loath to leave unsought<BR
+>&gt;  Or that or any place that harbours men.<BR
+>&gt;  But here must end the story of my life;<BR
+>&gt;  And happy were I in my timely death,<BR
+>&gt;  Could all my travels warrant me they live.<BR
+>&gt;      </BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></P><BR
+>&gt;<I
+>DUKE SOLINUS</I><BR
+>&gt;   <P
+>Hapless AEgeon, whom the fates have mark'd<BR
+>&gt;  To bear the extremity of dire mishap!<BR
+>&gt;  Now, trust me, were it not against our laws,<BR
+>&gt;  Against my crown, my oath, my dignity,<BR
+>&gt;  Which princes, would they, may not disannul,<BR
+>&gt;  My soul would sue as advocate for thee.<BR
+>&gt;  But, though thou art adjudged to the death<BR
+>&gt;  And passed sentence may not be recall'd<BR
+>&gt;  But to our honour's great disparagement,<BR
+>&gt;  Yet I will favour thee in what I can.<BR
+>&gt;  Therefore, merchant, I'll limit thee this day<BR
+>&gt;  To seek thy life by beneficial help:<BR
+>&gt;  Try all the friends thou hast in Ephesus;<BR
+>&gt;  Beg thou, or borrow, to make up the sum,<BR
+>&gt;  And live; if no, then thou art doom'd to die.<BR
+>&gt;  Gaoler, take him to thy custody.<BR
+>&gt;      </BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></BR></P><BR
+>&gt;<I
+>Gaoler</I><BR
+>&gt;   <P
+>I will, my lord.<BR
+>&gt;    </BR></P><BR
+>&gt;<I
+>AEGEON</I><BR
+>&gt;   <P
+>Hopeless and helpless doth AEgeon wend,<BR
+>&gt;  But to procrastinate his lifeless end.<BR
+>&gt;      </BR></BR></P><P
+> [<I
+>Exeunt</I>]<BR
+>&gt;</BR></P>        <HR
+WIDTH="50%"
+><BR
+>&gt;  <CENTER
+><H3
+>Scene 2</H3></CENTER>    <P
+> [<I
+>The Mart.</I>]<BR
+>&gt;    </BR></P><P
+> [<I
+>Enter ANTIPHOLUS of Syracuse, DROMIO of Syracuse, and First Merchant</I>]<BR
+>&gt;    </BR></P><BR
+>&gt;<I
+>First Merchant</I><BR
+>&gt;   <P
+>Therefore give out you are of Epidamnum,<BR
+>&gt;  Lest that your goods too soon be confiscate.<BR
+>&gt;  This very day a Syracusian merchant<BR
+>&gt;  Is apprehended for arrival here;<BR
+>&gt;  And not being able to buy out his life<BR
+>&gt;  According to the statute of the town,<BR
+>&gt;  Dies ere the weary sun set in the west.<BR
+>&gt;  There is your money that I had to keep.<BR
+>&gt;        </BR></BR></BR></BR></BR></BR></BR></BR></P><BR
+>&gt;<I
+>OF SYRACUSE</I><BR
+>&gt;   <P
+>Go bear it to the Centaur, where we host,<BR
+>&gt;  And stay there, Dromio, till I come to thee.<BR
+>&gt;  Within this hour it will be dinner-time:<BR
+>&gt;  Till that, I'll view the manners of the town,<BR
+>&gt;  Peruse the traders, gaze upon the buildings,<BR
+>&gt;  And then return and sleep within mine inn,<BR
+>&gt;  For with long travel I am stiff and weary.<BR
+>&gt;  Get thee away.<BR
+>&gt;      </BR></BR></BR></BR></BR></BR></BR></BR></P>
