@@ -40,7 +40,7 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lexpat -lfreetype2 -lpa9 -lfat -lnds9
+LIBS	:= -lexpat -lfreetype2 -lfatdldi -lfat -lnds9
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -113,8 +113,8 @@ run:
 
 
 install:
-	cp $(TARGET).r4ds.nds e:/
-	cp ebook.txt e:/
+	cmd /c copy $(TARGET).r4ds.nds e:\DSLibris.nds
+	cmd /c copy ebook.xml e:\
 #---------------------------------------------------------------------------------
 else
  
