@@ -1,6 +1,7 @@
 #include <nds.h>		/* libnds */
 #include <fat.h>   		/* maps stdio to FAT on ARM */
 #include <libfat.h>
+#include "font.h"
 #include <ft2build.h>	/* freetype2 - text rendering */
 #include FT_FREETYPE_H
 #include <expat.h>		/* expat - XML parsing */
@@ -144,6 +145,7 @@ void drawchar(int code) {
 			}
 		}
 	}
+	pen.x += glyph->advance.x >> 6;
 }
 
 void drawstring(char *string) {
@@ -155,7 +157,7 @@ void drawstring(char *string) {
 	}
 }
 
-void writepage(int pageindex) {
+void drawpage(int pageindex) {
 	startpage();
 	clearfacingpages();
 	swiWaitForVBlank();
@@ -166,10 +168,8 @@ void writepage(int pageindex) {
 		if(c == '\n') newline();
 		else {
 			drawchar(c);
-			pen.x += glyphs[c].advance.x >> 6;
 		}
 	}
-//	blitfacingpages();
 }
 
 void
@@ -206,6 +206,11 @@ end_hndl(void *data, const char *el) {
 	}
 }  /* End of end_hndl */
 
+void drawbrowser() {
+	fb = screen1;
+	solid(0,0,0);
+}
+	
 void
 char_hndl(void *data, const char *txt, int txtlen) {
 	// paginate on the fly into page data structure.
@@ -288,7 +293,8 @@ void
 proc_hndl(void *data, const char *target, const char *pidata) {
 }  /* End proc_hndl */
 
-int main(void){
+	
+int main(void) {
 	powerON(POWER_ALL);
 	irqInit();
 	irqEnable(IRQ_VBLANK);
@@ -358,19 +364,23 @@ int main(void){
 	// open up the first XML we find.
 	int bookcount = 0;
 	book_t *book = books;
+	startpage();
 	char filename[256];
 	FILE_TYPE filetype = FAT_FindFirstFileLFN(filename);
-	while(filetype != FT_NONE) {
-		if(!stricmp(".xml",&(filename[strlen(filename)-5]))) {
+	while((filetype != FT_NONE) && bookcount < MAXBOOKS) {
+		if(!stricmp(".xml",filename + (strlen(filename)-4))) {
 			strcpy(book->filename, filename);
 			bookcount++;
-			break;
+			book++;
 		}
 		filetype = FAT_FindNextFileLFN(filename);
 	}
-
-	strcpy(filename,"/ebook.xml");
-	FILE *fp = fopen(filename,"r");
+	
+//	strcpy(filename,"/ebook.xml");
+	char path[64] = "/";
+	strcat(path,books[0].filename);
+	drawstring(path);
+	FILE *fp = fopen(path,"r");
 	if(!fp) {
 		solid(0,31,31);
 		return -2;
@@ -393,7 +403,7 @@ int main(void){
 	//draw page 0
 	
 	curpage = 0;
-	writepage(curpage);
+	drawpage(curpage);
 	swiWaitForVBlank();
 	
 	while(1) {
@@ -401,13 +411,13 @@ int main(void){
  
 		if((keysDown() & KEY_A) || (keysDown() & KEY_R)) {
 			curpage++;
-			writepage(curpage);
+			drawpage(curpage);
 		}
 		
 		if((keysDown() & KEY_B) || (keysDown() & KEY_L)) {
 			if(curpage > 0) {
 				curpage--;
-				writepage(curpage);
+				drawpage(curpage);
 			}
 		}
 		
