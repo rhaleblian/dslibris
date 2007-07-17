@@ -7,7 +7,7 @@
 #include <expat.h>		/* expat - XML parsing */
 #include <sys/stat.h>
 
-#define BUFSIZE 32000
+#define BUFSIZE 1000000
 #define PAGEBUFSIZE 2048
 #define MAXPAGES 1024
 #define MAXGLYPHS 256
@@ -24,7 +24,7 @@
 
 FT_Vector pen;
 u16 *screen0, *screen1, *fb;
-//u16 *bb, bb1[256*256], bb2[256*256];
+u16 *bb, bb1[256*256], bb2[256*256];
 
 FT_Library library;
 FT_Error   error;
@@ -58,12 +58,10 @@ void solid(int r, int g, int b) {
 	for(i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++) fb[i] =color;
 }
 
-/*
 void blitfacingpages() {
 	memcpy(fb,bb,256*256*sizeof(u16));
 	swiWaitForVBlank();
 }
-*/
 
 void drawmargins() {
 	int x, y; 
@@ -157,7 +155,7 @@ void drawstring(char *string) {
 	}
 }
 
-void drawpage(int pageindex) {
+void drawfacingpages(int pageindex) {
 	startpage();
 	clearfacingpages();
 	swiWaitForVBlank();
@@ -207,10 +205,14 @@ end_hndl(void *data, const char *el) {
 }  /* End of end_hndl */
 
 void drawbrowser() {
-	fb = screen1;
-	solid(0,0,0);
+	solid(31,31,31);
+	int i;
+	for(i=0;i<bookcount;i++) {
+		drawstring(books[i].filename);
+		newline();
+	}
 }
-	
+
 void
 char_hndl(void *data, const char *txt, int txtlen) {
 	// paginate on the fly into page data structure.
@@ -362,7 +364,7 @@ int main(void) {
 	// UVA HTML texts, for instance, need to go through HTML tidy.
 	
 	// open up the first XML we find.
-	int bookcount = 0;
+	bookcount = 0;
 	book_t *book = books;
 	startpage();
 	char filename[256];
@@ -376,13 +378,16 @@ int main(void) {
 		filetype = FAT_FindNextFileLFN(filename);
 	}
 	
-//	strcpy(filename,"/ebook.xml");
 	char path[64] = "/";
 	strcat(path,books[0].filename);
-	drawstring(path);
 	FILE *fp = fopen(path,"r");
 	if(!fp) {
-		solid(0,31,31);
+		solid(31,31,0);
+		char msg[64];
+		strcat(msg,"error opening ");
+		strcat(msg,path);
+		pen.x = 10; pen.y = 128;
+		drawstring(msg);
 		return -2;
 	}
 	struct stat st;
@@ -403,7 +408,7 @@ int main(void) {
 	//draw page 0
 	
 	curpage = 0;
-	drawpage(curpage);
+	drawfacingpages(curpage);
 	swiWaitForVBlank();
 	
 	while(1) {
@@ -411,14 +416,22 @@ int main(void) {
  
 		if((keysDown() & KEY_A) || (keysDown() & KEY_R)) {
 			curpage++;
-			drawpage(curpage);
+			drawfacingpages(curpage);
 		}
 		
 		if((keysDown() & KEY_B) || (keysDown() & KEY_L)) {
 			if(curpage > 0) {
 				curpage--;
-				drawpage(curpage);
+				drawfacingpages(curpage);
 			}
+		}
+		
+		if(keysDown() & KEY_Y) {
+			drawbrowser();
+		}
+		
+		if(keysUp() & KEY_Y) {
+			drawfacingpages(curpage);
 		}
 		
 		swiWaitForVBlank();
@@ -426,7 +439,3 @@ int main(void) {
 	
  	return 0;
 }
-
-
-
-

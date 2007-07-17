@@ -114,7 +114,7 @@ run:
 
 install:
 	cmd /c copy $(TARGET).r4ds.nds e:\DSLibris.nds
-	cmd /c copy ebook.xml e:\
+	cmd /c copy rhetorica.xml e:\
 #---------------------------------------------------------------------------------
 else
  
