@@ -2,20 +2,20 @@
 #include <fat.h>   		/* maps stdio to FAT on ARM */
 #include <libfat.h>
 #include "font.h"
-#include <ft2build.h>	/* freetype2 - text rendering */
-#include FT_FREETYPE_H
+#include "ui.h"
 #include <expat.h>		/* expat - XML parsing */
 #include <sys/stat.h>
 
-#define BUFSIZE 1000000
+#define BUFSIZE 1024*512
 #define PAGEBUFSIZE 2048
 #define MAXPAGES 1024
 #define MAXGLYPHS 256
 #define MAXBOOKS 4
-#define MARGINLEFT 8
-#define MARGINRIGHT 8
-#define MARGINTOP 8
-#define MARGINBOTTOM 8
+#define MARGINLEFT 10
+#define MARGINRIGHT 10
+#define MARGINTOP 10
+#define MARGINBOTTOM 14
+#define LINESPACINGADD 2
 #define PIXELSIZE 12
 #define DPI 72		    // probably not true for a DS - measure it
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
@@ -24,12 +24,12 @@
 
 FT_Vector pen;
 u16 *screen0, *screen1, *fb;
-u16 *bb, bb1[256*256], bb2[256*256];
+u16 *bb, bb0[256*256], bb1[256*256];
 
-FT_Library library;
-FT_Error   error;
-FT_Face    face;
-FT_GlyphSlotRec glyphs[128];
+extern FT_Library library;
+extern FT_Error   error;
+extern FT_Face    face;
+extern FT_GlyphSlotRec glyphs[];
 
 typedef struct {
 	char filename[32];
@@ -41,6 +41,7 @@ int bookcount;
 typedef struct {
 	char buf[PAGEBUFSIZE];
 	int chars;
+	int ibuf;		// index into buffer for parsing
 } page_t;
 page_t pages[MAXPAGES]; 
 int pagecount;
@@ -52,42 +53,14 @@ context_t context;
 int	curpage;
 int pagedone;
 
-void solid(int r, int g, int b) {
-	u16 color = RGB15(r,g,b) | BIT(15);
-	int i;
-	for(i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++) fb[i] =color;
-}
+button_t buttons[16];
 
-void blitfacingpages() {
-	memcpy(fb,bb,256*256*sizeof(u16));
-	swiWaitForVBlank();
-}
-
-void drawmargins() {
-	int x, y; 
-	for(y=0;y<PAGE_HEIGHT;y++) {
-		fb[y*PAGE_HEIGHT + MARGINLEFT] = RGB15(30,30,30) | BIT(15);
-		fb[y*PAGE_HEIGHT + PAGE_WIDTH-MARGINRIGHT] = RGB15(30,30,30) | BIT(15);
-	}
-	for(x=0;x<PAGE_HEIGHT;x++) {
-		fb[MARGINTOP*PAGE_HEIGHT + x] = RGB15(30,30,30) | BIT(15);
-		fb[(PAGE_HEIGHT-MARGINBOTTOM)*PAGE_HEIGHT + x] = RGB15(30,30,30) | BIT(15);
-	}
-}
-
-void clearfacingpages() {
-	fb = screen0;
-	solid(31,31,31);
-	drawmargins();
-	fb = screen1;
-	solid(31,31,31);
-	drawmargins();
-	fb = screen0;
-}
+// struct initializers
 
 void newpage(int page) {
 	strcpy(pages[page].buf,"");
 	pages[page].chars = 0;
+	pages[page].ibuf = 0;
 }
 
 FT_GlyphSlot newglyph(int i, FT_GlyphSlot src) {
@@ -103,17 +76,25 @@ FT_GlyphSlot newglyph(int i, FT_GlyphSlot src) {
 	dst->advance = src->advance;
 	return(dst);
 }
- 
-void startpage() {
-	fb = screen0;
-	pen.y = MARGINTOP + (face->size->metrics.ascender >> 6);
-	pen.x = MARGINLEFT;
-	pagedone = 0;
+
+// unused and probably borken
+void blitfacingpages() {
+	memcpy(screen0,bb0,256*256*sizeof(u16));
+	memcpy(screen1,bb1,256*256*sizeof(u16));
+	swiWaitForVBlank();
 }
 
-void newline() {
+void drawsolid(int r, int g, int b) {
+	u16 color = RGB15(r,g,b) | BIT(15);
+	int i;
+	// memset here?
+	for(i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++) fb[i] =color;
+}
+
+void drawnewline() {
 	pen.x = MARGINLEFT;
 	pen.y += face->size->metrics.height >> 6;
+	pen.y += LINESPACINGADD;
 	if(pen.y > (PAGE_HEIGHT - MARGINBOTTOM)) {
 		pen.y = MARGINTOP + (face->size->metrics.ascender >> 6);
 		if(fb == screen0) {
@@ -123,51 +104,92 @@ void newline() {
 		}
 	}
 }
-
-void drawchar(int code) {
-	// draw a character (ASCII) at the pen position.
-	FT_GlyphSlot glyph = &glyphs[code];
-	FT_Bitmap bitmap = glyph->bitmap;
-	int bx = glyph->bitmap_left;
-	int by = glyph->bitmap_top;
-	int gx, gy;
-	for(gy=0; gy<bitmap.rows; gy++) {
-		for(gx=0; gx<bitmap.width; gx++) {
-			/* get antialiased value */
-			int a = bitmap.buffer[gy*bitmap.width+gx];
-			if(a) {
-				u8 sx = (pen.x+gx+bx);
-				u8 sy = (pen.y+gy-by);			
-				int l = (255-a) >> 3;
-				fb[sy*SCREEN_WIDTH+sx] = RGB15(l,l,l) | BIT(15);
-			}
-		}
-	}
-	pen.x += glyph->advance.x >> 6;
+ 
+void startpage() {
+	fb = screen0;
+	pen.x = MARGINLEFT;
+	pen.y = MARGINTOP + (face->size->metrics.ascender >> 6);
+	pagedone = 0;
 }
 
-void drawstring(char *string) {
-	// draw an ASCII string starting at the pen position.
-	int c, i;
-	for(i=0;i<strlen(string);i++) {
-		c = (int)string[i];
-		drawchar(c);
+void drawmargins() {
+	int x, y;
+	u16 color = RGB15(30,30,30) | BIT(15);
+	for(y=0;y<PAGE_HEIGHT;y++) {
+		fb[y*PAGE_HEIGHT + MARGINLEFT] = color;
+		fb[y*PAGE_HEIGHT + PAGE_WIDTH-MARGINRIGHT] = color;
 	}
+	for(x=0;x<PAGE_HEIGHT;x++) {
+		fb[MARGINTOP*PAGE_HEIGHT + x] = color;
+		fb[(PAGE_HEIGHT-MARGINBOTTOM)*PAGE_HEIGHT + x] = color;
+	}
+}
+
+void clearfacingpages() {
+	fb = screen0;
+	drawsolid(31,31,31);
+//	drawmargins();
+	fb = screen1;
+	drawsolid(31,31,31);
+//	drawmargins();
+	fb = screen0;
 }
 
 void drawfacingpages(int pageindex) {
 	startpage();
 	clearfacingpages();
 	swiWaitForVBlank();
-	int i;
 	page_t *page = &(pages[pageindex]);
-	for(i=0;(i<page->chars) && !pagedone;i++) {
-		int c = (int)page->buf[i];
-		if(c == '\n') newline();
-		else {
-			drawchar(c);
+
+	int advance;
+	int spaces;
+	int i=0;
+	while(i<page->chars && !pagedone) {
+		advance = 0;
+		spaces = 0;
+		
+		// full justification.
+		// get line advance, count spaces,
+		// and insert more space in spaces.
+/*
+		int j,k;
+		for(j=i;j<page->chars && page->buf[j]==' ';j++);
+		for(j=i;j<page->chars && page->buf[j]!='\n';j++) {
+			int c = (int)page->buf[j];
+			advance += glyphs[c].advance.x >> 6;
+			if(page->buf[j] == ' ') spaces++;
+		}
+		for(k=j;k>0 && page->buf[k]==' ';k--) spaces--;
+*/
+		float horispace = 0.0;
+		if(spaces) horispace = (float)((PAGE_WIDTH-MARGINRIGHT-MARGINLEFT) - advance) / (float)spaces;
+		
+		for(;i<page->chars;i++) {
+			int c = (int)page->buf[i];
+			if(c == '\n') {
+				drawnewline();
+			} else {
+				if(c == ' ') pen.x += (int)(horispace);
+				drawchar(c,&pen);
+			}
 		}
 	}
+}
+
+void drawbrowser(int bookcurrent) {
+	fb = screen1;
+	drawsolid(31,31,31);
+	int i;
+	for(i=0;i<bookcount;i++) {
+		if(i==bookcurrent) drawbutton(&buttons[i],fb,1);
+		else drawbutton(&buttons[i],fb,0);
+	}
+}
+
+
+int iswhitespace(int c) {
+	if(c == ' ' || c == '\t' || c == '\n' || c == '\r') return 1;
+	else return 0;
 }
 
 void
@@ -193,9 +215,9 @@ end_hndl(void *data, const char *el) {
 		|| !stricmp(el,"p")
 		|| !stricmp(el,"br")
 	) {
-		page->buf[page->chars] = '\n';
-		page->chars++;
-		newline();
+		page->buf[page->chars++] = '\n';
+		page->ibuf = 0;
+		drawnewline();
 		if(pagedone) {
 			curpage++;
 			newpage(curpage);
@@ -204,99 +226,64 @@ end_hndl(void *data, const char *el) {
 	}
 }  /* End of end_hndl */
 
-void drawbrowser() {
-	solid(31,31,31);
-	int i;
-	for(i=0;i<bookcount;i++) {
-		drawstring(books[i].filename);
-		newline();
-	}
-}
-
 void
 char_hndl(void *data, const char *txt, int txtlen) {
-	// paginate on the fly into page data structure.
+	// paginate and linebreak on the fly into page data structure.
 	// TODO txt is UTF-8, but for now we assume it's always in the ASCII range.
 	int i=0;
 	page_t *page = &pages[curpage];
 	
-	/* 
 	while(i<txtlen) {
-		if((int)txt[i] > 127) {}
-		else if((int)txt[i] < 33) {
-			ibreak = page->chars;
-			page->buf[page->chars] = ' ';
-			pen.x += glyphs[(int)txt[i]].advance.x >> 6;
-			page->chars++;
+		if((int)txt[i] == '\r') {
+			i++;
+		} else if(iswhitespace((int)txt[i])) {
+			if(page->ibuf) {
+				pen.x += glyphs[(int)txt[i]].advance.x >> 6;
+				page->buf[page->chars++] = ' ';
+			}
+			i++;
 		} else {
-			// we're looking for the end of the next word.
-			int advance = glyphs[(int)txt[i]].advance.x >> 6;
+			page->ibuf = 1; // non-whitespace
+			int advance = 0;
 			int j;
-			for(j=i+1;(j<txtlen) && ((int)txt[j] > 32) && ((int)txt[j] < 128);j++) {
+			for(j=i;(j<txtlen) && (!iswhitespace((int)txt[j]));j++) {
+				// we're looking for the end of the next word.
 				advance += glyphs[(int)txt[j]].advance.x >> 6;
 			}
 			if((pen.x + advance) > (PAGE_WIDTH - MARGINRIGHT)) {
 				// we went over the margin. go back and break;
 				// and pass to the next page if we pagebreak.
-				page->buf[ibreak] = '\n';
-				newline();  // this is at the pen position.
+				page->buf[page->chars++] = '\n';
+				drawnewline();  // this is at the pen position.
+				page->ibuf = 0;
 				if(pagedone) {
 					curpage++;
 					newpage(curpage);
-					page++;					
+					page++;
 					startpage();
-					page = &pages[curpage];
 				}
 			}
 			for(;i<j;i++) {
-				page->buf[page->chars] = txt[i];
-				page->chars++;
+				if(iswhitespace(txt[i]) && page->ibuf)
+					page->buf[page->chars++] = ' ';
+				else {
+					page->ibuf = 1;
+					page->buf[page->chars++] = txt[i];
+				}
 			}
 			pen.x += advance;
 		}
-		i++;
 	}
-	*/
-	
-	while(i<txtlen) {
-		int c = (int)txt[i];
-		if(c == '\r') { i++; continue; }
-		if(c < 33) {
-			linebreak = page->chars;
-			c = ' ';
-		}
-		page->buf[page->chars] = c;
-		pen.x += glyphs[c].advance.x >> 6;
-		if(c > 32 && pen.x > 182) {
-			// a find a previous space to linebreak on
-			int j;
-			for(j=page->chars;(int)(page->buf[j]) > 32;j--);
-			linebreak = j;
-			page->buf[linebreak] = '\n';
-			
-			// linebreak and reposition pen at the end of new text on next line.
-			newline();
-			if(pagedone) {
-				curpage++;
-				newpage(curpage);
-				page++;
-				startpage();
-			}
-			int k;
-			for(k=linebreak;k<=i;k++) pen.x += glyphs[(int)(page->buf[k])].advance.x >> 6;
-		}	
-		page->chars++;
-		i++;
-	}
-
 }  /* End char_hndl */
 
 void
 proc_hndl(void *data, const char *target, const char *pidata) {
 }  /* End proc_hndl */
 
-	
+
 int main(void) {
+	int browseractive = 0;
+	
 	powerON(POWER_ALL);
 	irqInit();
 	irqEnable(IRQ_VBLANK);
@@ -331,17 +318,17 @@ int main(void) {
 	FAT_InitFiles();
 	error = FT_Init_FreeType(&library);
     if(error) {
-		solid(31,0,0);
+		drawsolid(31,0,0);
         return error;
 	}
 	error = FT_New_Face(library, "/frutiger.ttf", 0, &face);
 	if(error) {
-		solid(31,0,0);
+		drawsolid(31,0,0);
         return error;
 	}
 	FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
 	
-	// cache advances, for pagination pass.
+	// cache glyphs. glyphs[] will contain all the bitmaps.
 	// using FirstChar() and NextChar() would be more robust.
 	// TODO also cache kerning and transformations.
 	int i;
@@ -353,7 +340,7 @@ int main(void) {
 	// parser.
 
 	if(!(p = XML_ParserCreate(NULL))) {
-		solid(31,0,0); return -1;
+		drawsolid(31,0,0); return -1;
 	}
 	XML_UseParserAsHandlerArg(p);
 	XML_SetElementHandler(p, start_hndl, end_hndl);
@@ -363,79 +350,115 @@ int main(void) {
 	// file. must be well-formed XML or XHTML.
 	// UVA HTML texts, for instance, need to go through HTML tidy.
 	
-	// open up the first XML we find.
+	// open up the first XHTML we find.
 	bookcount = 0;
+	int bookcurrent = 0;
 	book_t *book = books;
 	startpage();
 	char filename[256];
 	FILE_TYPE filetype = FAT_FindFirstFileLFN(filename);
 	while((filetype != FT_NONE) && bookcount < MAXBOOKS) {
-		if(!stricmp(".xml",filename + (strlen(filename)-4))) {
+		if(!stricmp(".xhtml",filename + (strlen(filename)-6))) {
 			strcpy(book->filename, filename);
+			
+			if(bookcount < 4) {
+				initbutton(&buttons[bookcount]);
+				movebutton(&buttons[bookcount],MARGINLEFT,MARGINTOP + bookcount*20);
+				strcpy(buttons[bookcount].text,book->filename);
+			}
+
 			bookcount++;
 			book++;
 		}
 		filetype = FAT_FindNextFileLFN(filename);
 	}
 	
-	char path[64] = "/";
-	strcat(path,books[0].filename);
-	FILE *fp = fopen(path,"r");
-	if(!fp) {
-		solid(31,31,0);
-		char msg[64];
-		strcat(msg,"error opening ");
-		strcat(msg,path);
-		pen.x = 10; pen.y = 128;
-		drawstring(msg);
-		return -2;
-	}
-	struct stat st;
-	if(fstat((int)fp,&st) == -1) st.st_size = BUFSIZE;
-	XML_Char *filebuf = (char*)XML_GetBuffer(p, st.st_size);
-	int bytes_read = fread(filebuf, 1, st.st_size, fp);
-	fclose(fp);
-
-	// parse and paginate.
-	
-	curpage = 0;
-	newpage(curpage);
-	pagecount = 0;
-	error = XML_ParseBuffer(p, bytes_read, bytes_read == 0);
-	XML_ParserFree(p);
-	pagecount = curpage+1;
-	
-	//draw page 0
-	
-	curpage = 0;
-	drawfacingpages(curpage);
-	swiWaitForVBlank();
+	drawbrowser(bookcurrent);
+	browseractive = 1;
 	
 	while(1) {
 		scanKeys();
  
-		if((keysDown() & KEY_A) || (keysDown() & KEY_R)) {
-			curpage++;
-			drawfacingpages(curpage);
-		}
+		if(browseractive) {
+			if(keysDown() & KEY_A) {
+				browseractive = 0;
+
+				char path[64];
+				strcpy(path,"/");
+				strcat(path,books[bookcurrent].filename);
+				FILE *fp = fopen(path,"r");
+				if(!fp) {
+					drawsolid(31,31,0);
+					char msg[64];
+					strcat(msg,"error opening ");
+					strcat(msg,path);
+					pen.x = 10; pen.y = 128;
+					drawstring(msg, &pen);
+					return -2;
+				}
+				struct stat st;
+				if(fstat((int)fp,&st) == -1) st.st_size = BUFSIZE;
+				XML_Char *filebuf = (char*)XML_GetBuffer(p, st.st_size);
+				int bytes_read = fread(filebuf, 1, st.st_size, fp);
+				fclose(fp);
+
+				// parse and paginate.
+				
+				pagecount = 0;
+				curpage = 0;
+				newpage(curpage);
+				startpage();
+				error = XML_ParseBuffer(p, bytes_read, bytes_read == 0);
+				pagecount = curpage+1;
+	
+				//draw page 0
+
+				curpage = 0;
+				drawfacingpages(curpage);
+				swiWaitForVBlank();
+			}	
+			if(keysDown() & KEY_X) {
+				if(bookcurrent < 3) {
+					bookcurrent++;
+					drawbrowser(bookcurrent);
+				}
+			}
+			if(keysDown() & KEY_Y) {
+				if(bookcurrent > 0) {
+					bookcurrent--;
+					drawbrowser(bookcurrent);
+				}
+			}
+		} else {
 		
-		if((keysDown() & KEY_B) || (keysDown() & KEY_L)) {
-			if(curpage > 0) {
-				curpage--;
+			if((keysDown() & (KEY_A | KEY_DOWN))
+			|| (keysDown() & KEY_R)) {
+				curpage++;
 				drawfacingpages(curpage);
 			}
+			
+			if((keysDown() & (KEY_B | KEY_UP))
+			|| (keysDown() & KEY_L)) {
+				if(curpage > 0) {
+					curpage--;
+					drawfacingpages(curpage);
+				}
+			}
+			
+			if(keysDown() & KEY_Y) {
+				drawbrowser(bookcurrent);
+				browseractive = 1;
+			}
+			
+			if(keysUp() & KEY_Y) {
+				drawfacingpages(curpage);
+				browseractive = 0;
+			}
 		}
-		
-		if(keysDown() & KEY_Y) {
-			drawbrowser();
-		}
-		
-		if(keysUp() & KEY_Y) {
-			drawfacingpages(curpage);
-		}
-		
 		swiWaitForVBlank();
 	}
 	
+	XML_ParserFree(p);
+
  	return 0;
 }
