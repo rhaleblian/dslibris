@@ -1,10 +1,12 @@
 #include <nds.h>		/* libnds */
 #include <fat.h>   		/* maps stdio to FAT on ARM */
-#include <libfat.h>
+#include <expat.h>		/* expat - XML parsing */
+#include <stdio.h>
+#include <sys/dir.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include "font.h"
 #include "ui.h"
-#include <expat.h>		/* expat - XML parsing */
-#include <sys/stat.h>
 
 #define BUFSIZE 1024*512
 #define PAGEBUFSIZE 2048
@@ -57,13 +59,13 @@ button_t buttons[16];
 
 // struct initializers
 
-void newpage(int page) {
+void initpage(int page) {
 	strcpy(pages[page].buf,"");
 	pages[page].chars = 0;
 	pages[page].ibuf = 0;
 }
 
-FT_GlyphSlot newglyph(int i, FT_GlyphSlot src) {
+FT_GlyphSlot initglyph(int i, FT_GlyphSlot src) {
 	FT_GlyphSlot dst = &glyphs[i];
 	int x = src->bitmap.rows;
 	int y = src->bitmap.width;
@@ -220,7 +222,7 @@ end_hndl(void *data, const char *el) {
 		drawnewline();
 		if(pagedone) {
 			curpage++;
-			newpage(curpage);
+			initpage(curpage);
 			startpage();
 		}
 	}
@@ -257,8 +259,7 @@ char_hndl(void *data, const char *txt, int txtlen) {
 				drawnewline();  // this is at the pen position.
 				page->ibuf = 0;
 				if(pagedone) {
-					curpage++;
-					newpage(curpage);
+					initpage(++curpage);
 					page++;
 					startpage();
 				}
@@ -311,19 +312,22 @@ int main(void) {
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	clearfacingpages();
 	swiWaitForVBlank();
+
+	if(!fatInitDefault()) {
+		drawsolid(15,15,15);
+		return -1;
+	}
 	
 	// font.
 	
-	fatInitDefault();
-	FAT_InitFiles();
 	error = FT_Init_FreeType(&library);
     if(error) {
-		drawsolid(31,0,0);
+		drawsolid(0,31,0);
         return error;
 	}
 	error = FT_New_Face(library, "/frutiger.ttf", 0, &face);
 	if(error) {
-		drawsolid(31,0,0);
+		drawsolid(0,0,31);
         return error;
 	}
 	FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
@@ -334,44 +338,33 @@ int main(void) {
 	int i;
 	for(i=0;i<MAXGLYPHS;i++) {
 		FT_Load_Char(face, i, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
-		newglyph(i, face->glyph);
+		initglyph(i, face->glyph);
 	}
 
 	// parser.
 
-	if(!(p = XML_ParserCreate(NULL))) {
-		drawsolid(31,0,0); return -1;
-	}
-	XML_UseParserAsHandlerArg(p);
-	XML_SetElementHandler(p, start_hndl, end_hndl);
-	XML_SetCharacterDataHandler(p, char_hndl);
-	XML_SetProcessingInstructionHandler(p, proc_hndl);
-
-	// file. must be well-formed XML or XHTML.
-	// UVA HTML texts, for instance, need to go through HTML tidy.
-	
-	// open up the first XHTML we find.
 	bookcount = 0;
 	int bookcurrent = 0;
 	book_t *book = books;
-	startpage();
+
+	// find all .xhtml files.
+	// aside: files must be well-formed XML or XHTML.
+	// UVA HTML texts, for instance, need to go through HTML tidy.	
 	char filename[256];
-	FILE_TYPE filetype = FAT_FindFirstFileLFN(filename);
-	while((filetype != FT_NONE) && bookcount < MAXBOOKS) {
+	DIR_ITER* dp = diropen("/");
+	while(dirnext(dp, filename, NULL) != ENOENT && bookcount < MAXBOOKS) {
 		if(!stricmp(".xhtml",filename + (strlen(filename)-6))) {
 			strcpy(book->filename, filename);
-			
 			if(bookcount < 4) {
 				initbutton(&buttons[bookcount]);
 				movebutton(&buttons[bookcount],MARGINLEFT,MARGINTOP + bookcount*20);
 				strcpy(buttons[bookcount].text,book->filename);
 			}
-
 			bookcount++;
 			book++;
 		}
-		filetype = FAT_FindNextFileLFN(filename);
 	}
+	dirclose(dp);
 	
 	drawbrowser(bookcurrent);
 	browseractive = 1;
@@ -383,6 +376,15 @@ int main(void) {
 			if(keysDown() & KEY_A) {
 				browseractive = 0;
 
+				if(p) XML_ParserFree(p);
+				if(!(p = XML_ParserCreate(NULL))) {
+					drawsolid(31,0,0); return -1;
+				}
+				XML_UseParserAsHandlerArg(p);
+				XML_SetElementHandler(p, start_hndl, end_hndl);
+				XML_SetCharacterDataHandler(p, char_hndl);
+				XML_SetProcessingInstructionHandler(p, proc_hndl);
+	
 				char path[64];
 				strcpy(path,"/");
 				strcat(path,books[bookcurrent].filename);
@@ -390,23 +392,23 @@ int main(void) {
 				if(!fp) {
 					drawsolid(31,31,0);
 					char msg[64];
-					strcat(msg,"error opening ");
+					strcat(msg,"dslibris: error opening file ");
 					strcat(msg,path);
 					pen.x = 10; pen.y = 128;
 					drawstring(msg, &pen);
 					return -2;
 				}
-				struct stat st;
-				if(fstat((int)fp,&st) == -1) st.st_size = BUFSIZE;
-				XML_Char *filebuf = (char*)XML_GetBuffer(p, st.st_size);
-				int bytes_read = fread(filebuf, 1, st.st_size, fp);
+				struct stat filestat;
+				if(fstat((int)fp,&filestat) == -1) filestat.st_size = BUFSIZE;
+				XML_Char *filebuf = (char*)XML_GetBuffer(p, filestat.st_size);
+				int bytes_read = fread(filebuf, 1, filestat.st_size, fp);
 				fclose(fp);
-
+				
 				// parse and paginate.
 				
 				pagecount = 0;
 				curpage = 0;
-				newpage(curpage);
+				initpage(curpage);
 				startpage();
 				error = XML_ParseBuffer(p, bytes_read, bytes_read == 0);
 				pagecount = curpage+1;
@@ -417,13 +419,17 @@ int main(void) {
 				drawfacingpages(curpage);
 				swiWaitForVBlank();
 			}	
-			if(keysDown() & KEY_X) {
+			if(keysDown() & KEY_B) {
+				browseractive = 0;
+				drawfacingpages(curpage);
+			}
+			if(keysDown() & (KEY_LEFT|KEY_L)) {
 				if(bookcurrent < 3) {
 					bookcurrent++;
 					drawbrowser(bookcurrent);
 				}
 			}
-			if(keysDown() & KEY_Y) {
+			if(keysDown() & (KEY_RIGHT|KEY_R)) {
 				if(bookcurrent > 0) {
 					bookcurrent--;
 					drawbrowser(bookcurrent);
@@ -431,14 +437,12 @@ int main(void) {
 			}
 		} else {
 		
-			if((keysDown() & (KEY_A | KEY_DOWN))
-			|| (keysDown() & KEY_R)) {
+			if(keysDown() & (KEY_A|KEY_DOWN|KEY_R)) {
 				curpage++;
 				drawfacingpages(curpage);
 			}
 			
-			if((keysDown() & (KEY_B | KEY_UP))
-			|| (keysDown() & KEY_L)) {
+			if(keysDown() & (KEY_B|KEY_UP|KEY_L)) {
 				if(curpage > 0) {
 					curpage--;
 					drawfacingpages(curpage);
@@ -449,16 +453,9 @@ int main(void) {
 				drawbrowser(bookcurrent);
 				browseractive = 1;
 			}
-			
-			if(keysUp() & KEY_Y) {
-				drawfacingpages(curpage);
-				browseractive = 0;
-			}
 		}
 		swiWaitForVBlank();
 	}
-	
-	XML_ParserFree(p);
 
  	return 0;
 }

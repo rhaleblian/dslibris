@@ -40,13 +40,13 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lexpat -lfreetype2 -lfatdldi -lfat -lnds9
+LIBS	:= -lexpat -lfreetype2 -lfat -lnds9
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(HOME)/nds/freetype2 $(HOME)/nds/expat $(DEVKITPRO)/palib
+LIBDIRS	:=	$(LIBNDS) $(HOME)/nds/freetype2 $(HOME)/nds/expat
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -103,18 +103,17 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(TARGET).arm9 $(TARGET).ds.gba 
+	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).r4ds.nds $(TARGET).nds $(TARGET).arm9 $(TARGET).ds.gba 
 
-fonts:
+data:
+	(cd data; make)
+
+fonts-old:
 	(cd source/gfx; PAGfx.exe)
 	
 run:
 	wmb -data $(CURDIR)/$(TARGET).nds
 
-
-install:
-	cmd /c copy $(TARGET).r4ds.nds e:\DSLibris.nds
-	cmd /c copy rhetorica.xml e:\
 #---------------------------------------------------------------------------------
 else
  
