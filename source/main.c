@@ -24,6 +24,7 @@
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 #define PAGE_HEIGHT SCREEN_WIDTH
 #define PAGE_WIDTH SCREEN_HEIGHT
+#define FONTPATH "/berling.ttf"
 
 FT_Vector pen;
 u16 *screen0, *screen1, *fb;
@@ -145,14 +146,15 @@ void drawfacingpages(int pageindex) {
 	int advance;
 	int spaces;
 	int i=0;
+	
 	while(i<page->chars && !pagedone) {
 		advance = 0;
 		spaces = 0;
-		
+
+#ifdef JUSTIFY		
 		// full justification.
 		// get line advance, count spaces,
 		// and insert more space in spaces.
-/*
 		int j,k;
 		for(j=i;j<page->chars && page->buf[j]==' ';j++);
 		for(j=i;j<page->chars && page->buf[j]!='\n';j++) {
@@ -161,7 +163,8 @@ void drawfacingpages(int pageindex) {
 			if(page->buf[j] == ' ') spaces++;
 		}
 		for(k=j;k>0 && page->buf[k]==' ';k--) spaces--;
-*/
+#endif
+
 		float horispace = 0.0;
 		if(spaces) horispace = (float)((PAGE_WIDTH-MARGINRIGHT-MARGINLEFT) - advance) / (float)spaces;
 		
@@ -329,7 +332,7 @@ int main(void) {
 		drawsolid(0,31,0);
         return error;
 	}
-	error = FT_New_Face(library, "/frutiger.ttf", 0, &face);
+	error = FT_New_Face(library, FONTPATH, 0, &face);
 	if(error) {
 		drawsolid(0,0,31);
         return error;
@@ -353,7 +356,7 @@ int main(void) {
 	// UVA HTML texts, for instance, need to go through HTML tidy.	
 	char filename[256];
 	DIR_ITER* dp = diropen("/");
-	while((dirnext(dp, filename, NULL) != ENOENT) && (bookcount < MAXBOOKS)) {
+	while(!dirnext(dp, filename, NULL) && (bookcount < MAXBOOKS)) {
 		if(!stricmp(".xhtml",filename + (strlen(filename)-6))) {
 			strcpy(books[bookcount].filename, filename);
 			if(bookcount < MAXBOOKS) {
