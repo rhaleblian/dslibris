@@ -12,12 +12,13 @@
 #define PAGEBUFSIZE 2048
 #define MAXPAGES 1024
 #define MAXGLYPHS 256
-#define MAXBOOKS 4
-#define MARGINLEFT 10
-#define MARGINRIGHT 10
+#define MAXBOOKS 10
+#define MARGINLEFT 12
+#define MARGINRIGHT 12
 #define MARGINTOP 10
-#define MARGINBOTTOM 14
-#define LINESPACINGADD 2
+#define MARGINBOTTOM 10
+#define LINESPACING 2
+#define PARASPACING 4
 #define PIXELSIZE 12
 #define DPI 72		    // probably not true for a DS - measure it
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
@@ -96,7 +97,7 @@ void drawsolid(int r, int g, int b) {
 void drawnewline() {
 	pen.x = MARGINLEFT;
 	pen.y += face->size->metrics.height >> 6;
-	pen.y += LINESPACINGADD;
+	pen.y += LINESPACING;
 	if(pen.y > (PAGE_HEIGHT - MARGINBOTTOM)) {
 		pen.y = MARGINTOP + (face->size->metrics.ascender >> 6);
 		if(fb == screen0) {
@@ -107,7 +108,7 @@ void drawnewline() {
 	}
 }
  
-void startpage() {
+void drawcleanpage() {
 	fb = screen0;
 	pen.x = MARGINLEFT;
 	pen.y = MARGINTOP + (face->size->metrics.ascender >> 6);
@@ -130,15 +131,13 @@ void drawmargins() {
 void clearfacingpages() {
 	fb = screen0;
 	drawsolid(31,31,31);
-//	drawmargins();
 	fb = screen1;
 	drawsolid(31,31,31);
-//	drawmargins();
 	fb = screen0;
 }
 
 void drawfacingpages(int pageindex) {
-	startpage();
+	drawcleanpage();
 	clearfacingpages();
 	swiWaitForVBlank();
 	page_t *page = &(pages[pageindex]);
@@ -209,13 +208,13 @@ void
 end_hndl(void *data, const char *el) {
 	page_t *page = &pages[curpage];
 	if(
-		!stricmp(el,"h1")
+		!stricmp(el,"br")
+		|| !stricmp(el,"p")
+		|| !stricmp(el,"h1")
 		|| !stricmp(el,"h2")
 		|| !stricmp(el,"h3")
 		|| !stricmp(el,"h4")
 		|| !stricmp(el,"hr")
-		|| !stricmp(el,"p")
-		|| !stricmp(el,"br")
 	) {
 		page->buf[page->chars++] = '\n';
 		page->ibuf = 0;
@@ -223,7 +222,9 @@ end_hndl(void *data, const char *el) {
 		if(pagedone) {
 			curpage++;
 			initpage(curpage);
-			startpage();
+			drawcleanpage();
+		} else {
+			if(!stricmp(el,"p")) pen.y += PARASPACING;
 		}
 	}
 }  /* End of end_hndl */
@@ -232,6 +233,8 @@ void
 char_hndl(void *data, const char *txt, int txtlen) {
 	// paginate and linebreak on the fly into page data structure.
 	// TODO txt is UTF-8, but for now we assume it's always in the ASCII range.
+	if(context != BODY) return;
+	
 	int i=0;
 	page_t *page = &pages[curpage];
 	
@@ -252,7 +255,8 @@ char_hndl(void *data, const char *txt, int txtlen) {
 				// we're looking for the end of the next word.
 				advance += glyphs[(int)txt[j]].advance.x >> 6;
 			}
-			if((pen.x + advance) > (PAGE_WIDTH - MARGINRIGHT)) {
+			int overrun = (pen.x + advance) - (PAGE_WIDTH-MARGINRIGHT);
+			if(overrun > 0) {
 				// we went over the margin. go back and break;
 				// and pass to the next page if we pagebreak.
 				page->buf[page->chars++] = '\n';
@@ -261,7 +265,7 @@ char_hndl(void *data, const char *txt, int txtlen) {
 				if(pagedone) {
 					initpage(++curpage);
 					page++;
-					startpage();
+					drawcleanpage();
 				}
 			}
 			for(;i<j;i++) {
@@ -344,28 +348,26 @@ int main(void) {
 	// parser.
 
 	bookcount = 0;
-	int bookcurrent = 0;
-	book_t *book = books;
 
-	// find all .xhtml files.
-	// aside: files must be well-formed XML or XHTML.
+	// find all available books. files must be well-formed XHTML;
 	// UVA HTML texts, for instance, need to go through HTML tidy.	
 	char filename[256];
 	DIR_ITER* dp = diropen("/");
-	while(dirnext(dp, filename, NULL) != ENOENT && bookcount < MAXBOOKS) {
+	while((dirnext(dp, filename, NULL) != ENOENT) && (bookcount < MAXBOOKS)) {
 		if(!stricmp(".xhtml",filename + (strlen(filename)-6))) {
-			strcpy(book->filename, filename);
-			if(bookcount < 4) {
+			strcpy(books[bookcount].filename, filename);
+			if(bookcount < MAXBOOKS) {
 				initbutton(&buttons[bookcount]);
 				movebutton(&buttons[bookcount],MARGINLEFT,MARGINTOP + bookcount*20);
-				strcpy(buttons[bookcount].text,book->filename);
+				strcpy(buttons[bookcount].text,books[bookcount].filename);
 			}
 			bookcount++;
-			book++;
 		}
+		strcpy(filename,"");
 	}
 	dirclose(dp);
 	
+	int bookcurrent = 0;
 	drawbrowser(bookcurrent);
 	browseractive = 1;
 	
@@ -409,7 +411,7 @@ int main(void) {
 				pagecount = 0;
 				curpage = 0;
 				initpage(curpage);
-				startpage();
+				drawcleanpage();
 				error = XML_ParseBuffer(p, bytes_read, bytes_read == 0);
 				pagecount = curpage+1;
 	
@@ -424,7 +426,7 @@ int main(void) {
 				drawfacingpages(curpage);
 			}
 			if(keysDown() & (KEY_LEFT|KEY_L)) {
-				if(bookcurrent < 3) {
+				if(bookcurrent < bookcount) {
 					bookcurrent++;
 					drawbrowser(bookcurrent);
 				}
