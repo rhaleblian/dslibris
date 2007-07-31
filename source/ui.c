@@ -1,15 +1,13 @@
 #include <nds.h>
+#include <stdio.h>
 #include "ui.h"
 #include "font.h"
-#include <stdio.h>
-
-extern FT_Face    face;
 
 void initbutton(button_t *b) {
 	b->origin.x = 0;
 	b->origin.y = 0;
-	b->extent.x = 120;
-	b->extent.y = 20;
+	b->extent.x = 192;
+	b->extent.y = 32;
 	strcpy(b->text, "");
 }
 
@@ -24,24 +22,32 @@ void movebutton(button_t *b, int x, int y) {
 
 void drawbutton(button_t *b, u16 *fb, int highlight) {
 	int x; int y;
-	coord_t ll, ur;
-	ll.x = b->origin.x;
-	ll.y = b->origin.y;
-	ur.x = b->origin.x + b->extent.x;
-	ur.y = b->origin.y + b->extent.y;
+	coord_t ul, lr;
+	u16 color = RGB15(0,0,0) | BIT(15);
 
-	u16 color;
+	ul.x = b->origin.x;
+	ul.y = b->origin.y;
+	lr.x = b->origin.x + b->extent.x;
+	lr.y = b->origin.y + b->extent.y;
+
+	for(x=ul.x;x<lr.x;x++) {
+		fb[ul.y*SCREEN_WIDTH + x] = color;
+		fb[lr.y*SCREEN_WIDTH + x] = color;
+	}
+	for(y=ul.y;y<lr.y;y++) {
+		fb[y*SCREEN_WIDTH + ul.x] = color;
+		fb[y*SCREEN_WIDTH + lr.x] = color;
+	}
 	if(highlight) {
-		color = RGB15(0,15,0) | BIT(15);
-		for(y=ll.y; y<ur.y; y++) {
-			for(x=0; x<10; x++) {
-				fb[y*SCREEN_WIDTH + x] = color;
-				fb[y*SCREEN_WIDTH + x] = color;
-			}
+		for(x=ul.x;x<lr.x;x++) {
+			fb[(ul.y+1)*SCREEN_WIDTH + x] = color;
+			fb[(lr.y-1)*SCREEN_WIDTH + x] = color;
+		}
+		for(y=ul.y;y<lr.y;y++) {
+			fb[y*SCREEN_WIDTH + (ul.x+1)] = color;
+			fb[y*SCREEN_WIDTH + (lr.x-1)] = color;
 		}
 	}
-	FT_Vector textpos;
-	textpos.x = ll.x+10;
-	textpos.y = ll.y + (face->size->metrics.height >> 6);
-	drawstring(b->text, &textpos);
+	tsSetPen(ul.x+10, ul.y + tsGetHeight());
+	tsString(b->text);
 }

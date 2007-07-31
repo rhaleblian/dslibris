@@ -16,7 +16,7 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	gfx source data  
+SOURCES		:=	gfx source data 
 INCLUDES	:=	include build
 
 #---------------------------------------------------------------------------------
@@ -26,12 +26,13 @@ ARCH	:=	-mthumb -mthumb-interwork
 
 # note: arm9tdmi isn't the correct CPU arch, but anything newer and LD
 # *insists* it has a FPU or VFP, and it won't take no for an answer!
-CFLAGS	:=	-g -Wall -O2\
- 			-mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer\
+CFLAGS	:=	-g -Wall -O2 \
+			-mcpu=arm9tdmi -mtune=arm9tdmi \
+ 			-fomit-frame-pointer\
 			-ffast-math \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -I$(DEVKITPRO)/palib/include/nds -DARM9
+CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
@@ -40,13 +41,13 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lexpat -lfreetype2 -lfat -lnds9
+LIBS	:= -lexpat -lfreetype2 -lfat -ldswifi9 -lnds9
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(HOME)/nds/freetype2 $(HOME)/nds/expat
+LIBDIRS	:=	 $(LIBNDS) $(HOME)/nds/freetype2 $(HOME)/nds/expat
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -91,10 +92,7 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
  
 .PHONY: $(BUILD)
 
-$(TARGET).r4ds.nds: $(BUILD)
-	@cp $(TARGET).nds $(TARGET).r4ds.nds
-	dlditool R4tf.dldi $(TARGET).r4ds.nds
- 
+all: dldi
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
@@ -103,13 +101,19 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).r4ds.nds $(TARGET).nds $(TARGET).arm9 $(TARGET).ds.gba 
-
+	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(TARGET).arm9 $(TARGET).ds.gba 
+ 
 data:
 	(cd data; make)
 
-fonts-old:
+oldfonts:
 	(cd source/gfx; PAGfx.exe)
+
+dldi: $(BUILD)
+	dlditool R4tf.dldi $(TARGET).nds
+
+install: dldi
+	cp $(TARGET).nds //asherah/sd/$(TARGET).nds
 	
 run:
 	wmb -data $(CURDIR)/$(TARGET).nds

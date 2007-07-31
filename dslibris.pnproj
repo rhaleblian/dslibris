@@ -1,1 +1,1 @@
-<Project name="dslibris"><Folder name="samples"></Folder><File path="Makefile"></File><File path="source\main.c"></File><File path="source\find.c"></File><File path="source\font.c"></File><File path="include\font.h"></File><File path="source\ui.c"></File><File path="include\ui.h"></File></Project>
+<Project name="dslibris"><File path="Makefile"></File><File path="source\main.c"></File><File path="source\font.c"></File><File path="include\font.h"></File><File path="source\ui.c"></File><File path="include\ui.h"></File><File path="include\main.h"></File></Project>

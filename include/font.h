@@ -1,10 +1,16 @@
-#ifndef _font_h_
-#define _font_h_
+#ifndef FONT_H
+#define FONT_H
 
 #include <ft2build.h>	/* freetype2 - text rendering */
 #include FT_FREETYPE_H
 
-void drawchar(int code, FT_Vector *pen);
-void drawstring(char *string, FT_Vector *pen);
+void	tsInitDefault();
+void	tsInitPen();
+int  	tsGetHeight();
+void	tsGetPen(int *x, int *y);
+void	tsSetPen(int x, int y);
+void	tsChar(int code);
+void	tsString(const char *string);
+int		tsStartNewLine();
 
-#endif // _font_h_
+#endif
