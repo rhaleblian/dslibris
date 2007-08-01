@@ -26,22 +26,22 @@ ARCH	:=	-mthumb -mthumb-interwork
 
 # note: arm9tdmi isn't the correct CPU arch, but anything newer and LD
 # *insists* it has a FPU or VFP, and it won't take no for an answer!
-CFLAGS	:=	-g -Wall -O2 \
-			-mcpu=arm9tdmi -mtune=arm9tdmi \
- 			-fomit-frame-pointer\
+CFLAGS	:=	-g -Wformat=2 -Wall -Winline -O2 \
+			-mcpu=arm946e-s -mtune=arm946e-s \
+ 			-fomit-frame-pointer \
 			-ffast-math \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM9
+CFLAGS	+=	$(INCLUDE) -DARM9 -I$(DEVKITPRO)/palib/include/nds
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map) -L$(DEVKITPRO)/palib/lib
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lexpat -lfreetype2 -lfat -ldswifi9 -lnds9
+LIBS	:= -lexpat -lfreetype2 -lfat -lnds9
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -92,31 +92,17 @@ export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
  
 .PHONY: $(BUILD)
 
-all: dldi
+all: $(BUILD)
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	dlditool R4tf.dldi $(TARGET).nds
  
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(TARGET).arm9 $(TARGET).ds.gba 
- 
-data:
-	(cd data; make)
-
-oldfonts:
-	(cd source/gfx; PAGfx.exe)
-
-dldi: $(BUILD)
-	dlditool R4tf.dldi $(TARGET).nds
-
-install: dldi
-	cp $(TARGET).nds //asherah/sd/$(TARGET).nds
-	
-run:
-	wmb -data $(CURDIR)/$(TARGET).nds
 
 #---------------------------------------------------------------------------------
 else

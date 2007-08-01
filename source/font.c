@@ -3,32 +3,33 @@
 #include "font.h"
 #include "main.h"
 
-#define MAXGLYPHS 256
-
-FT_Library 		library;
-FT_Face    		face;
-FT_GlyphSlotRec glyphs[128];
-FT_Vector		pen;
-FT_Error   		error;
+#define MAXGLYPHS 128
 
 extern u16 *fb,*screen0,*screen1;
 
+FT_Library 		library;
+FT_Face    		face;
+FT_GlyphSlotRec glyphs[MAXGLYPHS];
+FT_Vector		pen;
+FT_Error   		error;
+
 // accessors
 
-int tsGetHeight() { return (face->size->metrics.height >> 6); }
+int tsGetHeight(void) { return (face->size->metrics.height >> 6); }
 void tsGetPen(int *x, int *y) { *x = pen.x; *y = pen.y; }
 void tsSetPen(int x, int y) { pen.x = x; pen.y = y; }
 
 // initialization
 
-void tsInitPen() {
+void tsInitPen(void) {
 	pen.x = MARGINLEFT;
 	pen.y = MARGINTOP + (face->size->metrics.height >> 6);
 }
 
-void tsInitDefault() {	
+void tsInitDefault(void) {	
 	FT_Init_FreeType(&library);
-	FT_New_Face(library, "data/frutiger.ttf", 0, &face);
+	FT_New_Face(library, "/data/frutiger.ttf", 0, &face);
+	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
 		
 	// cache glyphs. glyphs[] will contain all the bitmaps.
@@ -52,8 +53,6 @@ void tsInitDefault() {
 	
 	tsInitPen();
 }
-
-void tsFree() {}
 
 // drawing
 
@@ -82,7 +81,7 @@ void tsChar(int code) {
 	pen.x += glyph->advance.x >> 6;
 }
 
-int tsStartNewLine() {
+int tsStartNewLine(void) {
 	int height = face->size->metrics.height >> 6;
 	pen.x = MARGINLEFT;
 	pen.y += height + LINESPACING;

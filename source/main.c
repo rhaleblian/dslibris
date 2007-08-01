@@ -1,42 +1,47 @@
 #include <nds.h>		/* libnds */
 #include <fat.h>   		/* maps stdio to FAT on ARM */
+#include <PA9.h>
+
 #include <expat.h>		/* expat - XML parsing */
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <errno.h>
+
 #include "main.h"
 #include "font.h"
 #include "ui.h"
 
-#define BUFSIZE 1024*64
-#define PAGEBUFSIZE 2048
-#define MAXPAGES 1024
-#define MAXBOOKS 10
+#define BUFSIZE 4096
+#define PAGEBUFSIZE 4096
+#define MAXPAGES 8
+#define MAXBOOKS 8
 
-extern FT_Vector pen;
+FT_Vector ppen;		// pen for at-parse-time pre-formatting, not drawing;
+					// font.c owns the drawing ppen.
 extern FT_GlyphSlotRec	glyphs[];
 u16 *screen0, *screen1, *fb;
+u8 msg[128];
 
+// watch out for struct alignment here! 64 is working.
 typedef struct book_s {
-	char filename[32];
-	char title[32];
-//	char author[64];
-//	int position;
+	u8 filename[32];
+	u8 title[16];
+	u8 author[16];
 } book_t;
 book_t books[MAXBOOKS];
-int bookcount;
-int bookcurrent;
+u8 bookcount;
+u8 bookcurrent;
 
 typedef struct page_s {
-	char buf[PAGEBUFSIZE];
-	int chars;
-	int ibuf;		// index into buffer for parsing,
-					// currently used to track last legal linebreak
+	u16 length;
+	u8 *buf;			// allocated per-page at parse 
+						// time, to exact buffer size
 } page_t;
 page_t pages[MAXPAGES];
-int pagecount;
-int	pagecurrent;
+u8 pagebuf[PAGEBUFSIZE];
+u16 pagecount;
+u16	pagecurrent;
 
 typedef enum {NONE,HTML,HEAD,TITLE,BODY} context_t;
 context_t context;
@@ -47,14 +52,12 @@ button_t buttons[16];
 
 void initbook(book_t *book) {
 	strcpy(book->filename,"");
-	strcpy(books->title,"");
-//	strcpy(books[index].author,"");
-//	books[index].position = 0;
+	strcpy(book->title,"");
 }
 
-void initpage(page_t *page) {
-	strcpy(page->buf,"");
-	page->chars = 0;
+void pageinit(page_t *page) {
+	page->length = 0;
+	page->buf = NULL;
 }
 
 void drawsolid(int r, int g, int b) {
@@ -63,7 +66,7 @@ void drawsolid(int r, int g, int b) {
 	for(i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++) fb[i] =color;
 }
 
-void drawmargins() {
+void drawmargins(void) {
 	int x, y;
 	u16 color = RGB15(30,30,30) | BIT(15);
 	for(y=0;y<PAGE_HEIGHT;y++) {
@@ -76,24 +79,28 @@ void drawmargins() {
 	}
 }
 
-void drawblankpages() {
-	fb = screen1;
-	drawsolid(31,31,31);
+void drawblankpages(void) {
+	u16 *savefb = fb;
 	fb = screen0;
 	drawsolid(31,31,31);
-	tsInitPen();
+	fb = screen1;
+	drawsolid(31,31,31);
+	fb = savefb;
 }
 
+/*
 int getjustifyspacing(page_t *page, int i) {
 	// full justification.
 	// get line advance, count spaces,
 	// and insert more space in spaces.
-	int spaces = 0;
-	int advance = 0;
-	int horispace = 0;
-	int j,k;
-	for(j=i;j<page->chars && page->buf[j]==' ';j++);
-	for(j=i;j<page->chars && page->buf[j]!='\n';j++) {
+	u8 spaces = 0;
+	u8 advance = 0;
+	u8 horispace = 0;
+	u8 j,k;
+	// find the first nonwhitespace
+	for(j=i;j<page->length && page->buf[j]==' ';j++);
+	// find the end of line
+	for(j=i;j<page->length && page->buf[j]!='\n';j++) {
 		int c = (int)page->buf[j];
 		advance += glyphs[c].advance.x >> 6;
 		if(page->buf[j] == ' ') spaces++;
@@ -102,12 +109,14 @@ int getjustifyspacing(page_t *page, int i) {
 	if(spaces) horispace = (float)((PAGE_WIDTH-MARGINRIGHT-MARGINLEFT) - advance) / (float)spaces;
 	return(horispace);
 }
+*/
 
 void drawpages(page_t *page) {
 	drawblankpages();
+	fb = screen0;
 	tsInitPen();
-	int i;
-	for(i=0;i<page->chars;i++) {
+	u16 i;
+	for(i=0;i<page->length;i++) {
 		int c = (int)(page->buf[i]);
 		if(c == '\n') {
 			tsStartNewLine();
@@ -117,10 +126,10 @@ void drawpages(page_t *page) {
 	}
 }
 
-void drawbrowser() {
+void drawbrowser(void) {
 	fb = screen1;
 	drawsolid(31,31,31);
-	int i;
+	u8 i;
 	for(i=0;i<bookcount;i++) {
 		if(i==bookcurrent) drawbutton(&buttons[i],fb,1);
 		else drawbutton(&buttons[i],fb,0);
@@ -144,37 +153,55 @@ void start_hndl(void *data, const char *el, const char **attr) {
 
 void title_hndl(void *data, const char *txt, int txtlen) {
 	if(context == TITLE) {
-		if((strlen(books[bookcount].title) + txtlen) < 32)
-			strcat(books[bookcount].title,txt);
-		else
+		if(txtlen > 31)
 			strncpy(books[bookcount].title,txt,32);
+		else 			
+			strncpy(books[bookcount].title,txt,txtlen);
 	}
 }
 
 void char_hndl(void *data, const char *txt, int txtlen) {
 	// paginate and linebreak on the fly into page data structure.
-	// TODO txt is UTF-8, but for now we assume it's always in the ASCII range.
+	// TODO don't simply skip non-ASCII chars.
 	if(context != BODY) return;
 	
-	int i=0;
-	int advance=0;
+	u16 i=0;
+	u8 advance=0;
 	static bool linebegan;
-	page_t *page = &pages[pagecurrent];
+	page_t *page = &(pages[pagecurrent]);
 	
-	if(page->chars == 0) linebegan = false;
+	// starting a new page?
+	if(page->length == 0) {
+		linebegan = false;
+		ppen.x = MARGINLEFT;
+		ppen.y = MARGINTOP + tsGetHeight();
+	}
 	
-	while(i<txtlen) {
+	int l = 100;
+	while(i<txtlen && l) {
 		if(txt[i] == '\r') {
 			i++;
-		
-		} else if(txt[i] > 127) {
-			i++;
+	
+		} else if(txt[i] > 0xc2 && txt[i] < 0xe0) {
+			pagebuf[page->length] = '_';
+			page->length++;
+			i+=2;
+
+		} else if(txt[i] > 0xdf && txt[i] < 0xf0) {
+			pagebuf[page->length] = '_';
+			page->length++;
+			i+=3;
 			
+		} else if(txt[i] > 0xef) {
+			pagebuf[page->length] = '_';
+			page->length++;
+			i+=4;
+		
 		} else if(iswhitespace((int)txt[i])) {
 			if(linebegan) {
-				page->buf[page->chars] = ' ';
-				pen.x += (glyphs[' '].advance.x >> 6);
-				page->chars++;
+				pagebuf[page->length] = ' ';
+				page->length++;
+				ppen.x += (glyphs[' '].advance.x >> 6);
 			}
 			i++;
 
@@ -186,26 +213,33 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 				// set type until the end of the next word.
 				advance += (glyphs[(int)txt[j]].advance.x >> 6);
 			}			
-			int overrun = (pen.x + advance) - (PAGE_WIDTH-MARGINRIGHT);
+			int overrun = (ppen.x + advance) - (PAGE_WIDTH-MARGINRIGHT);
 			
 			if(overrun > 0) {
 				// we went over the margin. insert a break.
-				page->buf[page->chars] = '\n';
-				page->chars++;
-				pen.x = MARGINLEFT;
-				pen.y += (tsGetHeight() + LINESPACING);
-				if(pen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
+				pagebuf[page->length] = '\n';
+				page->length++;
+				ppen.x = MARGINLEFT;
+				ppen.y += (tsGetHeight() + LINESPACING);
+				if(ppen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
 					// we are at the end of one of the facing pages.
 					if(fb == screen1) {
-						pagecount++;
-						pagecurrent++;
+						if(!page->buf) {
+							page->buf = malloc(page->length * sizeof(char));
+							if(!page->buf) tsString("alloc error]\n");
+						}
+						strncpy(page->buf,pagebuf,page->length);
 						page++;
-						initpage(page);
+						pageinit(page);
 						fb = screen0;
+//						if(pagecurrent == 0) drawpages(&(pages[pagecurrent]));
+						pagecurrent++;
+						pagecount++;
 					} else {
 						fb = screen1;
 					}
-					tsInitPen();
+					ppen.x = MARGINLEFT;
+					ppen.y = MARGINTOP + tsGetHeight();
 				}
 				linebegan = false;
 			}
@@ -214,17 +248,18 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 			for(;i<j;i++) {
 				if(iswhitespace(txt[i])) {
 					if(linebegan) {
-						page->buf[page->chars] = ' ';
-						page->chars++;
+						pagebuf[page->length] = ' ';
+						page->length++;
 					}
 				} else {
 					linebegan = true;
-					page->buf[page->chars] = txt[i];
-					page->chars++;
+					pagebuf[page->length] = txt[i];
+					page->length++;
 				}
 			}
-			pen.x += advance;
+			ppen.x += advance;
 		}
+		l--;
 	}
 }  /* End char_hndl */
 
@@ -240,25 +275,36 @@ void end_hndl(void *data, const char *el) {
 		|| !stricmp(el,"h4")
 		|| !stricmp(el,"hr")
 	) {
-		page->buf[page->chars] = '\n';
-		page->chars++;
-		pen.x = MARGINLEFT;
-		pen.y += tsGetHeight() + LINESPACING;
-		if(pen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
+		page->buf[page->length] = '\n';
+		page->length++;
+		ppen.x = MARGINLEFT;
+		ppen.y += tsGetHeight() + LINESPACING;
+		if(ppen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
 			if(fb == screen1) {
 				fb = screen0;
-				pagecount++;
-				pagecurrent++;
+				if(!page->buf)
+					page->buf = malloc(page->length * sizeof(char));
+				strncpy(page->buf,pagebuf,page->length);
 				page++;
-				initpage(page);
+				pageinit(page);
+				pagecurrent++;
+				pagecount++;
 			} else {
 				fb = screen1;
 			}
-			tsInitPen();
+			ppen.x = MARGINLEFT;
+			ppen.y = MARGINTOP + tsGetHeight();
 		}
 	}
 	if(!stricmp(el,"html")) context = NONE;
-	if(!stricmp(el,"body")) context = HTML;
+	if(!stricmp(el,"body")) {
+		if(!page->buf) {
+			page->buf = malloc(page->length * sizeof(char));
+			if(!page->buf) tsString("alloc error]\n");
+		}
+		strncpy(page->buf,pagebuf,page->length);
+		context = HTML;
+	}
 	if(!stricmp(el,"title")) context = HEAD;
 	if(!stricmp(el,"head")) context = HTML;
 }  /* End of end_hndl */
@@ -266,64 +312,19 @@ void end_hndl(void *data, const char *el) {
 void proc_hndl(void *data, const char *target, const char *pidata) {
 }  /* End proc_hndl */
 
-int bookparse(XML_Parser p) {
-	char msg[64];
-	char path[64];
-
-	XML_UseParserAsHandlerArg(p);
-	XML_SetElementHandler(p, start_hndl, end_hndl);
-	XML_SetCharacterDataHandler(p, char_hndl);
-	XML_SetProcessingInstructionHandler(p, proc_hndl);
-
-	sprintf(path,"/data/%s",books[bookcurrent].filename);
-	struct stat st;
-	st.st_size = BUFSIZE;
-	stat(path, &st);
-
-	FILE *fp = fopen(path,"r");
-	if(!fp) {
-		sprintf(msg,"[cannot open %s]\n",path);
-		tsString(msg);
-		return(-1);
+void makebrowser(void) {
+	u8 book;
+	for(book=0;book<bookcount;book++) {
+		initbutton(&buttons[book]);
+		movebutton(&buttons[book],0,book*32);
+		if(strlen(books[book].title))
+			strcpy(buttons[book].text,books[book].title);
+		else
+			strcpy(buttons[book].text,books[book].filename);
 	}
-	int bufsize;
-	if(st.st_size < BUFSIZE) bufsize = (int)st.st_size;
-	else bufsize = BUFSIZE;
-	
-	pagecount = 0;
-	pagecurrent = 0;
-	initpage(&pages[pagecurrent]);
-
-	XML_Char *filebuf;
-	filebuf = (char*)XML_GetBuffer(p, bufsize);				
-	if(!filebuf) {
-		sprintf(msg,"[allocating %d bytes failed]\n",bufsize);
-		tsString(msg);
-		return(-1);
-	}
-	
-	while(1) {		
-		sprintf(msg,"[%d bytes allocated]\n",bufsize);
-		tsString(msg);
-
-		int bytes_read = fread(filebuf, 1, bufsize, fp);
-		sprintf(msg,"[%d bytes read]\n",bytes_read);
-		tsString(msg);
-		
-		// parse and paginate.
-		XML_ParseBuffer(p, bytes_read, bytes_read == 0);
-		
-		if(!bytes_read) break;
-	}
-	
-	fclose(fp);
-
-	pagecurrent = 0;
-	tsInitPen();
-	return(0);
 }
 
-void readbookpositions() {
+void readbookpositions(void) {
 	FILE *savefile = fopen("dslibris.ini","r");
 	if(savefile) {
 		int position = 0;
@@ -339,13 +340,13 @@ void readbookpositions() {
 
 int main(void) {
 	bool browseractive = false;
-	char msg[128];
 	
 	powerON(POWER_ALL);
 	irqInit();
 	irqEnable(IRQ_VBLANK);
 	screen0 = (u16*)BG_BMP_RAM(0);
 	screen1 = (u16*)BG_BMP_RAM_SUB(0);
+	fb = screen0;
 	s16 s = SIN[-128 & 0x1FF] >> 4;
 	s16 c = COS[-128 & 0x1FF] >> 4;
 	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
@@ -366,19 +367,22 @@ int main(void) {
 	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	fb=screen0;
-	swiWaitForVBlank();
-	drawsolid(7,7,7);
-	swiWaitForVBlank();
-	fatInitDefault();
-	drawsolid(15,15,15);
-	swiWaitForVBlank();
-	tsInitDefault();
-	drawsolid(31,31,31);
-	swiWaitForVBlank();
-	tsString("[welcome to dslibris]\n[font loaded]\n");
-	swiWaitForVBlank();
 
+	drawsolid(15,15,15);
+	fb = screen1;
+	drawsolid(15,15,15);
+	fb = screen0;
+	
+//	PA_Init();
+//	PA_LoadSplash();
+	
+	fatInitDefault();
+	
+	tsInitDefault();
+
+	drawsolid(31,31,31);	
+	tsString("[welcome to dslibris]\n[font loaded]\n");
+	
 	// find all available books in the root directory.
 	// files must be well-formed XHTML;
 	// UVA HTML texts, for instance, need to go through HTML tidy.	
@@ -389,12 +393,12 @@ int main(void) {
 	DIR_ITER *dp = diropen("/data");
 	if(!dp) tsString("[diropen failed]\n");
 
-	char filename[64];
+	u8 filename[32];
 	while(!dirnext(dp, filename, NULL)) {
 		if((bookcount < MAXBOOKS)
 			&& (!stricmp(".xhtml",filename + (strlen(filename)-6)))) {
-			initbook(&books[bookcount]);
-			strcpy(books[bookcount].filename,filename);
+			initbook(&books[bookcount]);			
+			strncpy(books[bookcount].filename,filename,32);
 			FILE *fp = fopen(filename,"r");
 			if(fp) {
 				XML_Parser p = XML_ParserCreate(NULL);
@@ -402,8 +406,8 @@ int main(void) {
 				XML_SetElementHandler(p, start_hndl, end_hndl);
 				XML_SetCharacterDataHandler(p, title_hndl);
 				XML_SetProcessingInstructionHandler(p, proc_hndl);
-				XML_Char *filebuf = (char*)XML_GetBuffer(p, BUFSIZE);
-				while(1) {
+				while(true) {
+					XML_Char *filebuf = (char*)XML_GetBuffer(p, BUFSIZE);				
 					int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
 					XML_ParseBuffer(p, bytes_read, bytes_read == 0);
 					if(!bytes_read) break;
@@ -411,30 +415,35 @@ int main(void) {
 				XML_ParserFree(p);
 				fclose(fp);
 			}
-			initbutton(&buttons[bookcount]);
-			movebutton(&buttons[bookcount],0,bookcount*32);
-			if(strlen(books[bookcount].title))
-				strcpy(buttons[bookcount].text,books[bookcount].title);
-			else
-				strcpy(buttons[bookcount].text,books[bookcount].filename);
 			bookcount++;
 		}
 	}
 	dirclose(dp);
 	sprintf(msg,"[%d books]\n",bookcount);
 	tsString(msg);
+#if 0
+	bookcount = 3;
+	bookcurrent = 1;
+	initbook(&books[0]);
+	strcpy(books[0].filename,"jefferson.xhtml");
+	strncpy(books[0].title,"TO THE CITIZENS OF THE SOUTHERN STATES",16);	
+	initbook(&(books[1]));
+	strcpy(books[1].filename,"rhetorica.xhtml");
+	strncpy(books[1].title,"Rhetorica - Aristotle",16);
+	initbook(&(books[2]));
+	strcpy(books[2].filename,"19211-h.xhtml");
+	strncpy(books[2].title,"History of England Vol I",16);
+#endif
 	
-	// restore reading positions.
-	//readbookpositions();
-	
+	makebrowser();
 	browseractive = true;
-	swiWaitForVBlank();
 	drawbrowser();
 	
-	while(1) {
+	while(true) {
 		scanKeys();
  
 		if(browseractive) {
+		
 			if(keysDown() & KEY_A) {
 				fb = screen0;
 				drawblankpages();
@@ -444,10 +453,72 @@ int main(void) {
 
 				pagecurrent = 0;
 				pagecount = 0;
-				initpage(&pages[pagecurrent]);
+				pageinit(&pages[pagecurrent]);
 
 				XML_Parser p = XML_ParserCreate(NULL);
-				if(bookparse(p)) {
+				
+				XML_UseParserAsHandlerArg(p);
+				XML_SetElementHandler(p, start_hndl, end_hndl);
+				XML_SetCharacterDataHandler(p, char_hndl);
+				XML_SetProcessingInstructionHandler(p, proc_hndl);
+			
+				char path[64];	
+				sprintf(path,"/data/%s",books[bookcurrent].filename);
+				struct stat st;
+				stat(path, &st);
+				u16 bufsize;
+				if(st.st_size < BUFSIZE) bufsize = (u16)st.st_size;
+				else bufsize = BUFSIZE;
+			
+				FILE *fp = fopen(path,"r");
+				if(!fp) {
+					sprintf(msg,"[cannot open %s]\n",path);
+					tsString(msg);
+					return(-1);
+				}
+				
+				pagecount = 0;
+				pagecurrent = 0;
+				page_t *page = &(pages[pagecurrent]);
+				pageinit(page);
+				
+				XML_Char *filebuf;
+				
+				int success;
+				u16 bytes_read;
+				while(true) {
+					filebuf = (char*)XML_GetBuffer(p, bufsize);				
+					if(!filebuf) {
+						sprintf(msg,"[allocating %d bytes failed]\n",bufsize);
+						tsString(msg);
+						return(-1);
+					}
+					sprintf(msg,"[%d bytes allocated]\n",bufsize);
+					tsString(msg);
+
+					bytes_read = fread(filebuf, 1, bufsize, fp);
+					
+					sprintf(msg,"[%d bytes read]\n",bytes_read);
+					tsString(msg);
+					
+					// parse and paginate.
+					if(success = XML_ParseBuffer(p, bytes_read, bytes_read == 0)) {
+						sprintf(msg,"%s\n",XML_ErrorString(XML_GetErrorCode(p)));
+						tsString(msg);
+						break;
+					} else {
+						sprintf(msg,"[%d bytes parsed]\n",bytes_read);
+						tsString(msg);
+					}
+					
+					if(bytes_read == 0) break;
+					
+				}
+				
+				XML_ParserFree(p);
+				fclose(fp);
+
+				if(!success) {
 					sprintf(msg,"[%s]\n",XML_ErrorString(XML_GetErrorCode(p)));
 					tsString(msg);
 					sprintf(msg,"expat: [%d:%d] : %d\n",
@@ -457,51 +528,59 @@ int main(void) {
 					tsString(msg);
 					drawbrowser();
 				} else {
-					tsInitPen();
 					drawblankpages();
+					fb = screen0;
+					tsInitPen();
 					pagecurrent = 0;
 					drawpages(&pages[pagecurrent]);
 					browseractive = false;
 				}
-				XML_ParserFree(p);
 			}
+			
 			if(keysDown() & KEY_B) {
 				browseractive = false;
 				drawpages(&pages[pagecurrent]);
 			}
+			
 			if(keysDown() & (KEY_LEFT|KEY_L)) {
 				if(bookcurrent < bookcount-1) {
 					bookcurrent++;
 					drawbrowser();
 				}
 			}
+			
 			if(keysDown() & (KEY_RIGHT|KEY_R)) {
 				if(bookcurrent > 0) {
 					bookcurrent--;
 					drawbrowser();
 				}
 			}
+		
 		} else {
+		
 			if(keysDown() & (KEY_A|KEY_DOWN|KEY_R)) {
 				if(pagecurrent < pagecount-1) {
 					pagecurrent++;
 					drawpages(&pages[pagecurrent]);
 				}
 			}
+			
 			if(keysDown() & (KEY_B|KEY_UP|KEY_L)) {
 				if(pagecurrent > 0) {
 					pagecurrent--;
 					drawpages(&pages[pagecurrent]);
 				}
 			}
+			
 			if(keysDown() & KEY_Y) {
 				browseractive = true;
-				drawbrowser(bookcurrent);
+				drawbrowser();
 			}
+			
 			if(keysDown() & KEY_X) {
 				drawblankpages();
 			}
 		}
-		swiWaitForVBlank();
+		swiWaitForVBlank();		
 	}
 }

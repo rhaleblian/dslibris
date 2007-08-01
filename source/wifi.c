@@ -1,4 +1,5 @@
-void wifiInit() {  
+#if 0
+void wifiInit(void) {  
 /*	char msg[64];
 	Wifi_AccessPoint ap;
 	strcpy(ap.ssid,"FNORD");
@@ -71,3 +72,4 @@ void wifiInit() {
 	} // if connected, you can now use the berkley sockets interface to connect to the internet!
 */
 }
+#endif

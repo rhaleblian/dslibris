@@ -6,7 +6,7 @@
 void initbutton(button_t *b) {
 	b->origin.x = 0;
 	b->origin.y = 0;
-	b->extent.x = 192;
+	b->extent.x = 191;
 	b->extent.y = 32;
 	strcpy(b->text, "");
 }
@@ -23,7 +23,7 @@ void movebutton(button_t *b, int x, int y) {
 void drawbutton(button_t *b, u16 *fb, int highlight) {
 	int x; int y;
 	coord_t ul, lr;
-	u16 color = RGB15(0,0,0) | BIT(15);
+	u16 color = RGB15(15,15,15) | BIT(15);
 
 	ul.x = b->origin.x;
 	ul.y = b->origin.y;
