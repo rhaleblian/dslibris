@@ -41,13 +41,13 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map) -L$
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lexpat -lfreetype2 -lfat -lnds9
+LIBS	:= -lexpat -lfreetype -lfat -lnds9
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	 $(LIBNDS) $(HOME)/nds/freetype2 $(HOME)/nds/expat
+LIBDIRS	:=	 $(LIBNDS) $(HOME)/nds/freetype2 $(HOME)/nds/local
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
