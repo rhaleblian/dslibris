@@ -338,6 +338,9 @@ void readbookpositions(void) {
 }
 
 int main(void) {
+
+	printf("here goes\n");
+
 	bool browseractive = false;
 	
 	powerON(POWER_ALL);
@@ -367,19 +370,16 @@ int main(void) {
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 
-	drawsolid(15,15,15);
-	fb = screen1;
-	drawsolid(15,15,15);
-	fb = screen0;
+	drawsolid(7,7,7);
 	
-//	PA_Init();
-//	PA_LoadSplash();
-	
+	fprintf(stderr,"hello\n");
+	exit(0);
 	fatInitDefault();
-	
+
+	drawsolid(15,15,15);
 	tsInitDefault();
 
-	drawsolid(31,31,31);	
+	drawsolid(31,31,31);
 	tsString("[welcome to dslibris]\n[font loaded]\n");
 	
 	// find all available books in the root directory.
