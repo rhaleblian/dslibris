@@ -9,7 +9,7 @@ typedef struct {
 typedef struct {
 	coord_t origin;
 	coord_t extent;
-	char text[64];
+	u8 text[64];
 } button_t;
 
 void initbutton(button_t *b);
