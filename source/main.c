@@ -16,6 +16,28 @@
 #define MAXPAGES 8
 #define MAXBOOKS 8
 
+#ifndef BACKGROUND
+
+typedef struct {
+    u16 xdx;
+    u16 xdy;
+    u16 ydx;
+    u16 ydy;
+    u32 centerX;
+    u32 centerY;    
+} bg_rotation;
+
+typedef struct {
+    u16 control[4];
+    bg_scroll scroll[4];
+    bg_rotation bg2_rotation;
+    bg_rotation bg3_rotation;
+} bg_attribute;
+
+#define BACKGROUND           (*((bg_attribute *)0x04000008))
+#define BACKGROUND_SUB       (*((bg_attribute *)0x04001008))
+#endif
+
 FT_Vector ppen;		// pen for at-parse-time pre-formatting, not drawing;
 					// font.c owns the drawing ppen.
 extern FT_GlyphSlotRec	glyphs[];
@@ -225,9 +247,9 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 					if(fb == screen1) {
 						if(!page->buf) {
 							page->buf = malloc(page->length * sizeof(char));
-							if(!page->buf) tsString("alloc error]\n");
+							if(!page->buf) tsString((u8*)"alloc error]\n");
 						}
-						strncpy(page->buf,pagebuf,page->length);
+						strncpy((char *)page->buf,pagebuf,page->length);
 						page++;
 						pageinit(page);
 						fb = screen0;
@@ -283,7 +305,7 @@ void end_hndl(void *data, const char *el) {
 				fb = screen0;
 				if(!page->buf)
 					page->buf = malloc(page->length * sizeof(char));
-				strncpy(page->buf,pagebuf,page->length);
+				strncpy((char *)page->buf,(char *)pagebuf,page->length);
 				page++;
 				pageinit(page);
 				pagecurrent++;
@@ -301,7 +323,7 @@ void end_hndl(void *data, const char *el) {
 			page->buf = malloc(page->length * sizeof(char));
 			if(!page->buf) tsString("alloc error]\n");
 		}
-		strncpy(page->buf,pagebuf,page->length);
+		strncpy((char *)page->buf,pagebuf,page->length);
 		context = HTML;
 	}
 	if(!stricmp(el,"title")) context = HEAD;
@@ -316,7 +338,7 @@ void makebrowser(void) {
 	for(book=0;book<bookcount;book++) {
 		initbutton(&buttons[book]);
 		movebutton(&buttons[book],0,book*32);
-		if(strlen(books[book].title))
+		if(strlen((char *)books[book].title))
 			strcpy((char *)buttons[book].text,books[book].title);
 		else
 			strcpy((char *)buttons[book].text,books[book].filename);
@@ -338,14 +360,12 @@ void readbookpositions(void) {
 }
 
 int main(void) {
-
-	printf("here goes\n");
-
 	bool browseractive = false;
 	
 	powerON(POWER_ALL);
 	irqInit();
 	irqEnable(IRQ_VBLANK);
+	consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31), (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
 	screen0 = (u16*)BG_BMP_RAM(0);
 	screen1 = (u16*)BG_BMP_RAM_SUB(0);
 	fb = screen0;
@@ -369,6 +389,7 @@ int main(void) {
 	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+	iprintf("hello\n");
 
 	drawsolid(7,7,7);
 	
@@ -395,10 +416,10 @@ int main(void) {
 	u8 filename[32];
 	while(!dirnext(dp, filename, NULL)) {
 		if((bookcount < MAXBOOKS)
-			&& (!stricmp(".xhtml",filename + (strlen(filename)-6)))) {
+			&& (!stricmp(".xhtml",(char *)(filename + (strlen((char *)filename)-6))))) {
 			initbook(&books[bookcount]);			
-			strncpy(books[bookcount].filename,filename,32);
-			FILE *fp = fopen(filename,"r");
+			strncpy((char *)books[bookcount].filename,filename,32);
+			FILE *fp = fopen((char *)filename,"r");
 			if(fp) {
 				XML_Parser p = XML_ParserCreate(NULL);
 				XML_UseParserAsHandlerArg(p);
@@ -418,7 +439,7 @@ int main(void) {
 		}
 	}
 	dirclose(dp);
-	sprintf(msg,"[%d books]\n",bookcount);
+	sprintf((char *)msg,"[%d books]\n",bookcount);
 	tsString(msg);
 #if 0
 	bookcount = 3;
@@ -447,7 +468,7 @@ int main(void) {
 				fb = screen0;
 				drawblankpages();
 				tsInitPen();
-				sprintf(msg,"[%s]\n",books[bookcurrent].filename);
+				sprintf((char *)msg,"[%s]\n",books[bookcurrent].filename);
 				tsString(msg);
 
 				pagecurrent = 0;
@@ -471,7 +492,7 @@ int main(void) {
 			
 				FILE *fp = fopen(path,"r");
 				if(!fp) {
-					sprintf(msg,"[cannot open %s]\n",path);
+					sprintf((char *)msg,"[cannot open %s]\n",path);
 					tsString(msg);
 					return(-1);
 				}
@@ -488,25 +509,25 @@ int main(void) {
 				while(true) {
 					filebuf = (char*)XML_GetBuffer(p, bufsize);				
 					if(!filebuf) {
-						sprintf(msg,"[allocating %d bytes failed]\n",bufsize);
+						sprintf((char *)msg,"[allocating %d bytes failed]\n",bufsize);
 						tsString(msg);
 						return(-1);
 					}
-					sprintf(msg,"[%d bytes allocated]\n",bufsize);
+					sprintf((char *)msg,"[%d bytes allocated]\n",bufsize);
 					tsString(msg);
 
 					bytes_read = fread(filebuf, 1, bufsize, fp);
 					
-					sprintf(msg,"[%d bytes read]\n",bytes_read);
+					sprintf((char *)msg,"[%d bytes read]\n",bytes_read);
 					tsString(msg);
 					
 					// parse and paginate.
-					if(success = XML_ParseBuffer(p, bytes_read, bytes_read == 0)) {
-						sprintf(msg,"%s\n",XML_ErrorString(XML_GetErrorCode(p)));
+					if(success = XML_ParseBuffer(p, bytes_read, (bytes_read == 0))) {
+						sprintf((char *)msg,"%s\n",XML_ErrorString(XML_GetErrorCode(p)));
 						tsString(msg);
 						break;
 					} else {
-						sprintf(msg,"[%d bytes parsed]\n",bytes_read);
+						sprintf((char *)msg,"[%d bytes parsed]\n",bytes_read);
 						tsString(msg);
 					}
 					
@@ -518,9 +539,9 @@ int main(void) {
 				fclose(fp);
 
 				if(!success) {
-					sprintf(msg,"[%s]\n",XML_ErrorString(XML_GetErrorCode(p)));
+					sprintf((char *)msg,"[%s]\n",XML_ErrorString(XML_GetErrorCode(p)));
 					tsString(msg);
-					sprintf(msg,"expat: [%d:%d] : %d\n",
+					sprintf((char *)msg,"expat: [%d:%d] : %d\n",
 						(int)XML_GetCurrentLineNumber(p),
 						(int)XML_GetCurrentColumnNumber(p),
 						(int)XML_GetCurrentByteIndex(p));
