@@ -1,6 +1,5 @@
 #include <nds.h>		/* libnds */
 #include <fat.h>   		/* maps stdio to FAT on ARM */
-#include <PA9.h>
 
 #include <expat.h>		/* expat - XML parsing */
 #include <stdio.h>
@@ -51,8 +50,8 @@ button_t buttons[16];
 // struct initializers
 
 void initbook(book_t *book) {
-	strcpy(book->filename,"");
-	strcpy(book->title,"");
+	strcpy((char *)book->filename,"");
+	strcpy((char *)book->title,"");
 }
 
 void pageinit(page_t *page) {
@@ -154,9 +153,9 @@ void start_hndl(void *data, const char *el, const char **attr) {
 void title_hndl(void *data, const char *txt, int txtlen) {
 	if(context == TITLE) {
 		if(txtlen > 31)
-			strncpy(books[bookcount].title,txt,32);
+			strncpy((char *)books[bookcount].title,txt,32);
 		else 			
-			strncpy(books[bookcount].title,txt,txtlen);
+			strncpy((char *)books[bookcount].title,txt,txtlen);
 	}
 }
 
@@ -318,9 +317,9 @@ void makebrowser(void) {
 		initbutton(&buttons[book]);
 		movebutton(&buttons[book],0,book*32);
 		if(strlen(books[book].title))
-			strcpy(buttons[book].text,books[book].title);
+			strcpy((char *)buttons[book].text,books[book].title);
 		else
-			strcpy(buttons[book].text,books[book].filename);
+			strcpy((char *)buttons[book].text,books[book].filename);
 	}
 }
 
@@ -388,7 +387,7 @@ int main(void) {
 	// UVA HTML texts, for instance, need to go through HTML tidy.	
 	bookcount = 0;
 	bookcurrent = 0;
-	sprintf(msg,"[searching for books]\n");
+	sprintf((char *)msg,"[searching for books]\n");
 	tsString(msg);
 	DIR_ITER *dp = diropen("/data");
 	if(!dp) tsString("[diropen failed]\n");
@@ -425,14 +424,14 @@ int main(void) {
 	bookcount = 3;
 	bookcurrent = 1;
 	initbook(&books[0]);
-	strcpy(books[0].filename,"jefferson.xhtml");
-	strncpy(books[0].title,"TO THE CITIZENS OF THE SOUTHERN STATES",16);	
+	strcpy((char *)books[0].filename,"jefferson.xhtml");
+	strncpy((char *)books[0].title,"TO THE CITIZENS OF THE SOUTHERN STATES",16);	
 	initbook(&(books[1]));
-	strcpy(books[1].filename,"rhetorica.xhtml");
-	strncpy(books[1].title,"Rhetorica - Aristotle",16);
+	strcpy((char *)books[1].filename,"rhetorica.xhtml");
+	strncpy((char *)books[1].title,"Rhetorica - Aristotle",16);
 	initbook(&(books[2]));
-	strcpy(books[2].filename,"19211-h.xhtml");
-	strncpy(books[2].title,"History of England Vol I",16);
+	strcpy((char *)books[2].filename,"19211-h.xhtml");
+	strncpy((char *)books[2].title,"History of England Vol I",16);
 #endif
 	
 	makebrowser();

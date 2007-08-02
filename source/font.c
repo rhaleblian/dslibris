@@ -94,10 +94,10 @@ int tsStartNewLine(void) {
 	return(0);
 }
 
-void tsString(const char *string) {
+void tsString(u8 *string) {
 	// draw an ASCII string starting at the pen position.
 	int c, i;
-	for(i=0;i<strlen(string);i++) {
+	for(i=0;i<strlen((char *)string);i++) {
 		c = (int)string[i];
 		if(c == '\n') tsStartNewLine();
 		else tsChar(c);

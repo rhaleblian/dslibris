@@ -10,7 +10,7 @@ int  	tsGetHeight(void);
 void	tsGetPen(int *x, int *y);
 void	tsSetPen(int x, int y);
 void	tsChar(int code);
-void	tsString(const char *string);
+void	tsString(u8 *string);
 int		tsStartNewLine(void);
 
 #endif
