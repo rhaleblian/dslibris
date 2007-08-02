@@ -26,9 +26,9 @@ void tsInitPen(void) {
 	pen.y = MARGINTOP + (face->size->metrics.height >> 6);
 }
 
-void tsInitDefault(void) {	
-	FT_Init_FreeType(&library);
-	FT_New_Face(library, "/data/frutiger.ttf", 0, &face);
+int tsInitDefault(void) {
+  FT_Init_FreeType(&library);
+  if(FT_New_Face(library, "/data/frutiger.ttf", 0, &face)) return -2;
 	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
 		
@@ -52,6 +52,7 @@ void tsInitDefault(void) {
 	}
 	
 	tsInitPen();
+	return(0);
 }
 
 // drawing

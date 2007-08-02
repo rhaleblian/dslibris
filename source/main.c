@@ -203,12 +203,12 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 		if(txt[i] == '\r') {
 			i++;
 	
-		} else if(txt[i] > 0xc2 && txt[i] < 0xe0) {
+			/*		} else if(txt[i] > 0xc2 && txt[i] < 0xe0) {
 			pagebuf[page->length] = '_';
 			page->length++;
 			i+=2;
 
-		} else if(txt[i] > 0xdf && txt[i] < 0xf0) {
+/		} else if(txt[i] > 0xdf && txt[i] < 0xf0) {
 			pagebuf[page->length] = '_';
 			page->length++;
 			i+=3;
@@ -225,7 +225,7 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 				ppen.x += (glyphs[' '].advance.x >> 6);
 			}
 			i++;
-
+			*/
 		} else {
 			linebegan = true;
 			int j;
@@ -249,7 +249,7 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 							page->buf = malloc(page->length * sizeof(char));
 							if(!page->buf) tsString((u8*)"alloc error]\n");
 						}
-						strncpy((char *)page->buf,pagebuf,page->length);
+						strncpy((char*)page->buf,(char*)pagebuf,page->length);
 						page++;
 						pageinit(page);
 						fb = screen0;
@@ -321,9 +321,9 @@ void end_hndl(void *data, const char *el) {
 	if(!stricmp(el,"body")) {
 		if(!page->buf) {
 			page->buf = malloc(page->length * sizeof(char));
-			if(!page->buf) tsString("alloc error]\n");
+			if(!page->buf) tsString((u8*)"alloc error]\n");
 		}
-		strncpy((char *)page->buf,pagebuf,page->length);
+		strncpy((char *)page->buf,(char*)pagebuf,page->length);
 		context = HTML;
 	}
 	if(!stricmp(el,"title")) context = HEAD;
@@ -339,20 +339,21 @@ void makebrowser(void) {
 		initbutton(&buttons[book]);
 		movebutton(&buttons[book],0,book*32);
 		if(strlen((char *)books[book].title))
-			strcpy((char *)buttons[book].text,books[book].title);
+		  strcpy((char *)buttons[book].text,(char*)books[book].title);
 		else
-			strcpy((char *)buttons[book].text,books[book].filename);
+		  strcpy((char *)buttons[book].text,(char*)books[book].filename);
 	}
 }
 
 void readbookpositions(void) {
+
 	FILE *savefile = fopen("dslibris.ini","r");
 	if(savefile) {
 		int position = 0;
-		int i;
+		u8 i;
 		for(i=0;i<bookcount;i++) {
-			if(fscanf(savefile,"%d\n", &position)) {
-			//	books[i].position = position;
+		  if(fscanf(savefile, "%d\n", &position)) {
+			//	books[i].position = (u16)position;
 			}
 		}
 		fclose(savefile);
@@ -365,7 +366,6 @@ int main(void) {
 	powerON(POWER_ALL);
 	irqInit();
 	irqEnable(IRQ_VBLANK);
-	consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31), (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
 	screen0 = (u16*)BG_BMP_RAM(0);
 	screen1 = (u16*)BG_BMP_RAM_SUB(0);
 	fb = screen0;
@@ -389,36 +389,30 @@ int main(void) {
 	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	iprintf("hello\n");
 
-	drawsolid(7,7,7);
-	
-	fprintf(stderr,"hello\n");
-	exit(0);
+	drawsolid(7,7,7);	
 	fatInitDefault();
 
 	drawsolid(15,15,15);
-	tsInitDefault();
+	if(tsInitDefault()) { drawsolid(31,0,0); return(-1); }
 
 	drawsolid(31,31,31);
-	tsString("[welcome to dslibris]\n[font loaded]\n");
+	tsString((u8*)"[welcome to dslibris]\n[font loaded]\n");
 	
-	// find all available books in the root directory.
-	// files must be well-formed XHTML;
-	// UVA HTML texts, for instance, need to go through HTML tidy.	
+	// find all available books.
 	bookcount = 0;
 	bookcurrent = 0;
 	sprintf((char *)msg,"[searching for books]\n");
 	tsString(msg);
 	DIR_ITER *dp = diropen("/data");
-	if(!dp) tsString("[diropen failed]\n");
+	if(!dp) tsString((u8*)"[diropen failed]\n");
 
 	u8 filename[32];
-	while(!dirnext(dp, filename, NULL)) {
+	while(!dirnext(dp, (char*)filename, NULL)) {
 		if((bookcount < MAXBOOKS)
-			&& (!stricmp(".xhtml",(char *)(filename + (strlen((char *)filename)-6))))) {
+			&& (!stricmp(".xhtml",(char*)(filename + (strlen((char *)filename)-6))))) {
 			initbook(&books[bookcount]);			
-			strncpy((char *)books[bookcount].filename,filename,32);
+			strncpy((char*)books[bookcount].filename,(char*)filename,32);
 			FILE *fp = fopen((char *)filename,"r");
 			if(fp) {
 				XML_Parser p = XML_ParserCreate(NULL);
@@ -439,20 +433,20 @@ int main(void) {
 		}
 	}
 	dirclose(dp);
-	sprintf((char *)msg,"[%d books]\n",bookcount);
+	sprintf((char*)msg,"[%d books]\n",bookcount);
 	tsString(msg);
 #if 0
 	bookcount = 3;
 	bookcurrent = 1;
 	initbook(&books[0]);
-	strcpy((char *)books[0].filename,"jefferson.xhtml");
-	strncpy((char *)books[0].title,"TO THE CITIZENS OF THE SOUTHERN STATES",16);	
+	strcpy((char*)books[0].filename,"jefferson.xhtml");
+	strncpy((char*)books[0].title,"TO THE CITIZENS OF THE SOUTHERN STATES",16);	
 	initbook(&(books[1]));
-	strcpy((char *)books[1].filename,"rhetorica.xhtml");
-	strncpy((char *)books[1].title,"Rhetorica - Aristotle",16);
+	strcpy((char*)books[1].filename,"rhetorica.xhtml");
+	strncpy((char*)books[1].title,"Rhetorica - Aristotle",16);
 	initbook(&(books[2]));
-	strcpy((char *)books[2].filename,"19211-h.xhtml");
-	strncpy((char *)books[2].title,"History of England Vol I",16);
+	strcpy((char*)books[2].filename,"19211-h.xhtml");
+	strncpy((char*)books[2].title,"History of England Vol I",16);
 #endif
 	
 	makebrowser();
@@ -469,7 +463,7 @@ int main(void) {
 				drawblankpages();
 				tsInitPen();
 				sprintf((char *)msg,"[%s]\n",books[bookcurrent].filename);
-				tsString(msg);
+				tsString((u8*)msg);
 
 				pagecurrent = 0;
 				pagecount = 0;
@@ -504,7 +498,6 @@ int main(void) {
 				
 				XML_Char *filebuf;
 				
-				int success;
 				u16 bytes_read;
 				while(true) {
 					filebuf = (char*)XML_GetBuffer(p, bufsize);				
@@ -522,7 +515,8 @@ int main(void) {
 					tsString(msg);
 					
 					// parse and paginate.
-					if(success = XML_ParseBuffer(p, bytes_read, (bytes_read == 0))) {
+					int error = XML_ParseBuffer(p, bytes_read, (bytes_read == 0));
+					if(error) {
 						sprintf((char *)msg,"%s\n",XML_ErrorString(XML_GetErrorCode(p)));
 						tsString(msg);
 						break;
@@ -538,7 +532,7 @@ int main(void) {
 				XML_ParserFree(p);
 				fclose(fp);
 
-				if(!success) {
+				if(false) {
 					sprintf((char *)msg,"[%s]\n",XML_ErrorString(XML_GetErrorCode(p)));
 					tsString(msg);
 					sprintf((char *)msg,"expat: [%d:%d] : %d\n",
