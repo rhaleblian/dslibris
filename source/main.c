@@ -1,7 +1,9 @@
-#include <nds.h>		/* libnds */
-#include <fat.h>   		/* maps stdio to FAT on ARM */
+/* dslibris - an ebook reader for Nintendo DS */
 
-#include <expat.h>		/* expat - XML parsing */
+#include <nds.h>
+#include <fat.h>
+
+#include <expat.h>
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
@@ -16,6 +18,9 @@
 #define MAXPAGES 8
 #define MAXBOOKS 8
 
+// libnds removed BACKGROUND et al at some point... r20?
+// the below is for OS X
+
 #ifndef BACKGROUND
 
 typedef struct {
@@ -25,7 +30,7 @@ typedef struct {
   u16 ydy;
   u32 centerX;
   u32 centerY;    
-} bg_rotation;
+} bg_rotation;  // need this here?
 
 typedef struct {
   u16 control[4];
@@ -38,9 +43,10 @@ typedef struct {
 #define BACKGROUND_SUB       (*((bg_attribute *)0x04001008))
 #endif
 
-FT_Vector ppen;		// pen for at-parse-time pre-formatting, not drawing;
+// pen for at-parse-time pre-formatting, not drawing;
 // font.c owns the drawing ppen.
-extern FT_GlyphSlotRec	glyphs[];
+FT_Vector ppen;		
+
 u16 *screen0, *screen1, *fb;
 u8 msg[128];
 
@@ -122,8 +128,9 @@ void drawblankpages(void) {
   for(j=i;j<page->length && page->buf[j]==' ';j++);
   // find the end of line
   for(j=i;j<page->length && page->buf[j]!='\n';j++) {
-  int c = (int)page->buf[j];
-  advance += glyphs[c].advance.x >> 6;
+  u16 c = page->buf[j];
+  advance += getAdvance(c);
+
   if(page->buf[j] == ' ') spaces++;
   }
   for(k=j;k>0 && page->buf[k]==' ';k--) spaces--;
@@ -222,7 +229,7 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 	if(linebegan) {
 	pagebuf[page->length] = ' ';
 	page->length++;
-	ppen.x += (glyphs[' '].advance.x >> 6);
+	ppen.x += tsAdvance((u16)' ');
 	}
 	i++;
       */
@@ -232,7 +239,7 @@ void char_hndl(void *data, const char *txt, int txtlen) {
       advance = 0;
       for(j=i;(j<txtlen) && (!iswhitespace((int)txt[j]));j++) {
 	// set type until the end of the next word.
-	advance += (glyphs[(int)txt[j]].advance.x >> 6);
+	advance += tsAdvance(txt[j]);
       }			
       int overrun = (ppen.x + advance) - (PAGE_WIDTH-MARGINRIGHT);
 			

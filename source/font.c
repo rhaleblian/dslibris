@@ -21,6 +21,10 @@ void tsSetPen(int x, int y) { pen.x = x; pen.y = y; }
 
 // initialization
 
+u8 tsAdvance(u16 code) {
+  return glyphs[code].advance.x >> 6;
+}
+
 void tsInitPen(void) {
   pen.x = MARGINLEFT;
   pen.y = MARGINTOP + (face->size->metrics.height >> 6);

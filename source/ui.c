@@ -12,7 +12,7 @@ void initbutton(button_t *b) {
 }
 
 void labelbutton(button_t *b, char *text) {
-  strncpy(b->text,text,63);
+  strncpy((char*)b->text,(char*)text,63);
 }
 
 void movebutton(button_t *b, int x, int y) {
