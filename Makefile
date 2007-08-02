@@ -47,7 +47,7 @@ LIBS	:= -lfreetype2 -lexpat -lfat -lnds9
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #-----------------------------------------------------------------------
-LIBDIRS	:=	 $(LIBNDS) $(HOME)/nds/local
+LIBDIRS	:=	 $(LIBNDS) $(HOME)/nds/local $(HOME)/nds/freetype2
 
 #-----------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
