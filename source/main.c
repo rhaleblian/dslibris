@@ -115,29 +115,36 @@ void drawblankpages(void) {
   fb = savefb;
 }
 
-/*
-  int getjustifyspacing(page_t *page, int i) {
-  // full justification.
-  // get line advance, count spaces,
-  // and insert more space in spaces.
+
+u8 getjustifyspacing(page_t *page, u16 i) {
+  // full justification. get line advance, count spaces,
+  // and insert more space in spaces to reach margin.
+  // returns amount of space to add per-character.
+
   u8 spaces = 0;
   u8 advance = 0;
-  u8 horispace = 0;
   u8 j,k;
-  // find the first nonwhitespace
+
+  // walk through leading spaces
   for(j=i;j<page->length && page->buf[j]==' ';j++);
+
   // find the end of line
   for(j=i;j<page->length && page->buf[j]!='\n';j++) {
-  u16 c = page->buf[j];
-  advance += getAdvance(c);
-
-  if(page->buf[j] == ' ') spaces++;
+    u16 c = page->buf[j];
+    advance += tsAdvance(c);
+    
+    if(page->buf[j] == ' ') spaces++;
   }
+  
+  // walk back through trailing spaces
   for(k=j;k>0 && page->buf[k]==' ';k--) spaces--;
-  if(spaces) horispace = (float)((PAGE_WIDTH-MARGINRIGHT-MARGINLEFT) - advance) / (float)spaces;
-  return(horispace);
-  }
-*/
+
+  if(spaces) 
+    return((u8)((float)((PAGE_WIDTH-MARGINRIGHT-MARGINLEFT) - advance) 
+		 / (float)spaces));
+  else return(0);
+}
+
 
 void drawpages(page_t *page) {
   drawblankpages();
