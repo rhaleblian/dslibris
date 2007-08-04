@@ -42,7 +42,7 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 # any extra libraries we wish to link with the project
 #-----------------------------------------------------------------------
 LIBS	:= -lexpat -lfreetype -lfat -lnds9
- 
+
 #-----------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
@@ -55,9 +55,9 @@ LIBDIRS	:=	 $(LIBNDS) $(HOME)/nds/local $(HOME)/nds/freetype2
 #-----------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #-----------------------------------------------------------------------
- 
+
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
- 
+
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
@@ -82,39 +82,50 @@ endif
 
 export OFILES	:=	$(BINFILES:.bin=.o) \
 			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
- 
+
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/lib) \
 			-I$(CURDIR)/$(BUILD)
- 
+
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
- 
-.PHONY: $(BUILD)
+
+.PHONY: $(BUILD) export dldi
 
 all: $(BUILD)
 #-----------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-#	dlditool R4tf.dldi $(TARGET).nds
- 
+
 #-----------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(TARGET).arm9 $(TARGET).ds.gba 
+	@rm -fr $(BUILD)
+	@rm -fr $(TARGET).elf $(TARGET).nds $(TARGET).arm9 $(TARGET).ds.gba 
+	@rm -fr $(TARGET).r4ds.nds
+
+$(TARGET).r4ds.nds:	dslibris.nds
+	cp dslibris.nds dslibris.r4ds.nds
+	dlditool R4tf.dldi dslibris.r4ds.nds
+
+dldi: dslibris.r4ds.nds
+
+install: $(TARGET).r4ds.nds
+	cp $(TARGET).r4ds.nds export
+	sync
 
 test: all
 	desmume-cli $(TARGET).nds
 
 #-----------------------------------------------------------------------
 else
- 
+
 DEPENDS	:=	$(OFILES:.o=.d)
- 
+
 #-----------------------------------------------------------------------
 # main targets
-#-----------------------------------------------------------------------	
+#-----------------------------------------------------------------------
 $(OUTPUT).nds	: 	$(OUTPUT).arm9
 $(OUTPUT).arm9	:	$(OUTPUT).elf
 $(OUTPUT).elf	:	$(OFILES)
@@ -124,10 +135,10 @@ $(OUTPUT).elf	:	$(OFILES)
 #-----------------------------------------------------------------------
 	@echo $(notdir $<)
 	$(bin2o)
- 
- 
+
+
 -include $(DEPENDS)
- 
+
 #-----------------------------------------------------------------------------
 endif
 #-----------------------------------------------------------------------------

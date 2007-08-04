@@ -13,12 +13,12 @@
 #include "font.h"
 #include "ui.h"
 
-#define BUFSIZE 4096
-#define PAGEBUFSIZE 4096
+#define BUFSIZE 8192
+#define PAGEBUFSIZE 8192
 #define MAXPAGES 8
 #define MAXBOOKS 8
 
-// libnds removed BACKGROUND et al at some point... r20?
+// libnds r20 removed BACKGROUND et al at some point?
 // the below is for OS X
 
 #ifndef BACKGROUND
@@ -217,29 +217,31 @@ void char_hndl(void *data, const char *txt, int txtlen) {
     if(txt[i] == '\r') {
       i++;
 	
-      /*		} else if(txt[i] > 0xc2 && txt[i] < 0xe0) {
-	pagebuf[page->length] = '_';
-	page->length++;
-	i+=2;
-
-	/		} else if(txt[i] > 0xdf && txt[i] < 0xf0) {
-	pagebuf[page->length] = '_';
-	page->length++;
-	i+=3;
-			
-	} else if(txt[i] > 0xef) {
-	pagebuf[page->length] = '_';
-	page->length++;
-	i+=4;
+#if 0
+    } else if(txt[i] > 0xc2 && txt[i] < 0xe0) {
+      pagebuf[page->length] = '_';
+      page->length++;
+      i+=2;
+      
+    } else if(txt[i] > 0xdf && txt[i] < 0xf0) {
+      pagebuf[page->length] = '_';
+      page->length++;
+      i+=3;
+      
+    } else if(txt[i] > 0xef) {
+      pagebuf[page->length] = '_';
+      page->length++;
+      i+=4;
 		
-	} else if(iswhitespace((int)txt[i])) {
-	if(linebegan) {
+    } else if(iswhitespace((int)txt[i])) {
+      if(linebegan) {
 	pagebuf[page->length] = ' ';
 	page->length++;
 	ppen.x += tsAdvance((u16)' ');
-	}
-	i++;
-      */
+      }
+      i++;
+#endif
+
     } else {
       linebegan = true;
       int j;
@@ -267,7 +269,7 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 	    page++;
 	    pageinit(page);
 	    fb = screen0;
-	    //						if(pagecurrent == 0) drawpages(&(pages[pagecurrent]));
+	    //if(pagecurrent == 0) drawpages(&(pages[pagecurrent]));
 	    pagecurrent++;
 	    pagecount++;
 	  } else {
@@ -374,6 +376,40 @@ void readbookpositions(void) {
   }
 }
 
+void searchfortitle(u8 *filename) {
+      FILE *fp = fopen((char *)filename,"r");
+      if(fp) {
+	XML_Parser p = XML_ParserCreate(NULL);
+	XML_UseParserAsHandlerArg(p);
+	XML_SetElementHandler(p, start_hndl, end_hndl);
+	XML_SetCharacterDataHandler(p, title_hndl);
+	XML_SetProcessingInstructionHandler(p, proc_hndl);
+	XML_Char filebuf[BUFSIZE];
+	while(true) {
+	  int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
+	  if(XML_Parse(p, filebuf, bytes_read,bytes_read == 0)) break;
+	  if(!bytes_read) break;
+	}
+	XML_ParserFree(p);
+	fclose(fp);
+      }
+}
+
+void hardwirebooks(void) {
+  bookcount = 3;
+  bookcurrent = 1;
+  initbook(&books[0]);
+  strcpy((char*)books[0].filename,"jefferson.xhtml");
+  strncpy((char*)books[0].title,"TO THE CITIZENS OF THE SOUTHERN STATES",16);
+
+  initbook(&(books[1]));
+  strcpy((char*)books[1].filename,"rhetorica.xhtml");
+  strncpy((char*)books[1].title,"Rhetorica - Aristotle",16);
+  initbook(&(books[2]));
+  strcpy((char*)books[2].filename,"19211-h.xhtml");
+  strncpy((char*)books[2].title,"History of England Vol I",16);
+}
+
 int main(void) {
   bool browseractive = false;
 	
@@ -406,9 +442,19 @@ int main(void) {
 
   drawsolid(7,7,7);	
   fatInitDefault();
+  /*
+  FILE *x = fopen("/frutiger.ttf","r");
+  if(!x) drawsolid(31,0,0);
+  else {
+    drawsolid(0,31,0);
+    fclose(x);
+  }
+  exit(0);
+  */
 
   drawsolid(15,15,15);
-  if(tsInitDefault()) { drawsolid(31,0,0); return(-1); }
+  int err;
+  if(err = tsInitDefault()) { drawsolid(0,0,err); return(-1); }
 
   drawsolid(31,31,31);
   tsString((u8*)"[welcome to dslibris]\n[font loaded]\n");
@@ -418,51 +464,27 @@ int main(void) {
   bookcurrent = 0;
   sprintf((char *)msg,"[searching for books]\n");
   tsString(msg);
-  DIR_ITER *dp = diropen("/data");
+  DIR_ITER *dp = diropen("/");
   if(!dp) tsString((u8*)"[diropen failed]\n");
 
   u8 filename[32];
   while(!dirnext(dp, (char*)filename, NULL)) {
     if((bookcount < MAXBOOKS)
-       && (!stricmp(".xhtml",(char*)(filename + (strlen((char *)filename)-6))))) {
+       && strlen((char*)filename) > 4
+       && (!stricmp(".xht",
+		    (char*)(filename + (strlen((char *)filename)-4))))
+       ) {
       initbook(&books[bookcount]);			
       strncpy((char*)books[bookcount].filename,(char*)filename,32);
-      FILE *fp = fopen((char *)filename,"r");
-      if(fp) {
-	XML_Parser p = XML_ParserCreate(NULL);
-	XML_UseParserAsHandlerArg(p);
-	XML_SetElementHandler(p, start_hndl, end_hndl);
-	XML_SetCharacterDataHandler(p, title_hndl);
-	XML_SetProcessingInstructionHandler(p, proc_hndl);
-	while(true) {
-	  XML_Char *filebuf = (char*)XML_GetBuffer(p, BUFSIZE);				
-	  int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
-	  XML_ParseBuffer(p, bytes_read, bytes_read == 0);
-	  if(!bytes_read) break;
-	}
-	XML_ParserFree(p);
-	fclose(fp);
-      }
+      //      searchfortitle(filename);
       bookcount++;
     }
   }
   dirclose(dp);
   sprintf((char*)msg,"[%d books]\n",bookcount);
   tsString(msg);
-#if 0
-  bookcount = 3;
-  bookcurrent = 1;
-  initbook(&books[0]);
-  strcpy((char*)books[0].filename,"jefferson.xhtml");
-  strncpy((char*)books[0].title,"TO THE CITIZENS OF THE SOUTHERN STATES",16);	
-  initbook(&(books[1]));
-  strcpy((char*)books[1].filename,"rhetorica.xhtml");
-  strncpy((char*)books[1].title,"Rhetorica - Aristotle",16);
-  initbook(&(books[2]));
-  strcpy((char*)books[2].filename,"19211-h.xhtml");
-  strncpy((char*)books[2].title,"History of England Vol I",16);
-#endif
-	
+  //  hardwirebooks();
+
   makebrowser();
   browseractive = true;
   drawbrowser();
@@ -476,9 +498,6 @@ int main(void) {
 	fb = screen0;
 	drawblankpages();
 	tsInitPen();
-	sprintf((char *)msg,"[%s]\n",books[bookcurrent].filename);
-	tsString((u8*)msg);
-
 	pagecurrent = 0;
 	pagecount = 0;
 	pageinit(&pages[pagecurrent]);
@@ -490,31 +509,35 @@ int main(void) {
 	XML_SetCharacterDataHandler(p, char_hndl);
 	XML_SetProcessingInstructionHandler(p, proc_hndl);
 			
-	char path[64];	
-	sprintf(path,"/data/%s",books[bookcurrent].filename);
+	char path[64];		
+	sprintf(path,"/%s",books[bookcurrent].filename);
 	struct stat st;
 	stat(path, &st);
+	sprintf((char *)msg,"[%s %ld bytes]\n",
+		books[bookcurrent].filename,
+		st.st_size);
+	tsString((u8*)msg);
+
 	u16 bufsize;
 	if(st.st_size < BUFSIZE) bufsize = (u16)st.st_size;
-	else bufsize = BUFSIZE;
-			
+	else bufsize = BUFSIZE;	
+		
 	FILE *fp = fopen(path,"r");
 	if(!fp) {
 	  sprintf((char *)msg,"[cannot open %s]\n",path);
 	  tsString(msg);
 	  return(-1);
 	}
-				
+	
 	pagecount = 0;
 	pagecurrent = 0;
 	page_t *page = &(pages[pagecurrent]);
 	pageinit(page);
 				
-	XML_Char *filebuf;
-				
-	u16 bytes_read;
+	XML_Char filebuf[BUFSIZE];	
+	int bytes_read;
 	while(true) {
-	  filebuf = (char*)XML_GetBuffer(p, bufsize);				
+	  /* XML_Char *filebuf = (char*)XML_GetBuffer(p, bufsize);
 	  if(!filebuf) {
 	    sprintf((char *)msg,"[allocating %d bytes failed]\n",bufsize);
 	    tsString(msg);
@@ -522,15 +545,17 @@ int main(void) {
 	  }
 	  sprintf((char *)msg,"[%d bytes allocated]\n",bufsize);
 	  tsString(msg);
+	  */
 
-	  bytes_read = fread(filebuf, 1, bufsize, fp);
-					
+	  //	  bytes_read = fread(filebuf, 1, bufsize, fp);
+	  bytes_read = fread(filebuf, 1, BUFSIZE, fp);
+	  
 	  sprintf((char *)msg,"[%d bytes read]\n",bytes_read);
 	  tsString(msg);
-					
+	  
 	  // parse and paginate.
-	  int error = XML_ParseBuffer(p, bytes_read, (bytes_read == 0));
-	  if(error) {
+	  //	  if(XML_ParseBuffer(p, bytes_read, (bytes_read == 0))) {
+	  if(XML_Parse(p, filebuf, bytes_read, (bytes_read == 0))) {
 	    sprintf((char *)msg,"%s\n",XML_ErrorString(XML_GetErrorCode(p)));
 	    tsString(msg);
 	    break;
@@ -538,11 +563,11 @@ int main(void) {
 	    sprintf((char *)msg,"[%d bytes parsed]\n",bytes_read);
 	    tsString(msg);
 	  }
-					
+	  
 	  if(bytes_read == 0) break;
-					
+	  
 	}
-				
+
 	XML_ParserFree(p);
 	fclose(fp);
 
