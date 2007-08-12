@@ -1,27 +1,29 @@
 #if 0
+#include <nds.h>
+#include <stdio.h>
+#include <dswifi9.h>
+#include <dswifi7.h>
+#include "wifi.h"
+#include "font.h"
+
 void wifiInit(void) {  
-  /*	char msg[64];
+  char msg[64];
     Wifi_AccessPoint ap;
     strcpy(ap.ssid,"FNORD");
     ap.ssid_len = 5;
     memset(&(ap.bssid),0,6);
     ap.channel=11;
     Wifi_ConnectAP(&ap,1,0,"37dd5a0741");
-  */
-  /*
+
     wifi7Init(Wifi_Init(WIFIINIT_OPTION_USELED));
     while(!Wifi_CheckInit()) swiWaitForVBlank();
-    //	tsString("[wifi ok]\n");
-    //	else tsString("[wifi not ok]\n");
 
     Wifi_EnableWifi();
     Wifi_AutoConnect();
     unsigned long ip = Wifi_GetIP();
     sprintf(msg,"[ip: %ld]\n",ip);
     tsString(msg);
-  */
 
-  /*
     { // send fifo message to initialize the arm7 wifi
     REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR; // enable & clear FIFO
 		
@@ -32,14 +34,14 @@ void wifiInit(void) {
     *((volatile u16 *)0x0400010E) = 0; // disable timer3
 		
     //		irqInit(); 
-    //		irqSet(IRQ_TIMER3, Timer_50ms); // setup timer IRQ
-    //		irqEnable(IRQ_TIMER3);
-    //		irqSet(IRQ_FIFO_NOT_EMPTY, arm9_fifo); // setup fifo IRQ
-    //		irqEnable(IRQ_FIFO_NOT_EMPTY);
+    //    		irqSet(IRQ_TIMER3, Timer_50ms); // setup timer IRQ
+    		irqEnable(IRQ_TIMER3);
+    		irqSet(IRQ_FIFO_NOT_EMPTY, arm9_fifo); // setup fifo IRQ
+    		irqEnable(IRQ_FIFO_NOT_EMPTY);
    	
     REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ; // enable FIFO IRQ
    	
-    //		Wifi_SetSyncHandler(arm9_synctoarm7); // tell wifi lib to use our handler to notify arm7
+    		Wifi_SetSyncHandler(arm9_synctoarm7); // tell wifi lib to use our handler to notify arm7
 
     // set timer3
     *((volatile u16 *)0x0400010C) = -6553; // 6553.1 * 256 cycles = ~50ms;
@@ -70,6 +72,6 @@ void wifiInit(void) {
     }
     }
     } // if connected, you can now use the berkley sockets interface to connect to the internet!
-  */
 }
 #endif
+

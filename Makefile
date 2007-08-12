@@ -1,144 +1,62 @@
-#-----------------------------------------------------------------------
+#---------------------------------------------------------------------------------
 .SUFFIXES:
-#-----------------------------------------------------------------------
-
+#---------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM)
 endif
 
 include $(DEVKITARM)/ds_rules
 
-#-----------------------------------------------------------------------
-# TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
-# SOURCES is a list of directories containing source code
-# INCLUDES is a list of directories containing extra header files
-#-----------------------------------------------------------------------
-TARGET		:=	$(shell basename $(CURDIR))
-BUILD		:=	build
-SOURCES		:=	gfx source data 
-INCLUDES	:=	include build
+export TARGET		:=	$(shell basename $(CURDIR))
+export TOPDIR		:=	$(CURDIR)
 
-#-----------------------------------------------------------------------
-# options for code generation
-#-----------------------------------------------------------------------
-ARCH	:=	-mthumb -mthumb-interwork
 
-# note: arm9tdmi isn't the correct CPU arch, but anything newer and LD
-# *insists* it has a FPU or VFP, and it won't take no for an answer!
-CFLAGS	:=	-g -Wformat=2 -Wall -Winline -O2 \
-		-mcpu=arm9tdmi -mtune=arm9tdmi \
-		-fomit-frame-pointer \
-		-ffast-math \
-		$(ARCH)
+#---------------------------------------------------------------------------------
+# path to tools - this can be deleted if you set the path in windows
+#---------------------------------------------------------------------------------
+export PATH		:=	$(DEVKITARM)/bin:$(PATH)
 
-CFLAGS	+=	$(INCLUDE) -DARM9 -I$(HOME)/nds/local/include/freetype2
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
+.PHONY: $(TARGET).arm7 $(TARGET).arm9
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
+#---------------------------------------------------------------------------------
+# main targets
+#---------------------------------------------------------------------------------
+all: $(TARGET).ds.gba
 
-#-----------------------------------------------------------------------
-# any extra libraries we wish to link with the project
-#-----------------------------------------------------------------------
-LIBS	:= -lexpat -lfreetype -lfat -lnds9
+$(TARGET).ds.gba	: $(TARGET).nds
 
-#-----------------------------------------------------------------------
-# list of directories containing libraries, this must be the top level containing
-# include and lib
-#-----------------------------------------------------------------------
-LIBDIRS	:=	 $(LIBNDS) $(HOME)/nds/local $(HOME)/nds/freetype2
+#---------------------------------------------------------------------------------
+$(TARGET).nds	:	$(TARGET).arm7 $(TARGET).arm9
+	ndstool	-c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
 
-#-----------------------------------------------------------------------
-# no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
-#-----------------------------------------------------------------------
-ifneq ($(BUILD),$(notdir $(CURDIR)))
-#-----------------------------------------------------------------------
+#---------------------------------------------------------------------------------
+$(TARGET).arm7	: arm7/$(TARGET).elf
+$(TARGET).arm9	: arm9/$(TARGET).elf
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+#---------------------------------------------------------------------------------
+arm7/$(TARGET).elf:
+	$(MAKE) -C arm7
 
-export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
-export DEPSDIR	:=	$(CURDIR)/$(BUILD)
+#---------------------------------------------------------------------------------
+arm9/$(TARGET).elf:
+	$(MAKE) -C arm9
 
-CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
-CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
-BINFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.bin)))
-
-#-----------------------------------------------------------------------
-# use CXX for linking C++ projects, CC for standard C
-#-----------------------------------------------------------------------
-ifeq ($(strip $(CPPFILES)),)
-#-----------------------------------------------------------------------
-	export LD	:=	$(CC)
-#-----------------------------------------------------------------------
-else
-#-----------------------------------------------------------------------
-	export LD	:=	$(CXX)
-#-----------------------------------------------------------------------
-endif
-#-----------------------------------------------------------------------
-
-export OFILES	:=	$(BINFILES:.bin=.o) \
-			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
-
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/lib) \
-			-I$(CURDIR)/$(BUILD)
-
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
-
-.PHONY: $(BUILD) export dldi
-
-all: $(BUILD)
-#-----------------------------------------------------------------------
-$(BUILD):
-	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-
-#-----------------------------------------------------------------------
+#---------------------------------------------------------------------------------
 clean:
-	@echo clean ...
-	@rm -fr $(BUILD)
-	@rm -fr $(TARGET).elf $(TARGET).nds $(TARGET).arm9 $(TARGET).ds.gba 
-	@rm -fr $(TARGET).r4ds.nds
+	$(MAKE) -C arm9 clean
+	$(MAKE) -C arm7 clean
+	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).r4ds.nds
 
-$(TARGET).r4ds.nds:	dslibris.nds
+test: $(TARGET).nds
+	desmume-cli $(TARGET).nds
+
+$(TARGET).r4ds.nds: $(TARGET).nds
 	cp dslibris.nds dslibris.r4ds.nds
 	dlditool R4tf.dldi dslibris.r4ds.nds
 
-dldi: dslibris.r4ds.nds
+smb: $(TARGET).r4ds.nds
+	 smbclient \\\\asherah\\e fnord... -c 'put dslibris.r4ds.nds'
 
 install: $(TARGET).r4ds.nds
-	cp $(TARGET).r4ds.nds export
+	cp $(TARGET).r4ds.nds /media/Kingston
 	sync
-
-test: all
-	desmume-cli $(TARGET).nds
-
-#-----------------------------------------------------------------------
-else
-
-DEPENDS	:=	$(OFILES:.o=.d)
-
-#-----------------------------------------------------------------------
-# main targets
-#-----------------------------------------------------------------------
-$(OUTPUT).nds	: 	$(OUTPUT).arm9
-$(OUTPUT).arm9	:	$(OUTPUT).elf
-$(OUTPUT).elf	:	$(OFILES)
-
-#-----------------------------------------------------------------------
-%.o	:	%.bin
-#-----------------------------------------------------------------------
-	@echo $(notdir $<)
-	$(bin2o)
-
-
--include $(DEPENDS)
-
-#-----------------------------------------------------------------------------
-endif
-#-----------------------------------------------------------------------------

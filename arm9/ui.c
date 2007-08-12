@@ -4,11 +4,11 @@
 #include "font.h"
 
 void initbutton(button_t *b) {
-  b->origin.x = 0;
-  b->origin.y = 0;
-  b->extent.x = 191;
-  b->extent.y = 32;
-  strcpy(b->text, "");
+  b->origin.x = 4;
+  b->origin.y = 4;
+  b->extent.x = 186;
+  b->extent.y = 28;
+  strcpy((char*)b->text, "");
 }
 
 void labelbutton(button_t *b, char *text) {
@@ -48,6 +48,8 @@ void drawbutton(button_t *b, u16 *fb, int highlight) {
       fb[y*SCREEN_WIDTH + (lr.x-1)] = color;
     }
   }
+  tsGetPen(&x,&y);
   tsSetPen(ul.x+10, ul.y + tsGetHeight());
   tsString(b->text);
+  tsSetPen(x,y);
 }

@@ -32,7 +32,7 @@ void tsInitPen(void) {
 
 int tsInitDefault(void) {
   if(FT_Init_FreeType(&library)) return 15;
-  if(FT_New_Face(library, "frutiger.ttf", 0, &face)) return 31;
+  if(FT_New_Face(library, "data/frutiger.ttf", 0, &face)) return 31;
   FT_Select_Charmap(face, FT_ENCODING_UNICODE);
   FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
 		
@@ -51,10 +51,10 @@ int tsInitDefault(void) {
     dst->bitmap.rows = src->bitmap.rows;
     dst->bitmap.width = src->bitmap.width;
     dst->bitmap_top = src->bitmap_top;
-    dst->bitmap_left = src->bitmap_left;	
+    dst->bitmap_left = src->bitmap_left;
     dst->advance = src->advance;
   }
-	
+  
   tsInitPen();
   return(0);
 }

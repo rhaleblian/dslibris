@@ -1,2 +1,0 @@
-copy dslibris.nds e:\
-
