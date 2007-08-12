@@ -104,7 +104,7 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD)
-	@rm -fr $(TARGET).elf $(TARGET).nds $(TARGET).arm9
+	@rm -fr $(TARGET).arm9.elf $(TARGET).arm9
 
 #-----------------------------------------------------------------------
 else
