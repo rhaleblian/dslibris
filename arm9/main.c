@@ -1,4 +1,6 @@
+/* $Id$ */
 /* dslibris - an ebook reader for Nintendo DS */
+/* $Log$ */
 
 #include <nds.h>
 #include <fat.h>
@@ -12,14 +14,16 @@
 #include <errno.h>
 
 #include "../../local/include/expat.h"
-#include "main.h"
-#include "font.h"
-#include "ui.h"
-
+#include "stupidWifiDebug.h"
 #include "debug_tcp.h"
 #include "debug_stub.h"
 
-#define BUFSIZE 1024*32
+#include "main.h"
+#include "font.h"
+#include "ui.h"
+#include "wifi.h"
+
+#define BUFSIZE 1024
 #define PAGEBUFSIZE 4096
 #define MAXPAGES 2048
 #define MAXBOOKS 8
@@ -74,14 +78,18 @@ u16 pagecurrent;
 typedef enum {NONE,HTML,HEAD,TITLE,BODY} context_t;
 context_t context;
 
-/*struct parsedata {
+#if 0
+struct parsedata {
   context_t context;
   FT_Vector pen;
   page_t *page;
   u8 *pagebuf;
-  };*/
+};
+#endif
 
 button_t buttons[16];
+
+/*---------------------------------------------------------------------------*/
 
 void initbook(book_t *book) {
   strcpy((char *)book->filename,"");
@@ -91,73 +99,6 @@ void initbook(book_t *book) {
 void pageinit(page_t *page) {
   page->length = 0;
   page->buf = NULL;
-}
-
-void drawsolid(int r, int g, int b) {
-  u16 color = RGB15(r,g,b) | BIT(15);
-  int i;
-  for(i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++) fb[i] =color;
-}
-
-void drawmargins(void) {
-  int x, y;
-  u16 color = RGB15(30,30,30) | BIT(15);
-  for(y=0;y<PAGE_HEIGHT;y++) {
-    fb[y*PAGE_HEIGHT + MARGINLEFT] = color;
-    fb[y*PAGE_HEIGHT + PAGE_WIDTH-MARGINRIGHT] = color;
-  }
-  for(x=0;x<PAGE_HEIGHT;x++) {
-    fb[MARGINTOP*PAGE_HEIGHT + x] = color;
-    fb[(PAGE_HEIGHT-MARGINBOTTOM)*PAGE_HEIGHT + x] = color;
-  }
-}
-
-void drawblankpages(void) {
-  u16 *savefb = fb;
-  fb = screen0;
-  drawsolid(31,31,31);
-  fb = screen1;
-  drawsolid(31,31,31);
-  fb = savefb;
-}
-
-u8 getjustifyspacing(page_t *page, u16 i) {
-  // full justification. get line advance, count spaces,
-  // and insert more space in spaces to reach margin.
-  // returns amount of space to add per-character.
-
-  u8 spaces = 0;
-  u8 advance = 0;
-  u8 j,k;
-
-  // walk through leading spaces
-  for(j=i;j<page->length && page->buf[j]==' ';j++);
-
-  // find the end of line
-  for(j=i;j<page->length && page->buf[j]!='\n';j++) {
-    u16 c = page->buf[j];
-    advance += tsAdvance(c);
-    
-    if(page->buf[j] == ' ') spaces++;
-  }
-  
-  // walk back through trailing spaces
-  for(k=j;k>0 && page->buf[k]==' ';k--) spaces--;
-
-  if(spaces) 
-    return((u8)((float)((PAGE_WIDTH-MARGINRIGHT-MARGINLEFT) - advance) 
-		 / (float)spaces));
-  else return(0);
-}
-
-void drawbrowser(void) {
-  fb = screen1;
-  drawsolid(31,31,31);
-  u8 i;
-  for(i=0;i<bookcount;i++) {
-    if(i==bookcurrent) drawbutton(&buttons[i],fb,1);
-    else drawbutton(&buttons[i],fb,0);
-  }
 }
 
 bool iswhitespace(u8 c) {
@@ -172,6 +113,35 @@ bool iswhitespace(u8 c) {
     return false;
     break;
   }
+}
+
+u8 getjustifyspacing(page_t *page, u16 i) {
+  /** full justification. get line advance, count spaces,
+      and insert more space in spaces to reach margin.
+      returns amount of space to add per-character. **/
+
+  u8 spaces = 0;
+  u8 advance = 0;
+  u8 j,k;
+
+  /* walk through leading spaces */
+  for(j=i;j<page->length && page->buf[j]==' ';j++);
+
+  /* find the end of line */
+  for(j=i;j<page->length && page->buf[j]!='\n';j++) {
+    u16 c = page->buf[j];
+    advance += tsAdvance(c);
+    
+    if(page->buf[j] == ' ') spaces++;
+  }
+  
+  /* walk back through trailing spaces */
+  for(k=j;k>0 && page->buf[k]==' ';k--) spaces--;
+
+  if(spaces) 
+    return((u8)((float)((PAGE_WIDTH-MARGINRIGHT-MARGINLEFT) - advance) 
+		 / (float)spaces));
+  else return(0);
 }
 
 void default_hndl(void *data, const char *s, int len) {
@@ -355,6 +325,11 @@ void makebrowser(void) {
 
 void writebookpositions(void) {
   FILE *savefile = fopen("dslibris.ini","w");
+  if(!savefile) {
+    tsInitPen();
+    tsString((u8*)"savefile failed");
+    return;
+  }
   u8 i;
   for(i=0;i<bookcount;i++) {
     if(i == bookcurrent)
@@ -427,6 +402,83 @@ void hardwirebooks(void) {
   strncpy((char*)books[2].title,"History of England Vol I",16);
 }
 
+u8 bookparse(XML_Parser p, char *filebuf) {
+  char path[64];
+  sprintf(path,"data/%s",books[bookcurrent].filename);
+  printf(path);
+  printf("\n");
+  FILE *fp = fopen(path,"r");
+  if(!fp) {
+    sprintf((char *)msg,"[cannot open %s]\n",path);
+    tsString(msg);
+    return(-1);
+  }
+
+  XML_ParserReset(p,NULL);
+  XML_UseParserAsHandlerArg(p);
+  XML_SetElementHandler(p, start_hndl, end_hndl);
+  XML_SetCharacterDataHandler(p, char_hndl);
+  XML_SetProcessingInstructionHandler(p, proc_hndl);
+
+  printf("begin parse\n");
+
+  //  while(true) swiWaitForVBlank();
+
+  enum XML_Status status;
+  while(true) {
+    int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
+    status = XML_Parse(p, filebuf, bytes_read, (bytes_read == 0));
+    if(status == XML_STATUS_ERROR) {
+      printerror(p);
+      break;
+    }
+    if(bytes_read == 0) break;
+  }
+  
+  printf("end parse\n");
+
+  fclose(fp);
+  return(0);
+}
+
+void drawsolid(int r, int g, int b) {
+  u16 color = RGB15(r,g,b) | BIT(15);
+  int i;
+  for(i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++) fb[i] =color;
+}
+
+void drawmargins(void) {
+  int x, y;
+  u16 color = RGB15(30,30,30) | BIT(15);
+  for(y=0;y<PAGE_HEIGHT;y++) {
+    fb[y*PAGE_HEIGHT + MARGINLEFT] = color;
+    fb[y*PAGE_HEIGHT + PAGE_WIDTH-MARGINRIGHT] = color;
+  }
+  for(x=0;x<PAGE_HEIGHT;x++) {
+    fb[MARGINTOP*PAGE_HEIGHT + x] = color;
+    fb[(PAGE_HEIGHT-MARGINBOTTOM)*PAGE_HEIGHT + x] = color;
+  }
+}
+
+void drawblankpages(void) {
+  u16 *savefb = fb;
+  fb = screen0;
+  drawsolid(31,31,31);
+  fb = screen1;
+  drawsolid(31,31,31);
+  fb = savefb;
+}
+
+void drawbrowser(void) {
+  fb = screen1;
+  drawsolid(31,31,31);
+  u8 i;
+  for(i=0;i<bookcount;i++) {
+    if(i==bookcurrent) drawbutton(&buttons[i],fb,1);
+    else drawbutton(&buttons[i],fb,0);
+  }
+}
+
 void drawpages(page_t *page) {
   drawblankpages();
   fb = screen0;
@@ -440,14 +492,16 @@ void drawpages(page_t *page) {
       tsChar(c);
     }
   }
-  //  writebookpositions();
 }
 
 int main(void) {
   bool browseractive = false;
-	
+  char filebuf[BUFSIZE];
+
   powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
+  defaultExceptionHandler();
   irqInit();
+
 #if 0
   /** wifi debugging **/
   {
@@ -461,44 +515,37 @@ int main(void) {
     }
   }
 
-  //  debugHalt();
+  debugHalt();
 #endif
+  
   irqEnable(IRQ_VBLANK);
 
-  /** rotation for both screens **/
-  s16 s = SIN[-128 & 0x1FF] >> 4;
-  s16 c = COS[-128 & 0x1FF] >> 4;
+  /** bring up the startup console **/
 
-  BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-  BG3_XDX = c;
-  BG3_XDY = -s;
-  BG3_YDX = s;
-  BG3_YDY = c;
-  BG3_CX = 0 << 8;
-  BG3_CY = 256 << 8;
-  
-  BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-  SUB_BG3_XDX = c;
-  SUB_BG3_XDY = -s;
-  SUB_BG3_YDX = s;
-  SUB_BG3_YDY = c;
-  SUB_BG3_CX = 0 << 8;
-  SUB_BG3_CY = 256 << 8;
-  
-  videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-  videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-  vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-  vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+  videoSetMode(0);	//not using the main screen
+  videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	
+  //sub bg 0 will be used to print text
+  vramSetBankC(VRAM_C_SUB_BG);
+  SUB_BG0_CR = BG_MAP_BASE(31);
+  {
+    u32 i;
+    for(i=0;i<256;i++)
+      BG_PALETTE_SUB[i] = RGB15(0,0,0);
+  }
+  BG_PALETTE_SUB[255] = RGB15(15,31,15);
+  //by default font will be rendered with color 255
 
-  screen1 = (u16*)BG_BMP_RAM(0);
-  screen0 = (u16*)BG_BMP_RAM_SUB(0);
-  drawblankpages();
-  fb = screen0;
+  consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31), (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
+  printf("console        [OK]\n");
 
   fatInitDefault();
+  printf("filesystem     [OK]\n");
+
   tsInitDefault();
-  tsString((u8*)"[welcome to dslibris]\n");
-  swiWaitForVBlank();
+  printf("typesetter     [OK]\n");
+
+  //  wifiInit();
+  //  printf("wifi           [OK]\n");
 
   bookcount = 0;
   bookcurrent = 0;
@@ -525,75 +572,81 @@ int main(void) {
     }
   }
   dirclose(dp);
-
-  sprintf((char*)msg,"[found %d books]\n",bookcount);
-  tsString(msg);
+  printf("book library   [OK]\n");
   swiWaitForVBlank();
 
-  browseractive = true;
+  XML_Parser p = XML_ParserCreate(NULL);
+  printf("XML parser     [OK]\n");
+
+  /*  
+  bookcurrent = 0;
+  bookparse(p,filebuf);
+  printf("test parse     [OK]\n");
+  */
+
+
+  /** initialize the book view. **/
+
+  /** rotation for both screens **/
+  s16 s = SIN[-128 & 0x1FF] >> 4;
+  s16 c = COS[-128 & 0x1FF] >> 4;
+
+  BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+  BG3_XDX = c;
+  BG3_XDY = -s;
+  BG3_YDX = s;
+  BG3_YDY = c;
+  BG3_CX = 0 << 8;
+  BG3_CY = 256 << 8;
+  
+  BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+  SUB_BG3_XDX = c;
+  SUB_BG3_XDY = -s;
+  SUB_BG3_YDX = s;
+  SUB_BG3_YDY = c;
+  SUB_BG3_CX = 0 << 8;
+  SUB_BG3_CY = 256 << 8;
+  
+  videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+  videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+  vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
+  vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+  screen1 = (u16*)BG_BMP_RAM(0);
+  screen0 = (u16*)BG_BMP_RAM_SUB(0);
+  drawblankpages();
+  fb = screen0;
+
   makebrowser();
   drawbrowser();
   fb = screen0;
   swiWaitForVBlank();
-
-  //  while(true);
-
-  XML_Parser p = XML_ParserCreate(NULL);
-
-  while(true) {
+  browseractive = true;
+  
+  while(true) {    
     scanKeys();
- 
+
     if(browseractive) {
-		
+      
       if(keysDown() & KEY_A) {
 	/** parse the selected book. **/
 
 	swiWaitForVBlank();
 	drawblankpages();
-	swiWaitForVBlank();
 
-	char path[64];		
-	sprintf(path,"data/%s",books[bookcurrent].filename);
-	FILE *fp = fopen(path,"r");
-	if(!fp) {
-	  sprintf((char *)msg,"[cannot open %s]\n",path);
-	  tsString(msg);
-	} else {
-	  pagecount = 0;
-	  pagecurrent = 0;
-	  page_t *page = &(pages[pagecurrent]);
-	  pageinit(page);
+	pagecount = 0;
+	pagecurrent = 0;
+	page_t *page = &(pages[pagecurrent]);
+	pageinit(page);
 
-	  XML_ParserReset(p,NULL);
-	  XML_UseParserAsHandlerArg(p);
-	  XML_SetElementHandler(p, start_hndl, end_hndl);
-	  XML_SetCharacterDataHandler(p, char_hndl);
-	  XML_SetProcessingInstructionHandler(p, proc_hndl);
+	bookparse(p, filebuf);
 
-	  char filebuf[BUFSIZE];
-	  enum XML_Status status;
-	  while(true) {
-	    int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
-	    status = XML_Parse(p, filebuf, bytes_read, (bytes_read == 0));
-	    if(status == XML_STATUS_ERROR) {
-	      printerror(p);
-	      break;
-	    }
-	    if(bytes_read == 0) break;
-	  }
+	fb = screen0;
+	tsInitPen();
 
-	  fclose(fp);
-
-	  drawblankpages();
-	  fb = screen0;
-	  tsInitPen();
-
-	  pagecurrent = 0;
-	  //	  readbookposition();
-	  page = &(pages[pagecurrent]);
-	  drawpages(page);
-	  browseractive = false;
-	}
+	pagecurrent = 0;
+	page = &(pages[pagecurrent]);
+	drawpages(page);
+	browseractive = false;
       }
       
       if(keysDown() & KEY_B) {
@@ -616,6 +669,11 @@ int main(void) {
 	  fb = screen0;
 	}
       }
+
+      if(keysDown() & KEY_SELECT) {
+	browseractive = false;
+	drawpages(&(pages[pagecurrent]));
+      }
       
     } else {
       
@@ -632,24 +690,58 @@ int main(void) {
 	  drawpages(&pages[pagecurrent]);
 	}
       }
-			
-      if(keysDown() & KEY_Y) {
+
+      if(keysDown() & KEY_X) {
+	writebookpositions();
+      }
+
+      if(keysDown() & KEY_SELECT) {
 	browseractive = true;
 	drawbrowser();
 	fb = screen0;
       }
-			
-      if(keysDown() & KEY_X) {
-	drawblankpages();
-      }
 
-      if(keysDown() & KEY_START) {
+      if(keysDown() & KEY_START) {	
+	swiSoftReset();
+      }
+    }
+      swiWaitForVBlank();
+  }
+
+  XML_ParserFree(p);
+  exit(0);
+}
+
+
+
+
+#if 0
+  {
+    int initdata = Wifi_Init(NULL);
+    tsString((u8*)"[wifi: arm9 initialized]\n");
+    while(!Wifi_CheckInit());
+    tsString((u8*)"[wifi: arm7 initialized]\n");
+    Wifi_EnableWifi();
+    Wifi_SetChannel(11);
+    Wifi_AccessPoint *apmatch;
+    Wifi_AccessPoint apdata;
+    Wifi_AutoConnect();
+    while(true) {
+      int status = Wifi_AssocStatus();
+      if(status == ASSOCSTATUS_ASSOCIATED) {
+	tsString("[connected]\n");
+	break;
+      }
+      if(status == ASSOCSTATUS_CANNOTCONNECT) {
+	tsString("[cannot connect]\n"); 
 	break;
       }
     }
-    swiWaitForVBlank();
-  }
+    int addr = Wifi_GetIP();
+    sprintf(msg,"[ip: %d\n]",addr);
+    tsString(msg);
 
-  swiSoftReset();
-  exit(0);
-}
+    stupidWifiDebugSendInt(1);
+    stupidWifiDebugSendString("hello\n",6);
+  }
+#endif

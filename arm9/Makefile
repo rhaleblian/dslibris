@@ -28,8 +28,8 @@ ARCH	:=	-mthumb -mthumb-interwork
 # note: arm9tdmi isn't the correct CPU arch, but anything newer and LD
 # *insists* it has a FPU or VFP, and it won't take no for an answer!
 CFLAGS	:=	-g -Wall -O2 \
-#		-mcpu=arm968e-s -mtune=arm968e-s \
-		-mcpu=arm7tdmi -mtune=arm9tdmi \
+		-mcpu=arm968e-s -mtune=arm968e-s \
+#		-mcpu=arm7tdmi -mtune=arm9tdmi \
 		-fomit-frame-pointer \
 		-ffast-math \
 		$(ARCH)
