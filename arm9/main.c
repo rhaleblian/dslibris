@@ -1,6 +1,11 @@
-/* $Id$ */
-/* dslibris - an ebook reader for Nintendo DS */
-/* $Log$ */
+/* $Id: main.c,v 1.2 2007/08/13 04:26:03 rhaleblian Exp $
+   dslibris - an ebook reader for Nintendo DS
+   $Log: main.c,v $
+   Revision 1.2  2007/08/13 04:26:03  rhaleblian
+   Suppressed arm7 code, which causes memory and pc stomping.
+   Added banner logo and title.
+   START reveals book list.
+*/
 
 #include <nds.h>
 #include <fat.h>
@@ -24,7 +29,7 @@
 #include "wifi.h"
 
 #define BUFSIZE 1024
-#define PAGEBUFSIZE 4096
+#define PAGEBUFSIZE 2048
 #define MAXPAGES 2048
 #define MAXBOOKS 8
 
@@ -177,26 +182,13 @@ void char_hndl(void *data, const char *txt, int txtlen) {
   if(page->length == 0) {
     linebegan = false;
     ppen.x = MARGINLEFT;
-    ppen.y = MARGINTOP + tsGetHeight();  }
+    ppen.y = MARGINTOP + tsGetHeight();  
+  }
   
   while(i<txtlen) {
+
     if(txt[i] == '\r') {
       i++;
-      
-    } else if(txt[i] > 0xc2 && txt[i] < 0xe0) {
-      pagebuf[page->length] = '_';
-      page->length++;
-      i+=2;
-      
-    } else if(txt[i] > 0xdf && txt[i] < 0xf0) {
-      pagebuf[page->length] = '_';
-      page->length++;
-      i+=3;
-      
-    } else if(txt[i] > 0xef) {
-      pagebuf[page->length] = '_';
-      page->length++;
-      i+=4;
       
     } else if(iswhitespace(txt[i])) {
       if(linebegan) {
@@ -206,6 +198,24 @@ void char_hndl(void *data, const char *txt, int txtlen) {
       }
       i++;
 
+    } else if(txt[i] > 0xc2 && txt[i] < 0xe0) {
+      pagebuf[page->length] = '*';
+      page->length++;
+      ppen.x += tsAdvance((u16)'*');
+      i+=2;
+      
+    } else if(txt[i] > 0xdf && txt[i] < 0xf0) {
+      pagebuf[page->length] = '*';
+      page->length++;
+      ppen.x += tsAdvance((u16)'*');
+      i+=3;
+      
+    } else if(txt[i] > 0xef) {
+      pagebuf[page->length] = '*';
+      page->length++;
+      ppen.x += tsAdvance((u16)'*');
+      i+=4;
+      
     } else {
       linebegan = true;
       int j;
@@ -226,10 +236,10 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 	  /** we are at the end of one of the facing pages. **/
 	  if(fb == screen1) {
 	    if(!page->buf) {
-	      page->buf = malloc(page->length * sizeof(char));
+	      page->buf = malloc(page->length * sizeof(u8));
 	      if(!page->buf) tsString((u8*)"[alloc error]\n");
 	    }
-	    strncpy((char*)page->buf,(char*)pagebuf,page->length);
+	    memcpy(page->buf,pagebuf,page->length * sizeof(u8));
 	    page++;
 	    pageinit(page);
 	    fb = screen0;
@@ -323,12 +333,12 @@ void makebrowser(void) {
   }
 }
 
-void writebookpositions(void) {
-  FILE *savefile = fopen("dslibris.ini","w");
+bool writebookpositions(void) {
+  FILE *savefile = fopen("dslibris.ini","wb");
   if(!savefile) {
     tsInitPen();
-    tsString((u8*)"savefile failed");
-    return;
+    tsString((u8*)"cannot write file");
+    return(false);
   }
   u8 i;
   for(i=0;i<bookcount;i++) {
@@ -338,21 +348,21 @@ void writebookpositions(void) {
       fprintf(savefile,"%s 0\n",books[i].filename);
   }
   fclose(savefile);
+  return(true);
 }
 
 void readbookposition(void) {
   FILE *savefile = fopen("dslibris.ini","r");
-  if(savefile) {
-    int pagesave;
-    char filename[64];
-    while(!feof(savefile)) {      
-      fscanf(savefile, "%s %d\n", filename, &pagesave);
-      if(!stricmp(filename,(char*)(books[bookcurrent].filename))) {
-	pagecurrent = (u16)pagesave;
-      }
+  if(!savefile) return;
+  int pagesave;
+  char filename[64];
+  while(!feof(savefile)) {      
+    fscanf(savefile, "%s %d\n", filename, &pagesave);
+    if(!stricmp(filename,(char*)(books[bookcurrent].filename))) {
+      pagecurrent = (u16)pagesave;
     }
-    fclose(savefile);
   }
+  fclose(savefile);
 }
 
 void searchfortitle(u8 *filename) {
@@ -492,6 +502,11 @@ void drawpages(page_t *page) {
       tsChar(c);
     }
   }
+
+  fb = screen0;
+  tsSetPen(MARGINLEFT,250);
+  sprintf((char*)msg,"<%d>",pagecurrent+1);
+  tsString(msg);
 }
 
 int main(void) {
@@ -691,8 +706,12 @@ int main(void) {
 	}
       }
 
-      if(keysDown() & KEY_X) {
-	writebookpositions();
+      if(keysDown() & KEY_RIGHT) {
+	if(writebookpositions() == true) {
+	  drawsolid(15,31,15);
+	} else {
+	  drawsolid(31,15,15);
+	}
       }
 
       if(keysDown() & KEY_SELECT) {
@@ -701,7 +720,7 @@ int main(void) {
 	fb = screen0;
       }
 
-      if(keysDown() & KEY_START) {	
+      if(keysDown() & KEY_START) {
 	swiSoftReset();
       }
     }

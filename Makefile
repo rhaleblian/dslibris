@@ -27,8 +27,7 @@ $(TARGET).ds.gba	: $(TARGET).nds
 
 #---------------------------------------------------------------------------------
 $(TARGET).nds	:	$(TARGET).arm7 $(TARGET).arm9
-	#ndstool	-c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
-	ndstool -b data/logo.bmp "dslibris;an ebook reader;by plateOfShrimp" -c $(TARGET).nds -9 arm9/$(TARGET).arm9
+	ndstool -b data/logo.bmp "dslibris;an ebook reader;" -c $(TARGET).nds -9 arm9/$(TARGET).arm9
 
 #---------------------------------------------------------------------------------
 $(TARGET).arm7	: arm7/$(TARGET).elf
@@ -58,6 +57,6 @@ $(TARGET).r4ds.nds: $(TARGET).nds
 smb: $(TARGET).r4ds.nds
 	 smbclient \\\\asherah\\e fnord... -c 'put dslibris.r4ds.nds'
 
-install: $(TARGET).r4ds.nds
+usb: $(TARGET).r4ds.nds
 	cp $(TARGET).r4ds.nds /media/Kingston
 	sync
