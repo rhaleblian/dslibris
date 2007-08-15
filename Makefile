@@ -27,7 +27,7 @@ $(TARGET).ds.gba	: $(TARGET).nds
 
 #---------------------------------------------------------------------------------
 $(TARGET).nds	:	$(TARGET).arm7 $(TARGET).arm9
-	ndstool -b data/logo.bmp "dslibris;an ebook reader;" -c $(TARGET).nds -9 arm9/$(TARGET).arm9
+	ndstool -b data/logo.bmp "dslibris;an ebook reader;for the Nintendo DS" -c $(TARGET).nds -9 arm9/$(TARGET).arm9
 
 #---------------------------------------------------------------------------------
 $(TARGET).arm7	: arm7/$(TARGET).elf

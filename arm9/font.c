@@ -3,7 +3,8 @@
 #include "font.h"
 #include "main.h"
 
-#define MAXGLYPHS 128
+#define MAXGLYPHS 512
+#define FONTFILENAME "frutiger.ttf"
 
 extern u16 *fb,*screen0,*screen1;
 
@@ -15,9 +16,9 @@ FT_Error   		error;
 
 // accessors
 
-int tsGetHeight(void) { return (face->size->metrics.height >> 6); }
-void tsGetPen(int *x, int *y) { *x = pen.x; *y = pen.y; }
-void tsSetPen(int x, int y) { pen.x = x; pen.y = y; }
+u8 tsGetHeight(void) { return (face->size->metrics.height >> 6); }
+inline void tsGetPen(u16 *x, u16 *y) { *x = pen.x; *y = pen.y; }
+inline void tsSetPen(u16 x, u16 y) { pen.x = x; pen.y = y; }
 
 // initialization
 
@@ -32,14 +33,14 @@ void tsInitPen(void) {
 
 int tsInitDefault(void) {
   if(FT_Init_FreeType(&library)) return 15;
-  if(FT_New_Face(library, "data/frutiger.ttf", 0, &face)) return 31;
+  if(FT_New_Face(library, FONTFILENAME, 0, &face)) return 31;
   FT_Select_Charmap(face, FT_ENCODING_UNICODE);
   FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
 		
   // cache glyphs. glyphs[] will contain all the bitmaps.
   // using FirstChar() and NextChar() would be more robust.
   // TODO also cache kerning and transformations.
-  int i;
+  u16 i;
   for(i=0;i<MAXGLYPHS;i++) {
     FT_Load_Char(face, i, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
     FT_GlyphSlot src = face->glyph;
@@ -68,16 +69,16 @@ void tsChar(int code) {
   // at the current pen position.
   FT_GlyphSlot glyph = &glyphs[code];
   FT_Bitmap bitmap = glyph->bitmap;
-  int bx = glyph->bitmap_left;
-  int by = glyph->bitmap_top;
-  int gx, gy;
+  u16 bx = glyph->bitmap_left;
+  u16 by = glyph->bitmap_top;
+  u16 gx, gy;
   for(gy=0; gy<bitmap.rows; gy++) {
     for(gx=0; gx<bitmap.width; gx++) {
       /* get antialiased value */
-      int a = bitmap.buffer[gy*bitmap.width+gx];
+      u16 a = bitmap.buffer[gy*bitmap.width+gx];
       if(a) {
-	u8 sx = (pen.x+gx+bx);
-	u8 sy = (pen.y+gy-by);			
+	u16 sx = (pen.x+gx+bx);
+	u16 sy = (pen.y+gy-by);			
 	int l = (255-a) >> 3;
 	fb[sy*SCREEN_WIDTH+sx] = RGB15(l,l,l) | BIT(15);
       }
@@ -101,9 +102,9 @@ int tsStartNewLine(void) {
 
 void tsString(u8 *string) {
   // draw an ASCII string starting at the pen position.
-  int c, i;
+  u8 i;
   for(i=0;i<strlen((char *)string);i++) {
-    c = (int)string[i];
+    u16 c = string[i];
     if(c == '\n') tsStartNewLine();
     else tsChar(c);
   }

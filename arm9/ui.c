@@ -15,13 +15,13 @@ void labelbutton(button_t *b, char *text) {
   strncpy((char*)b->text,(char*)text,63);
 }
 
-void movebutton(button_t *b, int x, int y) {
+void movebutton(button_t *b, u16 x, u16 y) {
   b->origin.x = x;
   b->origin.y = y;
 }
 
-void drawbutton(button_t *b, u16 *fb, int highlight) {
-  int x; int y;
+void drawbutton(button_t *b, u16 *fb, bool highlight) {
+  u16 x; u16 y;
   coord_t ul, lr;
   u16 color = RGB15(15,15,15) | BIT(15);
 

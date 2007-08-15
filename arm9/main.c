@@ -1,6 +1,9 @@
-/* $Id: main.c,v 1.2 2007/08/13 04:26:03 rhaleblian Exp $
+/* $Id: main.c,v 1.3 2007/08/14 05:52:42 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    $Log: main.c,v $
+   Revision 1.3  2007/08/14 05:52:42  rhaleblian
+   small tweaks to ndstool and build rules.
+
    Revision 1.2  2007/08/13 04:26:03  rhaleblian
    Suppressed arm7 code, which causes memory and pc stomping.
    Added banner logo and title.
@@ -263,7 +266,10 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 	  }
 	} else {
 	  linebegan = true;
-	  pagebuf[page->length] = txt[i];
+	  if(txt[i] > 127)
+	    pagebuf[page->length] = '*';
+	  else
+	    pagebuf[page->length] = txt[i];
 	  page->length++;
 	}
       }
@@ -333,36 +339,36 @@ void makebrowser(void) {
   }
 }
 
-bool writebookpositions(void) {
-  FILE *savefile = fopen("dslibris.ini","wb");
-  if(!savefile) {
-    tsInitPen();
-    tsString((u8*)"cannot write file");
-    return(false);
-  }
+void bookwriteposition(void) {
+  book_t *book = &(books[bookcurrent]);
   u8 i;
-  for(i=0;i<bookcount;i++) {
-    if(i == bookcurrent)
-      fprintf(savefile,"%s %d\n",books[i].filename,pagecurrent);
-    else
-      fprintf(savefile,"%s 0\n",books[i].filename);
+  for(i=0;book->filename[i] != '.';i++);
+  char filename[64];
+  strncpy(filename,(char*)(book->filename),i);
+  strcat(filename,".txt");
+  
+  FILE *fp = fopen(filename,"w");
+  if(fp) {
+    fprintf(fp,"%d\n",(int)pagecurrent);
+    fclose(fp);
   }
-  fclose(savefile);
-  return(true);
 }
 
-void readbookposition(void) {
-  FILE *savefile = fopen("dslibris.ini","r");
-  if(!savefile) return;
-  int pagesave;
+void bookreadposition(void) {
+  book_t *book = &(books[bookcurrent]);
+  u8 i;
+  for(i=0;book->filename[i] != '.';i++);
   char filename[64];
-  while(!feof(savefile)) {      
-    fscanf(savefile, "%s %d\n", filename, &pagesave);
-    if(!stricmp(filename,(char*)(books[bookcurrent].filename))) {
-      pagecurrent = (u16)pagesave;
-    }
+  strncpy(filename,(char*)book->filename,(int)i);
+  strcat(filename,".txt");
+
+  FILE *fp = fopen(filename,"rb");
+  if(fp) {
+    int pagesave;
+    fscanf(fp, "%d", &pagesave);
+    pagecurrent = (u16)pagesave;
+    fclose(fp);
   }
-  fclose(savefile);
 }
 
 void searchfortitle(u8 *filename) {
@@ -396,32 +402,16 @@ void printerror(XML_Parser p) {
   tsString(msg);
 }
 
-void hardwirebooks(void) {
-  /** test function to debug book searching. **/
-  bookcount = 3;
-  bookcurrent = 1;
-  initbook(&books[0]);
-  strcpy((char*)books[0].filename,"jefferson.xhtml");
-  strncpy((char*)books[0].title,"TO THE CITIZENS OF THE SOUTHERN STATES",16);
-
-  initbook(&(books[1]));
-  strcpy((char*)books[1].filename,"rhetorica.xhtml");
-  strncpy((char*)books[1].title,"Rhetorica - Aristotle",16);
-  initbook(&(books[2]));
-  strcpy((char*)books[2].filename,"19211-h.xhtml");
-  strncpy((char*)books[2].title,"History of England Vol I",16);
-}
-
 u8 bookparse(XML_Parser p, char *filebuf) {
   char path[64];
-  sprintf(path,"data/%s",books[bookcurrent].filename);
+  sprintf(path,"%s",books[bookcurrent].filename);
   printf(path);
   printf("\n");
   FILE *fp = fopen(path,"r");
   if(!fp) {
     sprintf((char *)msg,"[cannot open %s]\n",path);
     tsString(msg);
-    return(-1);
+    return(1);
   }
 
   XML_ParserReset(p,NULL);
@@ -429,10 +419,6 @@ u8 bookparse(XML_Parser p, char *filebuf) {
   XML_SetElementHandler(p, start_hndl, end_hndl);
   XML_SetCharacterDataHandler(p, char_hndl);
   XML_SetProcessingInstructionHandler(p, proc_hndl);
-
-  printf("begin parse\n");
-
-  //  while(true) swiWaitForVBlank();
 
   enum XML_Status status;
   while(true) {
@@ -445,8 +431,6 @@ u8 bookparse(XML_Parser p, char *filebuf) {
     if(bytes_read == 0) break;
   }
   
-  printf("end parse\n");
-
   fclose(fp);
   return(0);
 }
@@ -484,8 +468,8 @@ void drawbrowser(void) {
   drawsolid(31,31,31);
   u8 i;
   for(i=0;i<bookcount;i++) {
-    if(i==bookcurrent) drawbutton(&buttons[i],fb,1);
-    else drawbutton(&buttons[i],fb,0);
+    if(i==bookcurrent) drawbutton(&buttons[i],fb,true);
+    else drawbutton(&buttons[i],fb,false);
   }
 }
 
@@ -493,13 +477,23 @@ void drawpages(page_t *page) {
   drawblankpages();
   fb = screen0;
   tsInitPen();
-  u16 i;
+  u8 spacing = getjustifyspacing(page,0);
+  u16 i; 
   for(i=0;i<page->length;i++) {
     u16 c = page->buf[i];
     if(c == '\n') {
       tsStartNewLine();
+      if(i < page->length-1) spacing = getjustifyspacing(page,i+1);
     } else {
       tsChar(c);
+#ifdef JUSTIFY
+      if(c == ' ') {
+	u16 x,y;
+	tsGetPen(&x,&y);
+	x += spacing;
+	tsSetPen(x,y);
+      }
+#endif
     }
   }
 
@@ -509,6 +503,23 @@ void drawpages(page_t *page) {
   tsString(msg);
 }
 
+
+#if 0
+void wifiDebugInit(void)
+{
+  /** wifi debugging **/
+  struct tcp_debug_comms_init_data init_data = {
+    .port = 30000
+  };
+  if ( !init_debug( &tcpCommsIf_debug, &init_data)) {
+    iprintf("Failed to initialise the debugger stub - cannot continue\n");
+    drawsolid(31,0,0);
+    while(true) swiWaitForVBlank();
+  }
+}
+#endif
+
+
 int main(void) {
   bool browseractive = false;
   char filebuf[BUFSIZE];
@@ -517,21 +528,8 @@ int main(void) {
   defaultExceptionHandler();
   irqInit();
 
-#if 0
-  /** wifi debugging **/
-  {
-    struct tcp_debug_comms_init_data init_data = {
-      .port = 30000
-    };
-    if ( !init_debug( &tcpCommsIf_debug, &init_data)) {
-      iprintf("Failed to initialise the debugger stub - cannot continue\n");
-      drawsolid(31,0,0);
-      while(1);
-    }
-  }
-
-  debugHalt();
-#endif
+  //  wifiDebugInit();
+  //  debugHalt();
   
   irqEnable(IRQ_VBLANK);
 
@@ -539,6 +537,7 @@ int main(void) {
 
   videoSetMode(0);	//not using the main screen
   videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	
+
   //sub bg 0 will be used to print text
   vramSetBankC(VRAM_C_SUB_BG);
   SUB_BG0_CR = BG_MAP_BASE(31);
@@ -548,26 +547,31 @@ int main(void) {
       BG_PALETTE_SUB[i] = RGB15(0,0,0);
   }
   BG_PALETTE_SUB[255] = RGB15(15,31,15);
-  //by default font will be rendered with color 255
 
   consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31), (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
   printf("console        [OK]\n");
 
-  fatInitDefault();
-  printf("filesystem     [OK]\n");
+  if(!fatInitDefault()) {
+    printf("filesystem   [FAIL]\n");
+    while(true) swiWaitForVBlank();
+  } else
+    printf("filesystem     [OK]\n");
 
-  tsInitDefault();
-  printf("typesetter     [OK]\n");
+  if(tsInitDefault()) {
+    printf("typesetter   [FAIL]\n");
+    while(true) swiWaitForVBlank();
+  } else
+    printf("typesetter     [OK]\n");
 
   //  wifiInit();
   //  printf("wifi           [OK]\n");
 
   bookcount = 0;
   bookcurrent = 0;
- 
+
   /** find books, aka .xht files in data/. **/
   
-  DIR_ITER *dp = diropen("data");
+  DIR_ITER *dp = diropen(".");
   if(!dp) {
     tsString((u8*)"[fatal: did not find data folder]\n");
     swiWaitForVBlank();
@@ -592,13 +596,10 @@ int main(void) {
 
   XML_Parser p = XML_ParserCreate(NULL);
   printf("XML parser     [OK]\n");
+  swiWaitForVBlank();
 
-  /*  
-  bookcurrent = 0;
-  bookparse(p,filebuf);
-  printf("test parse     [OK]\n");
-  */
-
+  u8 i;
+  for(i=0;i<60;i++) swiWaitForVBlank();
 
   /** initialize the book view. **/
 
@@ -630,6 +631,8 @@ int main(void) {
   screen0 = (u16*)BG_BMP_RAM_SUB(0);
   drawblankpages();
   fb = screen0;
+  tsString((u8*)"[welcome to dslibris]\n");
+  swiWaitForVBlank();
 
   makebrowser();
   drawbrowser();
@@ -653,12 +656,13 @@ int main(void) {
 	page_t *page = &(pages[pagecurrent]);
 	pageinit(page);
 
-	bookparse(p, filebuf);
+	if(bookparse(p, filebuf)) break;
 
 	fb = screen0;
 	tsInitPen();
 
 	pagecurrent = 0;
+	bookreadposition();
 	page = &(pages[pagecurrent]);
 	drawpages(page);
 	browseractive = false;
@@ -707,14 +711,11 @@ int main(void) {
       }
 
       if(keysDown() & KEY_RIGHT) {
-	if(writebookpositions() == true) {
-	  drawsolid(15,31,15);
-	} else {
-	  drawsolid(31,15,15);
-	}
+	bookwriteposition();
       }
 
       if(keysDown() & KEY_SELECT) {
+	bookwriteposition();
 	browseractive = true;
 	drawbrowser();
 	fb = screen0;

@@ -5,13 +5,13 @@
 #include FT_FREETYPE_H
 
 u8 tsAdvance(u16 code);
-int	tsInitDefault(void);
-void	tsInitPen(void);
-int  	tsGetHeight(void);
-void	tsGetPen(int *x, int *y);
-void	tsSetPen(int x, int y);
-void	tsChar(int code);
-void	tsString(u8 *string);
-int	tsStartNewLine(void);
+int tsInitDefault(void);
+void tsInitPen(void);
+u8 tsGetHeight(void);
+inline void tsGetPen(u16 *x, u16 *y);
+inline void tsSetPen(u16 x, u16 y);
+void tsChar(int code);
+void tsString(u8 *string);
+int tsStartNewLine(void);
 
 #endif
