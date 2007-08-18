@@ -1,6 +1,9 @@
-/* $Id: main.c,v 1.3 2007/08/14 05:52:42 rhaleblian Exp $
+/* $Id: main.c,v 1.4 2007/08/15 04:59:12 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    $Log: main.c,v $
+   Revision 1.4  2007/08/15 04:59:12  rhaleblian
+   bookmarks barely work. filenames cannot exceed 7 chars.
+
    Revision 1.3  2007/08/14 05:52:42  rhaleblian
    small tweaks to ndstool and build rules.
 
@@ -21,7 +24,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include "../../local/include/expat.h"
+#include "expat.h"
+
 #include "stupidWifiDebug.h"
 #include "debug_tcp.h"
 #include "debug_stub.h"
@@ -373,7 +377,7 @@ void bookreadposition(void) {
 
 void searchfortitle(u8 *filename) {
   char path[64];
-  sprintf(path,"data/%s",filename);
+  sprintf(path,"%s",filename);
   FILE *fp = fopen(path,"r");
   if(fp) {
     XML_Parser p = XML_ParserCreate(NULL);
@@ -586,7 +590,7 @@ int main(void) {
        ) {
       initbook(&books[bookcount]);			
       strncpy((char*)books[bookcount].filename,(char*)filename,32);
-      //      searchfortitle(filename);
+      searchfortitle(filename);
       bookcount++;
     }
   }
