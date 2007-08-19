@@ -50,6 +50,6 @@ void drawbutton(button_t *b, u16 *fb, bool highlight) {
   }
   tsGetPen(&x,&y);
   tsSetPen(ul.x+10, ul.y + tsGetHeight());
-  tsString(b->text);
+  tsString((char*)b->text);
   tsSetPen(x,y);
 }

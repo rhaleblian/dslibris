@@ -3,8 +3,8 @@
 #include "font.h"
 #include "main.h"
 
-#define MAXGLYPHS 512
-#define FONTFILENAME "frutiger.ttf"
+#define MAXGLYPHS 128
+#define FONTFILENAME "dslibris.ttf"
 
 extern u16 *fb,*screen0,*screen1;
 
@@ -62,11 +62,9 @@ int tsInitDefault(void) {
 
 // drawing
 
-void tsChar(int code) {
-  // draw an ASCII character,
-  // with the current glyphs,
-  // into the current buffer,
-  // at the current pen position.
+void tsChar(u16 code) {
+  // draw a character with the current glyph
+  // into the current buffer at the current pen position.
   FT_GlyphSlot glyph = &glyphs[code];
   FT_Bitmap bitmap = glyph->bitmap;
   u16 bx = glyph->bitmap_left;
@@ -100,7 +98,7 @@ int tsStartNewLine(void) {
   return(0);
 }
 
-void tsString(u8 *string) {
+void tsString(char *string) {
   // draw an ASCII string starting at the pen position.
   u8 i;
   for(i=0;i<strlen((char *)string);i++) {

@@ -10,8 +10,8 @@ void tsInitPen(void);
 u8 tsGetHeight(void);
 inline void tsGetPen(u16 *x, u16 *y);
 inline void tsSetPen(u16 x, u16 y);
-void tsChar(int code);
-void tsString(u8 *string);
+void tsChar(u16 code);
+void tsString(char *string);
 int tsStartNewLine(void);
 
 #endif

@@ -45,18 +45,25 @@ arm9/$(TARGET).elf:
 clean:
 	$(MAKE) -C arm9 clean
 	$(MAKE) -C arm7 clean
-	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).r4ds.nds
+	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).r4.nds
 
-test: $(TARGET).nds
-	desmume-cli $(TARGET).nds
+run: $(TARGET).nds
+	desmume $(TARGET).nds
 
-$(TARGET).r4ds.nds: $(TARGET).nds
-	cp dslibris.nds dslibris.r4ds.nds
-	dlditool R4tf.dldi dslibris.r4ds.nds
+debug: $(TARGET).nds
+	desmume --arm9gdb=20000 $(TARGET).nds
+#	arm-eabi-insight &
 
-smb: $(TARGET).r4ds.nds
-	 smbclient \\\\asherah\\e fnord... -c 'put dslibris.r4ds.nds'
+$(TARGET).r4.nds: $(TARGET).nds
+	cp dslibris.nds dslibris.r4.nds
+	dlditool R4tf.dldi dslibris.r4.nds
 
-usb: $(TARGET).r4ds.nds
-	cp $(TARGET).r4ds.nds /media/Kingston
+smb: $(TARGET).r4.nds
+	 smbclient \\\\asherah\\e fnord... -c 'cd .; put dslibris.r4.nds'
+
+usb: $(TARGET).r4.nds
+	cp $(TARGET).r4.nds /media/Kingston
 	sync
+
+zip: $(TARGET).nds
+	zip dslibris.zip $(TARGET).nds $(TARGET).ttf *.xht
