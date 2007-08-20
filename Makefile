@@ -52,7 +52,6 @@ run: $(TARGET).nds
 
 debug: $(TARGET).nds
 	desmume --arm9gdb=20000 $(TARGET).nds
-#	arm-eabi-insight &
 
 $(TARGET).r4.nds: $(TARGET).nds
 	cp dslibris.nds dslibris.r4.nds

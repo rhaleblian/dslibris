@@ -1,6 +1,9 @@
-/* $Id: main.c,v 1.5 2007/08/18 03:55:09 rhaleblian Exp $
+/* $Id: main.c,v 1.6 2007/08/19 05:31:16 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    $Log: main.c,v $
+   Revision 1.6  2007/08/19 05:31:16  rhaleblian
+   XHTML filenames need to conform to 8.3 to work under Ubuntu.
+
    Revision 1.5  2007/08/18 03:55:09  rhaleblian
    text now renders again. added title search within found books.
 
@@ -98,86 +101,14 @@ void drawblankpages(void);
 void drawbrowser(void);
 void drawpages(page_t *page);
 
+void makebrowser(void);
+void searchfortitle(char *filename);
+void printerror(XML_Parser p);
+u8 bookparse(XML_Parser p, char *filebuf);
+
 void spin(void) { while(true) swiWaitForVBlank(); }
 
 /*---------------------------------------------------------------------------*/
-
-void makebrowser(void) {
-  u8 book;
-  for(book=0;book<bookcount;book++) {
-    initbutton(&buttons[book]);
-    movebutton(&buttons[book],0,book*32);
-    if(strlen((char *)books[book].title))
-      strcpy((char *)buttons[book].text,(char*)books[book].title);
-    else
-      strcpy((char *)buttons[book].text,(char*)books[book].filename);
-  }
-}
-
-void searchfortitle(u8 *filename) {
-  char path[32];
-  strncpy(path,(char*)filename,32);
-  FILE *fp = fopen(path,"r");
-  if(fp) {
-    XML_Parser p = XML_ParserCreate(NULL);
-    XML_UseParserAsHandlerArg(p);
-    XML_SetElementHandler(p, start_hndl, end_hndl);
-    XML_SetCharacterDataHandler(p, title_hndl);
-    XML_SetProcessingInstructionHandler(p, proc_hndl);
-    XML_Char filebuf[BUFSIZE];
-    while(true) {
-      int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
-      if(XML_Parse(p, filebuf, bytes_read,bytes_read == 0)) break;
-      if(!bytes_read) break;
-    }
-    XML_ParserFree(p);
-    fclose(fp);
-  }
-}
-
-void printerror(XML_Parser p) {
-  sprintf(msg,"expat: [%s]\n",XML_ErrorString(XML_GetErrorCode(p)));
-  tsString(msg);
-  sprintf(msg,"expat: [%d:%d] : %d\n",
-	  (int)XML_GetCurrentLineNumber(p),
-	  (int)XML_GetCurrentColumnNumber(p),
-	  (int)XML_GetCurrentByteIndex(p));
-  tsString(msg);
-}
-
-u8 bookparse(XML_Parser p, char *filebuf) {
-  char path[64];
-  sprintf(path,"%s",books[bookcurrent].filename);
-  printf(path);
-  printf("\n");
-  FILE *fp = fopen(path,"r");
-  if(!fp) {
-    sprintf(msg,"[cannot open %s]\n",path);
-    tsString(msg);
-    return(1);
-  }
-
-  XML_ParserReset(p,NULL);
-  XML_UseParserAsHandlerArg(p);
-  XML_SetElementHandler(p, start_hndl, end_hndl);
-  XML_SetCharacterDataHandler(p, char_hndl);
-  XML_SetProcessingInstructionHandler(p, proc_hndl);
-
-  enum XML_Status status;
-  while(true) {
-    int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
-    status = XML_Parse(p, filebuf, bytes_read, (bytes_read == 0));
-    if(status == XML_STATUS_ERROR) {
-      printerror(p);
-      break;
-    }
-    if(bytes_read == 0) break;
-  }
-  
-  fclose(fp);
-  return(0);
-}
-
 
 int main(void) {
   bool browseractive = false;
@@ -208,22 +139,25 @@ int main(void) {
     BG_PALETTE_SUB[255] = RGB15(15,31,15);
   }
   consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31), (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
-  printf("console        [OK]\n");
+  printf("console                    [OK]\n");
 
+  printf("filesystem               ");
   if(!fatInitDefault()) {
-    printf("filesystem   [FAIL]\n");
+    printf("[FAIL]\n");
   } else
-    printf("filesystem     [OK]\n");
+    printf("  [OK]\n");
 
+  printf("typesetter               ");
   if(tsInitDefault()) {
-    printf("typesetter   [FAIL]\n");
+    printf("[FAIL]\n");
   } else
-    printf("typesetter     [OK]\n");
+    printf("  [OK]\n");
   swiWaitForVBlank();
 
 #if WIFI
   wifiInit();
-  printf("wifi           [OK]\n");
+  printf("wifi                     ");
+  printf("  [OK]\n");
 #endif
 
   bookcount = 0;
@@ -231,11 +165,11 @@ int main(void) {
 
   /** assemble library, aka XHTML/XML files in the current directory. **/
   
+  printf("book library             ");
   DIR_ITER *dp = diropen(".");
   if(!dp) {
-    tsString("[fatal: did not find books folder]\n");
-    swiWaitForVBlank();
-    while(true);
+    printf("[FAIL]\n");
+    spin();
   }
   char filename[32];
   while(!dirnext(dp, filename, NULL)) {
@@ -250,11 +184,17 @@ int main(void) {
     }
   }
   dirclose(dp);
-  printf("book library   [OK]\n");
+  printf("  [OK]\n");
   swiWaitForVBlank();
 
+  printf("XML Parser               ");
   XML_Parser p = XML_ParserCreate(NULL);
-  printf("XML parser     [OK]\n");
+  if(p) printf("  [OK]\n");
+  else {
+    printf("[FAIL]\n");
+    spin();
+  }
+  XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
   swiWaitForVBlank();
 
   u8 i;
@@ -291,6 +231,9 @@ int main(void) {
   drawblankpages();
   fb = screen0;
   tsString("[welcome to dslibris]\n");
+  swiWaitForVBlank();
+  tsDump();
+  tsChar(198); /** &AElig; **/
   swiWaitForVBlank();
 
   makebrowser();
@@ -440,6 +383,84 @@ void wifiDebugInit(void)
 }
 #endif
 
+void makebrowser(void) {
+  u8 book;
+  for(book=0;book<bookcount;book++) {
+    initbutton(&buttons[book]);
+    movebutton(&buttons[book],0,book*32);
+    if(strlen((char *)books[book].title))
+      strcpy((char *)buttons[book].text,(char*)books[book].title);
+    else
+      strcpy((char *)buttons[book].text,(char*)books[book].filename);
+  }
+}
+
+void searchfortitle(char *filename) {
+  char path[32];
+  strncpy(path,(char*)filename,32);
+  FILE *fp = fopen(path,"r");
+  if(fp) {
+    XML_Parser p = XML_ParserCreate(NULL);
+    XML_UseParserAsHandlerArg(p);
+    XML_SetElementHandler(p, start_hndl, end_hndl);
+    XML_SetCharacterDataHandler(p, title_hndl);
+    XML_SetProcessingInstructionHandler(p, proc_hndl);
+    XML_Char filebuf[BUFSIZE];
+    while(true) {
+      int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
+      if(XML_Parse(p, filebuf, bytes_read,bytes_read == 0)) break;
+      if(!bytes_read) break;
+    }
+    XML_ParserFree(p);
+    fclose(fp);
+  }
+}
+
+
+void printerror(XML_Parser p) {
+  sprintf(msg,"expat: [%s]\n",XML_ErrorString(XML_GetErrorCode(p)));
+  tsString(msg);
+  sprintf(msg,"expat: [%d:%d] : %d\n",
+	  (int)XML_GetCurrentLineNumber(p),
+	  (int)XML_GetCurrentColumnNumber(p),
+	  (int)XML_GetCurrentByteIndex(p));
+  tsString(msg);
+}
+
+u8 bookparse(XML_Parser p, char *filebuf) {
+  char path[64];
+  sprintf(path,"%s",books[bookcurrent].filename);
+  printf(path);
+  printf("\n");
+  FILE *fp = fopen(path,"r");
+  if(!fp) {
+    sprintf(msg,"[cannot open %s]\n",path);
+    tsString(msg);
+    return(1);
+  }
+
+  XML_ParserReset(p,NULL);
+  XML_UseParserAsHandlerArg(p);
+  XML_SetDefaultHandler(p, default_hndl);
+  XML_SetElementHandler(p, start_hndl, end_hndl);
+  XML_SetCharacterDataHandler(p, char_hndl);
+  XML_SetProcessingInstructionHandler(p, proc_hndl);
+
+  enum XML_Status status;
+  while(true) {
+    int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
+    status = XML_Parse(p, filebuf, bytes_read, (bytes_read == 0));
+    if(status == XML_STATUS_ERROR) {
+      printerror(p);
+      break;
+    }
+    if(bytes_read == 0) break;
+  }
+  
+  fclose(fp);
+  return(0);
+}
+
 
 
 void book_init(book_t *book) {
@@ -526,15 +547,18 @@ void drawpages(page_t *page) {
 #ifdef JUSTIFY
   u8 spacing = getjustifyspacing(page,0);
 #endif
-  u16 i; 
-  for(i=0;i<page->length;i++) {
+  u16 i=0; 
+  while(i<page->length) {
     u16 c = page->buf[i];
     if(c == '\n') {
       tsStartNewLine();
 #ifdef JUSTIFY
       if(i < page->length-1) spacing = getjustifyspacing(page,i+1);
 #endif
+      i++;
     } else {
+      if(c > 127) i+=utf8(&(page->buf[i]),&c);
+      else i++;
       tsChar(c);
 #ifdef JUSTIFY
       if(c == ' ') {
@@ -548,8 +572,7 @@ void drawpages(page_t *page) {
   }
 
   fb = screen1;
-  int offset = (PAGE_WIDTH - MARGINRIGHT - MARGINLEFT)
-    * ((float)pagecurrent / (float)pagecount);
+  int offset = 170 * (pagecurrent / (float)pagecount);
   tsSetPen(MARGINLEFT+offset,250);
   sprintf((char*)msg,"[%d]",pagecurrent+1);
   tsString(msg);
@@ -619,7 +642,33 @@ bool iswhitespace(u8 c) {
   }
 }
 
-void default_hndl(void *data, const char *s, int len) {
+int unknown_hndl(void *encodingHandlerData,
+		 const XML_Char *name,
+		 XML_Encoding *info) {
+  return(XML_STATUS_ERROR);
+}
+
+void default_hndl(void *data, const XML_Char *s, int len) {
+  if(s[0] == '&') {
+    /* an iso-8859-1 character code. if it's numeric, decode. */
+    page_t *page = &(pages[pagecurrent]);
+    int code=0;
+    fscanf(s,"&#%d;",&code);
+    if(code) {
+      if(code>=128 && code<=2047) {
+	pagebuf[page->length++] = 192 + (code/64);
+	pagebuf[page->length++] = 128 + (code%64);
+      }
+	
+      if(code>=2048 && code<=65535) {
+	pagebuf[page->length++] = 224 + (code/4096);
+	pagebuf[page->length++] = 128 + ((code/64)%64);
+	pagebuf[page->length++] = 128 + (code%64);
+      }
+
+      ppen.x += tsAdvance(code);
+    }
+  }
 }  /* End default_hndl */
 
 void start_hndl(void *data, const char *el, const char **attr) {
@@ -640,14 +689,14 @@ void title_hndl(void *data, const char *txt, int txtlen) {
   }
 }
 
-void char_hndl(void *data, const char *txt, int txtlen) {
-  /** flow text on the fly, into page data structure.
-      TODO handle UTF-8, don't simply skip non-ASCII chars! **/
+void char_hndl(void *data, const XML_Char *txt, int txtlen) {
+  /** flow text on the fly, into page data structure. **/
+
   if(context != BODY) return;
 
-  u16 i=0;
+  int i=0;
   u8 advance=0;
-  static bool linebegan;
+  static bool linebegan=false;
   page_t *page = &(pages[pagecurrent]);
 	
   /** starting a new page? **/
@@ -658,10 +707,9 @@ void char_hndl(void *data, const char *txt, int txtlen) {
   }
   
   while(i<txtlen) {
-
     if(txt[i] == '\r') {
       i++;
-      
+
     } else if(iswhitespace(txt[i])) {
       if(linebegan) {
 	pagebuf[page->length] = ' ';
@@ -669,52 +717,46 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 	ppen.x += tsAdvance((u16)' ');
       }
       i++;
-#if 0
-    } else if(txt[i] > 127) {
-      pagebuf[page->length++] = '*';
-      ppen.x += tsAdvance((u16)'*');
-      i++;
 
-    } else if(txt[i] > 0xc2 && txt[i] < 0xe0) {
-      pagebuf[page->length] = '*';
-      page->length++;
-      ppen.x += tsAdvance((u16)'*');
-      i+=2;
-      
-    } else if(txt[i] > 0xdf && txt[i] < 0xf0) {
-      pagebuf[page->length] = '*';
-      page->length++;
-      ppen.x += tsAdvance((u16)'*');
-      i+=3;
-      
-    } else if(txt[i] > 0xef) {
-      pagebuf[page->length] = '*';
-      page->length++;
-      ppen.x += tsAdvance((u16)'*');
-      i+=4;
-#endif      
     } else {
       linebegan = true;
       int j;
       advance = 0;
-      for(j=i;(j<txtlen) && (!iswhitespace(txt[j]));j++) {
-	/** set type until the end of the next word. **/
-	advance += tsAdvance(txt[j]);
-      }	
+      u8 bytes = 1;
+      for(j=i;(j<txtlen) && (!iswhitespace(txt[j]));j+=bytes) {
+
+	/** set type until the end of the next word.
+	    account for UTF-8 characters when advancing. **/
+	u16 code;
+	if(txt[j] > 127) 
+	  bytes = utf8((unsigned char*)&(txt[j]),&code);
+	else {
+	  code = txt[j];
+	  bytes = 1;
+	}
+	advance += tsAdvance(code);
+      }
+
+      /** reflow. if we overrun the margin, insert a break. **/
+
       int overrun = (ppen.x + advance) - (PAGE_WIDTH-MARGINRIGHT);
-			
       if(overrun > 0) {
-	/** we went over the margin. insert a break. **/
 	pagebuf[page->length] = '\n';
 	page->length++;
 	ppen.x = MARGINLEFT;
 	ppen.y += (tsGetHeight() + LINESPACING);
 	if(ppen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
+
 	  /** we are at the end of one of the facing pages. **/
 	  if(fb == screen1) {
+
+	    /** we left the right page, save chars into this page. **/
 	    if(!page->buf) {
 	      page->buf = malloc(page->length * sizeof(u8));
-	      if(!page->buf) tsString("[alloc error]\n");
+	      if(!page->buf) {
+		tsString("[page alloc error]\n");
+		spin();
+	      }
 	    }
 	    memcpy(page->buf,pagebuf,page->length * sizeof(u8));
 	    page++;
@@ -722,6 +764,7 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 	    fb = screen0;
 	    pagecurrent++;
 	    pagecount++;
+
 	  } else {
 	    fb = screen1;
 	  }
@@ -731,7 +774,8 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 	linebegan = false;
       }
 			
-      /** append this word to the page. **/
+      /** append this word to the page. to save space,
+	  chars will stay UTF-8 until they are drawn. **/
       for(;i<j;i++) {
 	if(iswhitespace(txt[i])) {
 	  if(linebegan) {
@@ -740,10 +784,7 @@ void char_hndl(void *data, const char *txt, int txtlen) {
 	  }
 	} else {
 	  linebegan = true;
-	  if(txt[i] > 127)
-	    pagebuf[page->length] = '*';
-	  else
-	    pagebuf[page->length] = txt[i];
+	  pagebuf[page->length] = txt[i];
 	  page->length++;
 	}
       }
@@ -751,6 +792,7 @@ void char_hndl(void *data, const char *txt, int txtlen) {
     }
   }
 }  /* End char_hndl */
+
 
 
 void end_hndl(void *data, const char *el) {
