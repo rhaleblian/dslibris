@@ -28,7 +28,8 @@ typedef struct page_s {
   u8 *buf;   /** allocated per-page at parse time, to exact length. **/
 } page_t;
 
-typedef enum {NONE,HTML,HEAD,TITLE,BODY} context_t;
+/** CHEESEMERCHANT! you need a stack **/
+typedef enum {NONE,HTML,HEAD,TITLE,BODY,PRE} context_t;
 
 void pageinit(page_t *page);
 
