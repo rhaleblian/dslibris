@@ -17,7 +17,7 @@ include $(DEVKITARM)/ds_rules
 #TARGET		:=	$(shell basename $(CURDIR))
 TARGET		:=	dslibris
 BUILD		:=	build
-SOURCES		:=	.
+SOURCES		:=	source
 INCLUDES	:=	../include build
 
 #-----------------------------------------------------------------------
