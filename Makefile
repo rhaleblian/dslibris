@@ -57,6 +57,9 @@ $(TARGET).r4.nds: $(TARGET).nds
 	cp dslibris.nds dslibris.r4.nds
 	dlditool R4tf.dldi dslibris.r4.nds
 
+scp: $(TARGET).r4.nds
+	scp $(TARGET).r4.nds eris:
+
 smb: $(TARGET).r4.nds
 	 smbclient \\\\asherah\\e fnord... -c 'cd .; put dslibris.r4.nds'
 
