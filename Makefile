@@ -47,7 +47,7 @@ clean:
 	$(MAKE) -C arm7 clean
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).r4.nds
 
-run: $(TARGET).nds
+test: $(TARGET).nds
 	desmume $(TARGET).nds
 
 debug: $(TARGET).nds

@@ -1,6 +1,9 @@
-/* $Id: main.c,v 1.8 2007/08/22 06:24:23 rhaleblian Exp $
+/* $Id: main.c,v 1.9 2007/08/24 01:11:39 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    $Log: main.c,v $
+   Revision 1.9  2007/08/24 01:11:39  rhaleblian
+   added case for &nbsp;
+
    Revision 1.8  2007/08/22 06:24:23  rhaleblian
    proper handling of <pre> blocks. now using a stack for parse context.
 
@@ -37,6 +40,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#include "utf8.h"
 #include "main.h"
 #include "parse.h"
 #include "font.h"
@@ -879,6 +883,11 @@ void end_hndl(void *data, const char *el) {
     page->length++;
     ppen.x = MARGINLEFT;
     ppen.y += tsGetHeight() + LINESPACING;
+    if( !stricmp(el,"p")) {
+      pagebuf[page->length] = '\n';
+      page->length++;
+      ppen.y += tsGetHeight() + LINESPACING;
+    }
     if(ppen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
       if(fb == screen1) {
 	fb = screen0;
