@@ -14,6 +14,6 @@ u8 tsGetHeight(void);
 inline void tsSetPen(u16 x, u16 y);
 void tsString(char *string);
 int tsStartNewLine(void);
-u8 utf8(unsigned char *txt, u16 *code);
+u8 ucs(unsigned char *txt, u16 *code);
 
 #endif

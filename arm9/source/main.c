@@ -1,38 +1,15 @@
-/* $Id: main.c,v 1.9 2007/08/24 01:11:39 rhaleblian Exp $
+/**----------------------------------------------------------------------------
+   $Id: main.c,v 1.10 2007/08/25 04:20:23 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
-   $Log: main.c,v $
-   Revision 1.9  2007/08/24 01:11:39  rhaleblian
-   added case for &nbsp;
-
-   Revision 1.8  2007/08/22 06:24:23  rhaleblian
-   proper handling of <pre> blocks. now using a stack for parse context.
-
-   Revision 1.7  2007/08/20 04:27:34  rhaleblian
-   added some support for UTF-8 and ISO-8859-1 Latin-1.
-
-   Revision 1.6  2007/08/19 05:31:16  rhaleblian
-   XHTML filenames need to conform to 8.3 to work under Ubuntu.
-
-   Revision 1.5  2007/08/18 03:55:09  rhaleblian
-   text now renders again. added title search within found books.
-
-   Revision 1.4  2007/08/15 04:59:12  rhaleblian
-   bookmarks barely work. filenames cannot exceed 7 chars.
-
-   Revision 1.3  2007/08/14 05:52:42  rhaleblian
-   small tweaks to ndstool and build rules.
-
-   Revision 1.2  2007/08/13 04:26:03  rhaleblian
-   Suppressed arm7 code, which causes memory and pc stomping.
-   Added banner logo and title.
-   START reveals book list.
-*/
+   -------------------------------------------------------------------------**/
 
 #include <nds.h>
 #include <fat.h>
 #include <dswifi9.h>
-#include <expat.h>
+#include <nds/registers_alt.h>
+#include <nds/reload.h>
 
+#include <expat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -40,7 +17,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include "utf8.h"
 #include "main.h"
 #include "parse.h"
 #include "font.h"
@@ -53,29 +29,6 @@
 
 #include "all_gfx.c"
 #include "all_gfx.h"
-
-//#define SDL
-
-/** libnds r20 removed BACKGROUND et al? the below is for OS X **/
-
-#ifndef BACKGROUND
-typedef struct {
-  u16 xdx;
-  u16 xdy;
-  u16 ydx;
-  u16 ydy;
-  u32 centerX;
-  u32 centerY;    
-} bg_rotation;  // need this here?
-typedef struct {
-  u16 control[4];
-  bg_scroll scroll[4];
-  bg_rotation bg2_rotation;
-  bg_rotation bg3_rotation;
-} bg_attribute;
-#define BACKGROUND           (*((bg_attribute *)0x04000008))
-#define BACKGROUND_SUB       (*((bg_attribute *)0x04001008))
-#endif
 
 u16 *screen0, *screen1, *fb;
 
@@ -90,10 +43,6 @@ button_t buttons[16];
 
 char msg[128];
 
-/** pen for computin reflow at parse time, not drawing;
-    font.c owns the drawing pen. **/
-FT_Vector ppen;
-
 typedef struct {
   context_t stack[16];
   u8 stacksize;
@@ -103,8 +52,9 @@ typedef struct {
 } parsedata_t;
 parsedata_t parsedata;
 
+void parse_init(parsedata_t *data);
 void parse_printerror(XML_Parser p);
-bool parse_pagefeed(void *data, page_t *page);
+bool parse_pagefeed(parsedata_t *data, page_t *page);
 void book_init(book_t *book);
 u8   book_parse(XML_Parser p, char *filebuf);
 void book_parsetitle(char *filename);
@@ -127,25 +77,24 @@ u8   getjustifyspacing(page_t *page, u16 i);
 
 void spin(void) { while(true) swiWaitForVBlank(); }
 
-void parse_init(parsedata_t *data) {
-  data->stacksize = 0;
-  data->book = NULL;
-  data->page = NULL;
+
+void lidsleep(void) {
+  __asm("mcr p15,0,r0,c7,c0,4");
+  __asm("mov r0, r0");
+  __asm("BX lr"); 
 }
+
 
 int main(void) {
   bool browseractive = false;
   char filebuf[BUFSIZE];
 
   powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
-  defaultExceptionHandler();
+  defaultExceptionHandler();  /** guru meditation! */
+
   irqInit();
   irqEnable(IRQ_VBLANK);
-
-#if WIFIDEBUG
-  wifiDebugInit();
-  debugHalt();
-#endif
+  irqEnable(IRQ_VCOUNT);
 
   /** bring up the startup console **/  
   /** not using the main screen **/
@@ -158,13 +107,21 @@ int main(void) {
   {
     u32 i;
     for(i=0;i<256;i++)
-      BG_PALETTE_SUB[i] = RGB15(0,0,0);
-    BG_PALETTE_SUB[255] = RGB15(15,25,15);
+      BG_PALETTE_SUB[i] = RGB15(0,3,0);
+    BG_PALETTE_SUB[255] = RGB15(15,31,15);
   }
   consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31),
       (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
   printf("console                    [OK]\n");
   swiWaitForVBlank();
+
+#if 0
+  wifiInit();
+  printf("wifi                     ");
+  printf("  [OK]\n");
+  wifiDebugInit();
+  debugHalt();
+#endif
 
   printf("filesystem               ");
   if(!fatInitDefault())
@@ -180,19 +137,14 @@ int main(void) {
     printf("  [OK]\n");
   swiWaitForVBlank();
 
-#if WIFI
-  wifiInit();
-  printf("wifi                     ");
-  printf("  [OK]\n");
-#endif
-
   bookcount = 0;
   bookcurrent = 0;
 
   /** assemble library, aka XHTML/XML files in the current directory. **/
   
   printf("book library             ");
-  DIR_ITER *dp = diropen(".");
+  char dirname[16] = ".";
+  DIR_ITER *dp = diropen(dirname);
   if(!dp) {
     printf("[FAIL]\n");
     spin();
@@ -204,7 +156,7 @@ int main(void) {
        ) {
       book_t *book = &(books[bookcount]);
       book_init(book);			
-      strncpy(book->filename,filename,32);
+      sprintf(book->filename,"%s/%s",dirname,filename);
       book_parsetitle(filename);
       bookcount++;
     }
@@ -226,13 +178,6 @@ int main(void) {
 
   u8 i;
   for(i=0;i<60;i++) swiWaitForVBlank();
-
-#if SDL
-  while(true) {
-    scanKeys();
-    if(keysDown()) break;
-  }
-#endif
 
   /** initialize the book view. **/
 
@@ -266,23 +211,48 @@ int main(void) {
   fb = screen0;
   tsString("[welcome to dslibris]\n");
   swiWaitForVBlank();
-#ifdef DEBUG
-  tsDump();
-  tsChar(198); /** &AElig; **/
-  swiWaitForVBlank();
-#endif
 
   browser_init();
   browser_draw();
   fb = screen0;
   swiWaitForVBlank();
   browseractive = true;
-  
+
+  touchPosition touch;
+
   while(true) {    
     scanKeys();
 
-    if(browseractive) {
+    if(keysDown() & KEY_TOUCH) {
+      touch = touchReadXY();
+      fb[touch.px + touch.py * 256] = rand();
       
+    }
+      
+    /* if lid 'key' */
+    if (keysDown() & BIT(7)) {
+      /* hinge is closed */
+      /* set only key irq for waking up */
+      unsigned long oldIE = REG_IE ;
+      REG_IE = IRQ_KEYS ;
+      *(volatile unsigned short *)0x04000132 = BIT(14) | 255 ; 
+      /* any of the inner keys might irq */
+      /* power off everything not needed */
+      powerOFF(POWER_LCD) ;
+      /* set system into sleep */
+      lidsleep() ;
+      /* wait a bit until returning power */
+      while (REG_VCOUNT!=0) ;
+      while (REG_VCOUNT==0) ;
+      while (REG_VCOUNT!=0) ;
+      /* power on again */
+      powerON(POWER_LCD) ;
+      /* set up old irqs again */
+      REG_IE = oldIE ;
+    }
+
+    if(browseractive) {
+
       if(keysDown() & KEY_A) {
 	/** parse the selected book. **/
 
@@ -360,6 +330,8 @@ int main(void) {
       }
 
       if(keysDown() & KEY_START) {
+	//	WAIT_CR &= ~0x8080;
+	//	LOADNDS->ARM9FUNC(BOOT_NDS);
 	swiSoftReset();
       }
     }
@@ -589,7 +561,7 @@ void page_draw(page_t *page) {
       tsStartNewLine();
       i++;
     } else {
-      if(c > 127) i+=utf8(&(page->buf[i]),&c);
+      if(c > 127) i+=ucs(&(page->buf[i]),&c);
       else i++;
       tsChar(c);
       //if(c == ' ') u16 x,y; tsGetPen(&x,&y); x += spacing; tsSetPen(x,y);
@@ -667,6 +639,14 @@ bool iswhitespace(u8 c) {
   }
 }
 
+void parse_init(parsedata_t *data) {
+  data->stacksize = 0;
+  data->book = NULL;
+  data->page = NULL;
+  data->pen.x = MARGINLEFT;
+  data->pen.y = MARGINTOP;
+}
+
 void parse_push(parsedata_t *data, context_t context) {
   data->stack[data->stacksize++] = context;
 }
@@ -684,8 +664,9 @@ bool parse_in(parsedata_t *data, context_t context) {
   return false;
 }
 
-bool parse_pagefeed(void *data, page_t *page) {
+bool parse_pagefeed(parsedata_t *data, page_t *page) {
   int pagedone;
+
   /** we are at the end of one of the facing pages. **/
   if(fb == screen1) {
 
@@ -705,8 +686,8 @@ bool parse_pagefeed(void *data, page_t *page) {
     fb = screen1;
     pagedone = false;
   }
-  ppen.x = MARGINLEFT;
-  ppen.y = MARGINTOP + tsGetHeight();
+  data->pen.x = MARGINLEFT;
+  data->pen.y = MARGINTOP + tsGetHeight();
   return pagedone;
 }
 
@@ -717,13 +698,14 @@ int unknown_hndl(void *encodingHandlerData,
 }
 
 void default_hndl(void *data, const XML_Char *s, int len) {
+  parsedata_t *p = (parsedata_t *)data;
   if(s[0] == '&') {
     page_t *page = &(pages[pagecurrent]);
     
     /** an iso-8859-1 character code. */
     if(!strnicmp(s,"&nbsp;",5)) {
       pagebuf[page->length++] = ' ';
-      ppen.x += tsAdvance(' ');
+      p->pen.x += tsAdvance(' ');
       return;
     }
 
@@ -742,7 +724,7 @@ void default_hndl(void *data, const XML_Char *s, int len) {
 	pagebuf[page->length++] = 128 + (code%64);
       }
 
-      ppen.x += tsAdvance(code);
+      p->pen.x += tsAdvance(code);
     }
   }
 }  /* End default_hndl */
@@ -771,6 +753,8 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen) {
 
   if(!parse_in(data,BODY)) return;
 
+  parsedata_t *p = (parsedata_t *)data;
+
   int i=0;
   u8 advance=0;
   static bool linebegan=false;
@@ -779,8 +763,8 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen) {
   /** starting a new page? **/
   if(page->length == 0) {
     linebegan = false;
-    ppen.x = MARGINLEFT;
-    ppen.y = MARGINTOP + tsGetHeight();  
+    p->pen.x = MARGINLEFT;
+    p->pen.y = MARGINTOP + tsGetHeight();  
   }
   
   while(i<txtlen) {
@@ -789,9 +773,9 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen) {
     if(iswhitespace(txt[i])) {
       if(parse_in(data,PRE) && txt[i] == '\n') {
 	pagebuf[page->length++] = txt[i];
-	ppen.x += tsAdvance((u16)txt[i]);
-	ppen.y += (tsGetHeight() + LINESPACING);
-	if(ppen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
+	p->pen.x += tsAdvance((u16)txt[i]);
+	p->pen.y += (tsGetHeight() + LINESPACING);
+	if(p->pen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
 	  if(parse_pagefeed(data,page)) {
 	    page++;
 	    page_init(page);
@@ -804,7 +788,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen) {
       } else {
 	if(linebegan) {
 	  pagebuf[page->length++] = ' ';
-	  ppen.x += tsAdvance((u16)' ');
+	  p->pen.x += tsAdvance((u16)' ');
 	}
 
       }
@@ -821,7 +805,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen) {
 	    account for UTF-8 characters when advancing. **/
 	u16 code;
 	if(txt[j] > 127) 
-	  bytes = utf8((unsigned char*)&(txt[j]),&code);
+	  bytes = ucs((unsigned char*)&(txt[j]),&code);
 	else {
 	  code = txt[j];
 	  bytes = 1;
@@ -831,14 +815,14 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen) {
 
       /** reflow. if we overrun the margin, insert a break. **/
       
-      int overrun = (ppen.x + advance) - (PAGE_WIDTH-MARGINRIGHT);
+      int overrun = (p->pen.x + advance) - (PAGE_WIDTH-MARGINRIGHT);
       if(overrun > 0) {
 	pagebuf[page->length] = '\n';
 	page->length++;
-	ppen.x = MARGINLEFT;
-	ppen.y += (tsGetHeight() + LINESPACING);
+	p->pen.x = MARGINLEFT;
+	p->pen.y += (tsGetHeight() + LINESPACING);
 
-	if(ppen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
+	if(p->pen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
 	  if(parse_pagefeed(data,page)) {
 	    page++;
 	    page_init(page);
@@ -863,13 +847,14 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen) {
 	  page->length++;
 	}
       }
-      ppen.x += advance;
+      p->pen.x += advance;
     }
   }
 }  /* End char_hndl */
 
 void end_hndl(void *data, const char *el) {
   page_t *page = &pages[pagecurrent];
+  parsedata_t *p = (parsedata_t *)data;
   if(
      !stricmp(el,"br")
      || !stricmp(el,"p")
@@ -881,14 +866,14 @@ void end_hndl(void *data, const char *el) {
      ) {
     pagebuf[page->length] = '\n';
     page->length++;
-    ppen.x = MARGINLEFT;
-    ppen.y += tsGetHeight() + LINESPACING;
+    p->pen.x = MARGINLEFT;
+    p->pen.y += tsGetHeight() + LINESPACING;
     if( !stricmp(el,"p")) {
       pagebuf[page->length] = '\n';
       page->length++;
-      ppen.y += tsGetHeight() + LINESPACING;
+      p->pen.y += tsGetHeight() + LINESPACING;
     }
-    if(ppen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
+    if(p->pen.y > (PAGE_HEIGHT-MARGINBOTTOM)) {
       if(fb == screen1) {
 	fb = screen0;
 	if(!page->buf)
@@ -901,8 +886,8 @@ void end_hndl(void *data, const char *el) {
       } else {
 	fb = screen1;
       }
-      ppen.x = MARGINLEFT;
-      ppen.y = MARGINTOP + tsGetHeight();
+      p->pen.x = MARGINLEFT;
+      p->pen.y = MARGINTOP + tsGetHeight();
     }
   }
   if(!stricmp(el,"body")) {

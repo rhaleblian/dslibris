@@ -14,7 +14,7 @@ FT_GlyphSlotRec glyphs[MAXGLYPHS];
 FT_Vector		pen;
 FT_Error   		error;
 
-u8 utf8(unsigned char *txt, u16 *code) {
+u8 ucs(unsigned char *txt, u16 *code) {
   if(txt[0] > 0xc2 && txt[0] < 0xe0) {
     *code = ((txt[0]-192)*64) + (txt[1]-128);
     return 2;
@@ -156,7 +156,10 @@ void tsString(char *string) {
   for(i=0;i<strlen((char *)string);i++) {
     u16 c = string[i];
     if(c == '\n') tsStartNewLine();
-    else tsChar(c);
+    else {
+      if(c > 127) { i+=ucs(&(string[i]),&c); i--; }
+      tsChar(c);
+    }
   }
 }
 
