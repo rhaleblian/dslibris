@@ -1,5 +1,5 @@
 /**----------------------------------------------------------------------------
-   $Id: main.c,v 1.10 2007/08/25 04:20:23 rhaleblian Exp $
+   $Id: main.c,v 1.11 2007/08/27 04:44:30 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    -------------------------------------------------------------------------**/
 
@@ -225,10 +225,14 @@ int main(void) {
 
     if(keysDown() & KEY_TOUCH) {
       touch = touchReadXY();
-      fb[touch.px + touch.py * 256] = rand();
-      
+      //      fb[touch.px + touch.py * 256] = rand();
+      if(pagecurrent < pagecount) {
+	pagecurrent++;
+	page_draw(&pages[pagecurrent]);
+      }
     }
       
+#if 0
     /* if lid 'key' */
     if (keysDown() & BIT(7)) {
       /* hinge is closed */
@@ -250,6 +254,8 @@ int main(void) {
       /* set up old irqs again */
       REG_IE = oldIE ;
     }
+    */
+#endif
 
     if(browseractive) {
 
