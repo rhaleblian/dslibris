@@ -102,3 +102,97 @@ void wifiMain_wifiChat(){
 
 #endif
 
+
+#if 0
+  {
+    int initdata = Wifi_Init(NULL);
+    tsString("[wifi: arm9 initialized]\n");
+    while(!Wifi_CheckInit());
+    tsString("[wifi: arm7 initialized]\n");
+    Wifi_EnableWifi();
+    Wifi_SetChannel(11);
+    Wifi_AccessPoint *apmatch;
+    Wifi_AccessPoint apdata;
+    Wifi_AutoConnect();
+    while(true) {
+      int status = Wifi_AssocStatus();
+      if(status == ASSOCSTATUS_ASSOCIATED) {
+	tsString("[connected]\n");
+	break;
+      }
+      if(status == ASSOCSTATUS_CANNOTCONNECT) {
+	tsString("[cannot connect]\n"); 
+	break;
+      }
+    }
+    int addr = Wifi_GetIP();
+    sprintf(msg,"[ip: %d\n]",addr);
+    tsString(msg);
+
+    stupidWifiDebugSendInt(1);
+    stupidWifiDebugSendString("hello\n",6);
+  }
+#endif
+
+#if 0
+void wifiDebugInit(void)
+{
+  /** wifi debugging **/
+  struct tcp_debug_comms_init_data init_data = {
+    .port = 30000
+  };
+  if ( !init_debug( &tcpCommsIf_debug, &init_data)) {
+    iprintf("Failed to initialise the debugger stub - cannot continue\n");
+    drawsolid(31,0,0);
+    while(true) swiWaitForVBlank();
+  }
+}
+#endif
+
+
+#if 0
+  {
+    int initdata = Wifi_Init(NULL);
+    tsString("[wifi: arm9 initialized]\n");
+    while(!Wifi_CheckInit());
+    tsString("[wifi: arm7 initialized]\n");
+    Wifi_EnableWifi();
+    Wifi_SetChannel(11);
+    Wifi_AccessPoint *apmatch;
+    Wifi_AccessPoint apdata;
+    Wifi_AutoConnect();
+    while(true) {
+      int status = Wifi_AssocStatus();
+      if(status == ASSOCSTATUS_ASSOCIATED) {
+	tsString("[connected]\n");
+	break;
+      }
+      if(status == ASSOCSTATUS_CANNOTCONNECT) {
+	tsString("[cannot connect]\n"); 
+	break;
+      }
+    }
+    int addr = Wifi_GetIP();
+    sprintf(msg,"[ip: %d\n]",addr);
+    tsString(msg);
+
+    stupidWifiDebugSendInt(1);
+    stupidWifiDebugSendString("hello\n",6);
+  }
+#endif
+
+#if 0
+void wifiDebugInit(void)
+{
+  /** wifi debugging **/
+  struct tcp_debug_comms_init_data init_data = {
+    .port = 30000
+  };
+  if ( !init_debug( &tcpCommsIf_debug, &init_data)) {
+    iprintf("Failed to initialise the debugger stub - cannot continue\n");
+    drawsolid(31,0,0);
+    while(true) swiWaitForVBlank();
+  }
+}
+#endif
+

@@ -21,6 +21,7 @@
 typedef struct book_s {
   char filename[32];
   char title[32];
+  //  u16 position;
 } book_t;
 
 typedef struct page_s {
@@ -28,9 +29,8 @@ typedef struct page_s {
   u8 *buf;   /** allocated per-page at parse time, to exact length. **/
 } page_t;
 
-/** CHEESEMERCHANT! you need a stack **/
 typedef enum {NONE,HTML,HEAD,TITLE,BODY,PRE} context_t;
 
-void pageinit(page_t *page);
+void page_init(page_t *page);
 
 #endif

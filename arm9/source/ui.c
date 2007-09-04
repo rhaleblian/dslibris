@@ -3,7 +3,7 @@
 #include "ui.h"
 #include "font.h"
 
-void initbutton(button_t *b) {
+void button_init(button_t *b) {
   b->origin.x = 0;
   b->origin.y = 0;
   b->extent.x = 192;
@@ -11,16 +11,16 @@ void initbutton(button_t *b) {
   strcpy((char*)b->text, "");
 }
 
-void labelbutton(button_t *b, char *text) {
+void button_label(button_t *b, char *text) {
   strncpy((char*)b->text,(char*)text,63);
 }
 
-void movebutton(button_t *b, u16 x, u16 y) {
+void button_move(button_t *b, u16 x, u16 y) {
   b->origin.x = x;
   b->origin.y = y;
 }
 
-void drawbutton(button_t *b, u16 *fb, bool highlight) {
+void button_draw(button_t *b, u16 *fb, bool highlight) {
   u16 x; u16 y;
   coord_t ul, lr;
   u16 bordercolor = RGB15(28,28,28) | BIT(15);

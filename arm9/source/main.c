@@ -1,5 +1,5 @@
 /**----------------------------------------------------------------------------
-   $Id: main.c,v 1.11 2007/08/27 04:44:30 rhaleblian Exp $
+   $Id: main.c,v 1.12 2007/08/30 03:30:10 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    -------------------------------------------------------------------------**/
 
@@ -84,6 +84,31 @@ void lidsleep(void) {
   __asm("BX lr"); 
 }
 
+void lidsleep2(void) { 
+#if 0
+  /* if lid 'key' */
+  if (keysDown() & BIT(7)) {
+    /* hinge is closed */
+    /* set only key irq for waking up */
+    unsigned long oldIE = REG_IE ;
+    REG_IE = IRQ_KEYS ;
+    *(volatile unsigned short *)0x04000132 = BIT(14) | 255 ; 
+    /* any of the inner keys might irq */
+    /* power off everything not needed */
+    powerOFF(POWER_LCD) ;
+    /* set system into sleep */
+    lidsleep() ;
+    /* wait a bit until returning power */
+    while (REG_VCOUNT!=0) ;
+    while (REG_VCOUNT==0) ;
+    while (REG_VCOUNT!=0) ;
+    /* power on again */
+    powerON(POWER_LCD) ;
+    /* set up old irqs again */
+    REG_IE = oldIE ;
+  }
+#endif
+}
 
 int main(void) {
   bool browseractive = false;
@@ -115,9 +140,9 @@ int main(void) {
   printf("console                    [OK]\n");
   swiWaitForVBlank();
 
-#if 0
-  wifiInit();
+#if 0 
   printf("wifi                     ");
+  wifiInit();
   printf("  [OK]\n");
   wifiDebugInit();
   debugHalt();
@@ -145,15 +170,12 @@ int main(void) {
   printf("book library             ");
   char dirname[16] = ".";
   DIR_ITER *dp = diropen(dirname);
-  if(!dp) {
-    printf("[FAIL]\n");
-    spin();
-  }
+  if(!dp) { printf("[FAIL]\n"); spin(); }
   char filename[32];
-  while(!dirnext(dp, filename, NULL)) {
-    if((bookcount < MAXBOOKS)
-       && (!stricmp(".xht", filename + (strlen(filename)-4)))
-       ) {
+  while(!dirnext(dp, filename, NULL) && bookcount != MAXBOOKS) {  
+    char *c;
+    for(c=filename;c!=filename+strlen(filename) && *c!='.';c++);
+    if(!stricmp(".xht",c) || !stricmp(".xhtml",c)) {
       book_t *book = &(books[bookcount]);
       book_init(book);			
       sprintf(book->filename,"%s/%s",dirname,filename);
@@ -231,31 +253,6 @@ int main(void) {
 	page_draw(&pages[pagecurrent]);
       }
     }
-      
-#if 0
-    /* if lid 'key' */
-    if (keysDown() & BIT(7)) {
-      /* hinge is closed */
-      /* set only key irq for waking up */
-      unsigned long oldIE = REG_IE ;
-      REG_IE = IRQ_KEYS ;
-      *(volatile unsigned short *)0x04000132 = BIT(14) | 255 ; 
-      /* any of the inner keys might irq */
-      /* power off everything not needed */
-      powerOFF(POWER_LCD) ;
-      /* set system into sleep */
-      lidsleep() ;
-      /* wait a bit until returning power */
-      while (REG_VCOUNT!=0) ;
-      while (REG_VCOUNT==0) ;
-      while (REG_VCOUNT!=0) ;
-      /* power on again */
-      powerON(POWER_LCD) ;
-      /* set up old irqs again */
-      REG_IE = oldIE ;
-    }
-    */
-#endif
 
     if(browseractive) {
 
@@ -348,60 +345,11 @@ int main(void) {
   exit(0);
 }
 
-
-
-
-#if 0
-  {
-    int initdata = Wifi_Init(NULL);
-    tsString("[wifi: arm9 initialized]\n");
-    while(!Wifi_CheckInit());
-    tsString("[wifi: arm7 initialized]\n");
-    Wifi_EnableWifi();
-    Wifi_SetChannel(11);
-    Wifi_AccessPoint *apmatch;
-    Wifi_AccessPoint apdata;
-    Wifi_AutoConnect();
-    while(true) {
-      int status = Wifi_AssocStatus();
-      if(status == ASSOCSTATUS_ASSOCIATED) {
-	tsString("[connected]\n");
-	break;
-      }
-      if(status == ASSOCSTATUS_CANNOTCONNECT) {
-	tsString("[cannot connect]\n"); 
-	break;
-      }
-    }
-    int addr = Wifi_GetIP();
-    sprintf(msg,"[ip: %d\n]",addr);
-    tsString(msg);
-
-    stupidWifiDebugSendInt(1);
-    stupidWifiDebugSendString("hello\n",6);
-  }
-#endif
-
-#if 0
-void wifiDebugInit(void)
-{
-  /** wifi debugging **/
-  struct tcp_debug_comms_init_data init_data = {
-    .port = 30000
-  };
-  if ( !init_debug( &tcpCommsIf_debug, &init_data)) {
-    iprintf("Failed to initialise the debugger stub - cannot continue\n");
-    drawsolid(31,0,0);
-    while(true) swiWaitForVBlank();
-  }
-}
-#endif
-
 void browser_init(void) {
   u8 book;
   for(book=0;book<bookcount;book++) {
-    initbutton(&buttons[book]);
-    movebutton(&buttons[book],0,book*32);
+    button_init(&buttons[book]);
+    button_move(&buttons[book],0,book*32);
     if(strlen((char *)books[book].title))
       strcpy((char *)buttons[book].text,(char*)books[book].title);
     else
@@ -549,8 +497,8 @@ void browser_draw(void) {
   drawsolid(31,31,31);
   u8 i;
   for(i=0;i<bookcount;i++) {
-    if(i==bookcurrent) drawbutton(&buttons[i],fb,true);
-    else drawbutton(&buttons[i],fb,false);
+    if(i==bookcurrent) button_draw(&buttons[i],fb,true);
+    else button_draw(&buttons[i],fb,false);
   }
 }
 

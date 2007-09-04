@@ -51,6 +51,7 @@ test: $(TARGET).nds
 	desmume $(TARGET).nds
 
 debug: $(TARGET).nds
+	arm-eabi-insight arm9/dslibris.arm9.elf &
 	desmume --arm9gdb=20000 $(TARGET).nds
 
 $(TARGET).r4.nds: $(TARGET).nds

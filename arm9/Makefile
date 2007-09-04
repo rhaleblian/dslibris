@@ -28,7 +28,7 @@ ARCH	:=	-mthumb-interwork
 # note: arm9tdmi isn't the correct CPU arch, but anything newer and LD
 # *insists* it has a FPU or VFP, and it won't take no for an answer!
 CFLAGS	:=	-g -Wall -O0 \
-		-mcpu=arm968e-s -mtune=arm968e-s \
+		-mcpu=arm9tdmi -mtune=arm9tdmi \
 		-fomit-frame-pointer \
 		-ffast-math \
 		$(ARCH)
@@ -45,14 +45,14 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 LIBS	:=  -lz -lSDL -lfreetype -lexpat -ldswifi9 -lfat -lnds9
 
 #-----------------------------------------------------------------------
-# list of directories containing libraries, this must be the top level containing
-# include and lib
+# list of directories containing libraries, this must be the top level
+# containing include and lib
 #-----------------------------------------------------------------------
 LIBDIRS	:=	 $(LIBNDS) $(HOME)/nds/local $(DEVKITPRO)/PAlib
 
 #-----------------------------------------------------------------------
-# no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
+# no real need to edit anything past this point unless you need to add
+# additional rules for different file extensions
 #-----------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #-----------------------------------------------------------------------
