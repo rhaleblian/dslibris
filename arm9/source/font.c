@@ -13,6 +13,7 @@ FT_Face    		face;
 FT_GlyphSlotRec glyphs[MAXGLYPHS];
 FT_Vector		pen;
 FT_Error   		error;
+bool                    usecache;
 
 u8 ucs(unsigned char *txt, u16 *code) {
   if(txt[0] > 0xc2 && txt[0] < 0xe0) {
@@ -37,7 +38,6 @@ u8 tsGetHeight(void) { return (face->size->metrics.height >> 6); }
 inline void tsGetPen(u16 *x, u16 *y) { *x = pen.x; *y = pen.y; }
 inline void tsSetPen(u16 x, u16 y) { pen.x = x; pen.y = y; }
 
-// initialization
 
 u8 tsAdvance(u16 code) {
   return glyphs[code].advance.x >> 6;
@@ -48,40 +48,32 @@ void tsInitPen(void) {
   pen.y = MARGINTOP + (face->size->metrics.height >> 6);
 }
 
+
+void tsSetPixelSize(int size)
+{
+  if(!size) {
+    FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
+    usecache = true;
+  } else {
+    FT_Set_Pixel_Sizes(face, 0, size);
+    usecache = false;
+  }
+}
+
 int tsInitDefault(void) {
   if(FT_Init_FreeType(&library)) return 15;
   if(FT_New_Face(library, FONTFILENAME, 0, &face)) return 31;
   FT_Select_Charmap(face, FT_ENCODING_UNICODE);
   FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
 
-  // cache glyphs. glyphs[] will contain all the bitmaps.
-  // using FirstChar() and NextChar() would be more robust.
-  // TODO also cache kerning and transformations.
-
-#if 0		
-  u16 i;
-  for(i=0;i<MAXGLYPHS;i++) {
-    FT_Load_Char(face, i, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
-    FT_GlyphSlot src = face->glyph;
-    FT_GlyphSlot dst = &glyphs[i];
-    int x = src->bitmap.rows;
-    int y = src->bitmap.width;
-    dst->bitmap.buffer = malloc(x*y);
-    memcpy(dst->bitmap.buffer, src->bitmap.buffer, x*y);
-    dst->bitmap.rows = src->bitmap.rows;
-    dst->bitmap.width = src->bitmap.width;
-    dst->bitmap_top = src->bitmap_top;
-    dst->bitmap_left = src->bitmap_left;
-    dst->advance = src->advance;
-  }
-#endif
+  /** cache glyphs. glyphs[] will contain all the bitmaps.
+      TODO also cache kerning and transformations. **/
 
   FT_ULong  charcode;                                              
   FT_UInt   gindex;                                                
   charcode = FT_Get_First_Char( face, &gindex );                   
   while ( gindex != 0 )                                            
   {                                                                
-    //    ... do something with (charcode,gindex) pair ...               
     if(charcode < MAXGLYPHS) {
       FT_Load_Char(face, charcode, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
       FT_GlyphSlot src = face->glyph;
@@ -99,11 +91,11 @@ int tsInitDefault(void) {
     charcode = FT_Get_Next_Char( face, charcode, &gindex );        
   }                     
   
+  usecache = true;
   tsInitPen();
   return(0);
 }
 
-// drawing
 
 void tsChar(u16 code) {
   /** draw a character with the current glyph
@@ -111,7 +103,7 @@ void tsChar(u16 code) {
   
   /** ASCII glyphs are cached; otherwise load. **/
   FT_GlyphSlot glyph;
-  if(code < 128) glyph = &glyphs[code];
+  if(usecache && code < 128) glyph = &glyphs[code];
   else {
     FT_Load_Char(face, code, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
     glyph = face->glyph;

@@ -4,6 +4,7 @@
 #include <ft2build.h>	/* freetype2 - text rendering */
 #include FT_FREETYPE_H
 
+void tsSetPixelSize(int size);
 u8 tsAdvance(u16 code);
 void tsChar(u16 code);
 void tsDump(void);

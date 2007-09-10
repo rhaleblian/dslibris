@@ -1,5 +1,5 @@
 /**----------------------------------------------------------------------------
-   $Id: main.c,v 1.13 2007/09/04 03:22:24 rhaleblian Exp $
+   $Id: main.c,v 1.14 2007/09/04 06:34:17 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    -------------------------------------------------------------------------**/
 
@@ -9,13 +9,16 @@
 #include <nds/registers_alt.h>
 #include <nds/reload.h>
 
-#include <expat.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <errno.h>
+
+#include <expat.h>
+#include <jpeglib.h>
+#include <png.h>
 
 #include "main.h"
 #include "parse.h"
@@ -75,6 +78,7 @@ void browser_draw(void);
 
 void page_init(page_t *page);
 void page_clear(void);
+void page_clearone(u16 *screen);
 void page_draw(page_t *page);
 void page_drawsolid(u8 r, u8 g, u8 b);
 void page_drawmargins(void);
@@ -90,6 +94,36 @@ void prefs_write(void);
 
 void spin(void) { while(true) swiWaitForVBlank(); }
 
+#define ERROR 1
+u8 splash(void)
+{
+  char file_name[32] = "dslibris.png";
+  FILE *fp = fopen(file_name, "rb");
+
+   png_structp png_ptr = png_create_read_struct
+       (PNG_LIBPNG_VER_STRING, (png_voidp)user_error_ptr,
+        user_error_fn, user_warning_fn);
+    if (!png_ptr)
+        return (ERROR);
+
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr)
+    {
+        png_destroy_read_struct(&png_ptr,
+           (png_infopp)NULL, (png_infopp)NULL);
+        return (ERROR);
+    }
+
+    png_infop end_info = png_create_info_struct(png_ptr);
+    if (!end_info)
+    {
+        png_destroy_read_struct(&png_ptr, &info_ptr,
+          (png_infopp)NULL);
+        return (ERROR);
+    }
+  fclose(fp);
+}
+
 int main(void) {
   bool browseractive = false;
   char filebuf[BUFSIZE];
@@ -101,42 +135,65 @@ int main(void) {
   irqEnable(IRQ_VBLANK);
   irqEnable(IRQ_VCOUNT);
 
-  /** bring up the startup console **/
-  videoSetMode(MODE_0_2D);	
+  /** cw rotation for both screens **/
+  s16 s = SIN[-128 & 0x1FF] >> 4;
+  s16 c = COS[-128 & 0x1FF] >> 4;
+
+  /** set up splash on bottom screen **/
+  BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+  BG3_XDX = c;
+  BG3_XDY = -s;
+  BG3_YDX = s;
+  BG3_YDY = c;
+  BG3_CX = 0 << 8;
+  BG3_CY = 256 << 8;
+  videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+  vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
+  fb = screen1 = (u16*)BG_BMP_RAM(0);
+
+  /*  tsSetPixelSize(36);
+  page_clearone(screen1);
+  tsSetPen(MARGINLEFT+28,MARGINTOP+128);
+  tsString("dslibris");
+  tsSetPixelSize(0);
+  */
+
+  /** bring up the startup console.
+      sub bg 0 will be used to print text. **/
   videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	
-  /** sub bg 0 will be used to print text **/
   vramSetBankC(VRAM_C_SUB_BG);
-  /** set palette - green on black **/
   SUB_BG0_CR = BG_MAP_BASE(31);
   {
     u32 i;
-    for(i=0;i<256;i++)
-      BG_PALETTE_SUB[i] = RGB15(0,3,0);
-    BG_PALETTE_SUB[255] = RGB15(15,31,15);
+    for(i=0;i<255;i++)
+      BG_PALETTE_SUB[i] = RGB15(0,0,0);
+    BG_PALETTE_SUB[255] = RGB15(15,15,15);
   }
   consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31),
 		     (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
-  printf("console                    [OK]\n");
+  printf("startup console          [ OK ]\n");
   swiWaitForVBlank();
 
-  printf("filesystem               ");
+  printf("media filesystem         ");
   if(!fatInitDefault())
     printf("[FAIL]\n");
   else
-    printf("  [OK]\n");
+    printf("[ OK ]\n");
   swiWaitForVBlank();
 
   printf("typesetter               ");
   if(tsInitDefault())
     printf("[FAIL]\n");
   else
-    printf("  [OK]\n");
+    printf("[ OK ]\n");
   swiWaitForVBlank();
 
-  printf("book library             ");
+  printf("book scan                ");
   bookcount = 0;
   bookcurrent = 0;
-  /** assemble library, aka XHTML/XML files in the current directory. **/  
+  /** assemble library by indexing all XHTML/XML files
+      in the current directory. **/  
+  /** TODO recursive book search **/
   char dirname[16] = ".";
   DIR_ITER *dp = diropen(dirname);
   if(!dp) { printf("[FAIL]\n"); spin(); }
@@ -153,31 +210,24 @@ int main(void) {
     }
   }
   dirclose(dp);
-  printf("  [OK]\n");
+  if(!bookcount) {
+    printf("[FAIL]\n");
+    spin();
+  }
+  else
+    printf("[ OK ]\n");
   swiWaitForVBlank();
 
-  printf("XML Parser               ");
+  printf("expat XML parser         ");
   XML_Parser p = XML_ParserCreate(NULL);
   if(!p) { printf("[FAIL]\n"); spin(); }
   XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
   parse_init(&parsedata);
-  printf("  [OK]\n");
+  printf("[ OK ]\n");
   swiWaitForVBlank();
 
-  /** initialize the book view. **/
+  /** initialize the top screen book view. **/
 
-  /** rotation for both screens **/
-  s16 s = SIN[-128 & 0x1FF] >> 4;
-  s16 c = COS[-128 & 0x1FF] >> 4;
-
-  BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-  BG3_XDX = c;
-  BG3_XDY = -s;
-  BG3_YDX = s;
-  BG3_YDY = c;
-  BG3_CX = 0 << 8;
-  BG3_CY = 256 << 8;
-  
   BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
   SUB_BG3_XDX = c;
   SUB_BG3_XDY = -s;
@@ -186,11 +236,8 @@ int main(void) {
   SUB_BG3_CX = 0 << 8;
   SUB_BG3_CY = 256 << 8;
   
-  videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
   videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-  vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
   vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-  screen1 = (u16*)BG_BMP_RAM(0);
   screen0 = (u16*)BG_BMP_RAM_SUB(0);
   page_clear();
   fb = screen0;
@@ -215,6 +262,7 @@ int main(void) {
     page_draw(page);
     browseractive = false;
   } else {
+    tsInitPen();
     tsString("[welcome to dslibris]\n");
     browser_init();
     browser_draw();
@@ -469,6 +517,15 @@ void page_clear(void) {
   page_drawsolid(31,31,31);
   fb = savefb;
 }
+
+
+void page_clearone(u16 *screen) {
+  u16 *savefb = fb;
+  fb = screen;
+  page_drawsolid(31,31,31);
+  fb = savefb;
+}
+
 
 void browser_draw(void) {
   fb = screen1;
