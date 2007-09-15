@@ -1,6 +1,8 @@
 #ifndef _main_h_
 #define _main_h_
 
+#include "font.h"
+
 #define MARGINLEFT 12
 #define MARGINRIGHT 12
 #define MARGINTOP 10
@@ -30,6 +32,14 @@ typedef struct page_s {
 } page_t;
 
 typedef enum {NONE,HTML,HEAD,TITLE,BODY,PRE} context_t;
+
+typedef struct {
+  context_t stack[16];
+  u8 stacksize;
+  book_t *book;
+  page_t *page;
+  FT_Vector pen;
+} parsedata_t;
 
 void page_init(page_t *page);
 

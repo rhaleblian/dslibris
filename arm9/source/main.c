@@ -1,5 +1,5 @@
 /**----------------------------------------------------------------------------
-   $Id: main.c,v 1.15 2007/09/10 14:08:22 rhaleblian Exp $
+   $Id: main.c,v 1.16 2007/09/11 05:00:01 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    -------------------------------------------------------------------------**/
 
@@ -22,7 +22,6 @@
 
 #include "main.h"
 #include "parse.h"
-#include "font.h"
 #include "ui.h"
 #include "wifi.h"
 
@@ -32,6 +31,9 @@
 
 #include "all_gfx.c"
 #include "all_gfx.h"
+
+#define APP_VERSION "0.2.1"
+#define APP_URL "http://rhaleblian.wordpress.com"
 
 u16 *screen0, *screen1, *fb;
 
@@ -43,16 +45,8 @@ u8 pagebuf[PAGEBUFSIZE];
 u16 pagecount, pagecurrent;
 
 button_t buttons[16];
-
 char msg[128];
 
-typedef struct {
-  context_t stack[16];
-  u8 stacksize;
-  book_t *book;
-  page_t *page;
-  FT_Vector pen;
-} parsedata_t;
 parsedata_t parsedata;
 
 typedef struct {
@@ -76,6 +70,8 @@ void bookmark_write(void);
 void browser_init(void);
 void browser_draw(void);
 
+void splash_draw(void);
+
 void page_init(page_t *page);
 void page_clear(void);
 void page_clearone(u16 *screen);
@@ -90,50 +86,14 @@ void prefs_start_hndl(void *data,
 bool prefs_read(XML_Parser p);
 void prefs_write(void);
 
+void statusmsg(const char *msg);
+
 /*---------------------------------------------------------------------------*/
 
 void spin(void) { while(true) swiWaitForVBlank(); }
 
-/*
-void user_error_ptr() {}
-void user_error_fn() {}
-void user_warning_fn() {}
-
-#define ERROR 1
-u8 splash(void)
+int main(void)
 {
-  char file_name[32] = "dslibris.png";
-  FILE *fp = fopen(file_name, "rb");
-
-  png_structp png_ptr = png_create_read_struct
-    (PNG_LIBPNG_VER_STRING, (png_voidp)user_error_ptr,
-     user_error_fn, user_warning_fn);
-  if (!png_ptr)
-    return (1);
-
-  png_infop info_ptr = png_create_info_struct(png_ptr);
-  if (!info_ptr)
-    {
-      png_destroy_read_struct(&png_ptr,
-			      (png_infopp)NULL, (png_infopp)NULL);
-      return (2);
-    }
-  
-  png_infop end_info = png_create_info_struct(png_ptr);
-  if (!end_info)
-    {
-      png_destroy_read_struct(&png_ptr, &info_ptr,
-			      (png_infopp)NULL);
-      return (3);
-    }
-  
-  fclose(fp);
-  return(0);
-}
-*/
-
-
-int main(void) {
   bool browseractive = false;
   char filebuf[BUFSIZE];
 
@@ -159,14 +119,7 @@ int main(void) {
   videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
   vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
   fb = screen1 = (u16*)BG_BMP_RAM(0);
-
-  /*  tsSetPixelSize(36);
-  page_clearone(screen1);
-  tsSetPen(MARGINLEFT+28,MARGINTOP+128);
-  tsString("dslibris");
-  tsSetPixelSize(0);
-  */
-
+  
   /** bring up the startup console.
       sub bg 0 will be used to print text. **/
   videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	
@@ -180,32 +133,28 @@ int main(void) {
   }
   consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31),
 		     (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
-  printf("startup console          [ OK ]\n");
+  printf("startup console        [  OK  ]\n");
   swiWaitForVBlank();
 
-  printf("media filesystem         ");
-  if(!fatInitDefault())
-    printf("[FAIL]\n");
-  else
-    printf("[ OK ]\n");
+  printf("media filesystem       ");
+  if(!fatInitDefault()) { printf("[ FAIL ]\n"); spin(); }
+  else printf("[ OK ]\n");
   swiWaitForVBlank();
 
-  printf("typesetter               ");
-  if(tsInitDefault())
-    printf("[FAIL]\n");
-  else
-    printf("[ OK ]\n");
+  printf("typesetter             ");
+  if(tsInitDefault()) { printf("[ FAIL ]\n"); spin(); }
+  else printf("[ OK ]\n");
   swiWaitForVBlank();
 
-  printf("book scan                ");
+  printf("book scan              ");
   bookcount = 0;
   bookcurrent = 0;
   /** assemble library by indexing all XHTML/XML files
-      in the current directory. **/  
-  /** TODO recursive book search **/
+      in the current directory.
+      TODO recursive book search **/
   char dirname[16] = ".";
   DIR_ITER *dp = diropen(dirname);
-  if(!dp) { printf("[FAIL]\n"); spin(); }
+  if(!dp) { printf("[ FAIL ]\n"); spin(); }
   char filename[32];
   while(!dirnext(dp, filename, NULL) && bookcount != MAXBOOKS) {  
     char *c;
@@ -219,20 +168,17 @@ int main(void) {
     }
   }
   dirclose(dp);
-  if(!bookcount) {
-    printf("[FAIL]\n");
-    spin();
-  }
-  else
-    printf("[ OK ]\n");
+  if(!bookcount) { printf("[ FAIL ]\n"); spin(); }
+  else printf("[  OK  ]\n");
   swiWaitForVBlank();
+  browser_init();
 
-  printf("expat XML parser         ");
+  printf("expat XML parser       ");
   XML_Parser p = XML_ParserCreate(NULL);
-  if(!p) { printf("[FAIL]\n"); spin(); }
+  if(!p) { printf("[ FAIL ]\n"); spin(); }
   XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
   parse_init(&parsedata);
-  printf("[ OK ]\n");
+  printf("[  OK  ]\n");
   swiWaitForVBlank();
 
   /** initialize the top screen book view. **/
@@ -244,7 +190,7 @@ int main(void) {
   SUB_BG3_YDY = c;
   SUB_BG3_CX = 0 << 8;
   SUB_BG3_CY = 256 << 8;
-  
+ 
   videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
   vramSetBankC(VRAM_C_SUB_BG_0x06200000);
   screen0 = (u16*)BG_BMP_RAM_SUB(0);
@@ -272,13 +218,12 @@ int main(void) {
     browseractive = false;
   } else {
     tsInitPen();
-    tsString("[welcome to dslibris]\n");
-    browser_init();
     browser_draw();
+    splash_draw();
     fb = screen0;
-    swiWaitForVBlank();
     browseractive = true;
   }
+  swiWaitForVBlank();
 
   touchPosition touch;
 
@@ -340,7 +285,7 @@ int main(void) {
 	  fb = screen0;
 	}
       }
-
+      
       if(keysDown() & KEY_SELECT) {
 	browseractive = false;
 	page_draw(&(pages[pagecurrent]));
@@ -371,6 +316,7 @@ int main(void) {
 	prefs_write();
 	browseractive = true;
 	browser_draw();	
+	splash_draw();
 	fb = screen0;
       }
     }
@@ -415,7 +361,8 @@ void book_parsetitle(char *filename) {
   }
 }
 
-void parse_printerror(XML_Parser p) {
+void parse_printerror(XML_Parser p)
+{
   sprintf(msg,"expat: [%s]\n",XML_ErrorString(XML_GetErrorCode(p)));
   tsString(msg);
   sprintf(msg,"expat: [%d:%d] : %d\n",
@@ -425,12 +372,14 @@ void parse_printerror(XML_Parser p) {
   tsString(msg);
 }
 
-void book_init(book_t *book) {
+void book_init(book_t *book)
+{
   strcpy((char *)book->filename,"");
   strcpy((char *)book->title,"");
 }
 
-u8 book_parse(XML_Parser p, char *filebuf) {
+u8 book_parse(XML_Parser p, char *filebuf)
+{
   char path[64];
   sprintf(path,"%s",books[bookcurrent].filename);
   printf(path);
@@ -505,6 +454,7 @@ void page_drawsolid(u8 r, u8 g, u8 b) {
   for(i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++) fb[i] =color;
 }
 
+
 void page_drawmargins(void) {
   int x, y;
   u16 color = RGB15(30,30,30) | BIT(15);
@@ -527,14 +477,12 @@ void page_clear(void) {
   fb = savefb;
 }
 
-
 void page_clearone(u16 *screen) {
   u16 *savefb = fb;
   fb = screen;
   page_drawsolid(31,31,31);
   fb = savefb;
 }
-
 
 void browser_draw(void) {
   fb = screen1;
@@ -544,6 +492,31 @@ void browser_draw(void) {
     if(i==bookcurrent) button_draw(&buttons[i],fb,true);
     else button_draw(&buttons[i],fb,false);
   }
+}
+
+#define SPLASH_LEFT (MARGINLEFT+28)
+#define SPLASH_TOP (MARGINTOP+96)
+
+void splash_draw(void) {
+  fb = screen0;
+  tsSetPixelSize(36);
+  page_clearone(screen0);
+  tsSetPen(SPLASH_LEFT,SPLASH_TOP);
+  tsString("dslibris");
+  tsSetPixelSize(0);
+  tsSetPen(SPLASH_LEFT,tsGetPenY()+tsGetHeight());
+  tsString("an ebook reader");
+  tsSetPen(SPLASH_LEFT,tsGetPenY()+tsGetHeight());
+  tsString("for Nintendo DS");
+  tsSetPen(SPLASH_LEFT,tsGetPenY()+tsGetHeight());
+  tsString(APP_VERSION);
+  tsNewLine();
+  tsSetPen(SPLASH_LEFT,tsGetPenY()+tsGetHeight());
+  sprintf(msg,"%d books\n", bookcount);
+  tsString(msg);
+
+  statusmsg(APP_URL);
+
 }
 
 void page_draw(page_t *page) {
@@ -556,7 +529,7 @@ void page_draw(page_t *page) {
     u16 c = page->buf[i];
     if(c == '\n') {
       spacing = page_getjustifyspacing(page,i+1);
-      tsStartNewLine();
+      tsNewLine();
       i++;
     } else {
       if(c > 127) i+=ucs(&(page->buf[i]),&c);
@@ -605,19 +578,18 @@ void bookmark_read(void) {
   }
 }
 
-void statusmsg(char *msg) {
+void statusmsg(const char *msg) {
   u16 *savefb = fb;
   fb = screen1;
   u16 x,y;
   tsGetPen(&x,&y);
 
-  tsSetPen(MARGINLEFT,MARGINBOTTOM);
+  tsSetPen(MARGINLEFT,MARGINBOTTOM-30);
   tsString(msg);
 
   tsSetPen(x,y);
   fb = savefb;
 }
-
 
 /** parse.c **/
 
@@ -687,6 +659,114 @@ bool parse_pagefeed(parsedata_t *data, page_t *page) {
   data->pen.x = MARGINLEFT;
   data->pen.y = MARGINTOP + tsGetHeight();
   return pagedone;
+}
+
+#if 0
+void lidsleep(void) {
+  __asm("mcr p15,0,r0,c7,c0,4");
+  __asm("mov r0, r0");
+  __asm("BX lr"); 
+}
+
+void lidsleep2(void) { 
+  /* if lid 'key' */
+  if (keysDown() & BIT(7)) {
+    /* hinge is closed */
+    /* set only key irq for waking up */
+    unsigned long oldIE = REG_IE ;
+    REG_IE = IRQ_KEYS ;
+    *(volatile unsigned short *)0x04000132 = BIT(14) | 255 ; 
+    /* any of the inner keys might irq */
+    /* power off everything not needed */
+    powerOFF(POWER_LCD) ;
+    /* set system into sleep */
+    lidsleep() ;
+    /* wait a bit until returning power */
+    while (REG_VCOUNT!=0) ;
+    while (REG_VCOUNT==0) ;
+    while (REG_VCOUNT!=0) ;
+    /* power on again */
+    powerON(POWER_LCD) ;
+    /* set up old irqs again */
+    REG_IE = oldIE ;
+  }
+}
+#endif
+
+void prefs_start_hndl(void *data,
+		      const XML_Char *name, 
+		      const XML_Char **attr) {
+  if(!stricmp(name,"bookmark")) {
+    prefsdata_t *ud = (prefsdata_t *)data;
+    u8 i;
+    for(i=0;attr[i];i+=2) {
+      tsString(" ");
+      tsString((char*)attr[i]);
+      tsString("=");
+      tsString((char*)attr[i+1]);
+      if(!strcmp(attr[i],"file")) strcpy(ud->filename, attr[i+1]);
+      if(!strcmp(attr[i],"position")) ud->position = atoi(attr[i+1]);
+    }
+  }
+}
+
+/** side effect - sets bookcurrent to index of bookmarked book. **/
+
+bool prefs_read(XML_Parser p) {
+  FILE *fp = fopen("dslibris.xml","r");
+  if(!fp) return false;
+  prefsdata_t ud;
+  strcpy(ud.filename,"");
+  ud.position = 0;
+
+  XML_ParserReset(p, NULL);
+  XML_SetStartElementHandler(p, prefs_start_hndl);
+  XML_SetUserData(p, (void *)&ud);
+  while(true) {
+    swiWaitForVBlank();
+    void *buff = XML_GetBuffer(p, 64);
+    int bytes_read = fread(buff, sizeof(char), 64, fp);
+    XML_ParseBuffer(p, bytes_read, bytes_read == 0);
+    if(bytes_read == 0) break;
+  }
+  fclose(fp);
+
+  if(!strlen(ud.filename)) return false;
+
+  /** handle bookmark. find a match by filename. **/
+  int i;
+  for(i=0;i<bookcount;i++) {
+    if(!stricmp(books[i].filename,ud.filename)) {
+      //      books[i].position = ud.position;
+      bookcurrent = i;
+      return true;
+    }
+  }
+  return false;
+}
+
+void prefs_write(void) {
+  FILE* fp = fopen("dslibris.xml","w");
+  fprintf(fp,"<dslibris>\n");
+  fprintf(fp, "<bookmark file=\"%s\" position=\"%d\" />",
+	  books[bookcurrent].filename, pagecurrent);
+  fprintf(fp, "\n</dslibris>\n");
+  fclose(fp);
+}
+
+void initConsole(void) {
+  /** bring up the startup console **/  
+  videoSetMode(MODE_0_2D);	
+  videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	
+  /** sub bg 0 will be used to print text **/
+  vramSetBankC(VRAM_C_SUB_BG);
+  /** set palette - green on black **/
+  SUB_BG0_CR = BG_MAP_BASE(31);
+  int i;
+  for(i=0;i<256;i++) BG_PALETTE_SUB[i] = RGB15(1,3,1);
+  BG_PALETTE_SUB[255] = RGB15(15,31,15);
+  consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31),
+		     (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
 }
 
 int unknown_hndl(void *encodingHandlerData,
@@ -906,113 +986,41 @@ void end_hndl(void *data, const char *el) {
 void proc_hndl(void *data, const char *target, const char *pidata) {
 }  /* End proc_hndl */
 
+/*
+void user_error_ptr() {}
+void user_error_fn() {}
+void user_warning_fn() {}
 
-#if 0
-void lidsleep(void) {
-  __asm("mcr p15,0,r0,c7,c0,4");
-  __asm("mov r0, r0");
-  __asm("BX lr"); 
-}
+#define ERROR 1
+u8 splash(void)
+{
+  char file_name[32] = "dslibris.png";
+  FILE *fp = fopen(file_name, "rb");
 
-void lidsleep2(void) { 
-  /* if lid 'key' */
-  if (keysDown() & BIT(7)) {
-    /* hinge is closed */
-    /* set only key irq for waking up */
-    unsigned long oldIE = REG_IE ;
-    REG_IE = IRQ_KEYS ;
-    *(volatile unsigned short *)0x04000132 = BIT(14) | 255 ; 
-    /* any of the inner keys might irq */
-    /* power off everything not needed */
-    powerOFF(POWER_LCD) ;
-    /* set system into sleep */
-    lidsleep() ;
-    /* wait a bit until returning power */
-    while (REG_VCOUNT!=0) ;
-    while (REG_VCOUNT==0) ;
-    while (REG_VCOUNT!=0) ;
-    /* power on again */
-    powerON(POWER_LCD) ;
-    /* set up old irqs again */
-    REG_IE = oldIE ;
-  }
-}
-#endif
+  png_structp png_ptr = png_create_read_struct
+    (PNG_LIBPNG_VER_STRING, (png_voidp)user_error_ptr,
+     user_error_fn, user_warning_fn);
+  if (!png_ptr)
+    return (1);
 
-void prefs_start_hndl(void *data,
-		      const XML_Char *name, 
-		      const XML_Char **attr) {
-  if(!stricmp(name,"bookmark")) {
-    prefsdata_t *ud = (prefsdata_t *)data;
-    u8 i;
-    for(i=0;attr[i];i+=2) {
-      tsString(" ");
-      tsString((char*)attr[i]);
-      tsString("=");
-      tsString((char*)attr[i+1]);
-      if(!strcmp(attr[i],"file")) strcpy(ud->filename, attr[i+1]);
-      if(!strcmp(attr[i],"position")) ud->position = atoi(attr[i+1]);
+  png_infop info_ptr = png_create_info_struct(png_ptr);
+  if (!info_ptr)
+    {
+      png_destroy_read_struct(&png_ptr,
+			      (png_infopp)NULL, (png_infopp)NULL);
+      return (2);
     }
-  }
-}
-
-
-/** side effect - sets bookcurrent to index of bookmarked book. **/
-
-bool prefs_read(XML_Parser p) {
-  FILE *fp = fopen("dslibris.xml","r");
-  if(!fp) return false;
-  prefsdata_t ud;
-  strcpy(ud.filename,"");
-  ud.position = 0;
-
-  XML_ParserReset(p, NULL);
-  XML_SetStartElementHandler(p, prefs_start_hndl);
-  XML_SetUserData(p, (void *)&ud);
-  while(true) {
-    swiWaitForVBlank();
-    void *buff = XML_GetBuffer(p, 64);
-    int bytes_read = fread(buff, sizeof(char), 64, fp);
-    XML_ParseBuffer(p, bytes_read, bytes_read == 0);
-    if(bytes_read == 0) break;
-  }
-  fclose(fp);
-
-  if(!strlen(ud.filename)) return false;
-
-  /** handle bookmark. find a match by filename. **/
-  int i;
-  for(i=0;i<bookcount;i++) {
-    if(!stricmp(books[i].filename,ud.filename)) {
-      //      books[i].position = ud.position;
-      bookcurrent = i;
-      return true;
+  
+  png_infop end_info = png_create_info_struct(png_ptr);
+  if (!end_info)
+    {
+      png_destroy_read_struct(&png_ptr, &info_ptr,
+			      (png_infopp)NULL);
+      return (3);
     }
-  }
-  return false;
-}
-
-void prefs_write(void) {
-  FILE* fp = fopen("dslibris.xml","w");
-  fprintf(fp,"<dslibris>\n");
-  fprintf(fp, "<bookmark file=\"%s\" positiion=\"%d\" />",
-	  books[bookcurrent].filename, pagecurrent);
-  fprintf(fp, "\n</dslibris>\n");
+  
   fclose(fp);
+  return(0);
 }
+*/
 
-void initConsole(void) {
-  /** bring up the startup console **/  
-  videoSetMode(MODE_0_2D);	
-  videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	
-  /** sub bg 0 will be used to print text **/
-  vramSetBankC(VRAM_C_SUB_BG);
-  /** set palette - green on black **/
-  SUB_BG0_CR = BG_MAP_BASE(31);
-  int i;
-  for(i=0;i<256;i++)
-    BG_PALETTE_SUB[i] = RGB15(1,3,1);
-  BG_PALETTE_SUB[255] = RGB15(15,31,15);
-  consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31),
-		     (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
-}
