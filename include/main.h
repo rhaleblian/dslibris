@@ -41,6 +41,11 @@ typedef struct {
   FT_Vector pen;
 } parsedata_t;
 
+typedef struct {
+  char filename[32];
+  u16 position;
+} prefsdata_t;
+
 void page_init(page_t *page);
 
 #endif

@@ -10,36 +10,38 @@ extern u16 *fb,*screen0,*screen1;
 
 FT_Library 		library;
 FT_Face    		face;
-FT_GlyphSlotRec glyphs[MAXGLYPHS];
+FT_GlyphSlotRec         glyphs[MAXGLYPHS];
 FT_Vector		pen;
 FT_Error   		error;
 bool                    usecache;
+bool                    invert;
 
-u8 ucs(char *txt, u16 *code) {
+/** return UCS byte count for the UTF-8 character at txt.
+    code contains actual UCS value. **/
+
+u8 ucs(const char *txt, u16 *code)
+{
   if(txt[0] > 0xc2 && txt[0] < 0xe0) {
     *code = ((txt[0]-192)*64) + (txt[1]-128);
     return 2;
-    
   } else if(txt[0] > 0xdf && txt[0] < 0xf0) {
     *code = (txt[0]-224)*4096 + (txt[1]-128)*64 + (txt[2]-128);
     return 3;
-
   } else if(txt[0] > 0xef) {
     return 4;
-
   }
   *code = txt[0];
   return 1;
 }
 
-// accessors
-
-u8 tsGetHeight(void) { return (face->size->metrics.height >> 6); }
+inline void tsSetInvert(bool state) { invert = state; }
+inline bool tsGetInvert(void) { return invert; }
 inline void tsGetPen(u16 *x, u16 *y) { *x = pen.x; *y = pen.y; }
+inline u8   tsGetPenX(void) { return pen.x; }
+inline u8   tsGetPenY(void) { return pen.y; }
 inline void tsSetPen(u16 x, u16 y) { pen.x = x; pen.y = y; }
 
-u8 tsGetPenX(void) { return pen.x; }
-u8 tsGetPenY(void) { return pen.y; }
+u8 tsGetHeight(void) { return (face->size->metrics.height >> 6); }
 
 u8 tsAdvance(u16 code) {
   return glyphs[code].advance.x >> 6;
@@ -95,6 +97,7 @@ int tsInitDefault(void)
   }                     
   
   usecache = true;
+  invert = false;
   tsInitPen();
   return(0);
 }
@@ -105,6 +108,7 @@ void tsChar(u16 code)
       into the current buffer at the current pen position. **/
   
   /** ASCII glyphs are cached; otherwise load. **/
+
   FT_GlyphSlot glyph;
   if(usecache && (code < 128)) glyph = &glyphs[code];
   else {
@@ -112,7 +116,9 @@ void tsChar(u16 code)
     glyph = face->glyph;
   }
   
-  /** direct draw into framebuffer. **/
+  /** direct draw into framebuffer.
+      TODO perhaps do this with tiles. **/
+
   FT_Bitmap bitmap = glyph->bitmap;
   u16 bx = glyph->bitmap_left;
   u16 by = glyph->bitmap_top;
@@ -124,7 +130,9 @@ void tsChar(u16 code)
       if(a) {
 	u16 sx = (pen.x+gx+bx);
 	u16 sy = (pen.y+gy-by);
-	int l = (255-a) >> 3;
+	int l;
+	if(invert) l = a >> 3;
+	else l = (255-a) >> 3;
 	fb[sy*SCREEN_WIDTH+sx] = RGB15(l,l,l) | BIT(15);
       }
     }
@@ -132,7 +140,8 @@ void tsChar(u16 code)
   pen.x += glyph->advance.x >> 6;
 }
 
-int tsNewLine(void) {
+int tsNewLine(void)
+{
   int height = face->size->metrics.height >> 6;
   pen.x = MARGINLEFT;
   pen.y += height + LINESPACING;
@@ -145,7 +154,8 @@ int tsNewLine(void) {
   return(0);
 }
 
-void tsString(char *string) {
+void tsString(const char *string)
+{
   /** draw an ASCII string starting at the pen position. **/
   u8 i;
   for(i=0;i<strlen((char *)string);i++) {
@@ -158,7 +168,8 @@ void tsString(char *string) {
   }
 }
 
-void tsDump(void) {
+void tsDump(void)
+{
   int code;
   for(code=0;code<MAXGLYPHS;code++) {
     tsChar(code);

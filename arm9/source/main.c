@@ -1,5 +1,5 @@
 /**----------------------------------------------------------------------------
-   $Id: main.c,v 1.16 2007/09/11 05:00:01 rhaleblian Exp $
+   $Id: main.c,v 1.17 2007/09/16 00:14:48 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    -------------------------------------------------------------------------**/
 
@@ -32,7 +32,7 @@
 #include "all_gfx.c"
 #include "all_gfx.h"
 
-#define APP_VERSION "0.2.1"
+#define APP_VERSION "0.2.2"
 #define APP_URL "http://rhaleblian.wordpress.com"
 
 u16 *screen0, *screen1, *fb;
@@ -46,13 +46,8 @@ u16 pagecount, pagecurrent;
 
 button_t buttons[16];
 char msg[128];
-
+bool invert = false;
 parsedata_t parsedata;
-
-typedef struct {
-  char filename[32];
-  u16 position;
-} prefsdata_t;
 
 void initConsole(void);
 
@@ -75,6 +70,7 @@ void splash_draw(void);
 void page_init(page_t *page);
 void page_clear(void);
 void page_clearone(u16 *screen);
+void page_clearinvert(u16 *screen);
 void page_draw(page_t *page);
 void page_drawsolid(u8 r, u8 g, u8 b);
 void page_drawmargins(void);
@@ -108,18 +104,6 @@ int main(void)
   s16 s = SIN[-128 & 0x1FF] >> 4;
   s16 c = COS[-128 & 0x1FF] >> 4;
 
-  /** set up splash on bottom screen **/
-  BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-  BG3_XDX = c;
-  BG3_XDY = -s;
-  BG3_YDX = s;
-  BG3_YDY = c;
-  BG3_CX = 0 << 8;
-  BG3_CY = 256 << 8;
-  videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-  vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-  fb = screen1 = (u16*)BG_BMP_RAM(0);
-  
   /** bring up the startup console.
       sub bg 0 will be used to print text. **/
   videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	
@@ -138,12 +122,12 @@ int main(void)
 
   printf("media filesystem       ");
   if(!fatInitDefault()) { printf("[ FAIL ]\n"); spin(); }
-  else printf("[ OK ]\n");
+  else printf("[  OK  ]\n");
   swiWaitForVBlank();
 
   printf("typesetter             ");
   if(tsInitDefault()) { printf("[ FAIL ]\n"); spin(); }
-  else printf("[ OK ]\n");
+  else printf("[  OK  ]\n");
   swiWaitForVBlank();
 
   printf("book scan              ");
@@ -181,8 +165,19 @@ int main(void)
   printf("[  OK  ]\n");
   swiWaitForVBlank();
 
-  /** initialize the top screen book view. **/
+  /** initialize book view. **/
 
+  BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+  BG3_XDX = c;
+  BG3_XDY = -s;
+  BG3_YDX = s;
+  BG3_YDY = c;
+  BG3_CX = 0 << 8;
+  BG3_CY = 256 << 8;
+  videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+  vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
+  fb = screen1 = (u16*)BG_BMP_RAM(0);
+  
   BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
   SUB_BG3_XDX = c;
   SUB_BG3_XDY = -s;
@@ -206,6 +201,11 @@ int main(void)
     page_t *page = &(pages[pagecurrent]);
     page_init(page);
 
+    page_clearinvert(screen0);
+    page_clearinvert(screen1);
+    tsSetInvert(true);
+    statusmsg("[loading...]");
+    tsSetInvert(false);
     book_parse(p, filebuf);
 
     fb = screen0;
@@ -252,17 +252,25 @@ int main(void)
 	page_t *page = &(pages[pagecurrent]);
 	page_init(page);
 
-	if(book_parse(p, filebuf)) break;
+	page_clearinvert(screen0);
+	page_clearinvert(screen1);
+	tsSetInvert(true);
+	statusmsg("[loading...]");
+	tsSetInvert(false);
+	if(!book_parse(p, filebuf)) {
+	  
+	  fb = screen0;
+	  tsInitPen();
 
-	fb = screen0;
-	tsInitPen();
-
-	pagecurrent = 0;
-	bookmark_read();
-	page = &(pages[pagecurrent]);
-	page_draw(page);
-	prefs_write();
-	browseractive = false;
+	  pagecurrent = 0;
+	  bookmark_read();
+	  page = &(pages[pagecurrent]);
+	  page_draw(page);
+	  prefs_write();
+	  browseractive = false;
+	} else {
+	  browser_draw();
+	}
       }
       
       if(keysDown() & KEY_B) {
@@ -327,6 +335,21 @@ int main(void)
   exit(0);
 }
 
+void initConsole(void) {
+  /** bring up the startup console **/  
+  videoSetMode(MODE_0_2D);	
+  videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	
+  /** sub bg 0 will be used to print text **/
+  vramSetBankC(VRAM_C_SUB_BG);
+  /** set palette - green on black **/
+  SUB_BG0_CR = BG_MAP_BASE(31);
+  int i;
+  for(i=0;i<256;i++) BG_PALETTE_SUB[i] = RGB15(1,3,1);
+  BG_PALETTE_SUB[255] = RGB15(15,31,15);
+  consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31),
+		     (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
+}
+
 void browser_init(void) {
   u8 book;
   for(book=0;book<bookcount;book++) {
@@ -336,6 +359,16 @@ void browser_init(void) {
       strcpy((char *)buttons[book].text,(char*)books[book].title);
     else
       strcpy((char *)buttons[book].text,(char*)books[book].filename);
+  }
+}
+
+void browser_draw(void) {
+  fb = screen1;
+  page_drawsolid(0,0,0);
+  u8 i;
+  for(i=0;i<bookcount;i++) {
+    if(i==bookcurrent) button_draw(&buttons[i],fb,true);
+    else button_draw(&buttons[i],fb,false);
   }
 }
 
@@ -484,14 +517,11 @@ void page_clearone(u16 *screen) {
   fb = savefb;
 }
 
-void browser_draw(void) {
-  fb = screen1;
-  page_drawsolid(31,31,31);
-  u8 i;
-  for(i=0;i<bookcount;i++) {
-    if(i==bookcurrent) button_draw(&buttons[i],fb,true);
-    else button_draw(&buttons[i],fb,false);
-  }
+void page_clearinvert(u16 *screen) {
+  u16 *savefb = fb;
+  fb = screen;
+  page_drawsolid(0,0,0);
+  fb = savefb;
 }
 
 #define SPLASH_LEFT (MARGINLEFT+28)
@@ -500,7 +530,8 @@ void browser_draw(void) {
 void splash_draw(void) {
   fb = screen0;
   tsSetPixelSize(36);
-  page_clearone(screen0);
+  tsSetInvert(true);
+  page_clearinvert(screen0);
   tsSetPen(SPLASH_LEFT,SPLASH_TOP);
   tsString("dslibris");
   tsSetPixelSize(0);
@@ -514,9 +545,8 @@ void splash_draw(void) {
   tsSetPen(SPLASH_LEFT,tsGetPenY()+tsGetHeight());
   sprintf(msg,"%d books\n", bookcount);
   tsString(msg);
-
   statusmsg(APP_URL);
-
+  tsSetInvert(false);
 }
 
 void page_draw(page_t *page) {
@@ -532,10 +562,10 @@ void page_draw(page_t *page) {
       tsNewLine();
       i++;
     } else {
-      if(c > 127) i+=ucs(&(page->buf[i]),&c);
+      if(c > 127) i+=ucs((char*)&(page->buf[i]),&c);
       else i++;
       tsChar(c);
-      //if(c == ' ') u16 x,y; tsGetPen(&x,&y); x += spacing; tsSetPen(x,y);
+      //if(c == ' ') au16 x,y; tsGetPen(&x,&y); x += spacing; tsSetPen(x,y);
     }
   }
 
@@ -580,11 +610,13 @@ void bookmark_read(void) {
 
 void statusmsg(const char *msg) {
   u16 *savefb = fb;
-  fb = screen1;
+  fb = screen0;
   u16 x,y;
   tsGetPen(&x,&y);
 
-  tsSetPen(MARGINLEFT,MARGINBOTTOM-30);
+  tsSetPen(MARGINLEFT,SCREEN_WIDTH-MARGINBOTTOM);
+  tsString("                                                     ");
+  tsSetPen(MARGINLEFT,SCREEN_WIDTH-MARGINBOTTOM);
   tsString(msg);
 
   tsSetPen(x,y);
@@ -754,21 +786,6 @@ void prefs_write(void) {
   fclose(fp);
 }
 
-void initConsole(void) {
-  /** bring up the startup console **/  
-  videoSetMode(MODE_0_2D);	
-  videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);	
-  /** sub bg 0 will be used to print text **/
-  vramSetBankC(VRAM_C_SUB_BG);
-  /** set palette - green on black **/
-  SUB_BG0_CR = BG_MAP_BASE(31);
-  int i;
-  for(i=0;i<256;i++) BG_PALETTE_SUB[i] = RGB15(1,3,1);
-  BG_PALETTE_SUB[255] = RGB15(15,31,15);
-  consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31),
-		     (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
-}
-
 int unknown_hndl(void *encodingHandlerData,
 		 const XML_Char *name,
 		 XML_Encoding *info) {
@@ -883,7 +900,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen) {
 	    account for UTF-8 characters when advancing. **/
 	u16 code;
 	if(txt[j] > 127) 
-	  bytes = ucs((unsigned char*)&(txt[j]),&code);
+	  bytes = ucs((char*)&(txt[j]),&code);
 	else {
 	  code = txt[j];
 	  bytes = 1;

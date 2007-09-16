@@ -16,7 +16,9 @@ void tsInitPen(void);
 u8 tsGetHeight(void);
 int tsNewLine(void);
 inline void tsSetPen(u16 x, u16 y);
-void tsString(char *string);
-u8 ucs(char *txt, u16 *code);
+void tsString(const char *string);
+u8 ucs(const char *txt, u16 *code);
+inline void tsSetInvert(bool state);
+inline bool tsGetInvert(void);
 
 #endif

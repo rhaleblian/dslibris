@@ -23,13 +23,22 @@ void button_move(button_t *b, u16 x, u16 y) {
 void button_draw(button_t *b, u16 *fb, bool highlight) {
   u16 x; u16 y;
   coord_t ul, lr;
-  u16 bordercolor = RGB15(28,28,28) | BIT(15);
-  u16 locolor = RGB15(14,14,14) | BIT(15);
   ul.x = b->origin.x;
   ul.y = b->origin.y;
   lr.x = b->origin.x + b->extent.x;
   lr.y = b->origin.y + b->extent.y;
 
+  u16 bgcolor;
+  if(highlight) bgcolor = RGB15(31,31,31) | BIT(15);
+  else bgcolor = RGB15(0,0,0) | BIT(15);
+
+  for(y=ul.y;y<lr.y;y++) {
+    for(x=ul.x;x<lr.x;x++) {
+      fb[y*SCREEN_WIDTH + x] = bgcolor;
+    }
+  }
+  
+  u16 bordercolor = RGB15(28,28,28) | BIT(15);
   for(x=ul.x;x<lr.x;x++) {
     fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
     fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
@@ -39,16 +48,10 @@ void button_draw(button_t *b, u16 *fb, bool highlight) {
     fb[y*SCREEN_WIDTH + lr.x] = bordercolor;
   }
 
-  if(highlight) {
-    for(y=ul.y;y<ul.y+8;y++) {
-      for(x=ul.x;x<ul.x+8;x++) {
-	fb[y*SCREEN_WIDTH + x] = locolor;
-      }
-    }
-  }
-
+  if(!highlight) tsSetInvert(true);
   tsGetPen(&x,&y);
   tsSetPen(ul.x+10, ul.y + tsGetHeight());
   tsString((char*)b->text);
   tsSetPen(x,y);
+  if(!highlight) tsSetInvert(false);
 }
