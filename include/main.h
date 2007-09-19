@@ -1,7 +1,8 @@
 #ifndef _main_h_
 #define _main_h_
 
-#include "font.h"
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 #define MARGINLEFT 12
 #define MARGINRIGHT 12
@@ -17,13 +18,13 @@
 #define BUFSIZE 1024
 #define PAGEBUFSIZE 2048
 #define MAXPAGES 2048
-#define MAXBOOKS 8
+#define MAXBOOKS 7
 
-/** watch out for struct alignment here! 64 is working. **/
+/** watch out for struct alignment here? **/
 typedef struct book_s {
   char filename[32];
-  char title[32];
-  //  u16 position;
+  char title[30];
+  u16 position;
 } book_t;
 
 typedef struct page_s {

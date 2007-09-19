@@ -28,17 +28,15 @@ void button_draw(button_t *b, u16 *fb, bool highlight) {
   lr.x = b->origin.x + b->extent.x;
   lr.y = b->origin.y + b->extent.y;
 
-  u16 bgcolor;
-  if(highlight) bgcolor = RGB15(31,31,31) | BIT(15);
-  else bgcolor = RGB15(0,0,0) | BIT(15);
-
-  for(y=ul.y;y<lr.y;y++) {
-    for(x=ul.x;x<lr.x;x++) {
-      fb[y*SCREEN_WIDTH + x] = bgcolor;
+  if(highlight) {
+    for(y=ul.y;y<lr.y;y++) {
+      for(x=ul.x;x<lr.x;x++) {
+	fb[y*SCREEN_WIDTH + x] = RGB15(31,31,31) | BIT(15);
+      }
     }
   }
   
-  u16 bordercolor = RGB15(28,28,28) | BIT(15);
+  u16 bordercolor = RGB15(15,15,15) | BIT(15);
   for(x=ul.x;x<lr.x;x++) {
     fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
     fb[lr.y*SCREEN_WIDTH + x] = bordercolor;

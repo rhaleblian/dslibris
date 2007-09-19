@@ -1,9 +1,12 @@
 /*-----------------------------------------------------------------------------
-  $Id: wifi_enabled.c,v 1.2 2007/08/13 04:26:03 rhaleblian Exp $
+  $Id: arm7main.c,v 1.1 2007/08/27 04:44:30 rhaleblian Exp $
 
   Simple ARM7 stub (sends RTC, TSC, and X/Y data to the ARM 9)
 
-  $Log: wifi_enabled.c,v $
+  $Log: arm7main.c,v $
+  Revision 1.1  2007/08/27 04:44:30  rhaleblian
+  lcds now shut off when lid is closed.
+
   Revision 1.2  2007/08/13 04:26:03  rhaleblian
   Suppressed arm7 code, which causes memory and pc stomping.
   Added banner logo and title.
@@ -234,13 +237,45 @@ void arm7_synctoarm9() { // send fifo message
 
 /**-------------------------------------------------------------------------**/
 // interrupt handler to allow incoming notifications from arm9
+
+#define GET_BRIGHTNESS      (0x1211B210)
+#define SET_BRIGHTNESS_0    (0x1211B211)
+#define SET_BRIGHTNESS_1    (0x1211B212)
+#define SET_BRIGHTNESS_2    (0x1211B213)
+#define SET_BRIGHTNESS_3    (0x1211B214)
+
 void arm7_fifo() { // check incoming fifo messages
   int syncd = 0;
   while ( !(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY)) {
-    u32 value = REG_IPC_FIFO_RX;
-    if ( value == 0x87654321 && !syncd) {
+    u32 msg = REG_IPC_FIFO_RX;
+    if ( msg == 0x87654321 && !syncd) {
       syncd = 1;
       Wifi_Sync();
+    }
+    else if(msg == GET_BRIGHTNESS)
+    {
+      // send back the value (0 - 3)
+      REG_IPC_FIFO_TX = readPowerManagement((4)) - 64;
+    }
+    else if(msg == SET_BRIGHTNESS_0)
+    {
+      // write value (0)
+      writePowerManagement((4), 0);
+    }
+    else if(msg == SET_BRIGHTNESS_1)
+    {
+      // write value (1)
+      writePowerManagement((4), 1);
+    }
+    else if(msg == SET_BRIGHTNESS_2)
+    {
+      // write value (2)
+      writePowerManagement((4), 2);
+    }
+    else if(msg == SET_BRIGHTNESS_3)
+    {
+      // write value (3)
+      writePowerManagement((4), 3);
     }
   }
 }
