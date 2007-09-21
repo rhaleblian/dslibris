@@ -11,7 +11,7 @@ void Button::Init(Text *typesetter) {
 	strcpy((char*)text, "");
 }
 
-void Button::Label(char *labeltext) {
+void Button::Label(const char *labeltext) {
 	strncpy((char*)text,(char*)labeltext,63);
 }
 

@@ -16,7 +16,7 @@ class Button {
 
  public:
   void Init(Text *typesetter);
-  void Label(char *text);
+  void Label(const char *text);
   void Draw(u16 *fb, bool highlight);
   void Move(u16 x, u16 y);
 };

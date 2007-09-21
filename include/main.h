@@ -22,23 +22,13 @@ typedef struct book_s {
 	char *filename;
 	char *title;
 	char *author;
-	u16 position;
+	s16 position;
 } book_t;
 
 typedef struct page_s {
 	u16 length;
 	u8 *buf;   /** allocated per-page at parse time, to exact length. **/
 } page_t;
-
-typedef enum {NONE,HTML,HEAD,TITLE,BODY,PRE} context_t;
-
-typedef struct {
-	context_t stack[16];
-	u8 stacksize;
-	book_t *book;
-	page_t *page;
-	FT_Vector pen;
-} parsedata_t;
 
 typedef struct {
 	char filename[32];
