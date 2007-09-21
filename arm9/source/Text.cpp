@@ -45,7 +45,7 @@ int Text::InitDefault(void) {
   return(0);
 }
 
-u8 Text::GetUCS(unsigned char *txt, u16 *code) {
+u8 Text::GetUCS(const char *txt, u16 *code) {
   if(txt[0] > 0xc2 && txt[0] < 0xe0) {
     *code = ((txt[0]-192)*64) + (txt[1]-128);
     return 2;
@@ -76,7 +76,7 @@ bool Text::GetInvert(void) { return invert; }
 u8 Text::GetPenX(void) { return pen.x; }
 u8 Text::GetPenY(void) { return pen.y; }
 
-void Text::SetPixelSize(int size)
+void Text::SetPixelSize(u8 size)
 {
   if(!size) {
     FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
@@ -154,7 +154,7 @@ void Text::PrintString(const char *string) {
     u16 c = string[i];
     if(c == '\n') PrintNewLine();
     else {
-      if(c > 127) { i+=GetUCS((unsigned char*)&(string[i]),&c); i--; }
+      if(c > 127) { i+=GetUCS(&(string[i]),&c); i--; }
       PrintChar(c);
     }
   }
