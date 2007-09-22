@@ -1,5 +1,5 @@
 /**----------------------------------------------------------------------------
-   $Id: main.cpp,v 1.1 2007/09/21 22:18:05 rhaleblian Exp $
+   $Id: main.cpp,v 1.2 2007/09/22 03:13:14 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    -------------------------------------------------------------------------**/
 
@@ -34,10 +34,12 @@ Book books[MAXBOOKS];
 u8 bookcount, bookcurrent;
 
 page_t pages[MAXPAGES];
-u8 pagebuf[PAGEBUFSIZE];
 u16 pagecount, pagecurrent;
 
+u8 pagebuf[PAGEBUFSIZE];
+
 Text *ts;
+
 Button *buttons[MAXBOOKS];
 
 char msg[128];
@@ -47,14 +49,8 @@ parsedata_t parsedata;
 void browser_init(void);
 void browser_draw(void);
 
-void splash_draw(void);
-
 void page_init(page_t *page);
-void page_clear(void);
-void page_clearone(u16 *screen);
-void page_clearinvert(u16 *screen);
 void page_draw(page_t *page);
-void page_drawsolid(u8 r, u8 g, u8 b);
 void page_drawmargins(void);
 u8   page_getjustifyspacing(page_t *page, u16 i);
 
@@ -62,12 +58,16 @@ void prefs_start_hndl(	void *data,
                        const XML_Char *name,
                        const XML_Char **attr);
 bool prefs_read(XML_Parser p);
-void prefs_write(void);
+bool prefs_write(void);
+
+void screen_clear(u16 *screen, u8 r, u8 g, u8 b);
 
 inline void spin(void)
 {
 	while (true) swiWaitForVBlank();
 }
+
+void splash_draw(void);
 
 /*---------------------------------------------------------------------------*/
 
@@ -146,6 +146,7 @@ int main(void)
 		{
 			Book *book = &(books[bookcount]);
 			book->SetFilename(filename);
+			book->Index(filebuf);
 			bookcount++;
 		}
 	}
@@ -195,38 +196,39 @@ int main(void)
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
 
-/*
+	browser_init();
+	
 	if (prefs_read(p))
 	{
-		page_clearinvert(screen0);
-		page_clearinvert(screen1);
-		ts->SetInvert(true);
+		screen_clear(screen0,0,0,0);
+		screen_clear(screen1,0,0,0);
+		ts->SetScreen(screen0);
 		ts->InitPen();
+		ts->SetInvert(true);
 		ts->PrintString("[loading...]");
 		ts->SetInvert(false);
 		swiWaitForVBlank();
 
-		int p = pagecurrent;
 		pagecount = 0;
 		pagecurrent = 0;
 		page_t *page = &(pages[pagecurrent]);
 		page_init(page);
-		books[bookcurrent].Parse(filebuf);
-		pagecurrent = p;
+		if(!books[bookcurrent].Parse(filebuf))
+		{
+			pagecurrent = books[bookcurrent].GetPosition();
+			fb = screen0;
+			ts->SetScreen(screen0);
+			ts->InitPen();
+			page = &(pages[pagecurrent]);
+			page_draw(page);
+			browseractive = false;
+		} else browseractive = true;
+	} else browseractive = true;
 
-		fb = screen0;
-		ts->InitPen();
-		page = &(pages[pagecurrent]);
-		page_draw(page);
-		browseractive = false;
-	}
-	else
-*/
+	if(browseractive)
 	{
-		browser_init();
 		splash_draw();
 		browser_draw();
-		browseractive = true;
 	}
 	swiWaitForVBlank();
 
@@ -254,33 +256,30 @@ int main(void)
 				/** parse the selected book. **/
 
 				swiWaitForVBlank();
-				page_clear();
 
 				pagecount = 0;
 				pagecurrent = 0;
 				page_t *page = &(pages[pagecurrent]);
 				page_init(page);
 
-				page_clearinvert(screen0);
-				page_clearinvert(screen1);
-				ts->SetInvert(true);
+				screen_clear(screen0,0,0,0);
+				screen_clear(screen1,0,0,0);
 				ts->SetScreen(screen0);
 				ts->InitPen();
+				ts->SetInvert(true);
 				ts->PrintString("[loading...]");
 				ts->SetInvert(false);
 				if (!books[bookcurrent].Parse(filebuf))
 				{
-					fb = screen0;
-					ts->SetScreen(screen0);
-					ts->InitPen();
-					pagecurrent = 0;
+					pagecurrent = books[bookcurrent].GetPosition();
 					page = &(pages[pagecurrent]);
 					page_draw(page);
-					//prefs_write();
+					prefs_write();
 					browseractive = false;
 				}
 				else
 				{
+					splash_draw();
 					browser_draw();
 				}
 			}
@@ -323,7 +322,7 @@ int main(void)
 				{
 					pagecurrent++;
 					page_draw(&pages[pagecurrent]);
-					//prefs_write();
+					prefs_write();
 				}
 			}
 
@@ -333,13 +332,19 @@ int main(void)
 				{
 					pagecurrent--;
 					page_draw(&pages[pagecurrent]);
-					//prefs_write();
+					prefs_write();
 				}
 			}
 
+			if (keysDown() & KEY_X)
+			{
+				ts->SetInvert(!ts->GetInvert());
+				page_draw(&pages[pagecurrent]);
+			}
+			
 			if (keysDown() & KEY_SELECT)
 			{
-				//prefs_write();
+				prefs_write();
 				browseractive = true;
 				splash_draw();
 				browser_draw();
@@ -347,7 +352,7 @@ int main(void)
 
 			if(keysDown() & KEY_START)
 			{
-				break;
+			//	break;
 			}
 		}
 		swiWaitForVBlank();
@@ -375,7 +380,15 @@ void browser_init(void)
 void browser_draw(void)
 {
 	ts->SetScreen(screen1);
-	page_drawsolid(0,0,0);
+	screen_clear(screen1,0,0,0);
+
+	ts->SetPen(MARGINLEFT+100, MARGINTOP+16);
+	ts->SetPixelSize(20);
+	ts->SetInvert(true);
+	ts->PrintString("library");
+	ts->SetInvert(false);
+	ts->SetPixelSize(0);
+
 	int i;
 	for (i=0;i<bookcount;i++)
 	{
@@ -435,37 +448,10 @@ u8 page_getjustifyspacing(page_t *page, u16 i)
 	else return(0);
 }
 
-void page_drawsolid(u8 r, u8 g, u8 b)
+void screen_clear(u16 *screen, u8 r, u8 g, u8 b)
 {
-	u16 color = RGB15(r,g,b) | BIT(15);
-	int i;
-	for (i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++) fb[i] =color;
-}
-
-void page_clear(void)
-{
-	u16 *savefb = fb;
-	fb = screen0;
-	page_drawsolid(31,31,31);
-	fb = screen1;
-	page_drawsolid(31,31,31);
-	fb = savefb;
-}
-
-void page_clearone(u16 *screen)
-{
-	u16 *savefb = fb;
-	fb = screen;
-	page_drawsolid(31,31,31);
-	fb = savefb;
-}
-
-void page_clearinvert(u16 *screen)
-{
-	u16 *savefb = fb;
-	fb = screen;
-	page_drawsolid(0,0,0);
-	fb = savefb;
+	for (int i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++)
+		screen[i] = RGB15(r,g,b) | BIT(15);
 }
 
 #define SPLASH_LEFT (MARGINLEFT+28)
@@ -474,11 +460,11 @@ void page_clearinvert(u16 *screen)
 void splash_draw(void)
 {
 	ts->SetInvert(true);
-
 	ts->SetScreen(screen0);
-	ts->SetPixelSize(36);
-	page_clearinvert(screen0);
+	fb = screen0;
+	screen_clear(screen0,0,0,0);
 	ts->SetPen(SPLASH_LEFT,SPLASH_TOP);
+	ts->SetPixelSize(36);
 	ts->PrintString("dslibris");
 	ts->SetPixelSize(0);
 	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
@@ -491,20 +477,15 @@ void splash_draw(void)
 	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
 	sprintf(msg,"%d books\n", bookcount);
 	ts->PrintString(msg);
-
-	ts->SetScreen(screen1);
-	ts->SetPen(MARGINLEFT+100, MARGINTOP+16);
-	ts->SetPixelSize(20);
-	ts->PrintString("library");
-	ts->SetPixelSize(0);
-
 	ts->SetInvert(false);
 }
 
 void page_draw(page_t *page)
 {
-	page_clear();
+	ts->SetScreen(screen1);
+	ts->ClearScreen();
 	ts->SetScreen(screen0);
+	ts->ClearScreen();
 	ts->InitPen();
 	u16 i=0;
 	while (i<page->length)
@@ -615,41 +596,39 @@ bool parse_pagefeed(parsedata_t *data, page_t *page)
 	return pagedone;
 }
 
-void prefs_start_hndl(	void *userdata,
+void prefs_start_hndl(	void *data,
 						const XML_Char *name,
 						const XML_Char **attr)
 {
-	if (!stricmp(name,"bookmark"))
+	Book *books = (Book*)data;
+	char filename[64];
+	strcpy(filename,"");
+	s16 position = 0;
+	if (!stricmp(name,"bookmark") || !stricmp(name,"book"))
 	{
-		Book *books = (Book*)userdata;
-		char filename[64];
-		s16 position = -1;
 		u8 i;
 		for (i=0;attr[i];i+=2)
 		{
 			if (!strcmp(attr[i],"file")) strcpy(filename, attr[i+1]);
 			if (!strcmp(attr[i],"position")) position = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"page")) position = atoi(attr[i+1]);
 		}
 		for(i=0; i<bookcount; i++)
 		{
 			if(!stricmp(books[i].GetFilename(),filename))
 			{
-				books[i].SetPosition(position);
+				if(position) books[i].SetPosition(position-1);
+				if(!stricmp(name,"book")) bookcurrent = i;
 				break;
-			}			
+			}
 		}
 	}
 }
-
-/** side effect - sets bookcurrent to index of bookmarked book. **/
 
 bool prefs_read(XML_Parser p)
 {
 	FILE *fp = fopen("dslibris.xml","r");
 	if (!fp) return false;
-	prefsdata_t data;
-	strcpy(data.filename,"");
-	data.position = 0;
 
 	XML_ParserReset(p, NULL);
 	XML_SetStartElementHandler(p, prefs_start_hndl);
@@ -665,20 +644,22 @@ bool prefs_read(XML_Parser p)
 	return true;
 }
 
-void prefs_write(void)
+bool prefs_write(void)
 {
 	FILE* fp = fopen("dslibris.xml","w+");
-	if(fp) {
-		fprintf(fp,"<dslibris>\n");
-		fprintf(fp, "<bookmark file=\"%s\" position=\"%d\" />\n",
-		        books[bookcurrent].GetFilename(), pagecurrent);
-		for(u8 i=0;i<bookcount; i++)
-		{
-			fprintf(fp, "<book file=\"%s\" />\n",books[i].GetFilename());
-		}
-		fprintf(fp, "\n</dslibris>\n");
-		fclose(fp);
+	if(!fp) return false;
+	
+	fprintf(fp,"<dslibris>\n");
+	fprintf(fp, "\t<book file=\"%s\" />\n", books[bookcurrent].GetFilename());
+	for(u8 i=0;i<bookcount; i++)
+	{
+		fprintf(fp, "\t<bookmark file=\"%s\" page=\"%d\" />\n",
+	        books[i].GetFilename(), books[i].GetPosition());
 	}
+	fprintf(fp, "</dslibris>\n");
+	fclose(fp);
+
+	return true;
 }
 
 int unknown_hndl(void *encodingHandlerData,
@@ -739,19 +720,20 @@ void start_hndl(void *data, const char *el, const char **attr)
 void title_hndl(void *userdata, const char *txt, int txtlen)
 {
 	parsedata_t *data = (parsedata_t*)userdata;
+	char title[32];
 	if (parse_in(data,TITLE))
 	{
 		if (txtlen > 30)
 		{
-			char title[32];
-			strncpy(title, txt, 27);
-			strcat(title, "...");
-			(data->book)->SetTitle(title);
+			strncpy(title,txt,27);
+			strcpy(title+27, "...");
 		}
 		else
 		{
-			(data->book)->SetTitle(txt);
+			strncpy(title,txt,txtlen);
+			title[txtlen] = 0;
 		}
+		data->book->SetTitle(title);
 	}
 }
 

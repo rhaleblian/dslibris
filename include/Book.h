@@ -8,7 +8,7 @@ class Book {
 	std::string filename;
 	std::string title;
 	std::string author;
-	s16 position;
+	u16 position;
 
 public:
 	Book();
@@ -18,9 +18,8 @@ public:
 	void SetFilename(const char *filename);
 	void SetTitle(const char *title);
 	void SetPosition(s16 pos);
-	void Index();	
+	void Index(char *filebuf);	
 	u8 Parse(char *filebuf);
 };
 
 #endif
-

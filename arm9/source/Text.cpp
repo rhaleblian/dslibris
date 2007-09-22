@@ -187,6 +187,12 @@ void Text::PrintString(const char *string) {
 	}
 }
 
+void Text::ClearScreen()
+{
+	if(invert) memset((void*)screen,0,PAGE_WIDTH*PAGE_HEIGHT*4);
+	else memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
+}
+
 void Text::Dump(void) {
 	int code;
 	for (code=0;code<MAXGLYPHS;code++) {

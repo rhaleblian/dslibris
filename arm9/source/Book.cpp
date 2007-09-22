@@ -4,10 +4,10 @@
 
 Book::Book()
 {
-	filename = "";
-	title = "";
-	author = "";
-	position = -1;
+	filename.clear();
+	title.clear();
+	author.clear();
+	position = 0;
 }
 
 void Book::SetFilename(const char *name)
@@ -40,20 +40,19 @@ void Book::SetPosition(s16 pos)
 	position = pos;
 }
 
-void Book::Index()
+void Book::Index(char *filebuf)
 {
 	FILE *fp = fopen(filename.c_str(),"r");
 	if (fp)
 	{
 		XML_Parser p = XML_ParserCreate(NULL);
 		parsedata_t parsedata;
+		parse_init(&parsedata);
 		parsedata.book = this;
 		XML_SetUserData(p, &parsedata);
-		parse_init(&parsedata);
 		XML_SetElementHandler(p, start_hndl, end_hndl);
 		XML_SetCharacterDataHandler(p, title_hndl);
 		XML_SetProcessingInstructionHandler(p, proc_hndl);
-		XML_Char filebuf[BUFSIZE];
 		while (true)
 		{
 			int bytes_read = fread(filebuf, 1, BUFSIZE, fp);

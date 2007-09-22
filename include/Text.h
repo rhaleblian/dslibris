@@ -41,6 +41,7 @@ public:
 	void PrintString(const char *string);
 	bool PrintNewLine(void);
 
+	void ClearScreen();
 	u8   Advance(u16 code);
 	void Dump(void);
 };
