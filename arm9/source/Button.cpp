@@ -21,18 +21,21 @@ void Button::Move(u16 x, u16 y) {
 }
 
 void Button::Draw(u16 *fb, bool highlight) {
-	u16 x;
-	u16 y;
 	coord_t ul, lr;
 	ul.x = origin.x;
 	ul.y = origin.y;
 	lr.x = origin.x + extent.x;
 	lr.y = origin.y + extent.y;
-	if (highlight) {
-		for (y=ul.y;y<lr.y;y++) {
-			for (x=ul.x;x<lr.x;x++) {
-				fb[y*SCREEN_WIDTH + x] = RGB15(31,31,31) | BIT(15);
-			}
+
+	u16 x;
+	u16 y;
+
+	u16 bgcolor;
+	if(highlight) bgcolor = RGB15(31,31,31) | BIT(15);
+	else bgcolor = RGB15(0,0,0) | BIT(15);
+	for (y=ul.y;y<lr.y;y++) {
+		for (x=ul.x;x<lr.x;x++) {
+			fb[y*SCREEN_WIDTH + x] = bgcolor;
 		}
 	}
 
@@ -51,5 +54,5 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->SetPen(ul.x+10, ul.y + ts->GetHeight());
 	ts->PrintString((const char*)text);
 	ts->SetPen(x,y);
-	ts->SetInvert(!highlight);
+	ts->SetInvert(highlight);
 }

@@ -1,5 +1,5 @@
 /**----------------------------------------------------------------------------
-   $Id: main.c,v 1.18 2007/09/16 17:28:41 rhaleblian Exp $
+   $Id: main.cpp,v 1.1 2007/09/21 22:18:05 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    -------------------------------------------------------------------------**/
 
@@ -195,8 +195,7 @@ int main(void)
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
 
-	page_clear();
-
+/*
 	if (prefs_read(p))
 	{
 		page_clearinvert(screen0);
@@ -205,6 +204,7 @@ int main(void)
 		ts->InitPen();
 		ts->PrintString("[loading...]");
 		ts->SetInvert(false);
+		swiWaitForVBlank();
 
 		int p = pagecurrent;
 		pagecount = 0;
@@ -221,7 +221,9 @@ int main(void)
 		browseractive = false;
 	}
 	else
+*/
 	{
+		browser_init();
 		splash_draw();
 		browser_draw();
 		browseractive = true;
@@ -262,18 +264,19 @@ int main(void)
 				page_clearinvert(screen0);
 				page_clearinvert(screen1);
 				ts->SetInvert(true);
+				ts->SetScreen(screen0);
 				ts->InitPen();
 				ts->PrintString("[loading...]");
 				ts->SetInvert(false);
 				if (!books[bookcurrent].Parse(filebuf))
 				{
 					fb = screen0;
+					ts->SetScreen(screen0);
 					ts->InitPen();
-
 					pagecurrent = 0;
 					page = &(pages[pagecurrent]);
 					page_draw(page);
-					prefs_write();
+					//prefs_write();
 					browseractive = false;
 				}
 				else
@@ -294,7 +297,6 @@ int main(void)
 				{
 					bookcurrent++;
 					browser_draw();
-					fb = screen0;
 				}
 			}
 
@@ -304,7 +306,6 @@ int main(void)
 				{
 					bookcurrent--;
 					browser_draw();
-					fb = screen0;
 				}
 			}
 
@@ -322,7 +323,7 @@ int main(void)
 				{
 					pagecurrent++;
 					page_draw(&pages[pagecurrent]);
-					prefs_write();
+					//prefs_write();
 				}
 			}
 
@@ -332,17 +333,16 @@ int main(void)
 				{
 					pagecurrent--;
 					page_draw(&pages[pagecurrent]);
-					prefs_write();
+					//prefs_write();
 				}
 			}
 
 			if (keysDown() & KEY_SELECT)
 			{
-				prefs_write();
+				//prefs_write();
 				browseractive = true;
-				browser_draw();
 				splash_draw();
-				fb = screen0;
+				browser_draw();
 			}
 
 			if(keysDown() & KEY_START)
@@ -362,6 +362,7 @@ void browser_init(void)
 	u8 i;
 	for (i=0;i<bookcount;i++)
 	{
+		buttons[i] = new Button();
 		buttons[i]->Init(ts);
 		buttons[i]->Move(0,(i+1)*32);
 		if (strlen(books[i].GetTitle()))
@@ -373,18 +374,16 @@ void browser_init(void)
 
 void browser_draw(void)
 {
-	u16 *fbsave = fb;
-	fb = screen1;
+	ts->SetScreen(screen1);
 	page_drawsolid(0,0,0);
 	int i;
 	for (i=0;i<bookcount;i++)
 	{
 		if (i==bookcurrent)
-			buttons[i]->Draw(fb,true);
+			buttons[i]->Draw(screen1,true);
 		else
-			buttons[i]->Draw(fb,false);
+			buttons[i]->Draw(screen1,false);
 	}
-	fb = fbsave;
 }
 
 void parse_printerror(XML_Parser p)
@@ -443,23 +442,6 @@ void page_drawsolid(u8 r, u8 g, u8 b)
 	for (i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++) fb[i] =color;
 }
 
-
-void page_drawmargins(void)
-{
-	int x, y;
-	u16 color = RGB15(30,30,30) | BIT(15);
-	for (y=0;y<PAGE_HEIGHT;y++)
-	{
-		fb[y*PAGE_HEIGHT + MARGINLEFT] = color;
-		fb[y*PAGE_HEIGHT + PAGE_WIDTH-MARGINRIGHT] = color;
-	}
-	for (x=0;x<PAGE_HEIGHT;x++)
-	{
-		fb[MARGINTOP*PAGE_HEIGHT + x] = color;
-		fb[(PAGE_HEIGHT-MARGINBOTTOM)*PAGE_HEIGHT + x] = color;
-	}
-}
-
 void page_clear(void)
 {
 	u16 *savefb = fb;
@@ -491,9 +473,10 @@ void page_clearinvert(u16 *screen)
 
 void splash_draw(void)
 {
-	fb = screen0;
-	ts->SetPixelSize(36);
 	ts->SetInvert(true);
+
+	ts->SetScreen(screen0);
+	ts->SetPixelSize(36);
 	page_clearinvert(screen0);
 	ts->SetPen(SPLASH_LEFT,SPLASH_TOP);
 	ts->PrintString("dslibris");
@@ -509,7 +492,7 @@ void splash_draw(void)
 	sprintf(msg,"%d books\n", bookcount);
 	ts->PrintString(msg);
 
-	fb = screen1;
+	ts->SetScreen(screen1);
 	ts->SetPen(MARGINLEFT+100, MARGINTOP+16);
 	ts->SetPixelSize(20);
 	ts->PrintString("library");
@@ -521,17 +504,15 @@ void splash_draw(void)
 void page_draw(page_t *page)
 {
 	page_clear();
-	fb = screen0;
+	ts->SetScreen(screen0);
 	ts->InitPen();
-	u8 spacing = page_getjustifyspacing(page,0);
 	u16 i=0;
 	while (i<page->length)
 	{
 		u16 c = page->buf[i];
 		if (c == '\n')
 		{
-			spacing = page_getjustifyspacing(page,i+1);
-			ts->PrintNewLine();
+			if(!ts->PrintNewLine()) break;
 			i++;
 		}
 		else
@@ -539,26 +520,15 @@ void page_draw(page_t *page)
 			if (c > 127) i+=ts->GetUCS((char*)&(page->buf[i]),&c);
 			else i++;
 			ts->PrintChar(c);
-#ifdef JUSTIFY_FULL
-			if (c == ' ')
-			{
-				u16 x,y;
-				ts->GetPen(&x,&y);
-				x += spacing;
-				ts->SetPen(x,y);
-			}
-#endif
 		}
 	}
 
-	fb = screen1;
-	int offset = (int)(170.0 * (pagecurrent / (float)pagecount));
+	ts->SetScreen(screen1);
+	u8 offset = (int)(170.0 * (pagecurrent / (float)pagecount));
 	ts->SetPen(MARGINLEFT+offset,250);
 	sprintf((char*)msg,"[%d]",pagecurrent+1);
 	ts->PrintString(msg);
 }
-
-/** parse.c **/
 
 int min(int x, int y)
 {
@@ -697,16 +667,18 @@ bool prefs_read(XML_Parser p)
 
 void prefs_write(void)
 {
-	FILE* fp = fopen("dslibris.xml","w");
-	fprintf(fp,"<dslibris>\n");
-	fprintf(fp, "<bookmark file=\"%s\" position=\"%d\" />\n",
-	        books[bookcurrent].GetFilename(), pagecurrent);
-	for(u8 i=0;i<bookcount; i++)
-	{
-		fprintf(fp, "<book file=\"%s\" />\n",books[i].GetFilename());
+	FILE* fp = fopen("dslibris.xml","w+");
+	if(fp) {
+		fprintf(fp,"<dslibris>\n");
+		fprintf(fp, "<bookmark file=\"%s\" position=\"%d\" />\n",
+		        books[bookcurrent].GetFilename(), pagecurrent);
+		for(u8 i=0;i<bookcount; i++)
+		{
+			fprintf(fp, "<book file=\"%s\" />\n",books[i].GetFilename());
+		}
+		fprintf(fp, "\n</dslibris>\n");
+		fclose(fp);
 	}
-	fprintf(fp, "\n</dslibris>\n");
-	fclose(fp);
 }
 
 int unknown_hndl(void *encodingHandlerData,

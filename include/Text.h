@@ -17,6 +17,7 @@ class Text {
 	FT_GlyphSlotRec glyphs[MAXGLYPHS];
 	FT_Vector pen;
 	FT_Error error;
+	u16 *screen, *screenleft, *screenright;
 	bool usecache;
 	bool invert;
 
@@ -27,7 +28,8 @@ public:
 	bool GetInvert();
 	void SetInvert(bool);
 	void SetPixelSize(u8);
-	u8 GetPixelSize();
+	u8   GetPixelSize();
+	void SetScreen(u16 *s);
 
 	void InitPen(void);
 	void GetPen(u16 *x, u16 *y);
@@ -37,7 +39,7 @@ public:
 
 	void PrintChar(u16 code);
 	void PrintString(const char *string);
-	int  PrintNewLine(void);
+	bool PrintNewLine(void);
 
 	u8   Advance(u16 code);
 	void Dump(void);
