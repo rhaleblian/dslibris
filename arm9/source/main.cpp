@@ -1,5 +1,5 @@
 /**----------------------------------------------------------------------------
-   $Id: main.cpp,v 1.2 2007/09/22 03:13:14 rhaleblian Exp $
+   $Id: main.cpp,v 1.3 2007/09/22 09:56:10 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    -------------------------------------------------------------------------**/
 
@@ -17,6 +17,7 @@
 #include <errno.h>
 
 #include <expat.h>
+//#include <TINA/TINA.h>
 #include "types.h"
 #include "Book.h"
 #include "Button.h"
@@ -30,21 +31,15 @@
 
 u16 *screen0, *screen1, *fb;
 
+Text *ts;
+Button *buttons[MAXBOOKS];
 Book books[MAXBOOKS];
 u8 bookcount, bookcurrent;
-
-page_t pages[MAXPAGES];
-u16 pagecount, pagecurrent;
+parsedata_t parsedata;
 
 u8 pagebuf[PAGEBUFSIZE];
-
-Text *ts;
-
-Button *buttons[MAXBOOKS];
-
-char msg[128];
-bool invert = false;
-parsedata_t parsedata;
+page_t pages[MAXPAGES];
+u16 pagecount, pagecurrent;
 
 void browser_init(void);
 void browser_draw(void);
@@ -71,6 +66,25 @@ void splash_draw(void);
 
 /*---------------------------------------------------------------------------*/
 
+void consoleOK(bool ok)
+{
+	printf("[");
+
+	if(ok)
+	{
+		BG_PALETTE_SUB[255] = RGB15(15,31,15);
+		printf(" OK ");
+	}
+	else
+	{
+		BG_PALETTE_SUB[255] = RGB15(31,15,15);
+		printf("FAIL");
+	}
+			
+	BG_PALETTE_SUB[255] = RGB15(24,24,24);
+	printf("]\n");
+}
+
 int main(void)
 {
 	bool browseractive = false;
@@ -83,10 +97,6 @@ int main(void)
 	irqEnable(IRQ_VBLANK);
 	irqEnable(IRQ_VCOUNT);
 
-	/** cw rotation for both screens **/
-	s16 s = SIN[-128 & 0x1FF] >> 4;
-	s16 c = COS[-128 & 0x1FF] >> 4;
-
 	/** bring up the startup console.
 	    sub bg 0 will be used to print text. **/
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
@@ -97,37 +107,38 @@ int main(void)
 		u32 i;
 		for (i=0;i<255;i++)
 			BG_PALETTE_SUB[i] = RGB15(0,0,0);
-		BG_PALETTE_SUB[255] = RGB15(15,31,15);
+		BG_PALETTE_SUB[255] = RGB15(24,24,24);
 		consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31),
 		                   (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
 	}
-	printf(" startup console       [  OK  ]\n");
+	printf(" Starting console...     ");
+	consoleOK(true);
 	swiWaitForVBlank();
 
-	printf(" media filesystem      ");
+	printf(" Mounting filesystem...  ");
 	if (!fatInitDefault())
 	{
-		printf("[ FAIL ]\n");
+		consoleOK(false);
 		spin();
 	}
-	else printf("[  OK  ]\n");
+	consoleOK(true);
 	swiWaitForVBlank();
 
-	printf(" typesetter            ");
+	printf(" Starting typesetter...  ");
 	ts = new Text();
 	if (ts->InitDefault())
 	{
-		printf("[ FAIL ]\n");
+		consoleOK(false);
 		spin();
 	}
-	else printf("[  OK  ]\n");
+	consoleOK(true);
 	swiWaitForVBlank();
 
 	/** assemble library by indexing all
 		XHTML/XML files in the current directory.
 	    TODO recursive book search **/
 
-	printf(" book scan             ");
+	printf(" Scanning for books...    ");
 	bookcount = 0;
 	bookcurrent = 0;
 	char filename[64];
@@ -135,7 +146,7 @@ int main(void)
 	DIR_ITER *dp = diropen(dirname);
 	if (!dp)
 	{
-		printf("[ FAIL ]\n");
+		consoleOK(false);
 		spin();
 	}
 	while (!dirnext(dp, filename, NULL) && (bookcount != MAXBOOKS))
@@ -153,26 +164,30 @@ int main(void)
 	dirclose(dp);
 	if (!bookcount)
 	{
-		printf("[ FAIL ]\n");
+		consoleOK(false);
 		spin();
 	}
-	else printf("[  OK  ]\n");
+	consoleOK(true);
 	swiWaitForVBlank();
 	browser_init();
 
-	printf(" expat XML parser      ");
+	printf(" Creating XML parser...  ");
 	XML_Parser p = XML_ParserCreate(NULL);
 	if (!p)
 	{
-		printf("[ FAIL ]\n");
+		consoleOK(false);
 		spin();
 	}
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
-	printf("[  OK  ]\n");
+	consoleOK(true);
 	swiWaitForVBlank();
 
-	/** initialize book view. **/
+	/** initialize screens. **/
+
+	/** clockwise rotation for both screens **/
+	s16 s = SIN[-128 & 0x1FF] >> 4;
+	s16 c = COS[-128 & 0x1FF] >> 4;
 
 	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
 	BG3_XDX = c;
@@ -197,44 +212,46 @@ int main(void)
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
 
 	browser_init();
+	splash_draw();
 	
-	if (prefs_read(p))
+	/** restore the last book and page we were reading. **/
+	/** TODO fix bookmark upating */
+	
+	bookcurrent = 127;
+	if(prefs_read(p) && bookcurrent < 127)
 	{
-		screen_clear(screen0,0,0,0);
-		screen_clear(screen1,0,0,0);
-		ts->SetScreen(screen0);
-		ts->InitPen();
+		ts->SetScreen(screen1);
+		ts->SetPen(MARGINLEFT+40,PAGE_HEIGHT/2);
+		bool invert = ts->GetInvert();
 		ts->SetInvert(true);
-		ts->PrintString("[loading...]");
-		ts->SetInvert(false);
+		ts->PrintString("[paginating...]");
+		ts->SetInvert(invert);
 		swiWaitForVBlank();
 
 		pagecount = 0;
 		pagecurrent = 0;
-		page_t *page = &(pages[pagecurrent]);
-		page_init(page);
+		page_init(&(pages[pagecurrent]));
 		if(!books[bookcurrent].Parse(filebuf))
 		{
 			pagecurrent = books[bookcurrent].GetPosition();
-			fb = screen0;
-			ts->SetScreen(screen0);
-			ts->InitPen();
-			page = &(pages[pagecurrent]);
-			page_draw(page);
+			page_draw(&(pages[pagecurrent]));
 			browseractive = false;
 		} else browseractive = true;
-	} else browseractive = true;
-
+	} else {
+		bookcurrent = 0;
+		browseractive = true;
+	}
+	
 	if(browseractive)
 	{
-		splash_draw();
 		browser_draw();
 	}
 	swiWaitForVBlank();
 
 	touchPosition touch;
 
-	while (true)
+	bool poll = true;
+	while (poll)
 	{
 		scanKeys();
 
@@ -255,20 +272,18 @@ int main(void)
 			{
 				/** parse the selected book. **/
 
-				swiWaitForVBlank();
-
 				pagecount = 0;
 				pagecurrent = 0;
 				page_t *page = &(pages[pagecurrent]);
 				page_init(page);
 
-				screen_clear(screen0,0,0,0);
 				screen_clear(screen1,0,0,0);
-				ts->SetScreen(screen0);
-				ts->InitPen();
+				ts->SetScreen(screen1);
+				ts->SetPen(MARGINLEFT+40,PAGE_HEIGHT/2);
+				bool invert = ts->GetInvert();
 				ts->SetInvert(true);
-				ts->PrintString("[loading...]");
-				ts->SetInvert(false);
+				ts->PrintString("[paginating...]");
+				ts->SetInvert(invert);
 				if (!books[bookcurrent].Parse(filebuf))
 				{
 					pagecurrent = books[bookcurrent].GetPosition();
@@ -352,13 +367,13 @@ int main(void)
 
 			if(keysDown() & KEY_START)
 			{
-			//	break;
+				poll = false;
 			}
 		}
 		swiWaitForVBlank();
 	}
 
-	XML_ParserFree(p);
+	if(p) XML_ParserFree(p);
 	exit(0);
 }
 
@@ -384,9 +399,10 @@ void browser_draw(void)
 
 	ts->SetPen(MARGINLEFT+100, MARGINTOP+16);
 	ts->SetPixelSize(20);
+	bool invert = ts->GetInvert();
 	ts->SetInvert(true);
 	ts->PrintString("library");
-	ts->SetInvert(false);
+	ts->SetInvert(invert);
 	ts->SetPixelSize(0);
 
 	int i;
@@ -401,6 +417,7 @@ void browser_draw(void)
 
 void parse_printerror(XML_Parser p)
 {
+	char msg[128];
 	sprintf(msg,"expat: [%s]\n",XML_ErrorString(XML_GetErrorCode(p)));
 	ts->PrintString(msg);
 	sprintf(msg,"expat: [%d:%d] : %d\n",
@@ -459,9 +476,9 @@ void screen_clear(u16 *screen, u8 r, u8 g, u8 b)
 
 void splash_draw(void)
 {
+	bool invert = ts->GetInvert();
 	ts->SetInvert(true);
 	ts->SetScreen(screen0);
-	fb = screen0;
 	screen_clear(screen0,0,0,0);
 	ts->SetPen(SPLASH_LEFT,SPLASH_TOP);
 	ts->SetPixelSize(36);
@@ -475,9 +492,10 @@ void splash_draw(void)
 	ts->PrintString(APP_VERSION);
 	ts->PrintNewLine();
 	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
+	char msg[16];
 	sprintf(msg,"%d books\n", bookcount);
 	ts->PrintString(msg);
-	ts->SetInvert(false);
+	ts->SetInvert(invert);
 }
 
 void page_draw(page_t *page)
@@ -507,6 +525,7 @@ void page_draw(page_t *page)
 	ts->SetScreen(screen1);
 	u8 offset = (int)(170.0 * (pagecurrent / (float)pagecount));
 	ts->SetPen(MARGINLEFT+offset,250);
+	char msg[8];
 	sprintf((char*)msg,"[%d]",pagecurrent+1);
 	ts->PrintString(msg);
 }
@@ -596,14 +615,14 @@ bool parse_pagefeed(parsedata_t *data, page_t *page)
 	return pagedone;
 }
 
-void prefs_start_hndl(	void *data,
+void prefs_start_hndl(	void *userdata,
 						const XML_Char *name,
 						const XML_Char **attr)
 {
-	Book *books = (Book*)data;
+	Book *data = (Book*)userdata;
 	char filename[64];
 	strcpy(filename,"");
-	s16 position = 0;
+	u16 position = 0;
 	if (!stricmp(name,"bookmark") || !stricmp(name,"book"))
 	{
 		u8 i;
@@ -615,9 +634,9 @@ void prefs_start_hndl(	void *data,
 		}
 		for(i=0; i<bookcount; i++)
 		{
-			if(!stricmp(books[i].GetFilename(),filename))
+			if(!stricmp(data[i].GetFilename(),filename))
 			{
-				if(position) books[i].SetPosition(position-1);
+				if(position) data[i].SetPosition(position-1);
 				if(!stricmp(name,"book")) bookcurrent = i;
 				break;
 			}
@@ -821,7 +840,8 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 			/** reflow. if we overrun the margin, insert a break. **/
 
-			int overrun = (pdata->pen.x + advance) - (PAGE_WIDTH-MARGINRIGHT);
+			int overrun = (pdata->pen.x + advance) 
+				- (PAGE_WIDTH-MARGINRIGHT);
 			if (overrun > 0)
 			{
 				pagebuf[page->length] = '\n';

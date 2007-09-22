@@ -4,7 +4,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#define MAXGLYPHS 128
+#define MAXGLYPHS 256
 #define FONTFILENAME "dslibris.ttf"
 
 #define PIXELSIZE 10

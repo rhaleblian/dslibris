@@ -14,11 +14,10 @@ include $(DEVKITARM)/ds_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #-----------------------------------------------------------------------
-#TARGET		:=	$(shell basename $(CURDIR))
 TARGET		:=	dslibris
 BUILD		:=	build
 SOURCES		:=	source
-INCLUDES	:=	../include build ../../local/include/freetype2
+INCLUDES	:=	../include build $(DEVKITARM)
 
 #-----------------------------------------------------------------------
 # options for code generation
@@ -33,22 +32,22 @@ CFLAGS	:=	-g -Wall -O2 \
 		-ffast-math \
 		$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM9
+CFLAGS	+=	$(INCLUDE) -DARM9 -I$(DEVKITARM)/include -I$(DEVKITARM)/include/freetype2
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map) -L$(DEVKITARM)/lib
 
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #-----------------------------------------------------------------------
-LIBS	:=  -ljpeg -lz -lSDL -lfreetype -lexpat -ldswifi9 -lfat -lnds9
+LIBS	:=  -lfreetype -lexpat -ldswifi9 -lfat -lnds9
 
 #-----------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-----------------------------------------------------------------------
-LIBDIRS	:=	 $(LIBNDS) $(HOME)/nds/local $(DEVKITPRO)/PAlib
+LIBDIRS	:=	 $(LIBNDS)
 
 #-----------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add

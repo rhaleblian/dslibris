@@ -18,7 +18,7 @@ int Text::InitDefault(void) {
 	charcode = FT_Get_First_Char( face, &gindex );
 	while ( gindex != 0 )
 	{
-		/** cache ASCII glyphs. **/
+		/** cache ASCII and Latin-1 glyphs. **/
 		if (charcode < MAXGLYPHS) {
 			FT_Load_Char(face, charcode, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
 			FT_GlyphSlot src = face->glyph;
@@ -109,7 +109,11 @@ void Text::SetScreen(u16 *inscreen)
 }
 
 u8 Text::Advance(u16 code) {
-	return glyphs[code].advance.x >> 6;
+	if(usecache && (code < MAXGLYPHS))
+		return glyphs[code].advance.x >> 6;
+
+	FT_Load_Char(face, code, FT_LOAD_DEFAULT);
+	return face->glyph->advance.x >> 6;	
 }
 
 void Text::InitPen(void) {
@@ -121,9 +125,9 @@ void Text::PrintChar(u16 code) {
 	/** draw a character with the current glyph
 	    into the current buffer at the current pen position. **/
 
-	/** ASCII glyphs are cached; otherwise load. **/
+	/** ASCII glyphs are cached; others need loading. **/
 	FT_GlyphSlot glyph;
-	if (usecache && code < 128) glyph = &glyphs[code];
+	if (usecache && (code < MAXGLYPHS)) glyph = &glyphs[code];
 	else {
 		FT_Load_Char(face, code, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
 		glyph = face->glyph;
@@ -154,7 +158,8 @@ void Text::PrintChar(u16 code) {
 bool Text::PrintNewLine(void) {
 	pen.x = MARGINLEFT;
 	int height = face->size->metrics.height >> 6;
-	if ((pen.y + height + LINESPACING) > (PAGE_HEIGHT - MARGINBOTTOM)) {
+	int y = pen.y + height + LINESPACING;
+	if (y > (PAGE_HEIGHT - MARGINBOTTOM)) {
 		if (screen == screenleft)
 		{
 			screen = screenright;
@@ -172,13 +177,14 @@ bool Text::PrintNewLine(void) {
 }
 
 void Text::PrintString(const char *string) {
-	// draw an ASCII string starting at the pen position.
+	// draw a character string starting at the pen position.
 	u8 i;
 	for (i=0;i<strlen((char *)string);i++) {
 		u16 c = string[i];
 		if (c == '\n') PrintNewLine();
 		else {
 			if (c > 127) {
+				/** this guy is multibyte UTF-8. **/
 				i+=GetUCS(&(string[i]),&c);
 				i--;
 			}
