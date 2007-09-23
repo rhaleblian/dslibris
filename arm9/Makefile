@@ -17,7 +17,7 @@ include $(DEVKITARM)/ds_rules
 TARGET		:=	dslibris
 BUILD		:=	build
 SOURCES		:=	source
-INCLUDES	:=	../include build $(DEVKITARM)
+INCLUDES	:=	../include build
 
 #-----------------------------------------------------------------------
 # options for code generation
