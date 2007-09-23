@@ -49,10 +49,11 @@ void Button::Draw(u16 *fb, bool highlight) {
 		fb[y*SCREEN_WIDTH + lr.x] = bordercolor;
 	}
 
+	bool invert = ts->GetInvert();
 	ts->SetInvert(!highlight);
 	ts->GetPen(&x,&y);
 	ts->SetPen(ul.x+10, ul.y + ts->GetHeight());
 	ts->PrintString((const char*)text);
 	ts->SetPen(x,y);
-	ts->SetInvert(highlight);
+	ts->SetInvert(invert);
 }

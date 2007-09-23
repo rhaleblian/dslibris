@@ -1,5 +1,5 @@
 /**----------------------------------------------------------------------------
-   $Id: main.cpp,v 1.3 2007/09/22 09:56:10 rhaleblian Exp $
+   $Id: main.cpp,v 1.4 2007/09/23 00:55:52 rhaleblian Exp $
    dslibris - an ebook reader for Nintendo DS
    -------------------------------------------------------------------------**/
 
@@ -138,7 +138,7 @@ int main(void)
 		XHTML/XML files in the current directory.
 	    TODO recursive book search **/
 
-	printf(" Scanning for books...    ");
+	printf(" Scanning for books...   ");
 	bookcount = 0;
 	bookcurrent = 0;
 	char filename[64];
@@ -426,7 +426,6 @@ void parse_printerror(XML_Parser p)
 	        (int)XML_GetCurrentByteIndex(p));
 	ts->PrintString(msg);
 }
-
 
 void page_init(page_t *page)
 {
