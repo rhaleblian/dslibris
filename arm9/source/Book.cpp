@@ -1,6 +1,9 @@
 #include "Book.h"
 #include "main.h"
 #include "parse.h"
+#include "App.h"
+
+extern App *app;
 
 Book::Book()
 {
@@ -47,7 +50,7 @@ void Book::Index(char *filebuf)
 	{
 		XML_Parser p = XML_ParserCreate(NULL);
 		parsedata_t parsedata;
-		parse_init(&parsedata);
+		app->parse_init(&parsedata);
 		parsedata.book = this;
 		XML_SetUserData(p, &parsedata);
 		XML_SetElementHandler(p, start_hndl, end_hndl);
@@ -75,7 +78,7 @@ u8 Book::Parse(char *filebuf)
 	XML_Parser p = XML_ParserCreate(NULL);
 	parsedata_t parsedata;
 	XML_ParserReset(p,NULL);
-	parse_init(&parsedata);
+	app->parse_init(&parsedata);
 	XML_SetUserData(p, &parsedata);
 	XML_SetDefaultHandler(p, default_hndl);
 	XML_SetElementHandler(p, start_hndl, end_hndl);
@@ -89,7 +92,7 @@ u8 Book::Parse(char *filebuf)
 		status = XML_Parse(p, filebuf, bytes_read, (bytes_read == 0));
 		if (status == XML_STATUS_ERROR)
 		{
-			parse_printerror(p);
+			app->parse_printerror(p);
 			break;
 		}
 		if (bytes_read == 0) break;

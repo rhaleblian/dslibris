@@ -2,6 +2,8 @@
 #define _parse_h
 
 #include <expat.h>
+#include "main.h"
+#include "Book.h"
 
 typedef enum {NONE,HTML,HEAD,TITLE,BODY,PRE} context_t;
 
@@ -14,6 +16,7 @@ typedef struct {
 } parsedata_t;
 
 void default_hndl(void *data, const char *s, int len);
+void prefs_start_hndl(void *data, const char *el, const char **attr);
 void start_hndl(void *data, const char *el, const char **attr);
 void title_hndl(void *data, const char *txt, int txtlen);
 void char_hndl(void *data, const char *txt, int txtlen);

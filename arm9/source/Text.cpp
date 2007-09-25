@@ -38,6 +38,7 @@ int Text::InitDefault(void) {
 
 	usecache = true;
 	invert = false;
+	justify = true;
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
@@ -46,7 +47,7 @@ int Text::InitDefault(void) {
 }
 
 u8 Text::GetUCS(const char *txt, u16 *code) {
-	if (txt[0] > 0xc2 && txt[0] < 0xe0) {
+	if (txt[0] > 0xc1 && txt[0] < 0xe0) {
 		*code = ((txt[0]-192)*64) + (txt[1]-128);
 		return 2;
 

@@ -20,7 +20,8 @@ class Text {
 	u16 *screen, *screenleft, *screenright;
 	bool usecache;
 	bool invert;
-
+	bool justify;
+	
 public:
 	int  InitDefault(void);
 	u8   GetUCS(const char *txt, u16 *code);
