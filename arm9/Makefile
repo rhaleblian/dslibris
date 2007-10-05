@@ -17,7 +17,7 @@ include $(DEVKITARM)/ds_rules
 TARGET		:=	dslibris
 BUILD		:=	build
 SOURCES		:=	source
-INCLUDES	:=	../include build
+INCLUDES	:=	../include ../include/freetype2 build
 
 #-----------------------------------------------------------------------
 # options for code generation
@@ -32,11 +32,11 @@ CFLAGS	:=	-g -Wall -O2 \
 		-ffast-math \
 		$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM9 -I$(DEVKITARM)/include -I$(DEVKITARM)/include/freetype2
+CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map) -L$(DEVKITARM)/lib
+LDFLAGS	=	-L../lib -specs=ds_arm9.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
@@ -47,7 +47,7 @@ LIBS	:=  -lfreetype -lexpat -ldswifi9 -lfat -lnds9
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-----------------------------------------------------------------------
-LIBDIRS	:=	 $(LIBNDS)
+LIBDIRS	:=	 $(LIBNDS) $(PWD)
 
 #-----------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add
