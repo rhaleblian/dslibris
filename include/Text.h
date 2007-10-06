@@ -18,12 +18,14 @@ class Text {
 	FT_Vector pen;
 	FT_Error error;
 	u16 *screen, *screenleft, *screenright;
+	u8 pixelsize;
 	bool usecache;
 	bool invert;
 	bool justify;
 	
 public:
 	int  InitDefault(void);
+	void Cache();
 	u8   GetUCS(const char *txt, u16 *code);
 	u8   GetHeight(void);
 	bool GetInvert();

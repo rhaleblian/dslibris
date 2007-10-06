@@ -7,8 +7,21 @@ int Text::InitDefault(void) {
 	if (FT_Init_FreeType(&library)) return 1;
 	if (FT_New_Face(library, FONTFILENAME, 0, &face)) return 2;
 	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
+	pixelsize = PIXELSIZE;
 	FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
+	Cache();
+	usecache = true;
+	invert = false;
+	justify = true;
+	screenleft = (u16*)BG_BMP_RAM_SUB(0);
+	screenright = (u16*)BG_BMP_RAM(0);
+	screen = screenleft;
+	InitPen();
+	return(0);
+}
 
+void Text::Cache()
+{
 	/** cache glyphs. glyphs[] will contain all the bitmaps.
 	    using FirstChar() and NextChar() would be more robust.
 	    TODO also cache kerning and transformations. **/
@@ -20,7 +33,8 @@ int Text::InitDefault(void) {
 	{
 		/** cache ASCII and Latin-1 glyphs. **/
 		if (charcode < MAXGLYPHS) {
-			FT_Load_Char(face, charcode, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
+			FT_Load_Char(face, charcode,
+				FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
 			FT_GlyphSlot src = face->glyph;
 			FT_GlyphSlot dst = &glyphs[charcode];
 			int x = src->bitmap.rows;
@@ -35,15 +49,6 @@ int Text::InitDefault(void) {
 		}
 		charcode = FT_Get_Next_Char( face, charcode, &gindex );
 	}
-
-	usecache = true;
-	invert = false;
-	justify = true;
-	screenleft = (u16*)BG_BMP_RAM_SUB(0);
-	screenright = (u16*)BG_BMP_RAM(0);
-	screen = screenleft;
-	InitPen();
-	return(0);
 }
 
 u8 Text::GetUCS(const char *txt, u16 *code) {
@@ -93,15 +98,23 @@ u8 Text::GetPenY(void) {
 	return pen.y;
 }
 
+u8 Text::GetPixelSize()
+{
+	return pixelsize;
+}
+
 void Text::SetPixelSize(u8 size)
 {
 	if (!size) {
 		FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
-		usecache = true;
+		//usecache = true;
+		pixelsize = PIXELSIZE;
 	} else {
 		FT_Set_Pixel_Sizes(face, 0, size);
-		usecache = false;
+		//usecache = false;
+		pixelsize = size;
 	}
+	Cache();
 }
 
 void Text::SetScreen(u16 *inscreen)

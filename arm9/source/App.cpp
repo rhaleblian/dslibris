@@ -404,12 +404,13 @@ void App::browser_draw(void)
 	screen_clear(screen1,0,0,0);
 
 	ts->SetPen(MARGINLEFT+100, MARGINTOP+16);
+	u8 size = ts->GetPixelSize();
 	ts->SetPixelSize(20);
 	bool invert = ts->GetInvert();
 	ts->SetInvert(true);
 	ts->PrintString("library");
 	ts->SetInvert(invert);
-	ts->SetPixelSize(0);
+	ts->SetPixelSize(size);
 
 	int i;
 	for (i=0;i<bookcount;i++)
@@ -620,9 +621,10 @@ void App::splash_draw(void)
 	ts->SetScreen(screen0);
 	screen_clear(screen0,0,0,0);
 	ts->SetPen(SPLASH_LEFT,SPLASH_TOP);
+	u8 size = ts->GetPixelSize();
 	ts->SetPixelSize(36);
 	ts->PrintString("dslibris");
-	ts->SetPixelSize(0);
+	ts->SetPixelSize(size);
 	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
 	ts->PrintString("an ebook reader");
 	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());

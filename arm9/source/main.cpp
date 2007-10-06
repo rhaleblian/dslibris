@@ -25,13 +25,21 @@ int main(void)
 }
 
 void prefs_start_hndl(	void *userdata,
-						const XML_Char *name,
-						const XML_Char **attr)
+			const XML_Char *name,
+			const XML_Char **attr)
 {
 	Book *data = (Book*)userdata;
 	char filename[64];
 	strcpy(filename,"");
 	u16 position = 0;
+	if (!stricmp(name,"font"))
+	{
+		for(int i=0;attr[i];i+=2)
+		{
+			if(!strcmp(attr[i],"size"))
+				app->ts->SetPixelSize(atoi(attr[i+1]));
+		}
+	}
 	if (!stricmp(name,"bookmark") || !stricmp(name,"book"))
 	{
 		u8 i;
