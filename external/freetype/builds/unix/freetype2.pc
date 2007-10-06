@@ -1,0 +1,11 @@
+prefix=/home/rhaleblian/nds/devkitPro/devkitARM
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: FreeType 2
+Description: A free, high-quality, and portable font engine.
+Version: 9.16.3
+Requires:
+Libs: -L${libdir} -lfreetype  
+Cflags: -I${includedir}/freetype2 -I${includedir}

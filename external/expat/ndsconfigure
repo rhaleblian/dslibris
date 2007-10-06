@@ -1,0 +1,5 @@
+#!/bin/sh
+./configure --disable-shared --enable-static=expat --host arm-eabi \
+CFLAGS='-mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer' \
+LDFLAGS='-specs=ds_arm9.specs'
+
