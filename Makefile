@@ -68,4 +68,5 @@ usb: $(TARGET).r4.nds
 	sync
 
 zip: $(TARGET).nds
-	zip dslibris.zip $(TARGET).nds $(TARGET).ttf *.xht
+	zip dslibris.zip $(TARGET).nds $(TARGET).ttf $(TARGET).xht
+
