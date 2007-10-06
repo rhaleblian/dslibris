@@ -222,3 +222,4 @@ void Text::Dump(void) {
 		}
 	}
 }
+

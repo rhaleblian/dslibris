@@ -17,18 +17,6 @@
 #include "main.h"
 #include "parse.h"
 #include "wifi.h"
-/*
-u16 *screen0, *screen1, *fb;
-Text *ts;
-Button *buttons[MAXBOOKS];
-Book books[MAXBOOKS];
-u8 bookcount, bookcurrent;
-parsedata_t parsedata;
-
-u8 pagebuf[PAGEBUFSIZE];
-page_t pages[MAXPAGES];
-u16 pagecount, pagecurrent;
-*/
 
 inline void spin(void)
 {
@@ -67,7 +55,6 @@ bool iswhitespace(u8 c)
 	case ' ':
 	case '\t':
 	case '\n':
-	case '\r':
 		return true;
 		break;
 	default:
@@ -334,6 +321,7 @@ int App::main(void)
 			if (keysDown() & KEY_SELECT)
 			{
 				browseractive = false;
+				ts->Cache();
 				page_draw(&(pages[pagecurrent]));
 			}
 		}
@@ -553,6 +541,11 @@ void App::page_draw(page_t *page)
 			if(!ts->PrintNewLine()) break;
 			i++;
 		}
+		else if (c == '\r')
+		{
+			// this should NOT occur, pagination tossed these...
+			i++;
+		}
 		else
 		{
 			if (c > 127) i+=ts->GetUCS((char*)&(page->buf[i]),&c);
@@ -562,6 +555,8 @@ void App::page_draw(page_t *page)
 	}
 
 	ts->SetScreen(screen1);
+
+	// page number
 	u8 offset = (int)(170.0 * (pagecurrent / (float)pagecount));
 	ts->SetPen(MARGINLEFT+offset,250);
 	char msg[8];

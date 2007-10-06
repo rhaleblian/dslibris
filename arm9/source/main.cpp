@@ -1,6 +1,7 @@
-/**----------------------------------------------------------------------------
-   dslibris - an ebook reader for Nintendo DS
-   -------------------------------------------------------------------------**/
+/** ---------------------------------------------------------------------------
+dslibris - an ebook reader for Nintendo DS
+<gpl />
+--------------------------------------------------------------------------- **/
 
 #include <nds.h>
 
@@ -15,6 +16,7 @@
 #include "wifi.h"
 
 App *app;
+bool linebegan = false;
 
 /*---------------------------------------------------------------------------*/
 
@@ -25,8 +27,8 @@ int main(void)
 }
 
 void prefs_start_hndl(	void *userdata,
-			const XML_Char *name,
-			const XML_Char **attr)
+						const XML_Char *name,
+						const XML_Char **attr)
 {
 	Book *data = (Book*)userdata;
 	char filename[64];
@@ -145,15 +147,17 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 	int i=0;
 	u8 advance=0;
-	static bool linebegan=false;
-	page_t *page = &(app->pages[app->pagecurrent]);
+	u8 linelength=PAGE_WIDTH-MARGINRIGHT;
+	static u8 breakchar=0;
 
-	/** starting a new page? **/
+	page_t *page = &(app->pages[app->pagecurrent]);
 	if (page->length == 0)
 	{
-		linebegan = false;
+		/** starting a new page. **/
+		breakchar = 0;
 		pdata->pen.x = MARGINLEFT;
 		pdata->pen.y = MARGINTOP + app->ts->GetHeight();
+		linebegan = false;
 	}
 
 	while (i<txtlen)
@@ -166,6 +170,8 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 		if (iswhitespace(txt[i]))
 		{
+
+			// TODO check this <PRE> code, i don't trust it
 			if (app->parse_in(pdata,PRE) && txt[i] == '\n')
 			{
 				app->pagebuf[page->length++] = txt[i];
@@ -188,6 +194,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 			{
 				if (linebegan)
 				{
+					breakchar = page->length;
 					app->pagebuf[page->length++] = ' ';
 					pdata->pen.x += app->ts->Advance((u16)' ');
 				}
@@ -218,10 +225,11 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				advance += app->ts->Advance(code);
 			}
 
-			/** reflow. if we overrun the margin, insert a break. **/
+			/** reflow. if we overrun the margin, 
+				insert a break. **/
 
-			int overrun = (pdata->pen.x + advance) 
-				- (PAGE_WIDTH-MARGINRIGHT);
+			int overrun = (pdata->pen.x + advance) - linelength;
+
 			if (overrun > 0)
 			{
 				app->pagebuf[page->length] = '\n';
@@ -238,8 +246,8 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 						app->pagecurrent++;
 						app->pagecount++;
 					}
-					linebegan = false;
 				}
+				linebegan = false;
 			}
 
 			/** append this word to the page. to save space,
@@ -310,6 +318,7 @@ void end_hndl(void *data, const char *el)
 			p->pen.x = MARGINLEFT;
 			p->pen.y = MARGINTOP + app->ts->GetHeight();
 		}
+		linebegan = false;
 	}
 	if (!stricmp(el,"body"))
 	{

@@ -1,11 +1,15 @@
 INSTALLATION
 
-1. DLDI patch dslibris.nds to work for your media.
+1. DLDI patch dslibris.nds to work for your media. eg. for R4DS
+
+	dlditool r4tf.dldi dslibris.nds
 
 2. copy all files from the distribution .zip to the root directory
 of your DS media.
 
-3. run dslibris.nds on the DS.
+3. Put any XHTML you have on the root of your media.
+
+4. run dslibris.nds on the DS.
 
 For tips and help, see http://rhaleblian.wordpress.com
 
