@@ -237,6 +237,7 @@ int App::main(void)
 		pagecount = 0;
 		pagecurrent = 0;
 		page_init(&(pages[pagecurrent]));
+		ts->Cache();
 		if(!books[bookcurrent].Parse(filebuf))
 		{
 			pagecurrent = books[bookcurrent].GetPosition();
@@ -290,6 +291,7 @@ int App::main(void)
 				ts->SetInvert(true);
 				ts->PrintString("[paginating...]");
 				ts->SetInvert(invert);
+				ts->Cache();
 				if (!books[bookcurrent].Parse(filebuf))
 				{
 					pagecurrent = books[bookcurrent].GetPosition();
@@ -591,7 +593,8 @@ bool App::prefs_write(void)
 	FILE* fp = fopen("dslibris.xml","w+");
 	if(!fp) return false;
 	
-	fprintf(fp,"<dslibris>\n");
+	fprintf(fp, "<dslibris>\n");
+	fprintf(fp, "\t<font size=\"%d\" />\n", ts->GetPixelSize());
 	fprintf(fp, "\t<book file=\"%s\" />\n", books[bookcurrent].GetFilename());
 	for(u8 i=0;i<bookcount; i++)
 	{

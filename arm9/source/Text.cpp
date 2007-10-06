@@ -49,6 +49,7 @@ void Text::Cache()
 		}
 		charcode = FT_Get_Next_Char( face, charcode, &gindex );
 	}
+	usecache = true;
 }
 
 u8 Text::GetUCS(const char *txt, u16 *code) {
@@ -107,14 +108,12 @@ void Text::SetPixelSize(u8 size)
 {
 	if (!size) {
 		FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
-		//usecache = true;
 		pixelsize = PIXELSIZE;
 	} else {
 		FT_Set_Pixel_Sizes(face, 0, size);
-		//usecache = false;
 		pixelsize = size;
 	}
-	Cache();
+	usecache = false;
 }
 
 void Text::SetScreen(u16 *inscreen)
