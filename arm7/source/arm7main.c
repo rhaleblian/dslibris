@@ -1,34 +1,6 @@
-/*-----------------------------------------------------------------------------
-  $Id: arm7main.c,v 1.1 2007/08/27 04:44:30 rhaleblian Exp $
-
-  Simple ARM7 stub (sends RTC, TSC, and X/Y data to the ARM 9)
-
-  $Log: arm7main.c,v $
-  Revision 1.1  2007/08/27 04:44:30  rhaleblian
-  lcds now shut off when lid is closed.
-
-  Revision 1.2  2007/08/13 04:26:03  rhaleblian
-  Suppressed arm7 code, which causes memory and pc stomping.
-  Added banner logo and title.
-  START reveals book list.
-
-  Revision 1.1  2007/08/12 20:51:16  rhaleblian
-  Makefiles reorganized to support separate arm7 and arm9 binaries.
-  Added wifi debug stub code - not working yet.
-	
-  Revision 1.2  2006/10/10 12:07:26  ben
-  empty the fifo on interrupt
-	
-  Revision 1.1.1.1  2006/09/06 10:13:18  ben
-  Debug start
-	
-  Revision 1.2  2005/09/07 20:06:06  wntrmute
-  updated for latest libnds changes
-	
-  Revision 1.8  2005/08/03 05:13:16  wntrmute
-  corrected sound code
-
-  ---------------------------------------------------------------------------*/
+/*  ---------------------------------------------------------------------------
+	Simple ARM7 stub (sends RTC, TSC, and X/Y data to the ARM 9)
+	-------------------------------------------------------------------------*/
 #include <nds.h>
 #include <stdlib.h>
 #include <nds/bios.h>
@@ -40,110 +12,116 @@
 
 /**-------------------------------------------------------------------------**/
 void startSound(int sampleRate, const void* data, u32 bytes,
-		u8 channel, u8 vol,  u8 pan, u8 format) {
+				u8 channel, u8 vol,  u8 pan, u8 format) {
 
-  SCHANNEL_TIMER(channel)  = SOUND_FREQ(sampleRate);
-  SCHANNEL_SOURCE(channel) = (u32)data;
-  SCHANNEL_LENGTH(channel) = bytes >> 2 ;
-  SCHANNEL_CR(channel)     = SCHANNEL_ENABLE | SOUND_ONE_SHOT 
-    | SOUND_VOL(vol) | SOUND_PAN(pan) | (format==1?SOUND_8BIT:SOUND_16BIT);
+	SCHANNEL_TIMER(channel)  = SOUND_FREQ(sampleRate);
+	SCHANNEL_SOURCE(channel) = (u32)data;
+	SCHANNEL_LENGTH(channel) = bytes >> 2 ;
+	SCHANNEL_CR(channel)     = SCHANNEL_ENABLE | SOUND_ONE_SHOT 
+		| SOUND_VOL(vol) | SOUND_PAN(pan) | (format==1?SOUND_8BIT:SOUND_16BIT);
 }
 
 
 /**-------------------------------------------------------------------------**/
-s32 getFreeSoundChannel() {
-
-  int i;
-  for (i=0; i<16; i++) {
-    if ( (SCHANNEL_CR(i) & SCHANNEL_ENABLE) == 0 ) return i;
-  }
-  return -1;
+s32 getFreeSoundChannel()
+{
+	int i;
+	for (i=0; i<16; i++) {
+		if ( (SCHANNEL_CR(i) & SCHANNEL_ENABLE) == 0 ) return i;
+	}
+	return -1;
 }
 
 int vcount;
 touchPosition first,tempPos;
 
 
-//-----------------------------------------------------------------------------
-void VcountHandler() {
-//-----------------------------------------------------------------------------
-  static int lastbut = -1;
+/**-------------------------------------------------------------------------**/
+void KeydownHandler()
+{
+	VBLANK_INTR_WAIT_FLAGS |= IRQ_KEYS;
+}
+
+/**-------------------------------------------------------------------------**/
+void VcountHandler()
+{  
+	static int lastbut = -1;
 	
-  uint16 but=0, x=0, y=0, xpx=0, ypx=0, z1=0, z2=0;
+	uint16 but=0, x=0, y=0, xpx=0, ypx=0, z1=0, z2=0;
 
-  but = REG_KEYXY;
+	but = REG_KEYXY;
 
-  if (!( (but ^ lastbut) & (1<<6))) {
- 
-    tempPos = touchReadXY();
+	if (!( (but ^ lastbut) & (1<<6))) {
 
-    x = tempPos.x;
-    y = tempPos.y;
-    xpx = tempPos.px;
-    ypx = tempPos.py;
-    z1 = tempPos.z1;
-    z2 = tempPos.z2;
+		tempPos = touchReadXY();
+
+		x = tempPos.x;
+		y = tempPos.y;
+		xpx = tempPos.px;
+		ypx = tempPos.py;
+		z1 = tempPos.z1;
+		z2 = tempPos.z2;
 		
-  } else {
-    lastbut = but;
-    but |= (1 <<6);
-  }
+	} else {
+		lastbut = but;
+		but |= (1 <<6);
+	}
 
-  if ( vcount == 80 ) {
-    first = tempPos;
-  } else {
-    if (	abs( xpx - first.px) > 10 || abs( ypx - first.py) > 10 ||
-		(but & ( 1<<6)) ) {
+	if ( vcount == 80 ) {
+		first = tempPos;
+	} else {
+		if (	abs( xpx - first.px) > 10 || abs( ypx - first.py) > 10 ||
+			(but & ( 1<<6)) ) {
 
-      but |= (1 <<6);
-      lastbut = but;
+			but |= (1 <<6);
+			lastbut = but;
 
-    } else { 	
-      IPC->mailBusy = 1;
-      IPC->touchX			= x;
-      IPC->touchY			= y;
-      IPC->touchXpx		= xpx;
-      IPC->touchYpx		= ypx;
-      IPC->touchZ1		= z1;
-      IPC->touchZ2		= z2;
-      IPC->mailBusy = 0;
-    }
-  }
-  IPC->buttons		= but;
-  vcount ^= (80 ^ 130);
-  SetYtrigger(vcount);
+		} else { 	
+			IPC->mailBusy = 1;
+			IPC->touchX			= x;
+			IPC->touchY			= y;
+			IPC->touchXpx		= xpx;
+			IPC->touchYpx		= ypx;
+			IPC->touchZ1		= z1;
+			IPC->touchZ2		= z2;
+			IPC->mailBusy = 0;
+		}
+	}
+	IPC->buttons		= but;
+	vcount ^= (80 ^ 130);
+	SetYtrigger(vcount);
 
-  // Check if the lid has been closed.
-  if(but & BIT(7)) {
+	// Check if the lid has been closed.
+	if(but & BIT(7)) {
 
-    // Save the current interrupt sate.
-    u32 ie_save = REG_IE;
+		// Save the current interrupt sate.
+		u32 ie_save = REG_IE;
 
-    // Turn the speaker down.
-    swiChangeSoundBias(0,0x400);
+		// Turn the speaker down.
+		swiChangeSoundBias(0,0x400);
 
-    // Save current power state.
-    int power = readPowerManagement(PM_CONTROL_REG);
+		// Save current power state.
+		int power = readPowerManagement(PM_CONTROL_REG);
 
-    // Set sleep LED.
-    writePowerManagement(PM_CONTROL_REG, PM_LED_CONTROL(1));
+		// Set sleep LED.
+		writePowerManagement(PM_CONTROL_REG, PM_LED_CONTROL(1));
 
-    // Register for the lid interrupt.
-    REG_IE = IRQ_LID;
-    
-    // Power down till we get our interrupt.
-    swiSleep(); //waits for PM (lid open) interrupt
-    REG_IF = ~0;
-    
-    // Restore the interrupt state.
-    REG_IE = ie_save;
-    
-    // Restore power state.
-    writePowerManagement(PM_CONTROL_REG, power);
-    
-    // Turn the speaker up.
-    swiChangeSoundBias(1,0x400);
-  }         
+		// Register for the lid interrupt.
+		REG_IE = IRQ_LID;
+
+		// Power down till we get our interrupt.
+		swiSleep(); //waits for PM (lid open) interrupt
+		REG_IF = ~0;
+
+		// Restore the interrupt state.
+		REG_IE = ie_save;
+
+		// Restore power state.
+		writePowerManagement(PM_CONTROL_REG, power);
+
+		// Turn the speaker up.
+		swiChangeSoundBias(1,0x400);
+	}
 }
 
 
@@ -282,57 +260,62 @@ void arm7_fifo() { // check incoming fifo messages
 
 
 /**-------------------------------------------------------------------------**/
-int main( void) {
-  
-  // reload
-  LOADNDS->PATH = 0;
+int main( void)
+{
+	// reload
+	LOADNDS->PATH = 0;
 
-  // enable & prepare fifo asap
-  REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR; 
-  // Reset the clock if needed
-  rtcReset();
+	// enable & prepare fifo asap
+	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR; 
 
-  //enable sound
-  powerON(POWER_SOUND);
-  SOUND_CR = SOUND_ENABLE | SOUND_VOL(0x7F);
-  IPC->soundData = 0;
+	// Reset the clock if needed
+	rtcReset();
 
-  irqInit();
-  irqSet(IRQ_VBLANK, VblankHandler);
-  irqEnable(IRQ_VBLANK);
+	//enable sound
+	powerON(POWER_SOUND);
+	SOUND_CR = SOUND_ENABLE | SOUND_VOL(0x7F);
+	IPC->soundData = 0;
 
-  irqSet(IRQ_VCOUNT, VcountHandler);
-  irqEnable(IRQ_VCOUNT);
+	irqInit();
 
-  irqSet(IRQ_WIFI, Wifi_Interrupt); // set up wifi interrupt
-  irqEnable(IRQ_WIFI);
+	irqSet(IRQ_VBLANK, VblankHandler);
+	irqEnable(IRQ_VBLANK);
 
-  { // sync with arm9 and init wifi
-    u32 fifo_temp;   
+	irqSet(IRQ_VCOUNT, VcountHandler);
+	irqEnable(IRQ_VCOUNT);
 
-    while(1) { // wait for magic number
-      while(REG_IPC_FIFO_CR&IPC_FIFO_RECV_EMPTY) swiWaitForVBlank();
-      fifo_temp=REG_IPC_FIFO_RX;
-      if(fifo_temp==0x12345678) break;
-    }
-    while(REG_IPC_FIFO_CR&IPC_FIFO_RECV_EMPTY) swiWaitForVBlank();
-    fifo_temp=REG_IPC_FIFO_RX; // give next value to wifi_init
-    Wifi_Init(fifo_temp);
-    
-    irqSet(IRQ_FIFO_NOT_EMPTY,arm7_fifo); // set up fifo irq
-    irqEnable(IRQ_FIFO_NOT_EMPTY);
-    REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ;
+	irqSet(IRQ_KEYS, KeydownHandler);
+	irqEnable(IRQ_KEYS);
 
-    Wifi_SetSyncHandler(arm7_synctoarm9); // allow wifi lib to notify arm9
-  } // arm7 wifi init complete
+	irqSet(IRQ_WIFI, Wifi_Interrupt);
+	irqEnable(IRQ_WIFI);
 
-  // Keep the ARM7 out of main RAM
-  while (1) {
-    if (LOADNDS->PATH != 0) {
-      LOADNDS->ARM7FUNC(LOADNDS->PATH);
-    }
-    swiWaitForVBlank();
-  }
+	{ // sync with arm9 and init wifi
+		u32 fifo_temp;   
+
+		while(1) { // wait for magic number
+		    while(REG_IPC_FIFO_CR&IPC_FIFO_RECV_EMPTY) swiWaitForVBlank();
+		    fifo_temp=REG_IPC_FIFO_RX;
+		    if(fifo_temp==0x12345678) break;
+		}
+		while(REG_IPC_FIFO_CR&IPC_FIFO_RECV_EMPTY) swiWaitForVBlank();
+		fifo_temp=REG_IPC_FIFO_RX; // give next value to wifi_init
+		Wifi_Init(fifo_temp);
+
+		irqSet(IRQ_FIFO_NOT_EMPTY,arm7_fifo); // set up fifo irq
+		irqEnable(IRQ_FIFO_NOT_EMPTY);
+		REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ;
+
+		Wifi_SetSyncHandler(arm7_synctoarm9); // allow wifi lib to notify arm9
+	} // arm7 wifi init complete
+
+	// Keep the ARM7 out of main RAM
+	while (1) {
+		if (LOADNDS->PATH != 0) {
+		    LOADNDS->ARM7FUNC(LOADNDS->PATH);
+		}
+		swiWaitForVBlank();
+	}
 }
 
 

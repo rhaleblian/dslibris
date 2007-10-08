@@ -9,7 +9,7 @@ include $(DEVKITARM)/ds_rules
 
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
-
+export MEDIA		:=  R4tf
 
 #-------------------------------------------------------------------------------
 # path to tools - this can be deleted if you set the path in windows
@@ -44,29 +44,36 @@ arm9/$(TARGET).elf:
 clean:
 	$(MAKE) -C arm9 clean
 	$(MAKE) -C arm7 clean
-	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).r4.nds
+	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIA).nds
 
+# run target in desmume
 test: $(TARGET).nds
 	desmume $(TARGET).nds
 
+# debug target with insight and desmume in linux
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/dslibris.arm9.elf &
 	desmume --arm9gdb=20000 $(TARGET).nds
 
-$(TARGET).r4.nds: $(TARGET).nds
-	cp dslibris.nds dslibris.r4.nds
-	dlditool R4tf.dldi dslibris.r4.nds
+# make R4DS DLDI patched target
+$(TARGET).$(MEDIA).nds: $(TARGET).nds
+	cp dslibris.nds dslibris.$(MEDIA).nds
+	dlditool $(MEDIA).dldi dslibris.$(MEDIA).nds
 
-scp: $(TARGET).r4.nds
-	scp $(TARGET).r4.nds eris:
+# secure copy target to another machine
+scp: $(TARGET).$(MEDIA).nds
+	scp $(TARGET).$(MEDIA).nds eris:
 
-smb: $(TARGET).r4.nds
-	 smbclient \\\\asherah\\e fnord... -c 'cd .; put dslibris.r4.nds'
+# copy target over network to microSD mounted under windows
+smb: $(TARGET).$(MEDIA).nds
+	 smbclient \\\\asherah\\e fnord... -c "cd .; put dslibris.$(MEDIA).nds"
 
-usb: $(TARGET).r4.nds
-	cp $(TARGET).r4.nds /media/Kingston
+# copy target to microSD mounted under Linux
+usb: $(TARGET).$(MEDIA).nds
+	cp $(TARGET).$(MEDIA).nds /media/Kingston
 	sync
 
-zip: $(TARGET).nds
-	zip dslibris.zip $(TARGET).nds $(TARGET).ttf $(TARGET).xht
+# make an archive to release on Sourceforge
+dist: $(TARGET).nds
+	zip dslibris.zip INSTALL.txt $(TARGET).nds $(TARGET).ttf $(TARGET).xht
 

@@ -23,6 +23,13 @@ inline void spin(void)
 	while (true) swiWaitForVBlank();
 }
 
+void swiWaitForKeys() 
+{
+  asm("mov r0, #1");
+  asm("mov r1, #4096");
+  asm("swi #262144");
+}
+
 void consoleOK(bool ok)
 {
 	printf("[");
@@ -333,6 +340,7 @@ int App::main(void)
 				{
 					pagecurrent++;
 					page_draw(&pages[pagecurrent]);
+					books[bookcurrent].SetPosition(pagecurrent);
 					prefs_write();
 				}
 			}
@@ -343,6 +351,7 @@ int App::main(void)
 				{
 					pagecurrent--;
 					page_draw(&pages[pagecurrent]);
+					books[bookcurrent].SetPosition(pagecurrent);
 					prefs_write();
 				}
 			}
@@ -366,6 +375,7 @@ int App::main(void)
 				poll = false;
 			}
 		}
+//		swiWaitForKeys();
 		swiWaitForVBlank();
 	}
 
@@ -390,26 +400,21 @@ void App::browser_init(void)
 
 void App::browser_draw(void)
 {
-	ts->SetScreen(screen1);
-	screen_clear(screen1,0,0,0);
-
-	ts->SetPen(MARGINLEFT+100, MARGINTOP+16);
-	u8 size = ts->GetPixelSize();
-	ts->SetPixelSize(20);
 	bool invert = ts->GetInvert();
-	ts->SetInvert(true);
-	ts->PrintString("library");
-	ts->SetInvert(invert);
-	ts->SetPixelSize(size);
+	u8 size = ts->GetPixelSize();
 
-	int i;
-	for (i=0;i<bookcount;i++)
+	ts->SetScreen(screen1);
+	ts->SetPixelSize(12);
+	for (int i=0;i<bookcount;i++)
 	{
 		if (i==bookcurrent)
 			buttons[i].Draw(screen1,true);
 		else
 			buttons[i].Draw(screen1,false);
 	}
+
+	ts->SetInvert(invert);
+	ts->SetPixelSize(size);
 }
 
 void App::page_init(page_t *page)
@@ -531,6 +536,7 @@ void App::page_draw(page_t *page)
 	ts->ClearScreen();
 	ts->SetScreen(screen0);
 	ts->ClearScreen();
+
 	ts->InitPen();
 	u16 i=0;
 	while (i<page->length)
@@ -541,11 +547,6 @@ void App::page_draw(page_t *page)
 			if(!ts->PrintNewLine()) break;
 			i++;
 		}
-		else if (c == '\r')
-		{
-			// this should NOT occur, pagination tossed these...
-			i++;
-		}
 		else
 		{
 			if (c > 127) i+=ts->GetUCS((char*)&(page->buf[i]),&c);
@@ -554,9 +555,8 @@ void App::page_draw(page_t *page)
 		}
 	}
 
-	ts->SetScreen(screen1);
-
 	// page number
+	ts->SetScreen(screen1);
 	u8 offset = (int)(170.0 * (pagecurrent / (float)pagecount));
 	ts->SetPen(MARGINLEFT+offset,250);
 	char msg[8];
@@ -615,14 +615,19 @@ void App::screen_clear(u16 *screen, u8 r, u8 g, u8 b)
 void App::splash_draw(void)
 {
 	bool invert = ts->GetInvert();
+	u8 size = ts->GetPixelSize();
+
 	ts->SetInvert(true);
 	ts->SetScreen(screen0);
 	screen_clear(screen0,0,0,0);
+	for(int i=1;i<256;i+=2)
+	{
+		memset(screen0+(i*256),RGB15(4,4,4)|BIT(15),512);
+	}
 	ts->SetPen(SPLASH_LEFT,SPLASH_TOP);
-	u8 size = ts->GetPixelSize();
 	ts->SetPixelSize(36);
 	ts->PrintString("dslibris");
-	ts->SetPixelSize(size);
+	ts->SetPixelSize(10);
 	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
 	ts->PrintString("an ebook reader");
 	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
@@ -634,5 +639,23 @@ void App::splash_draw(void)
 	char msg[16];
 	sprintf(msg,"%d books\n", bookcount);
 	ts->PrintString(msg);
+
+	ts->SetScreen(screen1);
+	screen_clear(screen1,0,0,0);
+	for(int i=1;i<32;i+=2)
+	{
+		memset(screen1+i*256,RGB15(4,4,4)|BIT(15),512);
+	}
+	for(int i=bookcount*32+1;i<256;i+=2)
+	{
+		memset(screen1+i*256,RGB15(4,4,4)|BIT(15),512);
+	}
+
+	ts->SetPen(MARGINLEFT+100, MARGINTOP+12);
+	ts->SetPixelSize(20);
+	ts->SetInvert(true);
+	ts->PrintString("library");
+
+	ts->SetPixelSize(size);
 	ts->SetInvert(invert);
 }

@@ -52,6 +52,12 @@ void Text::Cache()
 	usecache = true;
 }
 
+void Text::ClearScreen()
+{
+	if(invert) memset((void*)screen,0,PAGE_WIDTH*PAGE_HEIGHT*4);
+	else memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
+}
+
 u8 Text::GetUCS(const char *txt, u16 *code) {
 	if (txt[0] > 0xc1 && txt[0] < 0xe0) {
 		*code = ((txt[0]-192)*64) + (txt[1]-128);
@@ -69,9 +75,7 @@ u8 Text::GetUCS(const char *txt, u16 *code) {
 	return 1;
 }
 
-// accessors
-
-u8 Text::GetHeight(void) {
+u8 Text::GetHeight() {
 	return (face->size->metrics.height >> 6);
 }
 
@@ -88,14 +92,14 @@ void Text::SetPen(u16 x, u16 y) {
 void Text::SetInvert(bool state) {
 	invert = state;
 }
-bool Text::GetInvert(void) {
+bool Text::GetInvert() {
 	return invert;
 }
 
-u8 Text::GetPenX(void) {
+u8 Text::GetPenX() {
 	return pen.x;
 }
-u8 Text::GetPenY(void) {
+u8 Text::GetPenY() {
 	return pen.y;
 }
 
@@ -206,13 +210,7 @@ void Text::PrintString(const char *string) {
 	}
 }
 
-void Text::ClearScreen()
-{
-	if(invert) memset((void*)screen,0,PAGE_WIDTH*PAGE_HEIGHT*4);
-	else memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
-}
-
-void Text::Dump(void) {
+void Text::PrintCache(void) {
 	int code;
 	for (code=0;code<MAXGLYPHS;code++) {
 		PrintChar(code);

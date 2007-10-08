@@ -140,26 +140,22 @@ void title_hndl(void *userdata, const char *txt, int txtlen)
 
 void char_hndl(void *data, const XML_Char *txt, int txtlen)
 {
-	/** flow text on the fly, into page data structure. **/
+	/** reflow text on the fly, into page data structure. **/
 
 	parsedata_t *pdata = (parsedata_t *)data;
 	if (!app->parse_in(pdata,BODY)) return;
-
-	int i=0;
-	u8 advance=0;
-	u8 linelength=PAGE_WIDTH-MARGINRIGHT;
-	static u8 breakchar=0;
 
 	page_t *page = &(app->pages[app->pagecurrent]);
 	if (page->length == 0)
 	{
 		/** starting a new page. **/
-		breakchar = 0;
 		pdata->pen.x = MARGINLEFT;
 		pdata->pen.y = MARGINTOP + app->ts->GetHeight();
 		linebegan = false;
 	}
 
+	u8 advance=0;
+	int i=0;
 	while (i<txtlen)
 	{
 		if (txt[i] == '\r')
@@ -194,7 +190,6 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 			{
 				if (linebegan)
 				{
-					breakchar = page->length;
 					app->pagebuf[page->length++] = ' ';
 					pdata->pen.x += app->ts->Advance((u16)' ');
 				}
@@ -225,12 +220,10 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				advance += app->ts->Advance(code);
 			}
 
-			/** reflow. if we overrun the margin, 
+			/** reflow - if we overrun the margin, 
 				insert a break. **/
 
-			int overrun = (pdata->pen.x + advance) - linelength;
-
-			if (overrun > 0)
+			if ((pdata->pen.x + advance) > (PAGE_WIDTH-MARGINRIGHT))
 			{
 				app->pagebuf[page->length] = '\n';
 				page->length++;
@@ -252,6 +245,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 			/** append this word to the page. to save space,
 			chars will stay UTF-8 until they are rendered. **/
+
 			for (;i<j;i++)
 			{
 				if (iswhitespace(txt[i]))
