@@ -34,7 +34,7 @@ public:
 	u8   GetPenX();
 	u8   GetPenY();
 	u8   GetPixelSize();
-
+	u16* GetScreen();
 	void SetInvert(bool);
 	void SetPen(u16 x, u16 y);
 	void SetPixelSize(u8);

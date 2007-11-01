@@ -9,6 +9,7 @@
 #include <nds/arm7/clock.h>
 #include "wifiData.h"
 #include <dswifi7.h>
+#include "ndsx_brightness.h"
 
 /**-------------------------------------------------------------------------**/
 void startSound(int sampleRate, const void* data, u32 bytes,
@@ -259,11 +260,18 @@ void arm7_fifo() { // check incoming fifo messages
 }
 
 
+void FifoHandler()
+{
+    u32 msg = REG_IPC_FIFO_RX;
+    NDSX_BrightnessFifo(msg);
+}
+
+
 /**-------------------------------------------------------------------------**/
 int main( void)
 {
 	// reload
-	LOADNDS->PATH = 0;
+	//LOADNDS->PATH = 0;
 
 	// enable & prepare fifo asap
 	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR; 
@@ -281,15 +289,21 @@ int main( void)
 	irqSet(IRQ_VBLANK, VblankHandler);
 	irqEnable(IRQ_VBLANK);
 
+	irqSet(IRQ_FIFO_NOT_EMPTY,FifoHandler); // set up fifo irq
+	irqEnable(IRQ_FIFO_NOT_EMPTY);
+	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ;
+
 	irqSet(IRQ_VCOUNT, VcountHandler);
 	irqEnable(IRQ_VCOUNT);
-
+/*
 	irqSet(IRQ_KEYS, KeydownHandler);
 	irqEnable(IRQ_KEYS);
 
 	irqSet(IRQ_WIFI, Wifi_Interrupt);
 	irqEnable(IRQ_WIFI);
+*/
 
+/*
 	{ // sync with arm9 and init wifi
 		u32 fifo_temp;   
 
@@ -302,18 +316,16 @@ int main( void)
 		fifo_temp=REG_IPC_FIFO_RX; // give next value to wifi_init
 		Wifi_Init(fifo_temp);
 
-		irqSet(IRQ_FIFO_NOT_EMPTY,arm7_fifo); // set up fifo irq
-		irqEnable(IRQ_FIFO_NOT_EMPTY);
-		REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ;
 
 		Wifi_SetSyncHandler(arm7_synctoarm9); // allow wifi lib to notify arm9
 	} // arm7 wifi init complete
+*/
 
 	// Keep the ARM7 out of main RAM
 	while (1) {
-		if (LOADNDS->PATH != 0) {
-		    LOADNDS->ARM7FUNC(LOADNDS->PATH);
-		}
+		//if (LOADNDS->PATH != 0) {
+		    //LOADNDS->ARM7FUNC(LOADNDS->PATH);
+		//}
 		swiWaitForVBlank();
 	}
 }
@@ -387,7 +399,6 @@ void wifiMain(){
 	*/
 	wifiData->read=true;
 }
-#endif
 
 //-----------------------------------------------------------------------------
 int main2(int argc, char ** argv) {
@@ -398,10 +409,11 @@ int main2(int argc, char ** argv) {
 	LOADNDS->PATH = 0;
 	// Keep the ARM7 out of main RAM
 	while (1) {
-		if (LOADNDS->PATH != 0) {
+		/*if (LOADNDS->PATH != 0) {
 			LOADNDS->ARM7FUNC(LOADNDS->PATH);
-		}
+		}*/
 		swiWaitForVBlank();
 	}
 }
+#endif
 

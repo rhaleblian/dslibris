@@ -108,6 +108,11 @@ u8 Text::GetPixelSize()
 	return pixelsize;
 }
 
+u16* Text::GetScreen()
+{
+	return screen;
+}
+
 void Text::SetPixelSize(u8 size)
 {
 	if (!size) {

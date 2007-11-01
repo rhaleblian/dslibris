@@ -70,10 +70,13 @@ smb: $(TARGET).$(MEDIA).nds
 
 # copy target to microSD mounted under Linux
 usb: $(TARGET).$(MEDIA).nds
-	cp $(TARGET).$(MEDIA).nds /media/Kingston
+	cp $(TARGET).$(MEDIA).nds /media/KINGSTON
 	sync
 
 # make an archive to release on Sourceforge
 dist: $(TARGET).nds
 	zip dslibris.zip INSTALL.txt $(TARGET).nds $(TARGET).ttf $(TARGET).xht
+
+upload: dist
+	ftp -u anonymous upload.sourceforge.net
 

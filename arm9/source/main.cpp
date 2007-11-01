@@ -26,6 +26,21 @@ int main(void)
 	return app->main();
 }
 
+bool iswhitespace(u8 c)
+{
+	switch (c)
+	{
+	case ' ':
+	case '\t':
+	case '\n':
+		return true;
+		break;
+	default:
+		return false;
+		break;
+	}
+}
+
 void prefs_start_hndl(	void *userdata,
 						const XML_Char *name,
 						const XML_Char **attr)
@@ -51,7 +66,7 @@ void prefs_start_hndl(	void *userdata,
 			if (!strcmp(attr[i],"position")) position = atoi(attr[i+1]);
 			if (!strcmp(attr[i],"page")) position = atoi(attr[i+1]);
 		}
-		for(i=0; i<app->bookcount; i++)
+		for(i=0;i<app->bookcount;i++)
 		{
 			if(!stricmp(data[i].GetFilename(),filename))
 			{
@@ -166,10 +181,10 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 		if (iswhitespace(txt[i]))
 		{
-
-			// TODO check this <PRE> code, i don't trust it
+/*
 			if (app->parse_in(pdata,PRE) && txt[i] == '\n')
 			{
+				// TODO check this <PRE> code, i don't trust it
 				app->pagebuf[page->length++] = txt[i];
 				pdata->pen.x += app->ts->Advance((u16)txt[i]);
 				pdata->pen.y += (app->ts->GetHeight() + LINESPACING);
@@ -186,14 +201,12 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				}
 
 			}
-			else
+			else 
+*/
+			if(linebegan)
 			{
-				if (linebegan)
-				{
-					app->pagebuf[page->length++] = ' ';
-					pdata->pen.x += app->ts->Advance((u16)' ');
-				}
-
+				app->pagebuf[page->length++] = ' ';
+				pdata->pen.x += app->ts->Advance((u16)' ');
 			}
 			i++;
 
@@ -282,37 +295,39 @@ void end_hndl(void *data, const char *el)
 	    || !stricmp(el,"hr")
 	)
 	{
-		app->pagebuf[page->length] = '\n';
-		page->length++;
-		p->pen.x = MARGINLEFT;
-		p->pen.y += app->ts->GetHeight() + LINESPACING;
-		if ( !stricmp(el,"p"))
-		{
+		if(linebegan) {
 			app->pagebuf[page->length] = '\n';
 			page->length++;
-			p->pen.y += app->ts->GetHeight() + LINESPACING;
-		}
-		if (p->pen.y > (PAGE_HEIGHT-MARGINBOTTOM))
-		{
-			if (app->fb == app->screen1)
-			{
-				app->fb = app->screen0;
-				if (!page->buf)
-					page->buf = (u8*)new u8[page->length];
-				strncpy((char*)page->buf,(char *)app->pagebuf,page->length);
-				page++;
-				app->page_init(page);
-				app->pagecurrent++;
-				app->pagecount++;
-			}
-			else
-			{
-				app->fb = app->screen1;
-			}
 			p->pen.x = MARGINLEFT;
-			p->pen.y = MARGINTOP + app->ts->GetHeight();
+			p->pen.y += app->ts->GetHeight() + LINESPACING;
+			if ( !stricmp(el,"p"))
+			{
+				app->pagebuf[page->length] = '\n';
+				page->length++;
+				p->pen.y += app->ts->GetHeight() + LINESPACING;
+			}
+			if (p->pen.y > (PAGE_HEIGHT-MARGINBOTTOM))
+			{
+				if (app->fb == app->screen1)
+				{
+					app->fb = app->screen0;
+					if (!page->buf)
+						page->buf = (u8*)new u8[page->length];
+					strncpy((char*)page->buf,(char *)app->pagebuf,page->length);
+					page++;
+					app->page_init(page);
+					app->pagecurrent++;
+					app->pagecount++;
+				}
+				else
+				{
+					app->fb = app->screen1;
+				}
+				p->pen.x = MARGINLEFT;
+				p->pen.y = MARGINTOP + app->ts->GetHeight();
+			}
+			linebegan = false;
 		}
-		linebegan = false;
 	}
 	if (!stricmp(el,"body"))
 	{

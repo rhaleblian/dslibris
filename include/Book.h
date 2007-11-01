@@ -13,13 +13,15 @@ class Book {
 public:
 	Book();
 	const char* GetFilename();
-	s16 GetPosition();
+	s16  GetPosition();
 	const char *GetTitle();
-	void SetFilename(const char *filename);
-	void SetTitle(const char *title);
-	void SetPosition(s16 pos);
 	void Index(char *filebuf);	
-	u8 Parse(char *filebuf);
+	void IndexHTML(char *filebuf);	
+	u8   Parse(char *filebuf);
+	u8   ParseHTML(char *filebuf);
+	void SetFilename(const char *filename);
+	void SetPosition(s16 pos);
+	void SetTitle(const char *title);
 };
 
 #endif

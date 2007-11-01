@@ -9,7 +9,7 @@
 #include "Button.h"
 #include "Text.h"
 
-#define APP_VERSION "0.2.7"
+#define APP_VERSION "1.0"
 #define APP_URL "http://rhaleblian.wordpress.com"
 
 class App {

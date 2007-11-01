@@ -2,6 +2,10 @@
 #include "main.h"
 #include "parse.h"
 #include "App.h"
+#include <tidy.h>
+#include <buffio.h>
+#include <stdio.h>
+#include <errno.h>
 
 extern App *app;
 
@@ -67,6 +71,50 @@ void Book::Index(char *filebuf)
 	}
 }
 
+void Book::IndexHTML(char *filebuf)
+{
+	TidyBuffer output = {0};
+	int rc = -1;
+	Bool ok;
+
+	FILE *fp = fopen(filename.c_str(),"r");
+	if (fp)
+	{	
+		fread(filebuf, 1, BUFSIZE, fp);		
+
+		TidyDoc tdoc = tidyCreate();
+		ok = tidyOptSetBool(tdoc, TidyXhtmlOut, yes);		
+		if(ok)
+			rc = tidyParseString(tdoc,filebuf);
+
+		TidyNode head = tidyGetHead(tdoc);
+		TidyNode child = tidyGetChild(head);
+		while(child) 
+		{
+			if(tidyNodeIsTITLE(child))
+			{
+				tidyNodeGetText(tdoc,tidyGetChild(child),&output);
+				SetTitle((char*)output.bp);
+				break;
+			}
+			child = tidyGetNext(child);
+		}
+
+/*
+		if(rc >= 0)
+			rc = tidyCleanAndRepair(tdoc);
+		if(rc >= 0)
+			rc = (tidyOptSetBool(tdoc, TidyForceOutput, yes) ? rc : -1);
+		if(rc >= 0)
+			rc = tidySaveBuffer(tdoc, &output);
+*/
+
+		tidyBufFree(&output);
+		tidyRelease(tdoc);
+		fclose(fp);
+	}
+}
+
 u8 Book::Parse(char *filebuf)
 {
 	FILE *fp = fopen(filename.c_str(),"r");
@@ -101,4 +149,36 @@ u8 Book::Parse(char *filebuf)
 	XML_ParserFree(p);
 	fclose(fp);
 	return(0);
+}
+
+u8 Book::ParseHTML(char *filebuf)
+{
+	TidyBuffer output = {0};
+	int rc = -1;
+	filebuf = (char*)malloc(1024*sizeof(char));
+
+	FILE *fp = fopen(filename.c_str(),"r");
+	if (!fp) return 1;
+
+	fread(filebuf, 1, BUFSIZE, fp);		
+
+	TidyDoc tdoc = tidyCreate();
+	rc = tidyParseString(tdoc,filebuf);
+	TidyNode body = tidyGetHead(tdoc);
+	TidyNode child = tidyGetChild(body);
+	while(child)
+	{
+		if(tidyNodeGetType(child) == TidyNode_Text)
+		{
+			tidyNodeGetText(tdoc,child,&output);
+		}
+		child = tidyGetNext(child);
+	}
+
+	strncat((char*)app->pages[0].buf, (char*)output.bp, 512);
+
+	tidyBufFree(&output);
+	tidyRelease(tdoc);
+	fclose(fp);
+	return 0;
 }

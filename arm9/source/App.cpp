@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <expat.h>
 #include "types.h"
+#include "ndsx_brightness.h"
 #include "App.h"
 #include "Book.h"
 #include "Button.h"
@@ -55,21 +56,6 @@ int min(int x, int y)
 	else return x;
 }
 
-bool iswhitespace(u8 c)
-{
-	switch (c)
-	{
-	case ' ':
-	case '\t':
-	case '\n':
-		return true;
-		break;
-	default:
-		return false;
-		break;
-	}
-}
-
 App::App()
 {
 	ts = NULL;
@@ -96,6 +82,7 @@ int App::main(void)
 	irqInit();
 	irqEnable(IRQ_VBLANK);
 	irqEnable(IRQ_VCOUNT);
+    REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
 
 	/** bring up the startup console.
 	    sub bg 0 will be used to print text. **/
@@ -158,6 +145,13 @@ int App::main(void)
 			Book *book = &(books[bookcount]);
 			book->SetFilename(filename);
 			book->Index(filebuf);
+			bookcount++;
+		}
+		if (!stricmp(".htm",c) || !stricmp(".html",c))
+		{
+			Book *book = &(books[bookcount]);
+			book->SetFilename(filename);
+			book->IndexHTML(filebuf);
 			bookcount++;
 		}
 	}
@@ -362,6 +356,11 @@ int App::main(void)
 				page_draw(&pages[pagecurrent]);
 			}
 			
+			if (keysDown() & KEY_Y)
+			{
+				NDSX_SetBrightness_Next();			
+			}
+
 			if (keysDown() & KEY_SELECT)
 			{
 				prefs_write();
@@ -369,11 +368,12 @@ int App::main(void)
 				splash_draw();
 				browser_draw();
 			}
-
+/*
 			if(keysDown() & KEY_START)
 			{
 				poll = false;
 			}
+*/
 		}
 //		swiWaitForKeys();
 		swiWaitForVBlank();
@@ -536,22 +536,35 @@ void App::page_draw(page_t *page)
 	ts->ClearScreen();
 	ts->SetScreen(screen0);
 	ts->ClearScreen();
-
 	ts->InitPen();
+	bool linebegan = false;
+
 	u16 i=0;
 	while (i<page->length)
 	{
 		u16 c = page->buf[i];
 		if (c == '\n')
 		{
-			if(!ts->PrintNewLine()) break;
 			i++;
+
+			if (ts->GetPenY() + ts->GetHeight() + LINESPACING 
+				> PAGE_HEIGHT - MARGINBOTTOM)
+			{
+				if(ts->GetScreen() == screen0) {
+					ts->SetScreen(screen1);
+					ts->InitPen();
+					linebegan = false;
+				}
+				else break;
+			}
+			else if (linebegan) ts->PrintNewLine();
 		}
 		else
 		{
 			if (c > 127) i+=ts->GetUCS((char*)&(page->buf[i]),&c);
 			else i++;
 			ts->PrintChar(c);
+			linebegan = true;
 		}
 	}
 
@@ -594,7 +607,7 @@ bool App::prefs_write(void)
 	for(u8 i=0;i<bookcount; i++)
 	{
 		fprintf(fp, "\t<bookmark file=\"%s\" page=\"%d\" />\n",
-	        books[i].GetFilename(), books[i].GetPosition());
+	        books[i].GetFilename(), books[i].GetPosition()+1);
 	}
 	fprintf(fp, "</dslibris>\n");
 	fclose(fp);
@@ -617,13 +630,15 @@ void App::splash_draw(void)
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 
-	ts->SetInvert(true);
+	ts->SetInvert(false);
 	ts->SetScreen(screen0);
-	screen_clear(screen0,0,0,0);
+	screen_clear(screen0,31,31,31);
+/*	
 	for(int i=1;i<256;i+=2)
 	{
-		memset(screen0+(i*256),RGB15(4,4,4)|BIT(15),512);
+		memset(screen0+(i*256),RGB15(28,28,28)|BIT(15),512);
 	}
+*/
 	ts->SetPen(SPLASH_LEFT,SPLASH_TOP);
 	ts->SetPixelSize(36);
 	ts->PrintString("dslibris");
@@ -642,6 +657,7 @@ void App::splash_draw(void)
 
 	ts->SetScreen(screen1);
 	screen_clear(screen1,0,0,0);
+/*
 	for(int i=1;i<32;i+=2)
 	{
 		memset(screen1+i*256,RGB15(4,4,4)|BIT(15),512);
@@ -650,7 +666,7 @@ void App::splash_draw(void)
 	{
 		memset(screen1+i*256,RGB15(4,4,4)|BIT(15),512);
 	}
-
+*/
 	ts->SetPen(MARGINLEFT+100, MARGINTOP+12);
 	ts->SetPixelSize(20);
 	ts->SetInvert(true);
