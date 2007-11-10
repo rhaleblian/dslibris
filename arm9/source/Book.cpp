@@ -49,7 +49,10 @@ void Book::SetPosition(s16 pos)
 
 void Book::Index(char *filebuf)
 {
-	FILE *fp = fopen(filename.c_str(),"r");
+	char path[128] = BOOKPATH;
+	strcat(path,"/");
+	strcat(path,filename.c_str());
+	FILE *fp = fopen(path,"r");
 	if (fp)
 	{
 		XML_Parser p = XML_ParserCreate(NULL);
@@ -77,7 +80,10 @@ void Book::IndexHTML(char *filebuf)
 	int rc = -1;
 	Bool ok;
 
-	FILE *fp = fopen(filename.c_str(),"r");
+	char path[128] = BOOKPATH;
+	strcat(path,"/");
+	strcat(path,filename.c_str());
+	FILE *fp = fopen(path,"r");
 	if (fp)
 	{	
 		fread(filebuf, 1, BUFSIZE, fp);		
@@ -117,7 +123,10 @@ void Book::IndexHTML(char *filebuf)
 
 u8 Book::Parse(char *filebuf)
 {
-	FILE *fp = fopen(filename.c_str(),"r");
+	char path[128] = BOOKPATH;
+	strcat(path,"/");
+	strcat(path,filename.c_str());
+	FILE *fp = fopen(path,"r");
 	if (!fp)
 	{
 		return(1);
@@ -157,7 +166,10 @@ u8 Book::ParseHTML(char *filebuf)
 	int rc = -1;
 	filebuf = (char*)malloc(1024*sizeof(char));
 
-	FILE *fp = fopen(filename.c_str(),"r");
+	char path[128] = BOOKPATH;
+	strcat(path,"/");
+	strcat(path,filename.c_str());
+	FILE *fp = fopen(path,"r");
 	if (!fp) return 1;
 
 	fread(filebuf, 1, BUFSIZE, fp);		

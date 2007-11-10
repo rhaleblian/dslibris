@@ -77,12 +77,12 @@ int App::main(void)
 	char filebuf[BUFSIZE];
 
 	powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
-	defaultExceptionHandler();  /** guru meditation! */
+	defaultExceptionHandler();  /** guru meditation! **/
 
 	irqInit();
 	irqEnable(IRQ_VBLANK);
 	irqEnable(IRQ_VCOUNT);
-    REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
+	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
 
 	/** bring up the startup console.
 	    sub bg 0 will be used to print text. **/
@@ -95,8 +95,9 @@ int App::main(void)
 		for (i=0;i<255;i++)
 			BG_PALETTE_SUB[i] = RGB15(0,0,0);
 		BG_PALETTE_SUB[255] = RGB15(24,24,24);
-		consoleInitDefault((u16*)SCREEN_BASE_BLOCK_SUB(31),
-		                   (u16*)CHAR_BASE_BLOCK_SUB(0), 16);
+		consoleInitDefault(
+			(u16*)SCREEN_BASE_BLOCK_SUB(31),
+			(u16*)CHAR_BASE_BLOCK_SUB(0), 16);
 	}
 	printf(" Starting console...     ");
 	consoleOK(true);
@@ -123,14 +124,12 @@ int App::main(void)
 
 	/** assemble library by indexing all
 		XHTML/XML files in the current directory.
-	    TODO recursive book search **/
-
+		**/
 	printf(" Scanning for books...   ");
 	bookcount = 0;
 	bookcurrent = 0;
 	char filename[64];
-	char dirname[16] = ".";
-	DIR_ITER *dp = diropen(dirname);
+	DIR_ITER *dp = diropen(BOOKPATH);
 	if (!dp)
 	{
 		consoleOK(false);
@@ -149,6 +148,7 @@ int App::main(void)
 		}
 		if (!stricmp(".htm",c) || !stricmp(".html",c))
 		{
+			/** NYI - this doesn't work yet **/
 			Book *book = &(books[bookcount]);
 			book->SetFilename(filename);
 			book->IndexHTML(filebuf);
@@ -209,8 +209,8 @@ int App::main(void)
 	splash_draw();
 	
 	/** restore the last book and page we were reading. **/
-	/** TODO fix bookmark upating */
-	
+	/** TODO bookmark character, not page **/
+
 	bookcurrent = 127;
 	if(prefs_read(p) && bookcurrent < 127)
 	{
@@ -579,7 +579,7 @@ void App::page_draw(page_t *page)
 
 bool App::prefs_read(XML_Parser p)
 {
-	FILE *fp = fopen("dslibris.xml","r");
+	FILE *fp = fopen("/dslibris/dslibris.xml","r");
 	if (!fp) return false;
 
 	XML_ParserReset(p, NULL);
@@ -598,7 +598,7 @@ bool App::prefs_read(XML_Parser p)
 
 bool App::prefs_write(void)
 {
-	FILE* fp = fopen("dslibris.xml","w+");
+	FILE* fp = fopen("/dslibris/dslibris.xml","w+");
 	if(!fp) return false;
 	
 	fprintf(fp, "<dslibris>\n");
