@@ -1,0 +1,138 @@
+tidylib.lo tidylib.o: tidylib.c \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/errno.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/errno.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/reent.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/_ansi.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/newlib.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/config.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/ieeefp.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/_types.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/lock.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/include/stddef.h \
+  tidy-int.h ../include/tidy.h ../include/platform.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/ctype.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/_ansi.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/stdio.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/include/stdarg.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/types.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/_types.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/include/limits.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/types.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/features.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/stdio.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/setjmp.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/setjmp.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/stdlib.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/stdlib.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/alloca.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/string.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/string.h \
+  /home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/assert.h \
+  ../include/tidyenum.h config.h forward.h ../include/platform.h \
+  streamio.h ../include/buffio.h ../include/tidy.h fileio.h lexer.h \
+  tags.h attrdict.h attrs.h pprint.h access.h parser.h clean.h message.h \
+  entities.h tmbstr.h utf8.h mappedio.h
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/errno.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/errno.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/reent.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/_ansi.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/newlib.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/config.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/ieeefp.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/_types.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/lock.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/include/stddef.h:
+
+tidy-int.h:
+
+../include/tidy.h:
+
+../include/platform.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/ctype.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/_ansi.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/stdio.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/include/stdarg.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/types.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/_types.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/include/limits.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/types.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/features.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/stdio.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/setjmp.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/setjmp.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/stdlib.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/machine/stdlib.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/alloca.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/string.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/sys/string.h:
+
+/home/rhaleblian/nds/devkitPro/devkitARM/bin/../lib/gcc/arm-eabi/4.1.1/../../../../arm-eabi/include/assert.h:
+
+../include/tidyenum.h:
+
+config.h:
+
+forward.h:
+
+../include/platform.h:
+
+streamio.h:
+
+../include/buffio.h:
+
+../include/tidy.h:
+
+fileio.h:
+
+lexer.h:
+
+tags.h:
+
+attrdict.h:
+
+attrs.h:
+
+pprint.h:
+
+access.h:
+
+parser.h:
+
+clean.h:
+
+message.h:
+
+entities.h:
+
+tmbstr.h:
+
+utf8.h:
+
+mappedio.h:
