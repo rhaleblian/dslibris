@@ -75,7 +75,7 @@ usb: $(TARGET).$(MEDIA).nds
 
 # make an archive to release on Sourceforge
 dist: $(TARGET).nds
-	zip dslibris.zip INSTALL.txt $(TARGET).nds $(TARGET).ttf $(TARGET).xht
+	zip -r dslibris.zip INSTALL.txt $(TARGET).nds dslibris books
 
 upload: dist
 	ftp -u anonymous upload.sourceforge.net

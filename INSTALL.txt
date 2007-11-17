@@ -1,15 +1,24 @@
+dslibris 1.0.1
+
 INSTALLATION
 
 1. DLDI patch dslibris.nds to work for your media. eg. for R4DS
 
 	dlditool r4tf.dldi dslibris.nds
 
-2. copy all files from this distribution .zip to the root directory
-of your DS media.
+2. copy all files and folders in this distribution .zip
+   to the root directory of your DS media. Preserve the folder hierarchy.
 
-3. Put any XHTML you have on the root of your media.
+3. Put any XHTML you have in the 'books' folder.
 
 4. run dslibris.nds on the DS.
 
-For tips and help, see http://rhaleblian.wordpress.com
+For tips and help, see the release notes on Sourceforge.
+Also, http://rhaleblian.wordpress.com.
+
+CHANGING THE FONT
+
+Replace /dslibris/dslibris.ttf with another TrueType Font file. 
+
+-ray
 

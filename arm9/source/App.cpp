@@ -84,8 +84,12 @@ int App::main(void)
 	irqEnable(IRQ_VCOUNT);
 	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
 
+	// this ought to be the lowest brightness setting.
+	NDSX_SetBrightness_Next();			
+
 	/** bring up the startup console.
 	    sub bg 0 will be used to print text. **/
+	// TODO don't display console; log to a file.
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);
 	vramSetBankC(VRAM_C_SUB_BG);
@@ -94,23 +98,20 @@ int App::main(void)
 		u32 i;
 		for (i=0;i<255;i++)
 			BG_PALETTE_SUB[i] = RGB15(0,0,0);
-		BG_PALETTE_SUB[255] = RGB15(24,24,24);
+		BG_PALETTE_SUB[255] = RGB15(04,24,04);
 		consoleInitDefault(
 			(u16*)SCREEN_BASE_BLOCK_SUB(31),
 			(u16*)CHAR_BASE_BLOCK_SUB(0), 16);
 	}
 	printf(" Starting console...     ");
 	consoleOK(true);
-	swiWaitForVBlank();
 
 	printf(" Mounting filesystem...  ");
 	if (!fatInitDefault())
 	{
 		consoleOK(false);
 		spin();
-	}
-	consoleOK(true);
-	swiWaitForVBlank();
+	} else consoleOK(true);
 
 	printf(" Starting typesetter...  ");
 	ts = new Text();
@@ -118,10 +119,9 @@ int App::main(void)
 	{
 		consoleOK(false);
 		spin();
-	}
-	consoleOK(true);
-	swiWaitForVBlank();
+	} else consoleOK(true);
 
+	swiWaitForVBlank();
 	/** assemble library by indexing all
 		XHTML/XML files in the current directory.
 		**/
