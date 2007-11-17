@@ -249,6 +249,11 @@ int App::main(void)
 	while (poll)
 	{
 		scanKeys();
+			
+		if (keysDown() & KEY_Y)
+		{
+			NDSX_SetBrightness_Next();			
+		}
 
 		if (browseractive)
 		{
@@ -354,11 +359,6 @@ int App::main(void)
 			{
 				ts->SetInvert(!ts->GetInvert());
 				page_draw(&pages[pagecurrent]);
-			}
-			
-			if (keysDown() & KEY_Y)
-			{
-				NDSX_SetBrightness_Next();			
 			}
 
 			if (keysDown() & KEY_SELECT)
