@@ -9,7 +9,9 @@ include $(DEVKITARM)/ds_rules
 
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
-export MEDIA		:=  R4tf
+export MEDIA		:=	R4tf
+export MEDIAROOT	:=	/Volumes/KINGSTON/
+export REMOTEHOST	:=	eris
 
 #-------------------------------------------------------------------------------
 # path to tools - this can be deleted if you set the path in windows
@@ -46,23 +48,23 @@ clean:
 	$(MAKE) -C arm7 clean
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIA).nds
 
-# run target in desmume
+# run target with desmume
 test: $(TARGET).nds
 	desmume $(TARGET).nds
 
-# debug target with insight and desmume in linux
+# debug target with insight and desmume under linux
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/dslibris.arm9.elf &
 	desmume --arm9gdb=20000 $(TARGET).nds
 
-# make R4DS DLDI patched target
+# make DLDI patched target
 $(TARGET).$(MEDIA).nds: $(TARGET).nds
 	cp dslibris.nds dslibris.$(MEDIA).nds
 	dlditool $(MEDIA).dldi dslibris.$(MEDIA).nds
 
 # secure copy target to another machine
 scp: $(TARGET).$(MEDIA).nds
-	scp $(TARGET).$(MEDIA).nds eris:
+	scp $(TARGET).$(MEDIA).nds $(REMOTEHOST):
 
 # copy target over network to microSD mounted under windows
 smb: $(TARGET).$(MEDIA).nds
@@ -70,13 +72,14 @@ smb: $(TARGET).$(MEDIA).nds
 
 # copy target to microSD mounted under Linux
 usb: $(TARGET).$(MEDIA).nds
-	cp $(TARGET).$(MEDIA).nds /media/KINGSTON
+	cp $(TARGET).$(MEDIA).nds $(MEDIAROOT)
 	sync
 
 # make an archive to release on Sourceforge
 dist: $(TARGET).nds
 	zip -r dslibris.zip INSTALL.txt $(TARGET).nds dslibris books
 
+# transfer a release zip for posting.
 upload: dist
-	ftp -u anonymous upload.sourceforge.net
+	ftp upload.sourceforge.net
 

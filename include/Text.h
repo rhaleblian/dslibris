@@ -18,7 +18,7 @@ class Text {
 	FT_Vector       pen;
 	FT_Error        error;
 
-	u16  *screen, *screenleft, *screenright;
+	u16  *fb, *screen, *screenleft, *screenright;
 	u8   pixelsize;
 	bool usecache;
 	bool invert;
@@ -40,6 +40,7 @@ public:
 	void SetPixelSize(u8);
 	void SetScreen(u16 *s);
 
+	void BlitToScreen(u16 *s);
 	void Cache();
 	void ClearScreen();
 	u8   Advance(u16 code);

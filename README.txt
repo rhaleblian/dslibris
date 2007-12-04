@@ -3,6 +3,8 @@ The method below assumes you are using either MSYS/MINGW with devkitPro.
 
 BUILDING
 
+Fedora, Ubuntu, OS X, and Windows XP have all been used as build platforms. The primary build platform is OS X 10.4.
+
 Prerequisites:
 
 * devkitPro
@@ -13,7 +15,13 @@ To build:
 cd ndsibris/trunk
 make
 
+dslbris.nds is your target.
+
 INSTALLATION
 
-see INSTALL.txt
+see INSTALL.txt.
+
+DEBUGGING
+
+Use insight with DeSmuME on XP and Linux. DeSmuME lacks the proper support t run or debug on OS X.
 

@@ -1,5 +1,9 @@
 dslibris 1.0.1
 
+For the latest documentation, see the wiki on Sourceforge.
+
+http://sourceforge.net/projects/ndslibris
+
 INSTALLATION
 
 1. DLDI patch dslibris.nds to work for your media. eg. for R4DS
@@ -13,12 +17,12 @@ INSTALLATION
 
 4. run dslibris.nds on the DS.
 
-For tips and help, see the release notes on Sourceforge.
-Also, http://rhaleblian.wordpress.com.
-
 CHANGING THE FONT
 
-Replace /dslibris/dslibris.ttf with another TrueType Font file. 
+Replace /dslibris/dslibris.ttf with another TrueType font file. 
+
+For tips and more help, see the release notes on Sourceforge.
+Also, http://rhaleblian.wordpress.com.
 
 -ray
 
