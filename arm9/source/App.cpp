@@ -19,28 +19,6 @@
 #include "parse.h"
 #include "wifi.h"
 
-// for some odd reason I can't seem to find vcount in ndslib -sigh- (I mean, in a place it doesn't conflict with other things)
-#define		VCOUNT		(*((u16 volatile *) 0x04000006))
-
-//---------------------------------------------------------------------------------
-// Dswifi helper functions
-
-// wifi timer function, to update internals of sgIP
-void Timer_50ms(void) {
-   Wifi_Timer(50);
-}
-
-// notification function to send fifo message to arm7
-void arm9_synctoarm7() { // send fifo message
-   REG_IPC_FIFO_TX=0x87654321;
-}
-
-// interrupt handler to receive fifo messages from arm7
-void arm9_fifo() { // check incoming fifo messages
-   u32 value = REG_IPC_FIFO_RX;
-   if(value == 0x87654321) Wifi_Sync();
-}
-
 inline void spin(void)
 {
 	while (true) swiWaitForVBlank();
@@ -199,69 +177,6 @@ int App::main(void)
 	consoleOK(true);
 	swiWaitForVBlank();
 
-#ifdef WIFI
-
-	printf(" Setting up Wifi...");
-	swiWaitForVBlank();
-	
-	int tries = 10;
-	{ // send fifo message to initialize the arm7 wifi
-		REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR; // enable & clear FIFO
-		
-		u32 Wifi_pass= Wifi_Init(WIFIINIT_OPTION_USELED);
-		REG_IPC_FIFO_TX=0x12345678;
-		REG_IPC_FIFO_TX=Wifi_pass;
-   	
-		*((volatile u16 *)0x0400010E) = 0; // disable timer3
-		
-		irqSet(IRQ_TIMER3, Timer_50ms); // setup timer IRQ
-		irqEnable(IRQ_TIMER3);
-		irqSet(IRQ_FIFO_NOT_EMPTY, arm9_fifo); // setup fifo IRQ
-		irqEnable(IRQ_FIFO_NOT_EMPTY);
-   	
-		REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ; // enable FIFO IRQ
-		
-		Wifi_SetSyncHandler(arm9_synctoarm7); // tell wifi lib to use our handler to notify arm7
-
-		// set timer3
-		*((volatile u16 *)0x0400010C) = -6553; // 6553.1 * 256 cycles = ~50ms;
-		*((volatile u16 *)0x0400010E) = 0x00C2; // enable, irq, 1/256 clock
-
-		while(tries && (Wifi_CheckInit()==0)) { // wait for arm7 to be initted successfully
-//			while(VCOUNT>192); // wait for vblank
-//			while(VCOUNT<192);
-			swiWaitForVBlank();
-			tries--;
-		}
-		
-	} // wifi init complete - wifi lib can now be used!
-	if(tries) consoleOK(true);
-	else consoleOK(false);
-
-	tries = 100;
-	printf("Connecting via WFC data...");
-	swiWaitForVBlank();
-	{ // simple WFC connect:
-		int i;
-		Wifi_AutoConnect(); // request connect
-		while(tries) {
-			i=Wifi_AssocStatus(); // check status
-			if(i==ASSOCSTATUS_ASSOCIATED) {
-//				printf("Connected successfully!\n");
-				break;
-			}
-			if(i==ASSOCSTATUS_CANNOTCONNECT) {
-//				printf("Could not connect!\n");
-				tries--;
-			}
-		}
-		swiWaitForVBlank();
-	} // if connected, you can now use the berkley sockets interface to connect to the internet!
-	if(tries) consoleOK(true);
-	else consoleOK(false);
-//	while(1) swiWaitForVBlank();
-#endif		
-	
 	/** initialize screens. **/
 
 	/** clockwise rotation for both screens **/
@@ -660,7 +575,6 @@ void App::page_draw(page_t *page)
 	char msg[8];
 	sprintf((char*)msg,"[%d]",pagecurrent+1);
 	ts->PrintString(msg);
-	ts->BlitToScreen(screen1);
 }
 
 bool App::prefs_read(XML_Parser p)

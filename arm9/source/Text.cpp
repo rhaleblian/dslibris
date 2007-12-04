@@ -16,16 +16,15 @@ int Text::InitDefault(void) {
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
-	fb = new u16[SCREEN_WIDTH*SCREEN_HEIGHT];
 	InitPen();
 	return(0);
 }
 
 void Text::Cache()
 {
-	/**	cache glyphs. glyphs[] will contain all the bitmaps.
-		using FirstChar() and NextChar() would be more robust.
-		TODO also cache kerning and transformations. **/
+	/** cache glyphs. glyphs[] will contain all the bitmaps.
+	    using FirstChar() and NextChar() would be more robust.
+	    TODO also cache kerning and transformations. **/
 
 	FT_ULong  charcode;
 	FT_UInt   gindex;
@@ -51,11 +50,6 @@ void Text::Cache()
 		charcode = FT_Get_Next_Char( face, charcode, &gindex );
 	}
 	usecache = true;
-}
-
-void Text::BlitToScreen(u16 *s)
-{
-	memcpy(s, fb, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u16));
 }
 
 void Text::ClearScreen()
@@ -176,7 +170,7 @@ void Text::PrintChar(u16 code) {
 				int l;
 				if (invert) l = a >> 3;
 				else l = (255-a) >> 3;
-				fb[sy*SCREEN_WIDTH+sx] = RGB15(l,l,l) | BIT(15);
+				screen[sy*SCREEN_WIDTH+sx] = RGB15(l,l,l) | BIT(15);
 			}
 		}
 	}
@@ -192,14 +186,10 @@ bool Text::PrintNewLine(void) {
 		{
 			screen = screenright;
 			pen.y = MARGINTOP + height;
-			BlitToScreen(screenleft);
-			return true;
+			return true;		
 		} 
 		else
-		{
-			BlitToScreen(screenright);
 			return false;
-		}
 	}
 	else
 	{

@@ -13,16 +13,13 @@
 
 /**-------------------------------------------------------------------------**/
 void startSound(int sampleRate, const void* data, u32 bytes,
-	u8 channel, u8 vol,  u8 pan, u8 format) {
+				u8 channel, u8 vol,  u8 pan, u8 format) {
 
 	SCHANNEL_TIMER(channel)  = SOUND_FREQ(sampleRate);
 	SCHANNEL_SOURCE(channel) = (u32)data;
 	SCHANNEL_LENGTH(channel) = bytes >> 2 ;
-	SCHANNEL_CR(channel)     = SCHANNEL_ENABLE
-		| SOUND_ONE_SHOT 
-		| SOUND_VOL(vol)
-		| SOUND_PAN(pan)
-		| (format==1?SOUND_8BIT:SOUND_16BIT);
+	SCHANNEL_CR(channel)     = SCHANNEL_ENABLE | SOUND_ONE_SHOT 
+		| SOUND_VOL(vol) | SOUND_PAN(pan) | (format==1?SOUND_8BIT:SOUND_16BIT);
 }
 
 
@@ -38,6 +35,7 @@ s32 getFreeSoundChannel()
 
 int vcount;
 touchPosition first,tempPos;
+
 
 /**-------------------------------------------------------------------------**/
 void KeydownHandler()
@@ -147,15 +145,18 @@ void VblankHandler(void) {
   but = REG_KEYXY;
 
   if (!(but & (1<<6))) {
-	touchPosition tempPos = touchReadXY();
-	x = tempPos.x;
-	y = tempPos.y;
-	xpx = tempPos.px;
-	ypx = tempPos.py;
+
+    touchPosition tempPos = touchReadXY();
+
+    x = tempPos.x;
+    y = tempPos.y;
+    xpx = tempPos.px;
+    ypx = tempPos.py;
   }
 
   z1 = touchRead(TSC_MEASURE_Z1);
   z2 = touchRead(TSC_MEASURE_Z2);
+
 	
   batt = touchRead(TSC_MEASURE_BATTERY);
   aux  = touchRead(TSC_MEASURE_AUX);
@@ -203,7 +204,7 @@ void VblankHandler(void) {
     }
   }
 
-//  Wifi_Update(); // update wireless in vblank
+  Wifi_Update(); // update wireless in vblank
 
 }
 
@@ -261,14 +262,16 @@ void arm7_fifo() { // check incoming fifo messages
 
 void FifoHandler()
 {
-	u32 msg = REG_IPC_FIFO_RX;
-	NDSX_BrightnessFifo(msg);
+    u32 msg = REG_IPC_FIFO_RX;
+    NDSX_BrightnessFifo(msg);
 }
 
 
 /**-------------------------------------------------------------------------**/
 int main( void)
 {
+	// reload
+	//LOADNDS->PATH = 0;
 
 	// enable & prepare fifo asap
 	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR; 
@@ -282,17 +285,27 @@ int main( void)
 	IPC->soundData = 0;
 
 	irqInit();
+
 	irqSet(IRQ_VBLANK, VblankHandler);
-	irqEnable(IRQ_VBLANK);	
+	irqEnable(IRQ_VBLANK);
+
+	irqSet(IRQ_FIFO_NOT_EMPTY,FifoHandler); // set up fifo irq
+	irqEnable(IRQ_FIFO_NOT_EMPTY);
+	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ;
+
 	irqSet(IRQ_VCOUNT, VcountHandler);
 	irqEnable(IRQ_VCOUNT);
-	
-#ifdef WIFI
-	irqSet(IRQ_WIFI, Wifi_Interrupt); // set up wifi interrupt
-	irqEnable(IRQ_WIFI);
+/*
+	irqSet(IRQ_KEYS, KeydownHandler);
+	irqEnable(IRQ_KEYS);
 
+	irqSet(IRQ_WIFI, Wifi_Interrupt);
+	irqEnable(IRQ_WIFI);
+*/
+
+/*
 	{ // sync with arm9 and init wifi
-		u32 fifo_temp;
+		u32 fifo_temp;   
 
 		while(1) { // wait for magic number
 		    while(REG_IPC_FIFO_CR&IPC_FIFO_RECV_EMPTY) swiWaitForVBlank();
@@ -302,17 +315,105 @@ int main( void)
 		while(REG_IPC_FIFO_CR&IPC_FIFO_RECV_EMPTY) swiWaitForVBlank();
 		fifo_temp=REG_IPC_FIFO_RX; // give next value to wifi_init
 		Wifi_Init(fifo_temp);
-   	
-		irqSet(IRQ_FIFO_NOT_EMPTY,arm7_fifo); // set up fifo irq
-		irqEnable(IRQ_FIFO_NOT_EMPTY);
-		REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ;
+
 
 		Wifi_SetSyncHandler(arm7_synctoarm9); // allow wifi lib to notify arm9
 	} // arm7 wifi init complete
-#endif
-	
+*/
+
 	// Keep the ARM7 out of main RAM
 	while (1) {
+		//if (LOADNDS->PATH != 0) {
+		    //LOADNDS->ARM7FUNC(LOADNDS->PATH);
+		//}
 		swiWaitForVBlank();
 	}
 }
+
+
+/** a new version, reading also the wep key, is already availabe */
+#if 0
+void wifiMain(){
+	wifiData->read=false;
+	IPC->mailData=0;
+	IPC->mailSize=0;
+	// Reset the clock if needed
+	rtcReset();
+
+	//enable sound
+	powerON(POWER_SOUND);
+	SOUND_CR = SOUND_ENABLE | SOUND_VOL(0x7F);
+	IPC->soundData = 0;
+
+	irqInit();
+	irqSet(IRQ_VBLANK, VblankHandler);
+	irqEnable(IRQ_VBLANK);
+	/*
+	irqSet(IRQ_WIFI, Wifi_Interrupt);
+	irqEnable(IRQ_WIFI);
+	 */
+	/*** MODIFICATION *///(*(vuint16*)0x0400010E)
+
+	irqSet(IRQ_IPC_SYNC, Wifi_Update);
+	irqEnable(IRQ_IPC_SYNC);
+	REG_IPC_SYNC = IPC_SYNC_IRQ_ENABLE;
+
+	/**** end */
+
+	// trade some mail, to get a pointer from arm9
+	while(IPC->mailData!=2) { swiWaitForVBlank(); IPC->mailSize=0; }
+	IPC->mailSize=2;
+	while(IPC->mailData==2) swiWaitForVBlank();
+	/*
+	Wifi_Init(IPC->mailData);
+	char add[4];
+	char sn[1];
+	int base,i=0,j,k;
+
+	for (base=0x3FA00;base<=0x3FC00;base+=0x100){
+		Read_Flash2(base+0x40, wifiData->ssid[i], 32);
+		Read_Flash2(base+0x80, wifiData->wepKey[i], 13);
+		j=0;
+		wifiData->wepMode[i]=0;
+		for(k=0;k<5;k++)
+			j|=wifiData->wepKey[i][k];
+		if (j!=0)
+			wifiData->wepMode[i]++;
+		for(k=5;k<13;k++)
+			j|=wifiData->wepKey[i][k];
+		if (j!=0)
+			wifiData->wepMode[i]++;
+		Read_Flash2(base+0xC0, add, 4);
+		wifiData->ipAddress[i] = readIP(add);
+		Read_Flash2(base+0xC4, add, 4);
+		wifiData->gateway[i] = readIP(add);
+		Read_Flash2(base+0xC8, add, 4);
+		wifiData->dns1[i] = readIP(add);
+		Read_Flash2(base+0xCC, add, 4);
+		wifiData->dns2[i] = readIP(add);
+		Read_Flash2(base+0xD0,sn, 1);
+   	    wifiData->subnetLength[i]=sn[0];
+		i++;
+	}
+	Read_Flash2(0x36,wifiData->mac, 6);
+	*/
+	wifiData->read=true;
+}
+
+//-----------------------------------------------------------------------------
+int main2(int argc, char ** argv) {
+
+	IPC->aux=PM_BACKLIGHT_BOTTOM | PM_BACKLIGHT_TOP;
+	//IPC->aux=0;
+	//	wifiMain();
+	LOADNDS->PATH = 0;
+	// Keep the ARM7 out of main RAM
+	while (1) {
+		/*if (LOADNDS->PATH != 0) {
+			LOADNDS->ARM7FUNC(LOADNDS->PATH);
+		}*/
+		swiWaitForVBlank();
+	}
+}
+#endif
+

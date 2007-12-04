@@ -153,27 +153,6 @@ void title_hndl(void *userdata, const char *txt, int txtlen)
 	}
 }
 
-void linebreak(parsedata_t *pdata)
-{
-	page_t *page = &(app->pages[app->pagecurrent]);
-	app->pagebuf[page->length] = '\n';
-	page->length++;
-	pdata->pen.x = MARGINLEFT;
-	pdata->pen.y += (app->ts->GetHeight() + LINESPACING);
-
-	if (pdata->pen.y > (PAGE_HEIGHT-MARGINBOTTOM))
-	{
-		if (app->parse_pagefeed(pdata,page))
-		{
-			page++;
-			app->page_init(page);
-			app->pagecurrent++;
-			app->pagecount++;
-		}
-	}
-	linebegan = false;
-}
-
 void char_hndl(void *data, const XML_Char *txt, int txtlen)
 {
 	/** reflow text on the fly, into page data structure. **/
@@ -202,6 +181,28 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 		if (iswhitespace(txt[i]))
 		{
+/*
+			if (app->parse_in(pdata,PRE) && txt[i] == '\n')
+			{
+				// TODO check this <PRE> code, i don't trust it
+				app->pagebuf[page->length++] = txt[i];
+				pdata->pen.x += app->ts->Advance((u16)txt[i]);
+				pdata->pen.y += (app->ts->GetHeight() + LINESPACING);
+				if (pdata->pen.y > (PAGE_HEIGHT-MARGINBOTTOM))
+				{
+					if (app->parse_pagefeed(pdata,page))
+					{
+						page++;
+						app->page_init(page);
+						app->pagecurrent++;
+						app->pagecount++;
+					}
+					linebegan = false;
+				}
+
+			}
+			else 
+*/
 			if(linebegan)
 			{
 				app->pagebuf[page->length++] = ' ';
@@ -230,13 +231,6 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 					bytes = 1;
 				}
 				advance += app->ts->Advance(code);
-				/**	line-long words need wrapping.
-					TODO include a dash. **/
-				if(	(pdata->pen.x < MARGINLEFT) &&
-					(advance > (PAGE_WIDTH-MARGINRIGHT)))
-				{
-					linebreak(pdata);
-				}
 			}
 
 			/** reflow - if we overrun the margin, 
