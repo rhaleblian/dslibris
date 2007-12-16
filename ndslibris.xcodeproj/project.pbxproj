@@ -1,0 +1,97 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXFileReference section */
+		1526D14E0CE7A70F00BA8441 /* App.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = App.cpp; path = arm9/source/App.cpp; sourceTree = "<group>"; };
+		1526D14F0CE7A70F00BA8441 /* Book.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Book.cpp; path = arm9/source/Book.cpp; sourceTree = "<group>"; };
+		1526D1500CE7A70F00BA8441 /* Button.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Button.cpp; path = arm9/source/Button.cpp; sourceTree = "<group>"; };
+		1526D1510CE7A70F00BA8441 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = arm9/source/main.cpp; sourceTree = "<group>"; };
+		1526D1520CE7A70F00BA8441 /* png.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = png.c; path = arm9/source/png.c; sourceTree = "<group>"; };
+		1526D1530CE7A70F00BA8441 /* sleep.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = sleep.c; path = arm9/source/sleep.c; sourceTree = "<group>"; };
+		1526D1540CE7A70F00BA8441 /* Text.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Text.cpp; path = arm9/source/Text.cpp; sourceTree = "<group>"; };
+		1526D1550CE7A70F00BA8441 /* wifi.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = wifi.c; path = arm9/source/wifi.c; sourceTree = "<group>"; };
+		1526D1580CE7A73A00BA8441 /* arm7main.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = arm7main.c; path = arm7/source/arm7main.c; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		1526D1360CE7A6A200BA8441 = {
+			isa = PBXGroup;
+			children = (
+				1526D1570CE7A72600BA8441 /* arm7 */,
+				1526D1560CE7A71600BA8441 /* arm9 */,
+			);
+			sourceTree = "<group>";
+		};
+		1526D1560CE7A71600BA8441 /* arm9 */ = {
+			isa = PBXGroup;
+			children = (
+				1526D14E0CE7A70F00BA8441 /* App.cpp */,
+				1526D14F0CE7A70F00BA8441 /* Book.cpp */,
+				1526D1500CE7A70F00BA8441 /* Button.cpp */,
+				1526D1510CE7A70F00BA8441 /* main.cpp */,
+				1526D1520CE7A70F00BA8441 /* png.c */,
+				1526D1530CE7A70F00BA8441 /* sleep.c */,
+				1526D1540CE7A70F00BA8441 /* Text.cpp */,
+				1526D1550CE7A70F00BA8441 /* wifi.c */,
+			);
+			name = arm9;
+			sourceTree = "<group>";
+		};
+		1526D1570CE7A72600BA8441 /* arm7 */ = {
+			isa = PBXGroup;
+			children = (
+				1526D1580CE7A73A00BA8441 /* arm7main.c */,
+			);
+			name = arm7;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		1526D1380CE7A6A200BA8441 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1526D1390CE7A6A200BA8441 /* Build configuration list for PBXProject "ndslibris" */;
+			hasScannedForEncodings = 0;
+			mainGroup = 1526D1360CE7A6A200BA8441;
+			projectDirPath = "";
+			targets = (
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		1526D13A0CE7A6A200BA8441 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Debug;
+		};
+		1526D13B0CE7A6A200BA8441 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1526D1390CE7A6A200BA8441 /* Build configuration list for PBXProject "ndslibris" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1526D13A0CE7A6A200BA8441 /* Debug */,
+				1526D13B0CE7A6A200BA8441 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 1526D1380CE7A6A200BA8441 /* Project object */;
+}
