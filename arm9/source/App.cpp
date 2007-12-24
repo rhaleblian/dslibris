@@ -129,7 +129,7 @@ int App::main(void)
 	bookcount = 0;
 	bookcurrent = 0;
 	char filename[64];
-	DIR_ITER *dp = diropen(".");
+	DIR_ITER *dp = diropen("./");
 	if (!dp)
 	{
 		consoleOK(false);
@@ -137,6 +137,7 @@ int App::main(void)
 	}
 	while (!dirnext(dp, filename, NULL) && (bookcount != MAXBOOKS))
 	{
+		printf("%s\n",filename);
 		char *c;
 		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
