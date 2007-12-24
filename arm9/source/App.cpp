@@ -19,6 +19,8 @@
 #include "parse.h"
 #include "wifi.h"
 
+#define MIN(x,y) (x < y ? x : y)
+
 inline void spin(void)
 {
 	while (true) swiWaitForVBlank();
@@ -126,18 +128,18 @@ int App::main(void)
 		XHTML/XML files in the current directory.
 		**/
 	printf(" Scanning for books...   ");
-	bookcount = 0;
-	bookcurrent = 0;
 	char filename[64];
-	DIR_ITER *dp = diropen("./");
+	DIR_ITER *dp = diropen(".");
 	if (!dp)
 	{
 		consoleOK(false);
 		spin();
 	}
-	while (!dirnext(dp, filename, NULL) && (bookcount != MAXBOOKS))
+	while (bookcount < MAXBOOKS)
 	{
-		printf("%s\n",filename);
+		int rc = dirnext(dp, filename, NULL);
+		printf("%s (%d %d)\n",filename,rc,errno);
+		if(rc) break;
 		char *c;
 		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
@@ -147,20 +149,13 @@ int App::main(void)
 			book->Index(filebuf);
 			bookcount++;
 		}
-		if (!stricmp(".htm",c) || !stricmp(".html",c))
-		{
-			/** NYI - this doesn't work yet **/
-			Book *book = &(books[bookcount]);
-			book->SetFilename(filename);
-			book->IndexHTML(filebuf);
-			bookcount++;
-		}
 	}
 	dirclose(dp);
 	if (!bookcount)
 	{
+		printf("no books\n");
 		consoleOK(false);
-		spin();
+		exit(-1);
 	}
 	consoleOK(true);
 	swiWaitForVBlank();
@@ -580,7 +575,7 @@ void App::page_draw(page_t *page)
 
 bool App::prefs_read(XML_Parser p)
 {
-	FILE *fp = fopen("/dslibris/dslibris.xml","r");
+	FILE *fp = fopen("dslibris.xml","r");
 	if (!fp) return false;
 
 	XML_ParserReset(p, NULL);
@@ -599,7 +594,7 @@ bool App::prefs_read(XML_Parser p)
 
 bool App::prefs_write(void)
 {
-	FILE* fp = fopen("/dslibris/dslibris.xml","w+");
+	FILE* fp = fopen("dslibris.xml","w+");
 	if(!fp) return false;
 	
 	fprintf(fp, "<dslibris>\n");
@@ -676,3 +671,4 @@ void App::splash_draw(void)
 	ts->SetPixelSize(size);
 	ts->SetInvert(invert);
 }
+

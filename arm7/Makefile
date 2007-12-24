@@ -25,7 +25,7 @@ INCLUDES	:=	../include build
 #-----------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-Wformat=2 -Wall -Winline \
+CFLAGS	:=	-g -O2 -Wformat=2 -Wall -Winline \
 		-mcpu=arm7tdmi -mtune=arm7tdmi \
 		-fomit-frame-pointer -ffast-math \
 		$(ARCH)
@@ -33,8 +33,8 @@ CFLAGS	:=	-Wformat=2 -Wall -Winline \
 CFLAGS	+=	$(INCLUDE) -DARM7
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
-ASFLAGS	:=	$(ARCH)
-LDFLAGS	=	-specs=ds_arm7.specs $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
+ASFLAGS	:=	-g $(ARCH)
+LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
