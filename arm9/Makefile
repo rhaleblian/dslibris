@@ -26,17 +26,16 @@ ARCH	:=	-mthumb-interwork
 
 # note: arm9tdmi isn't the correct CPU arch, but anything newer and LD
 # *insists* it has a FPU or VFP, and it won't take no for an answer!
-CFLAGS	:=	-O2 -g -Wall \
+CFLAGS	:=	-Wall \
 		-mcpu=arm9tdmi -mtune=arm9tdmi \
-		-fomit-frame-pointer \
-		-ffast-math \
+		-fomit-frame-pointer -ffast-math \
 		$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-L../lib -specs=ds_arm9.specs -g $(ARCH) -mno-fpu \
+ASFLAGS	:=	$(ARCH)
+LDFLAGS	=	-L../lib -specs=ds_arm9.specs $(ARCH) -mno-fpu \
 		-Wl,-Map,$(notdir $*.map)
 
 #-----------------------------------------------------------------------

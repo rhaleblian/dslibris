@@ -129,7 +129,7 @@ int App::main(void)
 	bookcount = 0;
 	bookcurrent = 0;
 	char filename[64];
-	DIR_ITER *dp = diropen(BOOKPATH);
+	DIR_ITER *dp = diropen(".");
 	if (!dp)
 	{
 		consoleOK(false);

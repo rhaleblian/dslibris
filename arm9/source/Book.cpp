@@ -49,9 +49,8 @@ void Book::SetPosition(s16 pos)
 
 void Book::Index(char *filebuf)
 {
-	char path[128] = BOOKPATH;
-	strcat(path,"/");
-	strcat(path,filename.c_str());
+	char path[128];
+	strcpy(path,filename.c_str());
 	FILE *fp = fopen(path,"r");
 	if (fp)
 	{
@@ -80,9 +79,8 @@ void Book::IndexHTML(char *filebuf)
 	int rc = -1;
 	Bool ok;
 
-	char path[128] = BOOKPATH;
-	strcat(path,"/");
-	strcat(path,filename.c_str());
+	char path[128];
+	strcpy(path,filename.c_str());
 	FILE *fp = fopen(path,"r");
 	if (fp)
 	{	
@@ -123,9 +121,8 @@ void Book::IndexHTML(char *filebuf)
 
 u8 Book::Parse(char *filebuf)
 {
-	char path[128] = BOOKPATH;
-	strcat(path,"/");
-	strcat(path,filename.c_str());
+	char path[128];
+	strcpy(path,filename.c_str());
 	FILE *fp = fopen(path,"r");
 	if (!fp)
 	{
@@ -166,9 +163,8 @@ u8 Book::ParseHTML(char *filebuf)
 	int rc = -1;
 	filebuf = (char*)malloc(1024*sizeof(char));
 
-	char path[128] = BOOKPATH;
-	strcat(path,"/");
-	strcat(path,filename.c_str());
+	char path[128];
+	strcpy(path,filename.c_str());
 	FILE *fp = fopen(path,"r");
 	if (!fp) return 1;
 

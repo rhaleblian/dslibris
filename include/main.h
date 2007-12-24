@@ -17,8 +17,8 @@
 #define MAXPAGES 2048
 #define MAXBOOKS 7
 
-#define BOOKPATH "/books"
-#define SUPPORTPATH "/dslibris"
+//#define BOOKPATH "."
+#define SUPPORTPATH "."
 
 /** watch out for struct alignment here? **/
 typedef struct book_s {

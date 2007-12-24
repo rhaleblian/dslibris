@@ -5,7 +5,7 @@
 #include FT_FREETYPE_H
 
 #define MAXGLYPHS 256
-#define FONTFILENAME "/dslibris/dslibris.ttf"
+#define FONTFILENAME "dslibris.ttf"
 
 #define PIXELSIZE 10
 #define DPI 72	/** probably not true for a DS - measure it **/
