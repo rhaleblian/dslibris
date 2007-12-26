@@ -115,6 +115,11 @@ int App::main(void)
 		spin();
 	} else consoleOK(true);
 
+/*
+	FILE *log = fopen("dslibris.log","w+");
+	fprintf(log, "begin\n");
+	fclose(log);
+*/
 	printf(" Starting typesetter...  ");
 	ts = new Text();
 	if (ts->InitDefault())

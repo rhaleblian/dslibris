@@ -1,9 +1,9 @@
-Herein lie dslibris and supporting libraries.
-The method below assumes you are using either MSYS/MINGW with devkitPro.
+
+Herein lie dslibris and supporting libraries. The method below assumes you are using either MSYS/MINGW with devkitPro.
 
 BUILDING
 
-Fedora, Ubuntu, OS X, and Windows XP have all been used as build platforms. The primary build platform is OS X 10.4.
+Fedora, Ubuntu, OS X, and Windows XP have all been used as build platforms. The primary build platform is Windows XP.
 
 Prerequisites:
 
@@ -12,10 +12,12 @@ Prerequisites:
 
 To build:
 
-cd ndsibris/trunk
+cd ndslibris/trunk
 make
 
-dslbris.nds is your target.
+dslibris.nds is your target, and shows up at the root level.
+ 
+Note the libraries in 'external', prebuilt for arm-eabi; make sure you don't have conflicting libs in your path.
 
 INSTALLATION
 
@@ -23,5 +25,5 @@ see INSTALL.txt.
 
 DEBUGGING
 
-Use insight with DeSmuME on XP and Linux. DeSmuME lacks the proper support t run or debug on OS X.
+Use insight with DeSmuME on XP and Linux. DeSmuME lacks the proper support to run or debug on OS X.
 
