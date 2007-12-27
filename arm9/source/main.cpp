@@ -277,6 +277,7 @@ void end_hndl(void *data, const char *el)
 	    || !stricmp(el,"h3")
 	    || !stricmp(el,"h4")
 	    || !stricmp(el,"hr")
+	    || !stricmp(el,"tr")
 	)
 	{
 		if(linebegan) {
