@@ -16,6 +16,8 @@
 #define PAGEBUFSIZE 2048
 #define MAXPAGES 2048
 #define MAXBOOKS 7
+#define SPLASH_LEFT (MARGINLEFT+28)
+#define SPLASH_TOP (MARGINTOP+96)
 
 //#define BOOKPATH "."
 #define SUPPORTPATH "."

@@ -35,6 +35,7 @@ public:
 	u8   GetPenY();
 	u8   GetPixelSize();
 	u16* GetScreen();
+	u8   GetStringWidth(const char *txt);
 	void SetInvert(bool);
 	void SetPen(u16 x, u16 y);
 	void SetPixelSize(u8);

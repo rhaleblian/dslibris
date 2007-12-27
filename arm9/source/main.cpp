@@ -117,7 +117,8 @@ void default_hndl(void *data, const XML_Char *s, int len)
 				app->pagebuf[page->length++] = 128 + ((code/64)%64);
 				app->pagebuf[page->length++] = 128 + (code%64);
 			}
-
+			// TODO - support 4-byte codes
+			
 			p->pen.x += app->ts->Advance(code);
 		}
 	}
@@ -181,28 +182,6 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 		if (iswhitespace(txt[i]))
 		{
-/*
-			if (app->parse_in(pdata,PRE) && txt[i] == '\n')
-			{
-				// TODO check this <PRE> code, i don't trust it
-				app->pagebuf[page->length++] = txt[i];
-				pdata->pen.x += app->ts->Advance((u16)txt[i]);
-				pdata->pen.y += (app->ts->GetHeight() + LINESPACING);
-				if (pdata->pen.y > (PAGE_HEIGHT-MARGINBOTTOM))
-				{
-					if (app->parse_pagefeed(pdata,page))
-					{
-						page++;
-						app->page_init(page);
-						app->pagecurrent++;
-						app->pagecount++;
-					}
-					linebegan = false;
-				}
-
-			}
-			else 
-*/
 			if(linebegan)
 			{
 				app->pagebuf[page->length++] = ' ';
@@ -231,10 +210,15 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 					bytes = 1;
 				}
 				advance += app->ts->Advance(code);
+				if(advance > PAGE_WIDTH-MARGINRIGHT-MARGINLEFT)
+				{
+					// here's a line-long word, need to break it now.
+					break;
+				}
 			}
 
 			/** reflow - if we overrun the margin, 
-				insert a break. **/
+			insert a break. **/
 
 			if ((pdata->pen.x + advance) > (PAGE_WIDTH-MARGINRIGHT))
 			{

@@ -57,6 +57,18 @@ void Text::ClearScreen()
 	if(invert) memset((void*)screen,0,PAGE_WIDTH*PAGE_HEIGHT*4);
 	else memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
 }
+u8 Text::GetStringWidth(const char *txt)
+{
+	u8 width = 0;
+	const char *c;
+	for(c = txt; c != NULL; c++)
+	{
+		u16 ucs;
+		GetUCS(c, &ucs);
+		width += Advance(ucs);
+	}
+	return width;
+}	
 
 u8 Text::GetUCS(const char *txt, u16 *code) {
 	if (txt[0] > 0xc1 && txt[0] < 0xe0) {
@@ -130,6 +142,7 @@ void Text::SetScreen(u16 *inscreen)
 	screen = inscreen;
 }
 
+// TODO should be GetAdvance()!
 u8 Text::Advance(u16 code) {
 	if(usecache && (code < MAXGLYPHS))
 		return glyphs[code].advance.x >> 6;

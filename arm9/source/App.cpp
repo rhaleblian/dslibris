@@ -115,11 +115,10 @@ int App::main(void)
 		spin();
 	} else consoleOK(true);
 
-/*
 	FILE *log = fopen("dslibris.log","w+");
-	fprintf(log, "begin\n");
+	fprintf(log, "begin log\n");
 	fclose(log);
-*/
+
 	printf(" Starting typesetter...  ");
 	ts = new Text();
 	if (ts->InitDefault())
@@ -130,8 +129,7 @@ int App::main(void)
 
 	swiWaitForVBlank();
 	/** assemble library by indexing all
-		XHTML/XML files in the current directory.
-		**/
+	    XHTML/XML files in the current directory. **/
 	printf(" Scanning for books...   ");
 	char filename[64];
 	DIR_ITER *dp = diropen(".");
@@ -156,12 +154,6 @@ int App::main(void)
 		}
 	}
 	dirclose(dp);
-	if (!bookcount)
-	{
-		printf("no books\n");
-		consoleOK(false);
-		exit(-1);
-	}
 	consoleOK(true);
 	swiWaitForVBlank();
 	browser_init();
@@ -570,11 +562,18 @@ void App::page_draw(page_t *page)
 	}
 
 	// page number
-	ts->SetScreen(screen1);
-	u8 offset = (int)(170.0 * (pagecurrent / (float)pagecount));
-	ts->SetPen(MARGINLEFT+offset,250);
 	char msg[8];
-	sprintf((char*)msg,"[%d]",pagecurrent+1);
+	strcpy(msg,"");
+	if(pagecurrent == 0) 
+		sprintf((char*)msg,"[ %d >",pagecurrent+1);
+	else if(pagecurrent == pagecount)
+		sprintf((char*)msg,"< %d ]",pagecurrent+1);
+	else
+		sprintf((char*)msg,"< %d >",pagecurrent+1);
+	ts->SetScreen(screen1);
+	u8 offset = (u8)((PAGE_WIDTH-MARGINLEFT-MARGINRIGHT-(ts->Advance(40)*7))
+		* (pagecurrent / (float)pagecount));
+	ts->SetPen(MARGINLEFT+offset,250);
 	ts->PrintString(msg);
 }
 
@@ -623,9 +622,6 @@ void App::screen_clear(u16 *screen, u8 r, u8 g, u8 b)
 		screen[i] = RGB15(r,g,b) | BIT(15);
 }
 
-#define SPLASH_LEFT (MARGINLEFT+28)
-#define SPLASH_TOP (MARGINTOP+96)
-
 void App::splash_draw(void)
 {
 	bool invert = ts->GetInvert();
@@ -634,12 +630,6 @@ void App::splash_draw(void)
 	ts->SetInvert(false);
 	ts->SetScreen(screen0);
 	screen_clear(screen0,31,31,31);
-/*	
-	for(int i=1;i<256;i+=2)
-	{
-		memset(screen0+(i*256),RGB15(28,28,28)|BIT(15),512);
-	}
-*/
 	ts->SetPen(SPLASH_LEFT,SPLASH_TOP);
 	ts->SetPixelSize(36);
 	ts->PrintString("dslibris");
@@ -658,16 +648,6 @@ void App::splash_draw(void)
 
 	ts->SetScreen(screen1);
 	screen_clear(screen1,0,0,0);
-/*
-	for(int i=1;i<32;i+=2)
-	{
-		memset(screen1+i*256,RGB15(4,4,4)|BIT(15),512);
-	}
-	for(int i=bookcount*32+1;i<256;i+=2)
-	{
-		memset(screen1+i*256,RGB15(4,4,4)|BIT(15),512);
-	}
-*/
 	ts->SetPen(MARGINLEFT+100, MARGINTOP+12);
 	ts->SetPixelSize(20);
 	ts->SetInvert(true);
