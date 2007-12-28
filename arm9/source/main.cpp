@@ -49,7 +49,18 @@ void prefs_start_hndl(	void *userdata,
 	char filename[64];
 	strcpy(filename,"");
 	u16 position = 0;
-	if (!stricmp(name,"font"))
+	if (!stricmp(name,"screen"))
+	{
+		for(int i=0;attr[i];i+=2)
+		{
+			if(!strcmp(attr[i],"brightness"))
+			{
+				app->brightness = atoi(attr[i+1]);
+				app->brightness = app->brightness > 3 ? 3 : app->brightness;	
+			}
+		}
+	}
+	else if (!stricmp(name,"font"))
 	{
 		for(int i=0;attr[i];i+=2)
 		{
@@ -57,7 +68,7 @@ void prefs_start_hndl(	void *userdata,
 				app->ts->SetPixelSize(atoi(attr[i+1]));
 		}
 	}
-	if (!stricmp(name,"bookmark") || !stricmp(name,"book"))
+	else if (!stricmp(name,"bookmark") || !stricmp(name,"book"))
 	{
 		u8 i;
 		for (i=0;attr[i];i+=2)
@@ -96,7 +107,7 @@ void default_hndl(void *data, const XML_Char *s, int len)
 		if (!strnicmp(s,"&nbsp;",5))
 		{
 			app->pagebuf[page->length++] = ' ';
-			p->pen.x += app->ts->Advance(' ');
+			p->pen.x += app->ts->GetAdvance(' ');
 			return;
 		}
 
@@ -119,7 +130,7 @@ void default_hndl(void *data, const XML_Char *s, int len)
 			}
 			// TODO - support 4-byte codes
 			
-			p->pen.x += app->ts->Advance(code);
+			p->pen.x += app->ts->GetAdvance(code);
 		}
 	}
 }  /* End default_hndl */
@@ -185,7 +196,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 			if(linebegan)
 			{
 				app->pagebuf[page->length++] = ' ';
-				pdata->pen.x += app->ts->Advance((u16)' ');
+				pdata->pen.x += app->ts->GetAdvance((u16)' ');
 			}
 			i++;
 
@@ -209,7 +220,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 					code = txt[j];
 					bytes = 1;
 				}
-				advance += app->ts->Advance(code);
+				advance += app->ts->GetAdvance(code);
 				if(advance > PAGE_WIDTH-MARGINRIGHT-MARGINLEFT)
 				{
 					// here's a line-long word, need to break it now.

@@ -20,12 +20,16 @@
 #include "wifi.h"
 
 #define MIN(x,y) (x < y ? x : y)
+#define MAX(x,y) (x > y ? x : y)
 
+// TODO - consider using exit() instead, as long as
+// we get to flush all pending output so we don't miss diags.
 inline void spin(void)
 {
 	while (true) swiWaitForVBlank();
 }
 
+// i don't suspect this works.
 void swiWaitForKeys() 
 {
   asm("mov r0, #1");
@@ -50,12 +54,6 @@ void consoleOK(bool ok)
 			
 	BG_PALETTE_SUB[255] = RGB15(24,24,24);
 	printf("]\n");
-}
-
-int min(int x, int y)
-{
-	if (y < x) return y;
-	else return x;
 }
 
 App::App()
@@ -88,6 +86,7 @@ int App::main(void)
 
 	// this ought to be the lowest brightness setting.
 	NDSX_SetBrightness_Next();			
+	brightness = 0;
 
 	/** bring up the startup console.
 	    sub bg 0 will be used to print text. **/
@@ -199,7 +198,7 @@ int App::main(void)
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
 
 	browser_init();
-	splash_draw();
+	screen_splash();
 	
 	/** restore the last book and page we were reading. **/
 	/** TODO bookmark character, not page **/
@@ -245,7 +244,9 @@ int App::main(void)
 			
 		if (keysDown() & KEY_Y)
 		{
-			NDSX_SetBrightness_Next();			
+			NDSX_SetBrightness_Next();
+			brightness++;
+			brightness = brightness > 3 ? 0 : brightness;
 		}
 
 		if (browseractive)
@@ -288,7 +289,7 @@ int App::main(void)
 				}
 				else
 				{
-					splash_draw();
+					screen_splash();
 					browser_draw();
 				}
 			}
@@ -358,7 +359,7 @@ int App::main(void)
 			{
 				prefs_write();
 				browseractive = true;
-				splash_draw();
+				screen_splash();
 				browser_draw();
 			}
 /*
@@ -433,7 +434,7 @@ u8 App::page_getjustifyspacing(page_t *page, u16 i)
 	for (j=i;j<page->length && page->buf[j]!='\n';j++)
 	{
 		u16 c = page->buf[j];
-		advance += ts->Advance(c);
+		advance += ts->GetAdvance(c);
 
 		if (page->buf[j] == ' ') spaces++;
 	}
@@ -571,7 +572,7 @@ void App::page_draw(page_t *page)
 	else
 		sprintf((char*)msg,"< %d >",pagecurrent+1);
 	ts->SetScreen(screen1);
-	u8 offset = (u8)((PAGE_WIDTH-MARGINLEFT-MARGINRIGHT-(ts->Advance(40)*7))
+	u8 offset = (u8)((PAGE_WIDTH-MARGINLEFT-MARGINRIGHT-(ts->GetAdvance(40)*7))
 		* (pagecurrent / (float)pagecount));
 	ts->SetPen(MARGINLEFT+offset,250);
 	ts->PrintString(msg);
@@ -602,6 +603,8 @@ bool App::prefs_write(void)
 	if(!fp) return false;
 	
 	fprintf(fp, "<dslibris>\n");
+	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\">\n",
+		brightness, ts->GetInvert());
 	fprintf(fp, "\t<font size=\"%d\" />\n", ts->GetPixelSize());
 	fprintf(fp, "\t<book file=\"%s\" />\n", books[bookcurrent].GetFilename());
 	for(u8 i=0;i<bookcount; i++)
@@ -622,7 +625,7 @@ void App::screen_clear(u16 *screen, u8 r, u8 g, u8 b)
 		screen[i] = RGB15(r,g,b) | BIT(15);
 }
 
-void App::splash_draw(void)
+void App::screen_splash(void)
 {
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
