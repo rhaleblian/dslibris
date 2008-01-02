@@ -214,7 +214,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				    account for UTF-8 characters when advancing. **/
 				u16 code;
 				if (txt[j] > 127)
-					bytes = app->ts->GetUCS((char*)&(txt[j]),&code);
+					bytes = app->ts->GetCharCode((char*)&(txt[j]),&code);
 				else
 				{
 					code = txt[j];

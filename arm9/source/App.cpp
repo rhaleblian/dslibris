@@ -217,7 +217,6 @@ int App::main(void)
 		pagecount = 0;
 		pagecurrent = 0;
 		page_init(&(pages[pagecurrent]));
-		ts->Cache();
 		if(!books[bookcurrent].Parse(filebuf))
 		{
 			pagecurrent = books[bookcurrent].GetPosition();
@@ -278,7 +277,6 @@ int App::main(void)
 				ts->SetInvert(true);
 				ts->PrintString("[paginating...]");
 				ts->SetInvert(invert);
-				ts->Cache();
 				if (!books[bookcurrent].Parse(filebuf))
 				{
 					pagecurrent = books[bookcurrent].GetPosition();
@@ -321,7 +319,6 @@ int App::main(void)
 			if (keysDown() & KEY_SELECT)
 			{
 				browseractive = false;
-				ts->Cache();
 				page_draw(&(pages[pagecurrent]));
 			}
 		}
@@ -555,7 +552,7 @@ void App::page_draw(page_t *page)
 		}
 		else
 		{
-			if (c > 127) i+=ts->GetUCS((char*)&(page->buf[i]),&c);
+			if (c > 127) i+=ts->GetCharCode((char*)&(page->buf[i]),&c);
 			else i++;
 			ts->PrintChar(c);
 			linebegan = true;

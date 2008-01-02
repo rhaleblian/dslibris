@@ -3,91 +3,78 @@
 #include "Text.h"
 #include "main.h"
 
+Text::Text()
+{
+	cachenext = 0;
+	fontfilename = FONTFILENAME;
+	invert = false;
+	justify = false;
+	pixelsize = PIXELSIZE;
+	screenleft = (u16*)BG_BMP_RAM_SUB(0);
+	screenright = (u16*)BG_BMP_RAM(0);
+	screen = screenleft;
+	cachemap.clear();
+}
 
 int Text::InitDefault(void) {
 	if (FT_Init_FreeType(&library)) return 1;
-	if (FT_New_Face(library, FONTFILENAME, 0, &face)) return 2;
+	if (FT_New_Face(library, fontfilename.c_str(), 0, &face)) return 2;
 	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-	pixelsize = PIXELSIZE;
 	FT_Set_Pixel_Sizes(face, 0, pixelsize);
-	Cache();
-	usecache = true;
-	invert = false;
-	justify = false;
-	screenleft = (u16*)BG_BMP_RAM_SUB(0);
-	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
 	InitPen();
 	return(0);
 }
 
-void Text::Cache_old()
+FT_GlyphSlot Text::CacheGlyph(u16 ucs)
 {
-	/* Cache japanese glyphs. */
+	//FT_UInt index = FT_Get_Char_Index(face, ucs);
+	FT_UInt index = ucs;
+	FT_Load_Char(face, index,
+		FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
+	FT_GlyphSlot src = face->glyph;
+	FT_GlyphSlot dst = &glyphs[cachenext];
+	int x = src->bitmap.rows;
+	int y = src->bitmap.width;
+	dst->bitmap.buffer = new unsigned char[x*y];
+	memcpy(dst->bitmap.buffer, src->bitmap.buffer, x*y);
+	dst->bitmap.rows = src->bitmap.rows;
+	dst->bitmap.width = src->bitmap.width;
+	dst->bitmap_top = src->bitmap_top;
+	dst->bitmap_left = src->bitmap_left;
+	dst->advance = src->advance;
 
-	FT_ULong cacheentry = 0;
-	for(FT_ULong codepoint=0x3040; codepoint<=0x30ff; codepoint++)
+	map<u16,u16>::iterator it;
+	for(it = cachemap.begin(); it != cachemap.end(); it++)
 	{
-		FT_Load_Char(face, codepoint,
-			FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
-		FT_GlyphSlot src = face->glyph;
-		FT_GlyphSlot dst = &glyphs[cacheentry];
-		int x = src->bitmap.rows;
-		int y = src->bitmap.width;
-		dst->bitmap.buffer = new unsigned char[x*y];
-		memcpy(dst->bitmap.buffer, src->bitmap.buffer, x*y);
-		dst->bitmap.rows = src->bitmap.rows;
-		dst->bitmap.width = src->bitmap.width;
-		dst->bitmap_top = src->bitmap_top;
-		dst->bitmap_left = src->bitmap_left;
-		dst->advance = src->advance;
-
-		ucsmap[codepoint] = cacheentry;  
-		cacheentry++;
+		if(it->second == cachenext)
+			cachemap.erase(it);
 	}
-}		
+	cachemap.insert( pair<u16,u16>(ucs,cachenext));
 
-void Text::Cache()
-{
-	/** cache glyphs. glyphs[] will contain all the bitmaps.
-	    using FirstChar() and NextChar() would be more robust.
-	    TODO - also cache kerning and transformations. 
-	    TODO - support caching different languages.	**/
+	// cache is a ring buffer.
+	cachenext++;
+	if(cachenext >= CACHESIZE) cachenext = 0;
 
-	FT_ULong  charcode;
-	FT_UInt   gindex;
-	charcode = FT_Get_First_Char( face, &gindex );
-	while ( gindex != 0 )
-	{
-		/** cache ASCII and Latin-1 glyphs. **/
-		if (charcode < MAXGLYPHS) {
-			FT_Load_Char(face, charcode,
-				FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
-			FT_GlyphSlot src = face->glyph;
-			FT_GlyphSlot dst = &glyphs[charcode];
-			int x = src->bitmap.rows;
-			int y = src->bitmap.width;
-			dst->bitmap.buffer = new unsigned char[x*y];
-			memcpy(dst->bitmap.buffer, src->bitmap.buffer, x*y);
-			dst->bitmap.rows = src->bitmap.rows;
-			dst->bitmap.width = src->bitmap.width;
-			dst->bitmap_top = src->bitmap_top;
-			dst->bitmap_left = src->bitmap_left;
-			dst->advance = src->advance;
-
-			// mapping trivial for ASCII and Latin-1.
-			// other languages will be different.
-			ucsmap[charcode] = charcode;  
-		}
-		charcode = FT_Get_Next_Char( face, charcode, &gindex );
-	}
-	usecache = true;
+	return dst;
 }
 
 void Text::ClearScreen()
 {
 	if(invert) memset((void*)screen,0,PAGE_WIDTH*PAGE_HEIGHT*4);
 	else memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
+}
+
+void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
+{
+	u16 clearcolor;
+	if(invert) clearcolor = RGB15(0,0,0) | BIT(15);
+	else clearcolor = RGB15(31,31,31) | BIT(15);
+	for(u16 y=yl; y<yh; y++) {
+		for(u16 x=xl; x<xh; x++) {
+			screen[y*PAGE_WIDTH+x] = clearcolor;
+		}
+	}
 }
 
 u8 Text::GetStringWidth(const char *txt)
@@ -97,35 +84,42 @@ u8 Text::GetStringWidth(const char *txt)
 	for(c = txt; c != NULL; c++)
 	{
 		u16 ucs;
-		GetUCS(c, &ucs);
+		GetCharCode(c, &ucs);
 		width += GetAdvance(ucs);
 	}
 	return width;
 }	
 
 
-u8 Text::GetUCS(const char *txt, u16 *code) {
-	if (txt[0] > 0xc1 && txt[0] < 0xe0) {
-		*code = ((txt[0]-192)*64) + (txt[1]-128);
+u8 Text::GetCharCode(const char *utf8, u16 *ucs) {
+	// given a UTF-8 encoding, fill in the Unicode/UCS code point.
+	// returns the bytelength of the encoding, for advancing
+	// to the next character.
+	// returns 0 if encoding could not be translated.
+	// TODO - handle 4 byte encodings.
+
+	if (utf8[0] < 0x80) { // ASCII
+		*ucs = utf8[0];
+		return 1;
+
+	} else if (utf8[0] > 0xc1 && utf8[0] < 0xe0) { // latin
+		*ucs = ((utf8[0]-192)*64) + (utf8[1]-128);
 		return 2;
 
-	} else if (txt[0] > 0xdf && txt[0] < 0xf0) {
-		*code = (txt[0]-224)*4096 + (txt[1]-128)*64 + (txt[2]-128);
+	} else if (utf8[0] > 0xdf && utf8[0] < 0xf0) { // asian
+		*ucs = (utf8[0]-224)*4096 + (utf8[1]-128)*64 + (utf8[2]-128);
 		return 3;
 
-	} else if (txt[0] > 0xef) {
+	} else if (utf8[0] > 0xef) { // rare
 		return 4;
 
 	}
-	*code = txt[0];
-	return 1;
+	return 0;
 }
-
 
 u8 Text::GetHeight() {
 	return (face->size->metrics.height >> 6);
 }
-
 
 void Text::GetPen(u16 *x, u16 *y) {
 	*x = pen.x;
@@ -140,6 +134,7 @@ void Text::SetPen(u16 x, u16 y) {
 void Text::SetInvert(bool state) {
 	invert = state;
 }
+
 bool Text::GetInvert() {
 	return invert;
 }
@@ -147,6 +142,7 @@ bool Text::GetInvert() {
 u8 Text::GetPenX() {
 	return pen.x;
 }
+
 u8 Text::GetPenY() {
 	return pen.y;
 }
@@ -170,7 +166,7 @@ void Text::SetPixelSize(u8 size)
 		FT_Set_Pixel_Sizes(face, 0, size);
 		pixelsize = size;
 	}
-	usecache = false;
+	cachemap.clear();
 }
 
 void Text::SetScreen(u16 *inscreen)
@@ -178,14 +174,16 @@ void Text::SetScreen(u16 *inscreen)
 	screen = inscreen;
 }
 
-u8 Text::GetAdvance(u16 code) {
-	map<int,int>::iterator it = ucsmap.find(code);
+u8 Text::GetAdvance(u16 ucs) {
+	map<u16,u16>::iterator it;
+	it = cachemap.find(ucs);
+	if(it != cachemap.end())
+		return glyphs[it->second].advance.x >> 6;
+	return CacheGlyph(ucs)->advance.x >> 6;
 
-	if(usecache && (it != ucsmap.end()))
-		return glyphs[code].advance.x >> 6;
-
-	FT_Load_Char(face, code, FT_LOAD_DEFAULT);
-	return face->glyph->advance.x >> 6;
+	//FT_UInt index = FT_Get_Char_Index(face,ucs);
+	//FT_Load_Char(face, ucs, FT_LOAD_DEFAULT);
+	//return face->glyph->advance.x >> 6;
 }
 
 void Text::InitPen(void) {
@@ -193,27 +191,27 @@ void Text::InitPen(void) {
 	pen.y = MARGINTOP + (face->size->metrics.height >> 6);
 }
 
-void Text::PrintChar(u16 code) {
-	/** draw a character with the current glyph
-	    into the current buffer at the current pen position.
-	    ASCII glyphs are cached; others need loading. **/
+void Text::PrintChar(u16 ucs) {
+	// Draw a character for the given UCS codepoint,
+	// into the current screen buffer at the current pen position.
 
+	// Consult the cache for glyph data; ask freetype on a cache miss.
 	FT_GlyphSlot glyph;
-	map<int,int>::iterator it = ucsmap.find(code);
-	if (usecache && (it != ucsmap.end())) glyph = &glyphs[it->second];
-	else {
-		FT_Load_Char(face, code, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
-		glyph = face->glyph;
-	}
-	
-	/** direct draw into framebuffer.**/
+	map<u16,u16>::iterator it;
+	it = cachemap.find(ucs);
+	if (it != cachemap.end()) glyph = &glyphs[it->second];
+	else glyph = CacheGlyph(ucs);
+
+	//FT_UInt index = FT_Get_Char_Index(face,ucs);
+	//FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
+	//glyph = face->glyph;
+
 	FT_Bitmap bitmap = glyph->bitmap;
 	u16 bx = glyph->bitmap_left;
 	u16 by = glyph->bitmap_top;
 	u16 gx, gy;
 	for (gy=0; gy<bitmap.rows; gy++) {
 		for (gx=0; gx<bitmap.width; gx++) {
-			/* get antialiased value */
 			u16 a = bitmap.buffer[gy*bitmap.width+gx];
 			if (a) {
 				u16 sx = (pen.x+gx+bx);
@@ -237,7 +235,7 @@ bool Text::PrintNewLine(void) {
 		{
 			screen = screenright;
 			pen.y = MARGINTOP + height;
-			return true;		
+			return true;
 		} 
 		else
 			return false;
@@ -258,7 +256,7 @@ void Text::PrintString(const char *string) {
 		else {
 			if (c > 127) {
 				/** this guy is multibyte UTF-8. **/
-				i+=GetUCS(&(string[i]),&c);
+				i+=GetCharCode(&(string[i]),&c);
 				i--;
 			}
 			PrintChar(c);
@@ -266,14 +264,15 @@ void Text::PrintString(const char *string) {
 	}
 }
 
-void Text::PrintCache(void) {
-	int code;
-	for (code=0;code<MAXGLYPHS;code++) {
-		PrintChar(code);
-		if (pen.x > 170) {
-			pen.x = MARGINLEFT;
-			pen.y += face->size->metrics.height >> 6;
-		}
-	}
+void Text::PrintStatusMessage(const char *msg)
+{
+	u16 x,y;
+	u16 *s = screen;
+	GetPen(&x,&y);
+	screen = screenleft;	
+	SetPen(10,10);
+	PrintString(msg);
+	screen = s;
+	SetPen(x,y);
 }
 
