@@ -20,7 +20,7 @@
 #define SPLASH_TOP (MARGINTOP+96)
 
 //#define BOOKPATH "."
-#define SUPPORTPATH "."
+//#define SUPPORTPATH "."
 
 /** watch out for struct alignment here? **/
 typedef struct book_s {

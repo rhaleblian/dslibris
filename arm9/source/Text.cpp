@@ -13,7 +13,6 @@ Text::Text()
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
-	cachemap.clear();
 }
 
 int Text::InitDefault(void) {
@@ -22,15 +21,19 @@ int Text::InitDefault(void) {
 	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	FT_Set_Pixel_Sizes(face, 0, pixelsize);
 	screen = screenleft;
+	ClearCache();
 	InitPen();
 	return(0);
 }
 
-FT_GlyphSlot Text::CacheGlyph(u16 ucs)
+int Text::CacheGlyph(u16 ucs)
 {
-	//FT_UInt index = FT_Get_Char_Index(face, ucs);
-	FT_UInt index = ucs;
-	FT_Load_Char(face, index,
+	// Cache glyph at ucs if there's space.
+	// Does not check if this is a duplicate entry.
+
+	if(cachenext == CACHESIZE) return -1;
+
+	FT_Load_Char(face, ucs,
 		FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
 	FT_GlyphSlot src = face->glyph;
 	FT_GlyphSlot dst = &glyphs[cachenext];
@@ -43,20 +46,29 @@ FT_GlyphSlot Text::CacheGlyph(u16 ucs)
 	dst->bitmap_top = src->bitmap_top;
 	dst->bitmap_left = src->bitmap_left;
 	dst->advance = src->advance;
-
-	map<u16,u16>::iterator it;
-	for(it = cachemap.begin(); it != cachemap.end(); it++)
-	{
-		if(it->second == cachenext)
-			cachemap.erase(it);
-	}
-	cachemap.insert( pair<u16,u16>(ucs,cachenext));
-
-	// cache is a ring buffer.
+	cache_ucs[cachenext] = ucs;
 	cachenext++;
-	if(cachenext >= CACHESIZE) cachenext = 0;
+	return cachenext-1;
+}
 
-	return dst;
+FT_GlyphSlot Text::GetGlyph(u16 ucs, int flags)
+{
+	int i;
+	for(i=0;i<cachenext;i++)
+	{
+		if(cache_ucs[i] == ucs) return &glyphs[i];
+	}
+
+	i = CacheGlyph(ucs);
+	if(i > -1) return &glyphs[i];
+
+	FT_Load_Char(face, ucs, flags);
+	return face->glyph;
+}
+
+void Text::ClearCache()
+{
+	cachenext = 0;
 }
 
 void Text::ClearScreen()
@@ -166,7 +178,7 @@ void Text::SetPixelSize(u8 size)
 		FT_Set_Pixel_Sizes(face, 0, size);
 		pixelsize = size;
 	}
-	cachemap.clear();
+	ClearCache();
 }
 
 void Text::SetScreen(u16 *inscreen)
@@ -175,15 +187,8 @@ void Text::SetScreen(u16 *inscreen)
 }
 
 u8 Text::GetAdvance(u16 ucs) {
-	map<u16,u16>::iterator it;
-	it = cachemap.find(ucs);
-	if(it != cachemap.end())
-		return glyphs[it->second].advance.x >> 6;
-	return CacheGlyph(ucs)->advance.x >> 6;
-
-	//FT_UInt index = FT_Get_Char_Index(face,ucs);
-	//FT_Load_Char(face, ucs, FT_LOAD_DEFAULT);
-	//return face->glyph->advance.x >> 6;
+	// Caches this glyph if possible.
+	return GetGlyph(ucs, FT_LOAD_DEFAULT)->advance.x >> 6;
 }
 
 void Text::InitPen(void) {
@@ -195,16 +200,9 @@ void Text::PrintChar(u16 ucs) {
 	// Draw a character for the given UCS codepoint,
 	// into the current screen buffer at the current pen position.
 
-	// Consult the cache for glyph data; ask freetype on a cache miss.
-	FT_GlyphSlot glyph;
-	map<u16,u16>::iterator it;
-	it = cachemap.find(ucs);
-	if (it != cachemap.end()) glyph = &glyphs[it->second];
-	else glyph = CacheGlyph(ucs);
-
-	//FT_UInt index = FT_Get_Char_Index(face,ucs);
-	//FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
-	//glyph = face->glyph;
+	// Consult the cache for glyph data and cache it on a miss
+	// if space is available.
+	FT_GlyphSlot glyph = GetGlyph(ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
 
 	FT_Bitmap bitmap = glyph->bitmap;
 	u16 bx = glyph->bitmap_left;

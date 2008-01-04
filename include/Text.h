@@ -11,13 +11,14 @@ using namespace std;
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 #define FONTFILENAME "dslibris.ttf"
 #define CACHESIZE 512
-#define PIXELSIZE 10
+#define PIXELSIZE 12
 #define DPI 72	/** probably not true for a DS - measure it **/
 
 class Text {
 	FT_Library library;
 	FT_Face face;
-	FT_GlyphSlotRec glyphs[CACHESIZE];
+	FT_GlyphSlotRec glyphs[CACHESIZE];	
+	u16 cache_ucs[CACHESIZE];
 	FT_Vector pen;
 	FT_Error error;
 
@@ -53,7 +54,9 @@ public:
 	void SetPixelSize(u8);
 	void SetScreen(u16 *s);
 
-	FT_GlyphSlot CacheGlyph(u16 codepoint);
+	int CacheGlyph(u16 codepoint);
+	FT_GlyphSlot GetGlyph(u16 ucs, int flags);
+	void ClearCache();
 
 	void ClearRect(u16 xl, u16 yl, u16 xh, u16 yh);
 	void ClearScreen();

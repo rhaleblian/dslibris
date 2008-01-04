@@ -50,7 +50,8 @@ clean:
 
 # run target with desmume
 test: $(TARGET).nds
-	desmume $(TARGET).nds
+	cp $(TARGET).nds /tmp/rhaleblian
+	(cd /tmp/rhaleblian; desmume $(TARGET).nds)
 
 # debug target with insight and desmume under linux
 debug: $(TARGET).nds
@@ -68,7 +69,7 @@ scp: $(TARGET).$(MEDIA).nds
 
 # copy target over network to microSD mounted under windows
 smb: $(TARGET).$(MEDIA).nds
-	 smbclient \\\\asherah\\e fnord... -c "cd .; put dslibris.$(MEDIA).nds"
+	smbclient \\\\asherah\\e fnord... -c "cd .; put dslibris.$(MEDIA).nds"
 
 # copy target to microSD mounted under Linux
 usb: $(TARGET).$(MEDIA).nds

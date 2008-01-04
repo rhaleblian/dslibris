@@ -1,14 +1,16 @@
 #include <fat.h>
-#include <dswifi9.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
-#include <stdlib.h>
+#include <sys/dir.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <sys/dir.h>
+#include <stdlib.h>
+
 #include <sys/stat.h>
+#include <nds/registers_alt.h>
+#include <nds/reload.h>
 #include <errno.h>
+
 #include <expat.h>
+
 #include "types.h"
 #include "ndsx_brightness.h"
 #include "App.h"
@@ -17,6 +19,8 @@
 #include "Text.h"
 #include "main.h"
 #include "parse.h"
+
+#include <dswifi9.h>
 #include "wifi.h"
 
 #define MIN(x,y) (x < y ? x : y)
@@ -106,7 +110,7 @@ int App::main(void)
 	}
 	printf(" Starting console...     ");
 	consoleOK(true);
-
+	
 	printf(" Mounting filesystem...  ");
 	if (!fatInitDefault())
 	{
@@ -114,9 +118,11 @@ int App::main(void)
 		spin();
 	} else consoleOK(true);
 
-	FILE *log = fopen("dslibris.log","w+");
+/*
+	FILE *log = fopen("dslibris.log","wb");
 	fprintf(log, "begin log\n");
 	fclose(log);
+*/
 
 	printf(" Starting typesetter...  ");
 	ts = new Text();
@@ -125,23 +131,29 @@ int App::main(void)
 		consoleOK(false);
 		spin();
 	} else consoleOK(true);
-
 	swiWaitForVBlank();
+
 	/** assemble library by indexing all
-	    XHTML/XML files in the current directory. **/
+	    XHTML files in the current directory. **/
 	printf(" Scanning for books...   ");
+	swiWaitForVBlank();
+
 	char filename[64];
-	DIR_ITER *dp = diropen(".");
+	char dirname[64];
+	strcpy(dirname,".");
+	DIR_ITER *dp = diropen(dirname);
 	if (!dp)
 	{
 		consoleOK(false);
 		spin();
 	}
+
 	while (bookcount < MAXBOOKS)
 	{
 		int rc = dirnext(dp, filename, NULL);
-		printf("%s (%d %d)\n",filename,rc,errno);
+//		printf("%d %s\n",rc,filename);
 		if(rc) break;
+
 		char *c;
 		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
@@ -155,6 +167,7 @@ int App::main(void)
 	dirclose(dp);
 	consoleOK(true);
 	swiWaitForVBlank();
+
 	browser_init();
 
 	printf(" Creating XML parser...  ");
@@ -217,6 +230,7 @@ int App::main(void)
 		pagecount = 0;
 		pagecurrent = 0;
 		page_init(&(pages[pagecurrent]));
+		ts->ClearCache();
 		if(!books[bookcurrent].Parse(filebuf))
 		{
 			pagecurrent = books[bookcurrent].GetPosition();
@@ -277,6 +291,7 @@ int App::main(void)
 				ts->SetInvert(true);
 				ts->PrintString("[paginating...]");
 				ts->SetInvert(invert);
+				ts->ClearCache();
 				if (!books[bookcurrent].Parse(filebuf))
 				{
 					pagecurrent = books[bookcurrent].GetPosition();
