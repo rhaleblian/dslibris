@@ -26,40 +26,6 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 
-// TODO - consider using exit() instead, as long as
-// we get to flush all pending output so we don't miss diags.
-inline void spin(void)
-{
-	while (true) swiWaitForVBlank();
-}
-
-// i don't suspect this works.
-void swiWaitForKeys() 
-{
-  asm("mov r0, #1");
-  asm("mov r1, #4096");
-  asm("swi #262144");
-}
-
-void consoleOK(bool ok)
-{
-	printf("[");
-
-	if(ok)
-	{
-		BG_PALETTE_SUB[255] = RGB15(15,31,15);
-		printf(" OK ");
-	}
-	else
-	{
-		BG_PALETTE_SUB[255] = RGB15(31,15,15);
-		printf("FAIL");
-	}
-			
-	BG_PALETTE_SUB[255] = RGB15(24,24,24);
-	printf("]\n");
-}
-
 App::App()
 {
 	ts = NULL;
@@ -73,11 +39,12 @@ App::App()
 	books = new Book[MAXBOOKS];
 	bookcount = 0;
 	bookcurrent = 0;
+	mode = APP_MODE_BOOK;
+	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
 }
 
 int App::main(void)
 {
-	bool browseractive = false;
 	char filebuf[BUFSIZE];
 
 	powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
@@ -118,11 +85,9 @@ int App::main(void)
 		spin();
 	} else consoleOK(true);
 
-/*
 	FILE *log = fopen("dslibris.log","wb");
 	fprintf(log, "begin log\n");
 	fclose(log);
-*/
 
 	printf(" Starting typesetter...  ");
 	ts = new Text();
@@ -235,21 +200,24 @@ int App::main(void)
 		{
 			pagecurrent = books[bookcurrent].GetPosition();
 			page_draw(&(pages[pagecurrent]));
-			browseractive = false;
-		} else browseractive = true;
+			mode = APP_MODE_BOOK;
+		}
+		else
+		{
+			mode = APP_MODE_BROWSER;
+		}
 	} else {
 		bookcurrent = 0;
-		browseractive = true;
+		mode = APP_MODE_BROWSER;
 	}
 	
-	if(browseractive)
+	if(mode == APP_MODE_BROWSER)
 	{
 		browser_draw();
 	}
 	swiWaitForVBlank();
 
 	touchPosition touch;
-
 	bool poll = true;
 	while (poll)
 	{
@@ -262,22 +230,39 @@ int App::main(void)
 			brightness = brightness > 3 ? 0 : brightness;
 		}
 
-		if (browseractive)
+		if (keysDown() & KEY_TOUCH)
 		{
-			if (keysDown() & KEY_TOUCH)
+			touch = touchReadXY();
+			
+			if (mode == APP_MODE_BROWSER)
 			{
-				touch = touchReadXY();
-				fb[touch.px + touch.py * 256] = rand();
-				if (pagecurrent < pagecount)
+				u8 hit = (224-touch.px) / 32;
+				if (hit < 7)
 				{
-					pagecurrent++;
-					page_draw(&pages[pagecurrent]);
+					bookcurrent = hit;
+					browser_draw();
+					OpenBook();
 				}
 			}
+			else
+			{
+				if (touch.py < 96)
+				{
+					if (pagecurrent > 0) pagecurrent--;
+				}
+				else
+				{
+					if (pagecurrent < pagecount) pagecurrent++;
+				}
+				page_draw(&pages[pagecurrent]);
+			}
+		}
 
+		if (mode == APP_MODE_BROWSER)
+		{
 			if (keysDown() & KEY_A)
 			{
-				/** parse the selected book. **/
+				// parse the selected book.
 
 				pagecount = 0;
 				pagecurrent = 0;
@@ -298,7 +283,7 @@ int App::main(void)
 					page = &(pages[pagecurrent]);
 					page_draw(page);
 					prefs_write();
-					browseractive = false;
+					mode = APP_MODE_BOOK;
 				}
 				else
 				{
@@ -309,7 +294,7 @@ int App::main(void)
 
 			if (keysDown() & KEY_B)
 			{
-				browseractive = false;
+				mode = APP_MODE_BOOK;
 				page_draw(&pages[pagecurrent]);
 			}
 
@@ -318,7 +303,7 @@ int App::main(void)
 				if (bookcurrent < bookcount-1)
 				{
 					bookcurrent++;
-					browser_draw();
+					browser_redraw();
 				}
 			}
 
@@ -327,13 +312,13 @@ int App::main(void)
 				if (bookcurrent > 0)
 				{
 					bookcurrent--;
-					browser_draw();
+					browser_redraw();
 				}
 			}
 
 			if (keysDown() & KEY_SELECT)
 			{
-				browseractive = false;
+				mode = APP_MODE_BOOK;
 				page_draw(&(pages[pagecurrent]));
 			}
 		}
@@ -370,16 +355,11 @@ int App::main(void)
 			if (keysDown() & KEY_SELECT)
 			{
 				prefs_write();
-				browseractive = true;
+				mode = APP_MODE_BROWSER;			
 				screen_splash();
 				browser_draw();
 			}
-/*
-			if(keysDown() & KEY_START)
-			{
-				poll = false;
-			}
-*/
+
 		}
 //		swiWaitForKeys();
 		swiWaitForVBlank();
@@ -389,6 +369,65 @@ int App::main(void)
 	exit(0);
 }
 
+u8 App::OpenBook(void)
+{
+	pagecount = 0;
+	pagecurrent = 0;
+	page_init(&pages[pagecurrent]);
+
+	screen_clear(screen1,0,0,0);
+	ts->SetScreen(screen1);
+	ts->SetPen(MARGINLEFT+40,PAGE_HEIGHT/2);
+	bool invert = ts->GetInvert();
+	ts->SetInvert(true);
+	ts->PrintString("[paginating...]");
+	ts->SetInvert(invert);
+	ts->ClearCache();
+	if (!books[bookcurrent].Parse(filebuf))
+	{
+		pagecurrent = books[bookcurrent].GetPosition();
+		page_draw(&(pages[pagecurrent]));
+		prefs_write();
+		mode = APP_MODE_BOOK;
+	}
+	return 0;
+}
+
+// TODO - consider using exit() instead, as long as
+// we get to flush all pending output so we don't miss diags.
+
+inline void App::spin(void)
+{
+	while (true) swiWaitForVBlank();
+}
+
+// i don't suspect this works.
+void App::swiWaitForKeys(void) 
+{
+  asm("mov r0, #1");
+  asm("mov r1, #4096");
+  asm("swi #262144");
+}
+
+void App::consoleOK(bool ok)
+{
+	printf("[");
+
+	if(ok)
+	{
+		BG_PALETTE_SUB[255] = RGB15(15,31,15);
+		printf(" OK ");
+	}
+	else
+	{
+		BG_PALETTE_SUB[255] = RGB15(31,15,15);
+		printf("FAIL");
+	}
+			
+	BG_PALETTE_SUB[255] = RGB15(24,24,24);
+	printf("]\n");
+}
+
 void App::browser_init(void)
 {
 	u8 i;
@@ -396,7 +435,7 @@ void App::browser_init(void)
 	{
 //		buttons[i] = new Button();
 		buttons[i].Init(ts);
-		buttons[i].Move(0,(i+1)*32);
+		buttons[i].Move(0,((i+1)*32)-16);
 		if (strlen(books[i].GetTitle()))
 			buttons[i].Label(books[i].GetTitle());
 		else
@@ -410,6 +449,10 @@ void App::browser_draw(void)
 	u8 size = ts->GetPixelSize();
 
 	ts->SetScreen(screen1);
+	for(int i=0;i < (256 * 16);i++) {
+		screen1[i] = RGB15(0,0,0)|BIT(15);
+		screen1[i+256*(256-16)] = RGB15(0,0,0)|BIT(15);
+	}
 	ts->SetPixelSize(12);
 	for (int i=0;i<bookcount;i++)
 	{
@@ -421,6 +464,15 @@ void App::browser_draw(void)
 
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
+}
+
+void App::browser_redraw()
+{
+	buttons[bookcurrent].Draw(screen1,true);
+	if(bookcurrent >= 1)
+		buttons[bookcurrent-1].Draw(screen1,false);
+	if(bookcurrent < bookcount-1)
+		buttons[bookcurrent+1].Draw(screen1,false);
 }
 
 void App::page_init(page_t *page)
@@ -660,14 +712,14 @@ void App::screen_splash(void)
 	char msg[16];
 	sprintf(msg,"%d books\n", bookcount);
 	ts->PrintString(msg);
-
+/*
 	ts->SetScreen(screen1);
 	screen_clear(screen1,0,0,0);
 	ts->SetPen(MARGINLEFT+100, MARGINTOP+12);
 	ts->SetPixelSize(20);
 	ts->SetInvert(true);
 	ts->PrintString("library");
-
+*/
 	ts->SetPixelSize(size);
 	ts->SetInvert(invert);
 }

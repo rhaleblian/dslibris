@@ -12,6 +12,9 @@
 #define APP_VERSION "1.0.2"
 #define APP_URL "http://rhaleblian.wordpress.com"
 
+#define APP_MODE_BOOK 0
+#define APP_MODE_BROWSER 1
+
 class App {
 	public:
 	Text *ts;
@@ -26,10 +29,15 @@ class App {
 	u16 pagecount;
 	u16 pagecurrent;
 	u8 brightness;
+	char *filebuf;
+	u8 mode;
+
 	App();
 	int main(void);
+	u8 OpenBook(void);
 	void browser_init(void);
 	void browser_draw(void);
+	void browser_redraw(void);
 	void page_init(page_t *page);
 	void page_draw(page_t *page);
 	void page_drawmargins(void);
@@ -44,5 +52,10 @@ class App {
 	bool prefs_write(void);
 	void screen_clear(u16 *screen, u8 r, u8 g, u8 b);
 	void screen_splash(void);
+
+private:
+	void swiWaitForKeys(void);
+	void spin(void);
+	void consoleOK(bool ok);
 };
 #endif

@@ -68,6 +68,8 @@ void VcountHandler()
 		but |= (1 <<6);
 	}
 
+/*
+
 	if ( vcount == 80 ) {
 		first = tempPos;
 	} else {
@@ -79,18 +81,21 @@ void VcountHandler()
 
 		} else { 	
 			IPC->mailBusy = 1;
+*/
 			IPC->touchX			= x;
 			IPC->touchY			= y;
 			IPC->touchXpx		= xpx;
 			IPC->touchYpx		= ypx;
 			IPC->touchZ1		= z1;
 			IPC->touchZ2		= z2;
+/*
 			IPC->mailBusy = 0;
 		}
 	}
+*/
 	IPC->buttons		= but;
-	vcount ^= (80 ^ 130);
-	SetYtrigger(vcount);
+//	vcount ^= (80 ^ 130);
+//	SetYtrigger(vcount);
 
 	// Check if the lid has been closed.
 	if(but & BIT(7)) {

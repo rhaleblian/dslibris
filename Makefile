@@ -50,8 +50,12 @@ clean:
 
 # run target with desmume
 test: $(TARGET).nds
-	cp $(TARGET).nds /tmp/rhaleblian
-	(cd /tmp/rhaleblian; desmume $(TARGET).nds)
+	mkdir -p /tmp/$(TARGET)
+	cp $(TARGET).nds /tmp/$(TARGET)
+	cp $(TARGET).xml /tmp/$(TARGET)
+	cp $(TARGET).ttf /tmp/$(TARGET)
+	cp *.xht /tmp/$(TARGET)
+	(cd /tmp/$(TARGET); desmume $(TARGET).nds)
 
 # debug target with insight and desmume under linux
 debug: $(TARGET).nds
