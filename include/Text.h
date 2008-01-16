@@ -9,10 +9,11 @@
 using namespace std;
 
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
-#define FONTFILENAME "dslibris.ttf"
-#define CACHESIZE 512
+#define CACHESIZE 256
 #define PIXELSIZE 12
 #define DPI 72	/** probably not true for a DS - measure it **/
+
+class App;
 
 class Text {
 	FT_Library library;
@@ -21,6 +22,7 @@ class Text {
 	u16 cache_ucs[CACHESIZE];
 	FT_Vector pen;
 	FT_Error error;
+	App *app;
 
 	// associates each glyph cache index (value)
 	// with it's Unicode code point (key).
@@ -35,6 +37,7 @@ class Text {
 	
 public:
 	Text();
+	Text(App *parent);
 	int  InitDefault(void);
 	void InitPen(void);
 
@@ -43,6 +46,7 @@ public:
 	u8   GetHeight(void);
 	bool GetInvert();
 	void GetPen(u16 *x, u16 *y);
+	void GetPen(u16 &x, u16 &y);
 	u8   GetPenX();
 	u8   GetPenY();
 	u8   GetPixelSize();

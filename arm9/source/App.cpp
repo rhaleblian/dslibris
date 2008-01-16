@@ -30,7 +30,7 @@ App::App()
 {
 	ts = NULL;
 	buttons = new Button[MAXBOOKS];
-	
+	browserstart = 0;
 	pages = new page_t[MAXPAGES];
 	pagebuf = new u8[PAGEBUFSIZE];
 	pagecount = 0;
@@ -43,113 +43,64 @@ App::App()
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
 }
 
-int App::main(void)
+App::~App()
+{
+	free(filebuf);
+}
+
+int App::Run(void)
 {
 	char filebuf[BUFSIZE];
+	char msg[128];
 
 	powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
-	defaultExceptionHandler();  /** guru meditation! **/
+	defaultExceptionHandler();  // guru meditation!
+
+	// set up ARM7 interrupts and IPC.
 
 	irqInit();
 	irqEnable(IRQ_VBLANK);
 	irqEnable(IRQ_VCOUNT);
 	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
 
-	// this ought to be the lowest brightness setting.
-	NDSX_SetBrightness_Next();			
+	// go to the lowest brightness setting.
+
+	NDSX_SetBrightness_Next();
 	brightness = 0;
 
-	/** bring up the startup console.
-	    sub bg 0 will be used to print text. **/
-	// TODO don't display console; log to a file.
+	// bring up the startup console.
+	// sub bg 0 will be used to print text.
+
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);
 	vramSetBankC(VRAM_C_SUB_BG);
 	SUB_BG0_CR = BG_MAP_BASE(31);
-	{
-		u32 i;
-		for (i=0;i<255;i++)
-			BG_PALETTE_SUB[i] = RGB15(0,0,0);
-		BG_PALETTE_SUB[255] = RGB15(04,24,04);
-		consoleInitDefault(
-			(u16*)SCREEN_BASE_BLOCK_SUB(31),
-			(u16*)CHAR_BASE_BLOCK_SUB(0), 16);
-	}
-	printf(" Starting console...     ");
-	consoleOK(true);
-	
-	printf(" Mounting filesystem...  ");
+	for (u32 i=0;i<255;i++)
+		BG_PALETTE_SUB[i] = RGB15(31,31,31);
+	BG_PALETTE_SUB[255] = RGB15(0,0,0);
+	consoleInitDefault(
+		(u16*)SCREEN_BASE_BLOCK_SUB(31),
+		(u16*)CHAR_BASE_BLOCK_SUB(0), 16);
+
 	if (!fatInitDefault())
 	{
-		consoleOK(false);
-		spin();
-	} else consoleOK(true);
+		printf("fatal: mounting filesystem failed\n"); 
+		exit(-1);
+	}
 
-	FILE *log = fopen("dslibris.log","wb");
-	fprintf(log, "begin log\n");
-	fclose(log);
+	Log("\ninfo : dslibris starting up\n");
 
-	printf(" Starting typesetter...  ");
 	ts = new Text();
 	if (ts->InitDefault())
 	{
-		consoleOK(false);
-		spin();
-	} else consoleOK(true);
-	swiWaitForVBlank();
-
-	/** assemble library by indexing all
-	    XHTML files in the current directory. **/
-	printf(" Scanning for books...   ");
-	swiWaitForVBlank();
-
-	char filename[64];
-	char dirname[64];
-	strcpy(dirname,".");
-	DIR_ITER *dp = diropen(dirname);
-	if (!dp)
-	{
-		consoleOK(false);
-		spin();
+		Log("fatal: starting typesetter failed\n");
+		printf("fatal: starting typesetter failed\n");
+		exit(-2);
 	}
 
-	while (bookcount < MAXBOOKS)
-	{
-		int rc = dirnext(dp, filename, NULL);
-//		printf("%d %s\n",rc,filename);
-		if(rc) break;
+	// initialize screens.
+	// clockwise rotation for both screens
 
-		char *c;
-		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
-		{
-			Book *book = &(books[bookcount]);
-			book->SetFilename(filename);
-			book->Index(filebuf);
-			bookcount++;
-		}
-	}
-	dirclose(dp);
-	consoleOK(true);
-	swiWaitForVBlank();
-
-	browser_init();
-
-	printf(" Creating XML parser...  ");
-	XML_Parser p = XML_ParserCreate(NULL);
-	if (!p)
-	{
-		consoleOK(false);
-		spin();
-	}
-	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
-	parse_init(&parsedata);
-	consoleOK(true);
-	swiWaitForVBlank();
-
-	/** initialize screens. **/
-
-	/** clockwise rotation for both screens **/
 	s16 s = SIN[-128 & 0x1FF] >> 4;
 	s16 c = COS[-128 & 0x1FF] >> 4;
 
@@ -175,47 +126,95 @@ int App::main(void)
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
 
-	browser_init();
 	screen_splash();
-	
-	/** restore the last book and page we were reading. **/
-	/** TODO bookmark character, not page **/
 
-	bookcurrent = 127;
-	if(prefs_read(p) && bookcurrent < 127)
+	// assemble library by indexing all XHTML files
+	// in the application directory.
+
+	char dirname[32];
+	strcpy(dirname,BOOKDIR);
+
+	sprintf(msg,"info : scanning %s for books\n",dirname);
+	Log(msg);
+
+	DIR_ITER *dp = diropen(dirname);
+	if (!dp)
 	{
-		ts->SetScreen(screen1);
-		ts->SetPen(MARGINLEFT+40,PAGE_HEIGHT/2);
-		bool invert = ts->GetInvert();
-		ts->SetInvert(true);
-		ts->PrintString("[paginating...]");
-		ts->SetInvert(invert);
+		ts->PrintString("fatal: book scan failed\n");
+		Log("fatal: book scan failed\n");
 		swiWaitForVBlank();
+		exit(-3);
+	}
 
-		pagecount = 0;
-		pagecurrent = 0;
-		page_init(&(pages[pagecurrent]));
-		ts->ClearCache();
-		if(!books[bookcurrent].Parse(filebuf))
+	char filename[64];
+	while (bookcount < MAXBOOKS)
+	{
+		int rc = dirnext(dp, filename, NULL);
+		if(rc) break;
+
+		sprintf(msg,"info : %s\n", filename);
+		Log(msg);
+
+		char *c;
+		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
+		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
 		{
-			pagecurrent = books[bookcurrent].GetPosition();
-			page_draw(&(pages[pagecurrent]));
-			mode = APP_MODE_BOOK;
+			Book *book = &(books[bookcount]);
+			book->SetFolderName(dirname);
+			book->SetFileName(filename);
+			
+			sprintf(msg,"info : indexing %s (in %s)\n",
+				book->GetFileName(),
+				book->GetFolderName());
+			Log(msg);
+
+			u8 rc = book->Index(filebuf);
+			if(rc == 255) {
+				ts->PrintString("cant open");
+				exit(-4);
+			}
+			if(rc == 254) {
+				ts->PrintString("cant make parser");
+				exit(-8);
+			}
+			bookcount++;
 		}
-		else
-		{
-			mode = APP_MODE_BROWSER;
-		}
-	} else {
-		bookcurrent = 0;
-		mode = APP_MODE_BROWSER;
+	}
+	dirclose(dp);
+	swiWaitForVBlank();
+
+	browser_init();
+	mode = APP_MODE_BROWSER;
+	bookcurrent = 127;
+
+	// restore the last book and page we were reading.
+	// TODO bookmark character, not page
+
+	XML_Parser p = XML_ParserCreate(NULL);
+	if (!p)
+	{
+		ts->PrintString("fatal: parser creation failed\n");
+		Log("fatal: parser creation failed\n");
+		exit(-6);
+	}
+	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
+	parse_init(&parsedata);
+	prefs_read(p);
+
+
+	if(bookcurrent < 127)
+	{
+		if(!OpenBook()) mode = APP_MODE_BOOK;
 	}
 	
 	if(mode == APP_MODE_BROWSER)
 	{
+		bookcurrent = 0;
 		browser_draw();
 	}
 	swiWaitForVBlank();
+
+	// start event loop.
 
 	touchPosition touch;
 	bool poll = true;
@@ -229,19 +228,32 @@ int App::main(void)
 			brightness++;
 			brightness = brightness > 3 ? 0 : brightness;
 		}
-
+/*
 		if (keysDown() & KEY_TOUCH)
 		{
 			touch = touchReadXY();
 			
 			if (mode == APP_MODE_BROWSER)
 			{
-				u8 hit = (224-touch.px) / 32;
-				if (hit < 7)
-				{
-					bookcurrent = hit;
+				if(touch.px < 16) {
+					browser_nextpage();
 					browser_draw();
-					OpenBook();
+				} else if(touch.px > 240) {
+					browser_prevpage();
+					browser_draw();
+				} else {
+					for(u8 i=browserstart;
+						i<bookcount && i<browserstart+7;
+						i++) {
+						if (buttons[i].EnclosesPoint(touch.px, touch.py))
+						{
+							bookcurrent = i;
+							browser_redraw();
+							swiWaitForVBlank();
+							if(!OpenBook()) mode = APP_MODE_BOOK;
+							break;
+						}
+					}	
 				}
 			}
 			else
@@ -257,13 +269,16 @@ int App::main(void)
 				page_draw(&pages[pagecurrent]);
 			}
 		}
-
+*/
 		if (mode == APP_MODE_BROWSER)
 		{
 			if (keysDown() & KEY_A)
 			{
 				// parse the selected book.
 
+				if(!OpenBook()) mode = APP_MODE_BOOK;
+				else browser_draw(); 
+			/*	
 				pagecount = 0;
 				pagecurrent = 0;
 				page_t *page = &(pages[pagecurrent]);
@@ -271,10 +286,10 @@ int App::main(void)
 
 				screen_clear(screen1,0,0,0);
 				ts->SetScreen(screen1);
-				ts->SetPen(MARGINLEFT+40,PAGE_HEIGHT/2);
+				ts->SetPen(PAGE_WIDTH/2-ts->GetStringWidth("[opening...]")/2,PAGE_HEIGHT/2);
 				bool invert = ts->GetInvert();
 				ts->SetInvert(true);
-				ts->PrintString("[paginating...]");
+				ts->PrintString("[opening...]");
 				ts->SetInvert(invert);
 				ts->ClearCache();
 				if (!books[bookcurrent].Parse(filebuf))
@@ -287,9 +302,9 @@ int App::main(void)
 				}
 				else
 				{
-					screen_splash();
 					browser_draw();
 				}
+*/
 			}
 
 			if (keysDown() & KEY_B)
@@ -302,8 +317,13 @@ int App::main(void)
 			{
 				if (bookcurrent < bookcount-1)
 				{
-					bookcurrent++;
-					browser_redraw();
+					if (bookcurrent == browserstart+6) {
+						browser_nextpage();
+						browser_draw();
+					} else {
+						bookcurrent++;
+						browser_redraw();
+					}
 				}
 			}
 
@@ -311,8 +331,13 @@ int App::main(void)
 			{
 				if (bookcurrent > 0)
 				{
-					bookcurrent--;
-					browser_redraw();
+					if(bookcurrent == browserstart) {
+						browser_prevpage();
+						browser_draw();
+					} else {
+						bookcurrent--;
+						browser_redraw();
+					}				
 				}
 			}
 
@@ -371,61 +396,29 @@ int App::main(void)
 
 u8 App::OpenBook(void)
 {
+	char msg[16];
+	strcpy(msg,"[opening...]");
+	ts->SetScreen(screen1);
+	screen_clear(screen1,0,0,0);	
+	//ts->SetPen((PAGE_WIDTH/2) - (ts->GetStringWidth(msg)/2),PAGE_HEIGHT/2);
+	ts->SetPen(MARGINLEFT,PAGE_HEIGHT/2);
+	bool invert = ts->GetInvert();
+	ts->SetInvert(true);
+	ts->PrintString(msg);
+	ts->SetInvert(invert);
+	swiWaitForVBlank();
 	pagecount = 0;
 	pagecurrent = 0;
 	page_init(&pages[pagecurrent]);
-
-	screen_clear(screen1,0,0,0);
-	ts->SetScreen(screen1);
-	ts->SetPen(MARGINLEFT+40,PAGE_HEIGHT/2);
-	bool invert = ts->GetInvert();
-	ts->SetInvert(true);
-	ts->PrintString("[paginating...]");
-	ts->SetInvert(invert);
 	ts->ClearCache();
 	if (!books[bookcurrent].Parse(filebuf))
 	{
 		pagecurrent = books[bookcurrent].GetPosition();
 		page_draw(&(pages[pagecurrent]));
 		prefs_write();
-		mode = APP_MODE_BOOK;
+		return 0;		
 	}
-	return 0;
-}
-
-// TODO - consider using exit() instead, as long as
-// we get to flush all pending output so we don't miss diags.
-
-inline void App::spin(void)
-{
-	while (true) swiWaitForVBlank();
-}
-
-// i don't suspect this works.
-void App::swiWaitForKeys(void) 
-{
-  asm("mov r0, #1");
-  asm("mov r1, #4096");
-  asm("swi #262144");
-}
-
-void App::consoleOK(bool ok)
-{
-	printf("[");
-
-	if(ok)
-	{
-		BG_PALETTE_SUB[255] = RGB15(15,31,15);
-		printf(" OK ");
-	}
-	else
-	{
-		BG_PALETTE_SUB[255] = RGB15(31,15,15);
-		printf("FAIL");
-	}
-			
-	BG_PALETTE_SUB[255] = RGB15(24,24,24);
-	printf("]\n");
+	else return 255;
 }
 
 void App::browser_init(void)
@@ -433,34 +426,61 @@ void App::browser_init(void)
 	u8 i;
 	for (i=0;i<bookcount;i++)
 	{
-//		buttons[i] = new Button();
 		buttons[i].Init(ts);
-		buttons[i].Move(0,((i+1)*32)-16);
+		buttons[i].Move(0,((i%7+1)*32)-16);
 		if (strlen(books[i].GetTitle()))
 			buttons[i].Label(books[i].GetTitle());
 		else
-			buttons[i].Label(books[i].GetFilename());
-	}	
+			buttons[i].Label(books[i].GetFileName());
+	}
+}
+
+void App::browser_nextpage()
+{
+      if(browserstart+7 < bookcount)
+      { 
+              browserstart += 7;
+              bookcurrent = browserstart;
+      }
+}
+
+void App::browser_prevpage()
+{
+      if(browserstart-7 >= 0)
+      {
+              browserstart -= 7;
+              bookcurrent = browserstart+6;
+      }
 }
 
 void App::browser_draw(void)
 {
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
+	Button buttonprev, buttonnext;
 
 	ts->SetScreen(screen1);
-	for(int i=0;i < (256 * 16);i++) {
-		screen1[i] = RGB15(0,0,0)|BIT(15);
-		screen1[i+256*(256-16)] = RGB15(0,0,0)|BIT(15);
-	}
+	screen_clear(screen1,0,0,0);
 	ts->SetPixelSize(12);
-	for (int i=0;i<bookcount;i++)
+	for (int i=browserstart;(i<bookcount) && (i<browserstart+7);i++)
 	{
 		if (i==bookcurrent)
 			buttons[i].Draw(screen1,true);
 		else
 			buttons[i].Draw(screen1,false);
 	}
+
+/*	buttonprev.Init(ts);
+	buttonprev.Move(0,0);
+	buttonprev.Resize(192,16);
+	buttonprev.Label("^");
+	buttonnext.Init(ts);
+	buttonnext.Move(0,240);
+	buttonnext.Resize(192,16);
+	buttonnext.Label("v");
+	buttonprev.Draw(screen1,false);
+	buttonnext.Draw(screen1,false);
+*/
 
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
@@ -469,9 +489,9 @@ void App::browser_draw(void)
 void App::browser_redraw()
 {
 	buttons[bookcurrent].Draw(screen1,true);
-	if(bookcurrent >= 1)
+	if(bookcurrent > browserstart)
 		buttons[bookcurrent-1].Draw(screen1,false);
-	if(bookcurrent < bookcount-1)
+	if(bookcurrent - browserstart < 6)
 		buttons[bookcurrent+1].Draw(screen1,false);
 }
 
@@ -515,14 +535,24 @@ u8 App::page_getjustifyspacing(page_t *page, u16 i)
 
 void App::parse_printerror(XML_Parser p)
 {
-	char msg[128];
-	sprintf(msg,"expat: [%s]\n",XML_ErrorString(XML_GetErrorCode(p)));
+	u16 *screen = ts->GetScreen();
+	u16 x,y;
+	ts->GetPen(x,y);
+
+	char msg[256];
+	sprintf(msg,"line %d, col %d: %s\n",
+		(int)XML_GetCurrentLineNumber(p),
+		(int)XML_GetCurrentColumnNumber(p),
+		XML_ErrorString(XML_GetErrorCode(p)));
+	Log(msg);
+
+	ts->SetScreen(screen0);
+	ts->InitPen();
+	ts->ClearScreen();
 	ts->PrintString(msg);
-	sprintf(msg,"expat: [%d:%d] : %d\n",
-	        (int)XML_GetCurrentLineNumber(p),
-	        (int)XML_GetCurrentColumnNumber(p),
-	        (int)XML_GetCurrentByteIndex(p));
-	ts->PrintString(msg);
+
+	ts->SetScreen(screen);
+	ts->SetPen(x,y);
 }
 
 void App::parse_init(parsedata_t *data)
@@ -557,26 +587,26 @@ bool App::parse_in(parsedata_t *data, context_t context)
 
 bool App::parse_pagefeed(parsedata_t *data, page_t *page)
 {
-	int pagedone;
+	// called when we are at the end of one of the facing pages.
 
-	/** we are at the end of one of the facing pages. **/
+	bool pagedone = false;
+	
 	if (fb == screen1)
 	{
+		// we left the right page, save chars into this page.
 
-		/** we left the right page, save chars into this page. **/
 		if (!page->buf)
 		{
 			page->buf = new u8[page->length];
 			if (!page->buf)
 			{
 				ts->PrintString("[out of memory]\n");
-				spin();
+				exit(-7);
 			}
 		}
 		memcpy(page->buf,pagebuf,page->length * sizeof(u8));
 		fb = screen0;
 		pagedone = true;
-
 	}
 	else
 	{
@@ -603,6 +633,8 @@ void App::page_draw(page_t *page)
 		u16 c = page->buf[i];
 		if (c == '\n')
 		{
+			// line break, page breaking if necessary
+
 			i++;
 
 			if (ts->GetPenY() + ts->GetHeight() + LINESPACING 
@@ -627,6 +659,7 @@ void App::page_draw(page_t *page)
 	}
 
 	// page number
+
 	char msg[8];
 	strcpy(msg,"");
 	if(pagecurrent == 0) 
@@ -644,7 +677,7 @@ void App::page_draw(page_t *page)
 
 bool App::prefs_read(XML_Parser p)
 {
-	FILE *fp = fopen("dslibris.xml","r");
+	FILE *fp = fopen(PREFSPATH,"r");
 	if (!fp) return false;
 
 	XML_ParserReset(p, NULL);
@@ -663,18 +696,18 @@ bool App::prefs_read(XML_Parser p)
 
 bool App::prefs_write(void)
 {
-	FILE* fp = fopen("dslibris.xml","w+");
+	FILE* fp = fopen(PREFSPATH,"w+");
 	if(!fp) return false;
 	
 	fprintf(fp, "<dslibris>\n");
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\">\n",
 		brightness, ts->GetInvert());
 	fprintf(fp, "\t<font size=\"%d\" />\n", ts->GetPixelSize());
-	fprintf(fp, "\t<book file=\"%s\" />\n", books[bookcurrent].GetFilename());
+	fprintf(fp, "\t<book file=\"%s\" />\n", books[bookcurrent].GetFileName());
 	for(u8 i=0;i<bookcount; i++)
 	{
 		fprintf(fp, "\t<bookmark file=\"%s\" page=\"%d\" />\n",
-	        books[i].GetFilename(), books[i].GetPosition()+1);
+	        books[i].GetFileName(), books[i].GetPosition()+1);
 	}
 	fprintf(fp, "</dslibris>\n");
 	fclose(fp);
@@ -709,18 +742,22 @@ void App::screen_splash(void)
 	ts->PrintString(APP_VERSION);
 	ts->PrintNewLine();
 	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
-	char msg[16];
-	sprintf(msg,"%d books\n", bookcount);
-	ts->PrintString(msg);
-/*
-	ts->SetScreen(screen1);
-	screen_clear(screen1,0,0,0);
-	ts->SetPen(MARGINLEFT+100, MARGINTOP+12);
-	ts->SetPixelSize(20);
-	ts->SetInvert(true);
-	ts->PrintString("library");
-*/
+
 	ts->SetPixelSize(size);
 	ts->SetInvert(invert);
+}
+
+void App::Log(const char *msg)
+{
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,msg);
+	fclose(logfile);
+}
+
+void App::Log(std::string msg)
+{
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,msg.c_str());
+	fclose(logfile);
 }
 

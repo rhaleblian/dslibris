@@ -3,12 +3,13 @@ Herein lie dslibris and supporting libraries. The method below assumes you are u
 
 BUILDING
 
-Fedora, Ubuntu, OS X, and Windows XP have all been used as build platforms. The primary build platform is Windows XP.
+Fedora, Ubuntu, OS X, and Windows XP have all been used as build platforms. The primary build platform is Fedora.
 
 Prerequisites:
 
 * devkitPro
 * If on Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
+* DEVKITPRO and DEVKITARM set in your environment.
 
 To build:
 

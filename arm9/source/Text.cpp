@@ -1,18 +1,25 @@
 #include <nds.h>
 #include <fat.h>
 #include "Text.h"
+#include "App.h"
 #include "main.h"
 
 Text::Text()
 {
 	cachenext = 0;
-	fontfilename = FONTFILENAME;
+	fontfilename = FONTFILEPATH;
 	invert = false;
 	justify = false;
 	pixelsize = PIXELSIZE;
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
+}
+
+Text::Text(App *parent)
+{
+	app = parent;
+	Text();
 }
 
 int Text::InitDefault(void) {
@@ -141,6 +148,11 @@ void Text::GetPen(u16 *x, u16 *y) {
 void Text::SetPen(u16 x, u16 y) {
 	pen.x = x;
 	pen.y = y;
+}
+
+void Text::GetPen(u16 &x, u16 &y) {
+	x = pen.x;
+	y = pen.y;
 }
 
 void Text::SetInvert(bool state) {

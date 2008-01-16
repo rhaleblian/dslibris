@@ -23,7 +23,7 @@ bool linebegan = false;
 int main(void)
 {
 	app = new App();
-	return app->main();
+	return app->Run();
 }
 
 bool iswhitespace(u8 c)
@@ -79,7 +79,7 @@ void prefs_start_hndl(	void *userdata,
 		}
 		for(i=0;i<app->bookcount;i++)
 		{
-			if(!stricmp(data[i].GetFilename(),filename))
+			if(!stricmp(data[i].GetFileName(),filename))
 			{
 				if(position) data[i].SetPosition(position-1);
 				if(!stricmp(name,"book")) app->bookcurrent = i;
@@ -135,14 +135,21 @@ void default_hndl(void *data, const XML_Char *s, int len)
 	}
 }  /* End default_hndl */
 
+void layoutNewLine()
+{
+	
+}
+
 void start_hndl(void *data, const char *el, const char **attr)
 {
 	parsedata_t *pdata = (parsedata_t*)data;
+	page_t *page = &(app->pages[app->pagecurrent]);
 	if (!stricmp(el,"html")) app->parse_push(pdata,HTML);
-	if (!stricmp(el,"body")) app->parse_push(pdata,BODY);
-	if (!stricmp(el,"title")) app->parse_push(pdata,TITLE);
-	if (!stricmp(el,"head")) app->parse_push(pdata,HEAD);
-	if (!stricmp(el,"pre")) app->parse_push(pdata,PRE);
+	else if (!stricmp(el,"body")) app->parse_push(pdata,BODY);
+	else if (!stricmp(el,"title")) app->parse_push(pdata,TITLE);
+	else if (!stricmp(el,"head")) app->parse_push(pdata,HEAD);
+	else if (!stricmp(el,"pre")) app->parse_push(pdata,PRE);
+
 }  /* End of start_hndl */
 
 void title_hndl(void *userdata, const char *txt, int txtlen)

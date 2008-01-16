@@ -10,7 +10,7 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
 export MEDIA		:=	R4tf
-export MEDIAROOT	:=	/Volumes/KINGSTON/
+export MEDIAROOT	:=	/media/SANDISK/
 export REMOTEHOST	:=	eris
 
 #-------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ clean:
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIA).nds
 
 # run target with desmume
-test: $(TARGET).nds
+test-tmp: $(TARGET).nds
 	mkdir -p /tmp/$(TARGET)
 	cp $(TARGET).nds /tmp/$(TARGET)
 	cp $(TARGET).xml /tmp/$(TARGET)
@@ -57,10 +57,17 @@ test: $(TARGET).nds
 	cp *.xht /tmp/$(TARGET)
 	(cd /tmp/$(TARGET); desmume $(TARGET).nds)
 
+test: $(TARGET).nds
+	cp $(TARGET).nds ../fat16
+	sync
+	desmume --cflash=../fat16.image dslibris.nds
+
 # debug target with insight and desmume under linux
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/dslibris.arm9.elf &
-	desmume --arm9gdb=20000 $(TARGET).nds
+	cp $(TARGET).nds ../fat16
+	sync
+	desmume --cflash=../fat16.image --arm9gdb=20000 $(TARGET).nds
 
 # make DLDI patched target
 $(TARGET).$(MEDIA).nds: $(TARGET).nds
@@ -72,19 +79,33 @@ scp: $(TARGET).$(MEDIA).nds
 	scp $(TARGET).$(MEDIA).nds $(REMOTEHOST):
 
 # copy target over network to microSD mounted under windows
-smb: $(TARGET).$(MEDIA).nds
+install-smb: $(TARGET).$(MEDIA).nds
 	smbclient \\\\asherah\\e fnord... -c "cd .; put dslibris.$(MEDIA).nds"
 
 # copy target to microSD mounted under Linux
-usb: $(TARGET).$(MEDIA).nds
+install: $(TARGET).nds
+	cp $(TARGET).nds $(MEDIAROOT)
+	sync
+#
+# installation including DLDI patching.
+install-dldi: $(TARGET).$(MEDIA).nds
 	cp $(TARGET).$(MEDIA).nds $(MEDIAROOT)
 	sync
 
 # make an archive to release on Sourceforge
 dist: $(TARGET).nds
-	zip -r dslibris.zip INSTALL.txt $(TARGET).nds $(TARGET).xht $(TARGET).ttf utf8.xht
+	- mkdir dist
+	cp INSTALL.txt $(TARGET).nds data/$(TARGET).xht dist
+	cp data/Cyberbit.ttf dist/dslibris.ttf
+	(cd dist; zip -r dslibris.zip *)
 
 # transfer a release zip for posting.
 upload: dist
 	ftp upload.sourceforge.net
+
+mount:
+	sudo mount -t msdos -o loop -o uid=rhaleblian ../fat16.image ../fat16
+
+umount:
+	sudo umount disk
 

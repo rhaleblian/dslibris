@@ -2,6 +2,13 @@
 #include <stdio.h>
 #include "Button.h"
 
+Button::Button() {
+}
+
+Button::Button(Text *typesetter) {
+	Init(typesetter);
+}
+
 void Button::Init(Text *typesetter) {
 	ts = typesetter;
 	origin.x = 0;
@@ -18,6 +25,11 @@ void Button::Label(const char *labeltext) {
 void Button::Move(u16 x, u16 y) {
 	origin.x = x;
 	origin.y = y;
+}
+
+void Button::Resize(u16 x, u16 y) {
+	extent.x = x;
+	extent.y = y;
 }
 
 void Button::Draw(u16 *fb, bool highlight) {
@@ -57,3 +69,9 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->SetPen(x,y);
 	ts->SetInvert(invert);
 }
+bool Button::EnclosesPoint(u16 x, u16 y)
+{
+	if(x > origin.x && y > origin.y && x < origin.x + extent.x && y < origin.y + extent.y) return true;
+	return false;
+}
+

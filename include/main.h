@@ -15,12 +15,14 @@
 #define BUFSIZE 1024
 #define PAGEBUFSIZE 2048
 #define MAXPAGES 2048
-#define MAXBOOKS 7
+#define MAXBOOKS 32
 #define SPLASH_LEFT (MARGINLEFT+28)
 #define SPLASH_TOP (MARGINTOP+96)
 
-//#define BOOKPATH "."
-//#define SUPPORTPATH "."
+#define BOOKDIR "."
+#define PREFSPATH "dslibris.xml"
+#define FONTFILEPATH "dslibris.ttf"
+#define LOGFILEPATH "dslibris.log"
 
 /** watch out for struct alignment here? **/
 typedef struct book_s {

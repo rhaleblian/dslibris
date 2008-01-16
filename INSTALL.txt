@@ -10,12 +10,11 @@ INSTALLATION
 	dlditool r4tf.dldi dslibris.nds
 
 2. copy all files and folders in this distribution .zip
-   to a directory of your DS media. Preserve any folder hierarchy.
+   to the root folder of your DS media.
 
-3. Put any XHTML you have into the same folder as dslibris.nds.
+3. Put any XHTML you have into the root folder as well.
+   The filenames should have an .xht or .xhtml extension.
 
 4. run dslibris.nds on the DS.
 
-
--ray
 
