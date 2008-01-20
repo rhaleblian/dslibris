@@ -93,11 +93,13 @@ install-dldi: $(TARGET).$(MEDIA).nds
 	sync
 
 # make an archive to release on Sourceforge
-dist: $(TARGET).nds
+dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	- mkdir dist
 	cp INSTALL.txt $(TARGET).nds data/$(TARGET).xht dist
 	cp data/Cyberbit.ttf dist/dslibris.ttf
 	(cd dist; zip -r dslibris.zip *)
+
+dist: dist/$(TARGET).zip
 
 # transfer a release zip for posting.
 upload: dist

@@ -1,27 +1,26 @@
-#include <fat.h>
-#include <sys/dir.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-#include <sys/stat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/dir.h>
+#include <sys/stat.h>
 
 #include <expat.h>
 
-#include "types.h"
+#include <fat.h>
+#include <dswifi9.h>
+#include <nds/registers_alt.h>
+#include <nds/reload.h>
+
 #include "ndsx_brightness.h"
+#include "types.h"
+#include "main.h"
+#include "parse.h"
+#include "wifi.h"
 #include "App.h"
 #include "Book.h"
 #include "Button.h"
 #include "Text.h"
-#include "main.h"
-#include "parse.h"
-
-#include <dswifi9.h>
-#include "wifi.h"
 
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
@@ -70,33 +69,18 @@ int App::Run(void)
 
 	// bring up the startup console.
 	// sub bg 0 will be used to print text.
-
+	/*
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);
 	vramSetBankC(VRAM_C_SUB_BG);
 	SUB_BG0_CR = BG_MAP_BASE(31);
 	for (u32 i=0;i<255;i++)
-		BG_PALETTE_SUB[i] = RGB15(31,31,31);
-	BG_PALETTE_SUB[255] = RGB15(0,0,0);
+		BG_PALETTE_SUB[i] = RGB15(0,0,0);
+	BG_PALETTE_SUB[255] = RGB15(15,15,15);
 	consoleInitDefault(
 		(u16*)SCREEN_BASE_BLOCK_SUB(31),
 		(u16*)CHAR_BASE_BLOCK_SUB(0), 16);
-
-	if (!fatInitDefault())
-	{
-		printf("fatal: mounting filesystem failed\n"); 
-		exit(-1);
-	}
-
-	Log("\ninfo : dslibris starting up\n");
-
-	ts = new Text();
-	if (ts->InitDefault())
-	{
-		Log("fatal: starting typesetter failed\n");
-		printf("fatal: starting typesetter failed\n");
-		exit(-2);
-	}
+	*/
 
 	// initialize screens.
 	// clockwise rotation for both screens
@@ -125,6 +109,22 @@ int App::Run(void)
 	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
+
+	if (!fatInitDefault())
+	{
+		printf("fatal: mounting filesystem failed\n"); 
+		exit(-1);
+	}
+
+	Log("\ninfo : dslibris starting up\n");
+
+	ts = new Text();
+	if (ts->InitDefault())
+	{
+		Log("fatal: starting typesetter failed\n");
+		printf("fatal: starting typesetter failed\n");
+		exit(-2);
+	}
 
 	screen_splash();
 
@@ -386,7 +386,6 @@ int App::Run(void)
 			}
 
 		}
-//		swiWaitForKeys();
 		swiWaitForVBlank();
 	}
 
@@ -491,7 +490,7 @@ void App::browser_redraw()
 	buttons[bookcurrent].Draw(screen1,true);
 	if(bookcurrent > browserstart)
 		buttons[bookcurrent-1].Draw(screen1,false);
-	if(bookcurrent - browserstart < 6)
+	if(bookcurrent < bookcount-1 && bookcurrent - browserstart < 6)
 		buttons[bookcurrent+1].Draw(screen1,false);
 }
 
