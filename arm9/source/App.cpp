@@ -726,9 +726,9 @@ void App::screen_splash(void)
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 
-	ts->SetInvert(false);
+	ts->SetInvert(true);
 	ts->SetScreen(screen0);
-	screen_clear(screen0,31,31,31);
+	screen_clear(screen0,0,0,0);
 	ts->SetPen(SPLASH_LEFT,SPLASH_TOP);
 	ts->SetPixelSize(36);
 	ts->PrintString("dslibris");

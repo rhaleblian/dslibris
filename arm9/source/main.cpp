@@ -58,6 +58,10 @@ void prefs_start_hndl(	void *userdata,
 				app->brightness = atoi(attr[i+1]);
 				app->brightness = app->brightness > 3 ? 3 : app->brightness;	
 			}
+			else if(!strcmp(attr[i],"invert"))
+			{
+				app->ts->SetInvert(atoi(attr[i+1]));
+			}
 		}
 	}
 	else if (!stricmp(name,"font"))
@@ -143,7 +147,7 @@ void layoutNewLine()
 void start_hndl(void *data, const char *el, const char **attr)
 {
 	parsedata_t *pdata = (parsedata_t*)data;
-	page_t *page = &(app->pages[app->pagecurrent]);
+	//page_t *page = &(app->pages[app->pagecurrent]);
 	if (!stricmp(el,"html")) app->parse_push(pdata,HTML);
 	else if (!stricmp(el,"body")) app->parse_push(pdata,BODY);
 	else if (!stricmp(el,"title")) app->parse_push(pdata,TITLE);
@@ -178,6 +182,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 	parsedata_t *pdata = (parsedata_t *)data;
 	if (!app->parse_in(pdata,BODY)) return;
+	if(app->pagecount == MAXPAGES) return;
 
 	page_t *page = &(app->pages[app->pagecurrent]);
 	if (page->length == 0)
@@ -253,6 +258,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 						app->page_init(page);
 						app->pagecurrent++;
 						app->pagecount++;
+						if(app->pagecount == MAXPAGES) return;
 					}
 				}
 				linebegan = false;
@@ -321,6 +327,7 @@ void end_hndl(void *data, const char *el)
 					app->page_init(page);
 					app->pagecurrent++;
 					app->pagecount++;
+					if(app->pagecount == MAXPAGES) return;
 				}
 				else
 				{

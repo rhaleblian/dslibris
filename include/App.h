@@ -9,7 +9,7 @@
 #include "main.h"
 #include "parse.h"
 
-#define APP_VERSION "1.0.3"
+#define APP_VERSION "1.0.4c"
 #define APP_URL "http://rhaleblian.wordpress.com"
 #define APP_LOGFILE "dslibris.log"
 #define APP_MODE_BOOK 0
