@@ -224,7 +224,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 				/** set type until the end of the next word.
 				    account for UTF-8 characters when advancing. **/
-				u16 code;
+				u32 code;
 				if (txt[j] > 127)
 					bytes = app->ts->GetCharCode((char*)&(txt[j]),&code);
 				else

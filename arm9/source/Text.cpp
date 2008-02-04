@@ -8,6 +8,7 @@ Text::Text()
 {
 	cachenext = 0;
 	fontfilename = FONTFILEPATH;
+	ftc = false;
 	invert = false;
 	justify = false;
 	pixelsize = PIXELSIZE;
@@ -22,6 +23,49 @@ Text::Text(App *parent)
 	Text();
 }
 
+static FT_Error
+TextFaceRequester(    FTC_FaceID   face_id,
+                      FT_Library   library,
+                      FT_Pointer   request_data,
+                      FT_Face     *aface )
+{
+	TextFace face = (TextFace) face_id;   // simple typecase
+	return FT_New_Face( library, face->file_path, face->face_index, aface );
+}
+
+int Text::InitWithCacheManager(void) {
+	if(error = FT_Init_FreeType(&library)) return error;
+
+	FTC_Manager_New(library,0,0,0,
+		&TextFaceRequester,NULL,&cache.manager);
+	FTC_ImageCache_New(cache.manager,&cache.image);
+	FTC_SBitCache_New(cache.manager,&cache.sbit);
+	FTC_CMapCache_New(cache.manager,&cache.cmap);
+
+	face_id.file_path = "dslibris.ttf";
+	face_id.face_index = 0;
+	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &face);
+	if(error) return error;
+	FT_Select_Charmap(face,FT_ENCODING_UNICODE);
+	charmap_index = FT_Get_Charmap_Index(face->charmap);
+/*
+	charmap_index = 0;
+	for(int i=0; i<face->num_charmaps;i++)
+	{
+		if((face->charmaps)[i]->encoding == FT_ENCODING_UNICODE)
+		{
+			charmap_index = i;
+		}
+	}
+*/
+	imagetype.face_id = (FTC_FaceID)&face_id;
+	imagetype.height = pixelsize;
+	imagetype.width = pixelsize;
+	ftc = true;
+
+	return 0;
+}
+
 int Text::InitDefault(void) {
 	if (FT_Init_FreeType(&library)) return 1;
 	if (FT_New_Face(library, fontfilename.c_str(), 0, &face)) return 2;
@@ -30,10 +74,11 @@ int Text::InitDefault(void) {
 	screen = screenleft;
 	ClearCache();
 	InitPen();
+	ftc = false;
 	return(0);
 }
 
-int Text::CacheGlyph(u16 ucs)
+int Text::CacheGlyph(u32 ucs)
 {
 	// Cache glyph at ucs if there's space.
 	// Does not check if this is a duplicate entry.
@@ -58,8 +103,25 @@ int Text::CacheGlyph(u16 ucs)
 	return cachenext-1;
 }
 
-FT_GlyphSlot Text::GetGlyph(u16 ucs, int flags)
+FT_UInt Text::GetGlyphIndex(u32 ucs)
 {
+	if(!ftc) return ucs;
+	return FTC_CMapCache_Lookup(cache.cmap,(FTC_FaceID)&face_id,
+		charmap_index,ucs);	
+}
+
+int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit)
+{
+	imagetype.flags = FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL;
+	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
+		GetGlyphIndex(ucs),sbit,NULL);
+	if(error) return error;
+	return 0;
+}
+
+FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags)
+{
+	if(ftc) return NULL;
 	int i;
 	for(i=0;i<cachenext;i++)
 	{
@@ -102,7 +164,7 @@ u8 Text::GetStringWidth(const char *txt)
 	const char *c;
 	for(c = txt; c != NULL; c++)
 	{
-		u16 ucs;
+		u32 ucs;
 		GetCharCode(c, &ucs);
 		width += GetAdvance(ucs);
 	}
@@ -110,7 +172,7 @@ u8 Text::GetStringWidth(const char *txt)
 }	
 
 
-u8 Text::GetCharCode(const char *utf8, u16 *ucs) {
+u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 	// given a UTF-8 encoding, fill in the Unicode/UCS code point.
 	// returns the bytelength of the encoding, for advancing
 	// to the next character.
@@ -183,6 +245,13 @@ u16* Text::GetScreen()
 
 void Text::SetPixelSize(u8 size)
 {
+	if(ftc) {
+		imagetype.height = size;
+		imagetype.width = size;
+		pixelsize = size;
+		return;
+	}
+
 	if (!size) {
 		FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
 		pixelsize = PIXELSIZE;
@@ -198,31 +267,59 @@ void Text::SetScreen(u16 *inscreen)
 	screen = inscreen;
 }
 
-u8 Text::GetAdvance(u16 ucs) {
-	// Caches this glyph if possible.
-	return GetGlyph(ucs, FT_LOAD_DEFAULT)->advance.x >> 6;
+u8 Text::GetAdvance(u32 ucs) {
+	if(!ftc)
+		// Caches this glyph if possible.
+		return GetGlyph(ucs, FT_LOAD_DEFAULT)->advance.x >> 6;
+
+	imagetype.flags = FT_LOAD_DEFAULT;
+	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
+		GetGlyphIndex(ucs),&sbit,NULL);
+	return sbit->xadvance;
 }
 
 void Text::InitPen(void) {
 	pen.x = MARGINLEFT;
-	pen.y = MARGINTOP + (face->size->metrics.height >> 6);
+	pen.y = MARGINTOP + GetHeight();
 }
 
-void Text::PrintChar(u16 ucs) {
+void Text::PrintChar(u32 ucs) {
 	// Draw a character for the given UCS codepoint,
 	// into the current screen buffer at the current pen position.
 
-	// Consult the cache for glyph data and cache it on a miss
-	// if space is available.
-	FT_GlyphSlot glyph = GetGlyph(ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
+	u16 bx, by, width, height = 0;
+	FT_Byte *buffer = NULL;
+	FT_UInt advance = 0;
 
-	FT_Bitmap bitmap = glyph->bitmap;
-	u16 bx = glyph->bitmap_left;
-	u16 by = glyph->bitmap_top;
+	if(ftc)
+	{
+		error = GetGlyphBitmap(ucs,&sbit);
+		buffer = sbit->buffer;
+		bx = sbit->left;
+		by = sbit->top;
+		height = sbit->height;
+		width = sbit->width;
+		advance = sbit->xadvance;
+	}
+	else
+	{
+		// Consult the cache for glyph data and cache it on a miss
+		// if space is available.
+		FT_GlyphSlot glyph = GetGlyph(ucs, 
+			FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
+		FT_Bitmap bitmap = glyph->bitmap;
+		bx = glyph->bitmap_left;
+		by = glyph->bitmap_top;
+		width = bitmap.width;
+		height = bitmap.rows;
+		advance = glyph->advance.x >> 6;
+		buffer = bitmap.buffer;
+	}
+
 	u16 gx, gy;
-	for (gy=0; gy<bitmap.rows; gy++) {
-		for (gx=0; gx<bitmap.width; gx++) {
-			u16 a = bitmap.buffer[gy*bitmap.width+gx];
+	for (gy=0; gy<height; gy++) {
+		for (gx=0; gx<width; gx++) {
+			u16 a = buffer[gy*width+gx];
 			if (a) {
 				u16 sx = (pen.x+gx+bx);
 				u16 sy = (pen.y+gy-by);
@@ -233,12 +330,12 @@ void Text::PrintChar(u16 ucs) {
 			}
 		}
 	}
-	pen.x += glyph->advance.x >> 6;
+	pen.x += advance;
 }
 
 bool Text::PrintNewLine(void) {
 	pen.x = MARGINLEFT;
-	int height = face->size->metrics.height >> 6;
+	int height = GetHeight();
 	int y = pen.y + height + LINESPACING;
 	if (y > (PAGE_HEIGHT - MARGINBOTTOM)) {
 		if (screen == screenleft)
@@ -246,7 +343,7 @@ bool Text::PrintNewLine(void) {
 			screen = screenright;
 			pen.y = MARGINTOP + height;
 			return true;
-		} 
+		}
 		else
 			return false;
 	}
@@ -257,18 +354,15 @@ bool Text::PrintNewLine(void) {
 	}
 }
 
-void Text::PrintString(const char *string) {
+void Text::PrintString(const char *s) {
 	// draw a character string starting at the pen position.
 	u8 i;
-	for (i=0;i<strlen((char *)string);i++) {
-		u16 c = string[i];
+	for (i=0;i<strlen((char*)s);i++) {
+		u32 c = s[i];
 		if (c == '\n') PrintNewLine();
 		else {
-			if (c > 127) {
-				/** this guy is multibyte UTF-8. **/
-				i+=GetCharCode(&(string[i]),&c);
-				i--;
-			}
+			i+=GetCharCode(&(s[i]),&c);
+			i--;
 			PrintChar(c);
 		}
 	}
@@ -279,7 +373,7 @@ void Text::PrintStatusMessage(const char *msg)
 	u16 x,y;
 	u16 *s = screen;
 	GetPen(&x,&y);
-	screen = screenleft;	
+	screen = screenleft;
 	SetPen(10,10);
 	PrintString(msg);
 	screen = s;

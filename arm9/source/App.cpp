@@ -119,7 +119,7 @@ int App::Run(void)
 	Log("\ninfo : dslibris starting up\n");
 
 	ts = new Text();
-	if (ts->InitDefault())
+	if (ts->InitWithCacheManager())
 	{
 		Log("fatal: starting typesetter failed\n");
 		printf("fatal: starting typesetter failed\n");
@@ -183,7 +183,6 @@ int App::Run(void)
 	dirclose(dp);
 	swiWaitForVBlank();
 
-	browser_init();
 	mode = APP_MODE_BROWSER;
 	bookcurrent = 127;
 
@@ -200,7 +199,7 @@ int App::Run(void)
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
 	prefs_read(p);
-
+	browser_init();
 
 	if(bookcurrent < 127)
 	{
@@ -228,11 +227,12 @@ int App::Run(void)
 			brightness++;
 			brightness = brightness > 3 ? 0 : brightness;
 		}
-/*
+
 		if (keysDown() & KEY_TOUCH)
 		{
 			touch = touchReadXY();
 			
+/*
 			if (mode == APP_MODE_BROWSER)
 			{
 				if(touch.px < 16) {
@@ -268,8 +268,9 @@ int App::Run(void)
 				}
 				page_draw(&pages[pagecurrent]);
 			}
-		}
 */
+		}
+
 		if (mode == APP_MODE_BROWSER)
 		{
 			if (keysDown() & KEY_A)
@@ -286,7 +287,9 @@ int App::Run(void)
 
 				screen_clear(screen1,0,0,0);
 				ts->SetScreen(screen1);
-				ts->SetPen(PAGE_WIDTH/2-ts->GetStringWidth("[opening...]")/2,PAGE_HEIGHT/2);
+				ts->SetPen(PAGE_WIDTH/2
+					- ts->GetStringWidth("[opening...]")/2,
+					PAGE_HEIGHT/2);
 				bool invert = ts->GetInvert();
 				ts->SetInvert(true);
 				ts->PrintString("[opening...]");
@@ -432,6 +435,7 @@ void App::browser_init(void)
 		else
 			buttons[i].Label(books[i].GetFileName());
 	}
+	browserstart = (bookcurrent / 7) * 7;
 }
 
 void App::browser_nextpage()
@@ -629,7 +633,7 @@ void App::page_draw(page_t *page)
 	u16 i=0;
 	while (i<page->length)
 	{
-		u16 c = page->buf[i];
+		u32 c = page->buf[i];
 		if (c == '\n')
 		{
 			// line break, page breaking if necessary

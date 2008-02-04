@@ -9,8 +9,8 @@
 #include "main.h"
 #include "parse.h"
 
-#define APP_VERSION "1.0.4c"
-#define APP_URL "http://rhaleblian.wordpress.com"
+#define APP_VERSION "1.1.129"
+#define APP_URL "http://ndslibris.sourceforge.net"
 #define APP_LOGFILE "dslibris.log"
 #define APP_MODE_BOOK 0
 #define APP_MODE_BROWSER 1

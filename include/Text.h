@@ -5,6 +5,7 @@
 #include <map>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_CACHE_H
 
 using namespace std;
 
@@ -15,15 +16,33 @@ using namespace std;
 
 class App;
 
+typedef struct TextFaceRec_ {
+	const char* file_path;
+	int face_index;
+} TextFaceRec, *TextFace;
+
+typedef struct TextCache_ {
+	FTC_Manager manager;
+	FTC_CMapCache cmap;
+	FTC_ImageCache image;
+	FTC_SBitCache sbit;
+} TextCache;
+
 class Text {
 	FT_Library library;
 	FT_Face face;
-	FT_GlyphSlotRec glyphs[CACHESIZE];	
-	u16 cache_ucs[CACHESIZE];
-	FT_Vector pen;
 	FT_Error error;
 	App *app;
 
+	bool ftc;
+	TextCache cache;
+	TextFaceRec face_id;
+	FTC_SBit sbit;
+	FTC_ImageTypeRec imagetype;
+	FT_Int charmap_index;
+
+	FT_GlyphSlotRec glyphs[CACHESIZE];	
+	u16 cache_ucs[CACHESIZE];
 	// associates each glyph cache index (value)
 	// with it's Unicode code point (key).
 	map<u16,u16> cachemap;
@@ -32,17 +51,24 @@ class Text {
 	string fontfilename;
 	u16 *screen, *screenleft, *screenright;
 	u8 pixelsize;
+	FT_Vector pen;
 	bool invert;
 	bool justify;
-	
+
+	int CacheGlyph(u32 ucs);
+	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
+	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit);
+	FT_UInt GetGlyphIndex(u32 ucs);
+
 public:
 	Text();
 	Text(App *parent);
 	int  InitDefault(void);
+	int  InitWithCacheManager(void);
 	void InitPen(void);
 
-	u8   GetAdvance(u16 code);
-	u8   GetCharCode(const char *txt, u16 *code);
+	u8   GetAdvance(u32 ucs);
+	u8   GetCharCode(const char* txt, u32* code);
 	u8   GetHeight(void);
 	bool GetInvert();
 	void GetPen(u16 *x, u16 *y);
@@ -53,19 +79,16 @@ public:
 	u16* GetScreen();
 	u8   GetStringWidth(const char *txt);
 
-	void SetInvert(bool);
+	void SetInvert(bool invert);
 	void SetPen(u16 x, u16 y);
-	void SetPixelSize(u8);
+	void SetPixelSize(u8 size);
 	void SetScreen(u16 *s);
 
-	int CacheGlyph(u16 codepoint);
-	FT_GlyphSlot GetGlyph(u16 ucs, int flags);
 	void ClearCache();
-
 	void ClearRect(u16 xl, u16 yl, u16 xh, u16 yh);
 	void ClearScreen();
 
-	void PrintChar(u16 code);
+	void PrintChar(u32 ucs);
 	bool PrintNewLine(void);
 	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
