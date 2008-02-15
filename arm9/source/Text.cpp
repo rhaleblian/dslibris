@@ -272,10 +272,16 @@ u8 Text::GetAdvance(u32 ucs) {
 		// Caches this glyph if possible.
 		return GetGlyph(ucs, FT_LOAD_DEFAULT)->advance.x >> 6;
 
-	imagetype.flags = FT_LOAD_DEFAULT;
+	imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;
+/*
 	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
 		GetGlyphIndex(ucs),&sbit,NULL);
 	return sbit->xadvance;
+*/
+	FT_Glyph glyph;
+	FTC_ImageType type = &imagetype;
+	error = FTC_ImageCache_Lookup(cache.image,type,GetGlyphIndex(ucs),&glyph,NULL);
+	return (glyph->advance).x;
 }
 
 void Text::InitPen(void) {

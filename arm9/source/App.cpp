@@ -203,7 +203,7 @@ int App::Run(void)
 
 	if(bookcurrent < 127)
 	{
-		if(!OpenBook()) mode = APP_MODE_BOOK;
+	//	if(!OpenBook()) mode = APP_MODE_BOOK;
 	}
 	
 	if(mode == APP_MODE_BROWSER)
