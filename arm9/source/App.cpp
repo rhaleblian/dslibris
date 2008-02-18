@@ -8,7 +8,6 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <dswifi9.h>
 #include <nds/registers_alt.h>
 #include <nds/reload.h>
 
@@ -16,7 +15,6 @@
 #include "types.h"
 #include "main.h"
 #include "parse.h"
-#include "wifi.h"
 #include "App.h"
 #include "Book.h"
 #include "Button.h"
@@ -119,7 +117,8 @@ int App::Run(void)
 	Log("\ninfo : dslibris starting up\n");
 
 	ts = new Text();
-	if (ts->InitWithCacheManager())
+	if (ts->InitDefault())
+//	if (ts->InitWithCacheManager())
 	{
 		Log("fatal: starting typesetter failed\n");
 		printf("fatal: starting typesetter failed\n");
@@ -401,8 +400,7 @@ u8 App::OpenBook(void)
 	char msg[16];
 	strcpy(msg,"[opening...]");
 	ts->SetScreen(screen1);
-	screen_clear(screen1,0,0,0);	
-	//ts->SetPen((PAGE_WIDTH/2) - (ts->GetStringWidth(msg)/2),PAGE_HEIGHT/2);
+	screen_clear(screen1,0,0,0);
 	ts->SetPen(MARGINLEFT,PAGE_HEIGHT/2);
 	bool invert = ts->GetInvert();
 	ts->SetInvert(true);

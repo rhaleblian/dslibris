@@ -13,7 +13,6 @@ dslibris - an ebook reader for Nintendo DS
 #include "Text.h"
 #include "main.h"
 #include "parse.h"
-#include "wifi.h"
 
 App *app;
 bool linebegan = false;

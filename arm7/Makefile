@@ -3,14 +3,14 @@
 #-----------------------------------------------------------------------
 
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM)
+$(error "Please set DEVKITARM in your environment.")
 endif
 
 include $(DEVKITARM)/ds_rules
 
 #-----------------------------------------------------------------------
 # TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
+# BUILD is the directory for object files & intermediate files
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #-----------------------------------------------------------------------
@@ -39,17 +39,17 @@ LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #-----------------------------------------------------------------------
-LIBS	:=  -ldswifi7 -lnds7
+LIBS	:=  -lnds7
 
 #-----------------------------------------------------------------------
-# list of directories containing libraries, this must be the top level containing
-# include and lib
+# list of directories containing libraries, this must be the top level
+# containing include and lib
 #-----------------------------------------------------------------------
 LIBDIRS	:=	 $(LIBNDS)
 
 #-----------------------------------------------------------------------
-# no real need to edit anything past this point unless you need to add additional
-# rules for different file extensions
+# no real need to edit anything past this point unless you need to add
+# additional rules for different file extensions
 #-----------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #-----------------------------------------------------------------------

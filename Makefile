@@ -58,16 +58,12 @@ test-tmp: $(TARGET).nds
 	(cd /tmp/$(TARGET); desmume $(TARGET).nds)
 
 test: $(TARGET).nds
-	cp $(TARGET).nds ../fat16
-	sync
-	desmume --cflash=../fat16.image dslibris.nds
+	desmume-cli --cflash=media.img dslibris.nds
 
 # debug target with insight and desmume under linux
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/dslibris.arm9.elf &
-	cp $(TARGET).nds ../fat16
-	sync
-	desmume --cflash=../fat16.image --arm9gdb=20000 $(TARGET).nds
+	desmume-cli --cflash=media.img --arm9gdb=20000 $(TARGET).nds
 
 # make DLDI patched target
 $(TARGET).$(MEDIA).nds: $(TARGET).nds
@@ -106,8 +102,8 @@ upload: dist
 	ftp upload.sourceforge.net
 
 mount:
-	sudo mount -t msdos -o loop -o uid=rhaleblian ../fat16.image ../fat16
+	sudo mount -t vfat -o loop -o uid=rhaleblian media.img media
 
 umount:
-	sudo umount disk
+	sudo umount media
 
