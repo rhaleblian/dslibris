@@ -53,6 +53,8 @@ int App::Run(void)
 	powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
 	defaultExceptionHandler();  // guru meditation!
 
+	printf("hello world.\n");
+
 	// set up ARM7 interrupts and IPC.
 
 	irqInit();
@@ -64,21 +66,6 @@ int App::Run(void)
 
 	NDSX_SetBrightness_Next();
 	brightness = 0;
-
-	// bring up the startup console.
-	// sub bg 0 will be used to print text.
-	/*
-	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);
-	vramSetBankC(VRAM_C_SUB_BG);
-	SUB_BG0_CR = BG_MAP_BASE(31);
-	for (u32 i=0;i<255;i++)
-		BG_PALETTE_SUB[i] = RGB15(0,0,0);
-	BG_PALETTE_SUB[255] = RGB15(15,15,15);
-	consoleInitDefault(
-		(u16*)SCREEN_BASE_BLOCK_SUB(31),
-		(u16*)CHAR_BASE_BLOCK_SUB(0), 16);
-	*/
 
 	// initialize screens.
 	// clockwise rotation for both screens
@@ -96,7 +83,6 @@ int App::Run(void)
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
 	screen1 = (u16*)BG_BMP_RAM(0);
-
 	BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
 	SUB_BG3_XDX = c;
 	SUB_BG3_XDY = -s;
@@ -132,15 +118,14 @@ int App::Run(void)
 
 	char dirname[32];
 	strcpy(dirname,BOOKDIR);
-
 	sprintf(msg,"info : scanning %s for books\n",dirname);
 	Log(msg);
 
 	DIR_ITER *dp = diropen(dirname);
 	if (!dp)
 	{
-		ts->PrintString("fatal: book scan failed\n");
-		Log("fatal: book scan failed\n");
+		ts->PrintString("fatal: no book directory\n");
+		Log("fatal: no book directory\n");
 		swiWaitForVBlank();
 		exit(-3);
 	}
@@ -182,10 +167,6 @@ int App::Run(void)
 	dirclose(dp);
 	swiWaitForVBlank();
 
-	sprintf(msg,"%d books\n",bookcount);
-	ts->PrintString(msg);
-
-	mode = APP_MODE_BROWSER;
 
 	// restore the last book and page we were reading.
 	// TODO bookmark character, not page
@@ -199,18 +180,19 @@ int App::Run(void)
 	}
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
-	browser_init();
 
 	bookcurrent = 127;
+	mode = APP_MODE_BROWSER;
 	prefs_read(p);
 	if(bookcurrent < 127)
 	{
+		browser_init();
 		if(!OpenBook()) mode = APP_MODE_BOOK;
 	}
-	
-	if(mode == APP_MODE_BROWSER)
+	else
 	{
 		bookcurrent = 0;
+		browser_init();
 		browser_draw();
 	}
 	swiWaitForVBlank();
