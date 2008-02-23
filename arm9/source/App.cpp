@@ -151,7 +151,7 @@ int App::Run(void)
 		int rc = dirnext(dp, filename, NULL);
 		if(rc) break;
 
-		sprintf(msg,"info : %s\n", filename);
+		sprintf(msg,"info : found %s\n", filename);
 		Log(msg);
 
 		char *c;
@@ -162,7 +162,7 @@ int App::Run(void)
 			book->SetFolderName(dirname);
 			book->SetFileName(filename);
 			
-			sprintf(msg,"info : indexing %s (in %s)\n",
+			sprintf(msg,"info : indexing %s (in folder %s)\n",
 				book->GetFileName(),
 				book->GetFolderName());
 			Log(msg);
@@ -182,8 +182,10 @@ int App::Run(void)
 	dirclose(dp);
 	swiWaitForVBlank();
 
+	sprintf(msg,"%d books\n",bookcount);
+	ts->PrintString(msg);
+
 	mode = APP_MODE_BROWSER;
-	bookcurrent = 127;
 
 	// restore the last book and page we were reading.
 	// TODO bookmark character, not page
@@ -197,12 +199,13 @@ int App::Run(void)
 	}
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
-	prefs_read(p);
 	browser_init();
 
+	bookcurrent = 127;
+	prefs_read(p);
 	if(bookcurrent < 127)
 	{
-	//	if(!OpenBook()) mode = APP_MODE_BOOK;
+		if(!OpenBook()) mode = APP_MODE_BOOK;
 	}
 	
 	if(mode == APP_MODE_BROWSER)

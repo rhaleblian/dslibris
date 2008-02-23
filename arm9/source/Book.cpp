@@ -21,19 +21,19 @@ Book::Book()
 void Book::SetFolderName(const char *name)
 {
 	foldername.clear();
-	foldername = std::string(name);
+	foldername = name;
 }
 
 void Book::SetFileName(const char *name)
 {
 	filename.clear();
-	filename = std::string(name);
+	filename = name;
 }
 
 void Book::SetTitle(const char *name)
 {
 	title.clear();
-	title = std::string(name);
+	title = name;
 }
 
 const char* Book::GetTitle()
