@@ -58,7 +58,7 @@ test-tmp: $(TARGET).nds
 	(cd /tmp/$(TARGET); desmume $(TARGET).nds)
 
 test-media: $(TARGET).nds
-	desmume-cli --cflash=media.img dslibris.nds
+	desmume-cli --cflash=../media.dmg dslibris.nds
 
 test: $(TARGET).nds
 	desmume-cli dslibris.nds
@@ -66,7 +66,12 @@ test: $(TARGET).nds
 # debug target with insight and desmume under linux
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/dslibris.arm9.elf &
-	desmume-cli --cflash=media.img --arm9gdb=20000 $(TARGET).nds
+	desmume-cli --cflash=media.img --arm9gdb=20000 $(TARGET).nds &
+
+gdb: $(TARGET).nds
+	desmume-cli --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &
+	sleep 4
+	$(DEVKITARM)/bin/arm-eabi-gdb -x gdb.commands arm9/dslibris.arm9.elf
 
 # make DLDI patched target
 $(TARGET).$(MEDIA).nds: $(TARGET).nds
@@ -108,5 +113,6 @@ mount:
 	sudo mount -t vfat -o loop -o uid=rhaleblian media.img media
 
 umount:
-	sudo umount media
+	#sudo umount media
+	hdiutil unmount $(MEDIAROOT)
 

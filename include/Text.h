@@ -54,8 +54,11 @@ class Text {
 	FT_Vector pen;
 	bool invert;
 	bool justify;
+	u32 codeprev; // last printed char code
 
 	int CacheGlyph(u32 ucs);
+	int InitDefault();
+	int InitWithCacheManager();
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
 	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit);
 	FT_UInt GetGlyphIndex(u32 ucs);
@@ -63,8 +66,7 @@ class Text {
 public:
 	Text();
 	Text(App *parent);
-	int  InitDefault(void);
-	int  InitWithCacheManager(void);
+	int  Init();
 	void InitPen(void);
 
 	u8   GetAdvance(u32 ucs);
@@ -87,11 +89,13 @@ public:
 	void ClearCache();
 	void ClearRect(u16 xl, u16 yl, u16 xh, u16 yh);
 	void ClearScreen();
+	void ClearScreen(u16*, u8, u8, u8);
 
 	void PrintChar(u32 ucs);
 	bool PrintNewLine(void);
 	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
+	void PrintSplash(void);
 };
 
 #endif

@@ -5,7 +5,10 @@
 #include "main.h"
 #include "Book.h"
 
-typedef enum {NONE,HTML,HEAD,TITLE,BODY,PRE} context_t;
+typedef enum {
+	NONE,HTML,HEAD,TITLE,BODY,PRE,
+	TAG_H1,TAG_H2,TAG_H3,TAG_H4,TAG_H5,TAG_H6
+} context_t;
 
 typedef struct {
 	context_t stack[16];

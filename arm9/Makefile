@@ -22,16 +22,14 @@ INCLUDES	:=	../include ../include/freetype2 build
 #-----------------------------------------------------------------------
 # options for code generation
 #-----------------------------------------------------------------------
-ARCH	:=	-mthumb-interwork
+ARCH	:=	-mthumb -mthumb-interwork
 
-# note: arm9tdmi isn't the correct CPU arch, but anything newer and LD
-# *insists* it has a FPU or VFP, and it won't take no for an answer!
 CFLAGS	:=	-g -O2 -Wall \
 		-mcpu=arm946e-s -mtune=arm946e-s \
 		-fomit-frame-pointer -ffast-math \
 		$(ARCH)
-
 CFLAGS	+=	$(INCLUDE) -DARM9
+
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)

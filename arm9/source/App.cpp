@@ -24,7 +24,7 @@
 #define MAX(x,y) (x > y ? x : y)
 
 App::App()
-{
+{	
 	ts = NULL;
 	buttons = new Button[MAXBOOKS];
 	browserstart = 0;
@@ -38,11 +38,17 @@ App::App()
 	bookcurrent = 0;
 	mode = APP_MODE_BOOK;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
+
+	prefs = new Prefs(this);
 }
 
 App::~App()
 {
 	free(filebuf);
+	delete books;
+	delete buttons;
+	delete pages;
+	delete prefs;
 }
 
 int App::Run(void)
@@ -52,8 +58,6 @@ int App::Run(void)
 
 	powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
 	defaultExceptionHandler();  // guru meditation!
-
-	printf("hello world.\n");
 
 	// set up ARM7 interrupts and IPC.
 
@@ -94,24 +98,18 @@ int App::Run(void)
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
 
-	if (!fatInitDefault())
-	{
-		printf("fatal: mounting filesystem failed\n"); 
-		exit(-1);
-	}
+	if (!fatInitDefault()) exit(-11);
 
 	Log("\ninfo : dslibris starting up\n");
 
 	ts = new Text();
-	if (ts->InitDefault())
-//	if (ts->InitWithCacheManager())
-	{
+	int err = ts->Init();
+   	if (err) {
 		Log("fatal: starting typesetter failed\n");
-		printf("fatal: starting typesetter failed\n");
 		exit(-2);
 	}
 
-	screen_splash();
+	ts->PrintSplash();
 
 	// assemble library by indexing all XHTML files
 	// in the application directory.
@@ -147,20 +145,19 @@ int App::Run(void)
 			book->SetFolderName(dirname);
 			book->SetFileName(filename);
 			
-			sprintf(msg,"info : indexing %s (in folder %s)\n",
-				book->GetFileName(),
-				book->GetFolderName());
+			sprintf(msg,"info : indexing %s\n", book->GetFileName());
 			Log(msg);
 
 			u8 rc = book->Index(filebuf);
 			if(rc == 255) {
-				ts->PrintString("cant open");
+				ts->PrintString("fatal: cannot index book");
 				exit(-4);
 			}
 			if(rc == 254) {
-				ts->PrintString("cant make parser");
+				ts->PrintString("fatal: cannot make parser");
 				exit(-8);
 			}
+			sprintf(msg, "info : %s\n",book->GetTitle());
 			bookcount++;
 		}
 	}
@@ -183,7 +180,7 @@ int App::Run(void)
 
 	bookcurrent = 127;
 	mode = APP_MODE_BROWSER;
-	prefs_read(p);
+	prefs->Read(p);
 	if(bookcurrent < 127)
 	{
 		browser_init();
@@ -199,180 +196,16 @@ int App::Run(void)
 
 	// start event loop.
 
-	touchPosition touch;
 	bool poll = true;
 	while (poll)
 	{
 		scanKeys();
-			
-		if (keysDown() & KEY_Y)
-		{
-			NDSX_SetBrightness_Next();
-			brightness++;
-			brightness = brightness > 3 ? 0 : brightness;
-		}
 
-		if (keysDown() & KEY_TOUCH)
-		{
-			touch = touchReadXY();
-			
-/*
-			if (mode == APP_MODE_BROWSER)
-			{
-				if(touch.px < 16) {
-					browser_nextpage();
-					browser_draw();
-				} else if(touch.px > 240) {
-					browser_prevpage();
-					browser_draw();
-				} else {
-					for(u8 i=browserstart;
-						i<bookcount && i<browserstart+7;
-						i++) {
-						if (buttons[i].EnclosesPoint(touch.px, touch.py))
-						{
-							bookcurrent = i;
-							browser_redraw();
-							swiWaitForVBlank();
-							if(!OpenBook()) mode = APP_MODE_BOOK;
-							break;
-						}
-					}	
-				}
-			}
-			else
-			{
-				if (touch.py < 96)
-				{
-					if (pagecurrent > 0) pagecurrent--;
-				}
-				else
-				{
-					if (pagecurrent < pagecount) pagecurrent++;
-				}
-				page_draw(&pages[pagecurrent]);
-			}
-*/
-		}
-
-		if (mode == APP_MODE_BROWSER)
-		{
-			if (keysDown() & KEY_A)
-			{
-				// parse the selected book.
-
-				if(!OpenBook()) mode = APP_MODE_BOOK;
-				else browser_draw(); 
-			/*	
-				pagecount = 0;
-				pagecurrent = 0;
-				page_t *page = &(pages[pagecurrent]);
-				page_init(page);
-
-				screen_clear(screen1,0,0,0);
-				ts->SetScreen(screen1);
-				ts->SetPen(PAGE_WIDTH/2
-					- ts->GetStringWidth("[opening...]")/2,
-					PAGE_HEIGHT/2);
-				bool invert = ts->GetInvert();
-				ts->SetInvert(true);
-				ts->PrintString("[opening...]");
-				ts->SetInvert(invert);
-				ts->ClearCache();
-				if (!books[bookcurrent].Parse(filebuf))
-				{
-					pagecurrent = books[bookcurrent].GetPosition();
-					page = &(pages[pagecurrent]);
-					page_draw(page);
-					prefs_write();
-					mode = APP_MODE_BOOK;
-				}
-				else
-				{
-					browser_draw();
-				}
-*/
-			}
-
-			if (keysDown() & KEY_B)
-			{
-				mode = APP_MODE_BOOK;
-				page_draw(&pages[pagecurrent]);
-			}
-
-			if (keysDown() & (KEY_LEFT|KEY_L))
-			{
-				if (bookcurrent < bookcount-1)
-				{
-					if (bookcurrent == browserstart+6) {
-						browser_nextpage();
-						browser_draw();
-					} else {
-						bookcurrent++;
-						browser_redraw();
-					}
-				}
-			}
-
-			if (keysDown() & (KEY_RIGHT|KEY_R))
-			{
-				if (bookcurrent > 0)
-				{
-					if(bookcurrent == browserstart) {
-						browser_prevpage();
-						browser_draw();
-					} else {
-						bookcurrent--;
-						browser_redraw();
-					}				
-				}
-			}
-
-			if (keysDown() & KEY_SELECT)
-			{
-				mode = APP_MODE_BOOK;
-				page_draw(&(pages[pagecurrent]));
-			}
-		}
+		if(mode == APP_MODE_BROWSER)
+			HandleEventInBrowser();
 		else
-		{
-			if (keysDown() & (KEY_A|KEY_DOWN|KEY_R))
-			{
-				if (pagecurrent < pagecount)
-				{
-					pagecurrent++;
-					page_draw(&pages[pagecurrent]);
-					books[bookcurrent].SetPosition(pagecurrent);
-					prefs_write();
-				}
-			}
-
-			if (keysDown() & (KEY_B|KEY_UP|KEY_L))
-			{
-				if (pagecurrent > 0)
-				{
-					pagecurrent--;
-					page_draw(&pages[pagecurrent]);
-					books[bookcurrent].SetPosition(pagecurrent);
-					prefs_write();
-				}
-			}
-
-			if (keysDown() & KEY_X)
-			{
-				ts->SetInvert(!ts->GetInvert());
-				page_draw(&pages[pagecurrent]);
-			}
-
-			if (keysDown() & KEY_SELECT)
-			{
-				prefs_write();
-				mode = APP_MODE_BROWSER;			
-				screen_splash();
-				browser_draw();
-			}
-
-		}
+			HandleEventInBook();
+		
 		swiWaitForVBlank();
 	}
 
@@ -380,12 +213,150 @@ int App::Run(void)
 	exit(0);
 }
 
+void App::HandleEventInBrowser()
+{
+	if (keysDown() & KEY_A)
+	{
+		// parse the selected book.
+		if(!OpenBook()) mode = APP_MODE_BOOK;
+		else browser_draw();
+	}
+
+	else if (keysDown() & KEY_B)
+	{
+		// return to current book.
+		mode = APP_MODE_BOOK;
+		page_draw(&pages[pagecurrent]);
+	}
+
+	else if (keysDown() & (KEY_LEFT|KEY_L))
+	{
+		if (bookcurrent < bookcount-1)
+		{
+			if (bookcurrent == browserstart+6) {
+				browser_nextpage();
+				browser_draw();
+			} else {
+				bookcurrent++;
+				browser_redraw();
+			}
+		}
+	}
+
+	else if (keysDown() & (KEY_RIGHT|KEY_R))
+	{
+		if (bookcurrent > 0)
+		{
+			if(bookcurrent == browserstart) {
+				browser_prevpage();
+				browser_draw();
+			} else {
+				bookcurrent--;
+				browser_redraw();
+			}				
+		}
+	}
+
+	else if (keysDown() & KEY_SELECT)
+	{
+		mode = APP_MODE_BOOK;
+		page_draw(&(pages[pagecurrent]));
+	}
+
+	else if (keysDown() & KEY_TOUCH)
+	{
+		touchPosition touch = touchReadXY();		
+		if(touch.px < 16) {
+			browser_nextpage();
+			browser_draw();
+		} else if(touch.px > 240) {
+			browser_prevpage();
+			browser_draw();
+		} else {
+			for(u8 i=browserstart;
+				i<bookcount && i<browserstart+7;
+				i++) {
+				if (buttons[i].EnclosesPoint(touch.px, touch.py))
+				{
+					bookcurrent = i;
+					browser_redraw();
+					swiWaitForVBlank();
+					if(!OpenBook()) mode = APP_MODE_BOOK;
+					break;
+				}
+			}	
+		}
+	}	
+}
+
+void App::HandleEventInBook()
+{
+	if (keysDown() & (KEY_A|KEY_DOWN|KEY_R))
+	{
+		if (pagecurrent < pagecount)
+		{
+			pagecurrent++;
+			page_draw(&pages[pagecurrent]);
+			books[bookcurrent].SetPosition(pagecurrent);
+			prefs->Write();
+		}
+	}
+
+	else if (keysDown() & (KEY_B|KEY_UP|KEY_L))
+	{
+		if (pagecurrent > 0)
+		{
+			pagecurrent--;
+			page_draw(&pages[pagecurrent]);
+			books[bookcurrent].SetPosition(pagecurrent);
+			prefs->Write();
+		}
+	}
+
+	else if (keysDown() & KEY_X)
+	{
+		ts->SetInvert(!ts->GetInvert());
+		page_draw(&pages[pagecurrent]);
+		prefs->Write();
+	}
+
+	else if (keysDown() & KEY_Y)
+	{
+		NDSX_SetBrightness_Next();
+		brightness++;
+		brightness = brightness > 3 ? 0 : brightness;
+		prefs->Write();
+	}
+
+	else if (keysDown() & KEY_SELECT)
+	{
+		prefs->Write();
+		mode = APP_MODE_BROWSER;			
+		ts->PrintSplash();
+		browser_draw();
+	}
+
+	else if (keysDown() & KEY_TOUCH)
+	{
+		touchPosition touch = touchReadXY();
+		if (touch.py < 96)
+		{
+			if (pagecurrent > 0) pagecurrent--;
+		}
+		else
+		{
+			if (pagecurrent < pagecount) pagecurrent++;
+		}
+		page_draw(&pages[pagecurrent]);
+	}
+}
+
 u8 App::OpenBook(void)
 {
 	char msg[16];
 	strcpy(msg,"[opening...]");
 	ts->SetScreen(screen1);
-	screen_clear(screen1,0,0,0);
+	ts->ClearScreen(screen1,0,0,0);
 	ts->SetPen(MARGINLEFT,PAGE_HEIGHT/2);
 	bool invert = ts->GetInvert();
 	ts->SetInvert(true);
@@ -400,7 +371,7 @@ u8 App::OpenBook(void)
 	{
 		pagecurrent = books[bookcurrent].GetPosition();
 		page_draw(&(pages[pagecurrent]));
-		prefs_write();
+		prefs->Write();
 		return 0;		
 	}
 	else return 255;
@@ -418,6 +389,14 @@ void App::browser_init(void)
 		else
 			buttons[i].Label(books[i].GetFileName());
 	}
+	buttonprev.Init(ts);
+	buttonprev.Move(0,0);
+	buttonprev.Resize(192,16);
+	buttonprev.Label("^");
+	buttonnext.Init(ts);
+	buttonnext.Move(0,240);
+	buttonnext.Resize(192,16);
+	buttonnext.Label("v");
 	browserstart = (bookcurrent / 7) * 7;
 }
 
@@ -443,10 +422,9 @@ void App::browser_draw(void)
 {
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
-	Button buttonprev, buttonnext;
 
 	ts->SetScreen(screen1);
-	screen_clear(screen1,0,0,0);
+	ts->ClearScreen(screen1,0,0,0);
 	ts->SetPixelSize(12);
 	for (int i=browserstart;(i<bookcount) && (i<browserstart+7);i++)
 	{
@@ -456,17 +434,10 @@ void App::browser_draw(void)
 			buttons[i].Draw(screen1,false);
 	}
 
-/*	buttonprev.Init(ts);
-	buttonprev.Move(0,0);
-	buttonprev.Resize(192,16);
-	buttonprev.Label("^");
-	buttonnext.Init(ts);
-	buttonnext.Move(0,240);
-	buttonnext.Resize(192,16);
-	buttonnext.Label("v");
-	buttonprev.Draw(screen1,false);
-	buttonnext.Draw(screen1,false);
-*/
+	if(browserstart > 6) 
+		buttonprev.Draw(screen1,false);
+	if(bookcount > browserstart+7)
+		buttonnext.Draw(screen1,false);
 
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
@@ -659,78 +630,6 @@ void App::page_draw(page_t *page)
 		* (pagecurrent / (float)pagecount));
 	ts->SetPen(MARGINLEFT+offset,250);
 	ts->PrintString(msg);
-}
-
-bool App::prefs_read(XML_Parser p)
-{
-	FILE *fp = fopen(PREFSPATH,"r");
-	if (!fp) return false;
-
-	XML_ParserReset(p, NULL);
-	XML_SetStartElementHandler(p, prefs_start_hndl);
-	XML_SetUserData(p, (void *)books);
-	while (true)
-	{
-		void *buff = XML_GetBuffer(p, 64);
-		int bytes_read = fread(buff, sizeof(char), 64, fp);
-		XML_ParseBuffer(p, bytes_read, bytes_read == 0);
-		if (bytes_read == 0) break;
-	}
-	fclose(fp);
-	return true;
-}
-
-bool App::prefs_write(void)
-{
-	FILE* fp = fopen(PREFSPATH,"w+");
-	if(!fp) return false;
-	
-	fprintf(fp, "<dslibris>\n");
-	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\">\n",
-		brightness, ts->GetInvert());
-	fprintf(fp, "\t<font size=\"%d\" />\n", ts->GetPixelSize());
-	fprintf(fp, "\t<book file=\"%s\" />\n", books[bookcurrent].GetFileName());
-	for(u8 i=0;i<bookcount; i++)
-	{
-		fprintf(fp, "\t<bookmark file=\"%s\" page=\"%d\" />\n",
-	        books[i].GetFileName(), books[i].GetPosition()+1);
-	}
-	fprintf(fp, "</dslibris>\n");
-	fclose(fp);
-
-	return true;
-}
-
-
-void App::screen_clear(u16 *screen, u8 r, u8 g, u8 b)
-{
-	for (int i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++)
-		screen[i] = RGB15(r,g,b) | BIT(15);
-}
-
-void App::screen_splash(void)
-{
-	bool invert = ts->GetInvert();
-	u8 size = ts->GetPixelSize();
-
-	ts->SetInvert(true);
-	ts->SetScreen(screen0);
-	screen_clear(screen0,0,0,0);
-	ts->SetPen(SPLASH_LEFT,SPLASH_TOP);
-	ts->SetPixelSize(36);
-	ts->PrintString("dslibris");
-	ts->SetPixelSize(10);
-	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
-	ts->PrintString("an ebook reader");
-	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
-	ts->PrintString("for Nintendo DS");
-	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
-	ts->PrintString(APP_VERSION);
-	ts->PrintNewLine();
-	ts->SetPen(SPLASH_LEFT,ts->GetPenY()+ts->GetHeight());
-
-	ts->SetPixelSize(size);
-	ts->SetInvert(invert);
 }
 
 void App::Log(const char *msg)

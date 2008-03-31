@@ -7,6 +7,7 @@
 Text::Text()
 {
 	cachenext = 0;
+	codeprev = 0;
 	fontfilename = FONTFILEPATH;
 	ftc = false;
 	invert = false;
@@ -34,7 +35,8 @@ TextFaceRequester(    FTC_FaceID   face_id,
 }
 
 int Text::InitWithCacheManager(void) {
-	if(error = FT_Init_FreeType(&library)) return error;
+	int error = FT_Init_FreeType(&library);
+	if(error) return error;
 
 	FTC_Manager_New(library,0,0,0,
 		&TextFaceRequester,NULL,&cache.manager);
@@ -69,6 +71,7 @@ int Text::InitWithCacheManager(void) {
 int Text::InitDefault(void) {
 	if (FT_Init_FreeType(&library)) return 1;
 	if (FT_New_Face(library, fontfilename.c_str(), 0, &face)) return 2;
+	//if (!FT_HAS_KERNING(face)) return 3;
 	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	FT_Set_Pixel_Sizes(face, 0, pixelsize);
 	screen = screenleft;
@@ -76,6 +79,12 @@ int Text::InitDefault(void) {
 	InitPen();
 	ftc = false;
 	return(0);
+}
+
+int Text::Init()
+{
+	if(ftc) return InitWithCacheManager();
+	else return InitDefault();
 }
 
 int Text::CacheGlyph(u32 ucs)
@@ -169,7 +178,7 @@ u8 Text::GetStringWidth(const char *txt)
 		width += GetAdvance(ucs);
 	}
 	return width;
-}	
+}
 
 
 u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
@@ -297,8 +306,11 @@ void Text::PrintChar(u32 ucs) {
 	FT_Byte *buffer = NULL;
 	FT_UInt advance = 0;
 
+	// get metrics and glyph pointer.
+
 	if(ftc)
 	{
+		// use the FT cache.
 		error = GetGlyphBitmap(ucs,&sbit);
 		buffer = sbit->buffer;
 		bx = sbit->left;
@@ -322,6 +334,17 @@ void Text::PrintChar(u32 ucs) {
 		buffer = bitmap.buffer;
 	}
 
+	// kern.
+	/*
+	if(codeprev) {
+		FT_Vector k;
+		error = FT_Get_Kerning(face,codeprev,ucs,FT_KERNING_UNSCALED,&k);
+		pen.x += k.x >> 6;
+	}
+	*/
+
+	// render to framebuffer.
+
 	u16 gx, gy;
 	for (gy=0; gy<height; gy++) {
 		for (gx=0; gx<width; gx++) {
@@ -337,6 +360,7 @@ void Text::PrintChar(u32 ucs) {
 		}
 	}
 	pen.x += advance;
+	codeprev = ucs;
 }
 
 bool Text::PrintNewLine(void) {
@@ -362,14 +386,17 @@ bool Text::PrintNewLine(void) {
 
 void Text::PrintString(const char *s) {
 	// draw a character string starting at the pen position.
-	u8 i;
-	for (i=0;i<strlen((char*)s);i++) {
+	u32 clast = 0;
+	u8 i=0;
+	while(i<strlen((char*)s)) {
 		u32 c = s[i];
-		if (c == '\n') PrintNewLine();
-		else {
+		if (c == '\n') {
+			PrintNewLine();
+			i++;
+		} else {
 			i+=GetCharCode(&(s[i]),&c);
-			i--;
 			PrintChar(c);
+			clast = c;
 		}
 	}
 }
@@ -384,5 +411,36 @@ void Text::PrintStatusMessage(const char *msg)
 	PrintString(msg);
 	screen = s;
 	SetPen(x,y);
+}
+
+void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
+{
+	for (int i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++)
+		screen[i] = RGB15(r,g,b) | BIT(15);
+}
+
+void Text::PrintSplash(void)
+{
+	bool invert = GetInvert();
+	u8 size = GetPixelSize();
+
+	SetInvert(true);
+	SetScreen(screenleft);
+	ClearScreen(screenleft,0,0,0);
+	SetPen(SPLASH_LEFT,SPLASH_TOP);
+	SetPixelSize(36);
+	PrintString("dslibris");
+	SetPixelSize(10);
+	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
+	PrintString("an ebook reader");
+	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
+	PrintString("for Nintendo DS");
+	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
+	PrintString(APP_VERSION);
+	PrintNewLine();
+	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
+
+	SetPixelSize(size);
+	SetInvert(invert);
 }
 

@@ -3,9 +3,12 @@
 
 #include <nds.h>
 #include <expat.h>
+
 #include "Book.h"
 #include "Button.h"
+#include "Prefs.h"
 #include "Text.h"
+
 #include "main.h"
 #include "parse.h"
 
@@ -18,8 +21,10 @@
 class App {
 	public:
 	Text *ts;
+	class Prefs *prefs;
 	u16 *screen0, *screen1, *fb;
 	Button *buttons;
+	Button buttonprev, buttonnext;
 	u8 browserstart;
 	Book *books;
 	u8 bookcount;
@@ -36,6 +41,8 @@ class App {
 	App();
 	~App();
 
+	void HandleEventInBrowser();
+	void HandleEventInBook();
 	void Log(const char*);
 	void Log(std::string);
 	u8   OpenBook(void);
@@ -44,7 +51,7 @@ class App {
 	void browser_init(void);
 	void browser_draw(void);
 	void browser_nextpage(void);
-	void browser_prevpage(void);	
+	void browser_prevpage(void);
 	void browser_redraw(void);
 	
 	void page_init(page_t *page);
@@ -59,11 +66,8 @@ class App {
 	context_t parse_pop(parsedata_t *data);
 	void parse_push(parsedata_t *data, context_t context);
 
-	bool prefs_read(XML_Parser p);
-	bool prefs_write(void);
-
-	void screen_clear(u16 *screen, u8 r, u8 g, u8 b);
-	void screen_splash(void);
+//	bool prefs_read(XML_Parser p);
+//	bool prefs_write(void);
 };
 
 #endif

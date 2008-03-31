@@ -124,8 +124,7 @@ void default_hndl(void *data, const XML_Char *s, int len)
 				app->pagebuf[page->length++] = 192 + (code/64);
 				app->pagebuf[page->length++] = 128 + (code%64);
 			}
-
-			if (code>=2048 && code<=65535)
+			else if (code>=2048 && code<=65535)
 			{
 				app->pagebuf[page->length++] = 224 + (code/4096);
 				app->pagebuf[page->length++] = 128 + ((code/64)%64);
@@ -146,13 +145,17 @@ void layoutNewLine()
 void start_hndl(void *data, const char *el, const char **attr)
 {
 	parsedata_t *pdata = (parsedata_t*)data;
-	//page_t *page = &(app->pages[app->pagecurrent]);
 	if (!stricmp(el,"html")) app->parse_push(pdata,HTML);
 	else if (!stricmp(el,"body")) app->parse_push(pdata,BODY);
 	else if (!stricmp(el,"title")) app->parse_push(pdata,TITLE);
 	else if (!stricmp(el,"head")) app->parse_push(pdata,HEAD);
 	else if (!stricmp(el,"pre")) app->parse_push(pdata,PRE);
-
+	else if (!stricmp(el,"h1")) app->parse_push(pdata,TAG_H1);
+	else if (!stricmp(el,"h2")) app->parse_push(pdata,TAG_H2);
+	else if (!stricmp(el,"h3")) app->parse_push(pdata,TAG_H3);
+	else if (!stricmp(el,"h4")) app->parse_push(pdata,TAG_H4);
+	else if (!stricmp(el,"h5")) app->parse_push(pdata,TAG_H5);
+	else if (!stricmp(el,"h6")) app->parse_push(pdata,TAG_H6);
 }  /* End of start_hndl */
 
 void title_hndl(void *userdata, const char *txt, int txtlen)
@@ -299,8 +302,13 @@ void end_hndl(void *data, const char *el)
 	    || !stricmp(el,"h2")
 	    || !stricmp(el,"h3")
 	    || !stricmp(el,"h4")
+	    || !stricmp(el,"h5")
+	    || !stricmp(el,"h6")
 	    || !stricmp(el,"hr")
 	    || !stricmp(el,"tr")
+	    || !stricmp(el,"dt")
+	    || !stricmp(el,"ul")
+	    || !stricmp(el,"ol")
 	)
 	{
 		if(linebegan) {
@@ -348,8 +356,20 @@ void end_hndl(void *data, const char *el)
 		strncpy((char*)page->buf,(char*)app->pagebuf,page->length);
 		app->parse_pop(p);
 	}
-	if (!(stricmp(el,"title") && stricmp(el,"head")
-	        && stricmp(el,"pre") && stricmp(el,"html")))
+	else if (!( stricmp(el,"title") 
+		&& stricmp(el,"head")
+		&& stricmp(el,"pre")
+		&& stricmp(el,"html")
+		&& stricmp(el,"h1")
+		&& stricmp(el,"h2")
+		&& stricmp(el,"h3")
+		&& stricmp(el,"h4")
+		&& stricmp(el,"h5")
+		&& stricmp(el,"h6")
+		&& stricmp(el,"dt")
+		&& stricmp(el,"ul")
+		&& stricmp(el,"ol")
+		))
 	{
 		app->parse_pop(p);
 	}
@@ -359,4 +379,3 @@ void end_hndl(void *data, const char *el)
 void proc_hndl(void *data, const char *target, const char *pidata)
 {
 }  /* End proc_hndl */
-
