@@ -1,5 +1,5 @@
 
-Herein lie dslibris and supporting libraries. The method below assumes you are using either MSYS/MINGW with devkitPro.
+Herein lie dslibris and supporting libraries.
 
 BUILDING
 
@@ -22,9 +22,10 @@ Note the libraries in 'external', prebuilt for arm-eabi; make sure you don't hav
 
 INSTALLATION
 
-see INSTALL.txt.
+Copy dslibris.nds and dslibris.ttf to the root of your media.
 
 DEBUGGING
 
-Use insight with DeSmuME on XP and Linux. DeSmuME lacks the proper support to run or debug on OS X.
+gdb and Insight have been known to work for debugging. See online forums for
+means to build an arm-eabi gdb for you platform.
 
