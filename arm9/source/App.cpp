@@ -181,6 +181,10 @@ int App::Run(void)
 	bookcurrent = 127;
 	mode = APP_MODE_BROWSER;
 	prefs->Read(p);
+
+	for(int b=0; b<brightness; b++)
+		NDSX_SetBrightness_Next();
+
 	if(bookcurrent < 127)
 	{
 		browser_init();

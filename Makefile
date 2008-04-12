@@ -10,7 +10,7 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
 export MEDIA		:=	R4tf
-export MEDIAROOT	:=	/Volumes/SANDISK/
+export MEDIAROOT	:=	/media/SANDISK/
 export REMOTEHOST	:=	eris
 
 #-------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ test-media: $(TARGET).nds
 	desmume-cli --cflash=../media.dmg dslibris.nds
 
 test: $(TARGET).nds
-	desmume-cli dslibris.nds
+	desmume-cli --cflash=media.img dslibris.nds
 
 # debug target with insight and desmume under linux
 debug: $(TARGET).nds

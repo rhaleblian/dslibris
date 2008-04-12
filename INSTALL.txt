@@ -17,4 +17,8 @@ INSTALLATION
 
 4. run dslibris.nds on the DS.
 
+TROUBLESHOOTING
+
+Look for file DSLIBRIS.LOG on your media root; send this file to developers
+when you encounter a problem.
 

@@ -12,7 +12,7 @@
 #include "main.h"
 #include "parse.h"
 
-#define APP_VERSION "1.1 (136)"
+#define APP_VERSION "1.1.141"
 #define APP_URL "http://ndslibris.sourceforge.net"
 #define APP_LOGFILE "dslibris.log"
 #define APP_MODE_BOOK 0
