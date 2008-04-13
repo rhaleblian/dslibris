@@ -6,8 +6,16 @@
 #include "Book.h"
 
 typedef enum {
-	NONE,HTML,HEAD,TITLE,BODY,PRE,
-	TAG_H1,TAG_H2,TAG_H3,TAG_H4,TAG_H5,TAG_H6
+	TAG_ANCHOR,
+	TAG_BR,TAG_BODY,
+	TAG_DIV,TAG_DT,
+	TAG_H1,TAG_H2,TAG_H3,TAG_H4,TAG_H5,TAG_H6,TAG_HTML,TAG_HEAD,
+	TAG_NONE,
+	TAG_OL,
+	TAG_P,TAG_PRE,
+	TAG_SCRIPT,TAG_STYLE,
+	TAG_TD,TAG_TITLE,
+	TAG_UL,TAG_UNKNOWN
 } context_t;
 
 typedef struct {
@@ -19,15 +27,17 @@ typedef struct {
 } parsedata_t;
 
 void default_hndl(void *data, const char *s, int len);
-void prefs_start_hndl(void *data, const char *el, const char **attr);
 void start_hndl(void *data, const char *el, const char **attr);
-void title_hndl(void *data, const char *txt, int txtlen);
 void char_hndl(void *data, const char *txt, int txtlen);
 void end_hndl(void *data, const char *el);
 void proc_hndl(void *data, const char *target, const char *pidata);
 int unknown_hndl(void *encodingHandlerData,
 					const XML_Char *name,
 					XML_Encoding *info);
+void prefs_start_hndl(void *data, const char *el, const char **attr);
+void title_start_hndl(void *data, const char *el, const char **attr);
+void title_char_hndl(void *data, const char *txt, int txtlen);
+void title_end_hndl(void *data, const char *el);
 
 bool iswhitespace(u8 c);
 

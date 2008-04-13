@@ -137,54 +137,76 @@ void default_hndl(void *data, const XML_Char *s, int len)
 	}
 }  /* End default_hndl */
 
-void layoutNewLine()
+static char title[32];
+
+void title_start_hndl(void *userdata, const char *el, const char **attr)
 {
-	
+	if(!stricmp(el,"title"))
+	{
+		app->parse_push((parsedata_t *)userdata,TAG_TITLE);
+		strcpy(title,"");
+	}
+}
+
+void title_char_hndl(void *userdata, const char *txt, int txtlen)
+{
+	if(strlen(title) > 27) return;
+	if (!app->parse_in((parsedata_t*)userdata,TAG_TITLE)) return;
+
+	for(u8 t=0;t<txtlen;t++)
+	{
+		if(iswhitespace(txt[t])) strncat(title," ",1);
+		else strncat(title,txt+t,1);
+
+		if (strlen(title) > 27)
+		{
+			strcat(title+27, "...");
+			break;
+		}
+	}
+}
+
+void title_end_hndl(void *userdata, const char *el)
+{
+	parsedata_t *data = (parsedata_t*)userdata;
+	if(!stricmp(el,"title")) data->book->SetTitle(title);
+	app->parse_pop(data);	
 }
 
 void start_hndl(void *data, const char *el, const char **attr)
 {
 	parsedata_t *pdata = (parsedata_t*)data;
-	if (!stricmp(el,"html")) app->parse_push(pdata,HTML);
-	else if (!stricmp(el,"body")) app->parse_push(pdata,BODY);
-	else if (!stricmp(el,"title")) app->parse_push(pdata,TITLE);
-	else if (!stricmp(el,"head")) app->parse_push(pdata,HEAD);
-	else if (!stricmp(el,"pre")) app->parse_push(pdata,PRE);
+	if (!stricmp(el,"html")) app->parse_push(pdata,TAG_HTML);
+	else if (!stricmp(el,"body")) app->parse_push(pdata,TAG_BODY);
+	else if (!stricmp(el,"div")) app->parse_push(pdata,TAG_DIV);
+	else if (!stricmp(el,"dt")) app->parse_push(pdata,TAG_DT);
 	else if (!stricmp(el,"h1")) app->parse_push(pdata,TAG_H1);
 	else if (!stricmp(el,"h2")) app->parse_push(pdata,TAG_H2);
 	else if (!stricmp(el,"h3")) app->parse_push(pdata,TAG_H3);
 	else if (!stricmp(el,"h4")) app->parse_push(pdata,TAG_H4);
 	else if (!stricmp(el,"h5")) app->parse_push(pdata,TAG_H5);
 	else if (!stricmp(el,"h6")) app->parse_push(pdata,TAG_H6);
+	else if (!stricmp(el,"head")) app->parse_push(pdata,TAG_HEAD);
+	else if (!stricmp(el,"ol")) app->parse_push(pdata,TAG_OL);
+	else if (!stricmp(el,"p")) app->parse_push(pdata,TAG_P);
+	else if (!stricmp(el,"pre")) app->parse_push(pdata,TAG_PRE);
+	else if (!stricmp(el,"script")) app->parse_push(pdata,TAG_SCRIPT);
+	else if (!stricmp(el,"style")) app->parse_push(pdata,TAG_STYLE);
+	else if (!stricmp(el,"title")) app->parse_push(pdata,TAG_TITLE);
+	else if (!stricmp(el,"td")) app->parse_push(pdata,TAG_TD);
+	else if (!stricmp(el,"ul")) app->parse_push(pdata,TAG_UL);
+	else app->parse_push(pdata,TAG_UNKNOWN);
 }  /* End of start_hndl */
 
-void title_hndl(void *userdata, const char *txt, int txtlen)
-{
-	parsedata_t *data = (parsedata_t*)userdata;
-	char title[32];
-	if (app->parse_in(data,TITLE))
-	{
-		if (txtlen > 30)
-		{
-			strncpy(title,txt,27);
-			strcpy(title+27, "...");
-		}
-		else
-		{
-			strncpy(title,txt,txtlen);
-			title[txtlen] = 0;
-		}
-		data->book->SetTitle(title);
-	}
-}
 
 void char_hndl(void *data, const XML_Char *txt, int txtlen)
 {
 	/** reflow text on the fly, into page data structure. **/
 
 	parsedata_t *pdata = (parsedata_t *)data;
-	if (!app->parse_in(pdata,BODY)) return;
-	if(app->pagecount == MAXPAGES) return;
+	if (app->parse_in(pdata,TAG_SCRIPT)) return;
+	if (app->parse_in(pdata,TAG_STYLE)) return;
+	if (app->pagecount == MAXPAGES) return;
 
 	page_t *page = &(app->pages[app->pagecurrent]);
 	if (page->length == 0)
@@ -297,7 +319,8 @@ void end_hndl(void *data, const char *el)
 	parsedata_t *p = (parsedata_t *)data;
 	if (
 	    !stricmp(el,"br")
-	    || !stricmp(el,"p")
+	    || !stricmp(el,"div")
+	    || !stricmp(el,"dt")
 	    || !stricmp(el,"h1")
 	    || !stricmp(el,"h2")
 	    || !stricmp(el,"h3")
@@ -305,21 +328,34 @@ void end_hndl(void *data, const char *el)
 	    || !stricmp(el,"h5")
 	    || !stricmp(el,"h6")
 	    || !stricmp(el,"hr")
-	    || !stricmp(el,"tr")
-	    || !stricmp(el,"dt")
-	    || !stricmp(el,"ul")
+	    || !stricmp(el,"li")
+	    || !stricmp(el,"p")
+	    || !stricmp(el,"pre")
 	    || !stricmp(el,"ol")
+	    || !stricmp(el,"td")
+	    || !stricmp(el,"ul")
 	)
 	{
 		if(linebegan) {
+			linebegan = false;
 			app->pagebuf[page->length] = '\n';
 			page->length++;
 			p->pen.x = MARGINLEFT;
 			p->pen.y += app->ts->GetHeight() + LINESPACING;
-			if ( !stricmp(el,"p"))
+			if (	!stricmp(el,"p")
+				|| !strcmp(el,"h1")
+				|| !strcmp(el,"h2")
+				|| !strcmp(el,"h3")
+				|| !strcmp(el,"h4")
+				|| !strcmp(el,"h5")
+				|| !strcmp(el,"h6")
+				|| !strcmp(el,"hr")
+				|| !strcmp(el,"pre")
+			)
 			{
 				app->pagebuf[page->length] = '\n';
 				page->length++;
+				p->pen.x = MARGINLEFT;
 				p->pen.y += app->ts->GetHeight() + LINESPACING;
 			}
 			if (p->pen.y > (PAGE_HEIGHT-MARGINBOTTOM))
@@ -343,36 +379,23 @@ void end_hndl(void *data, const char *el)
 				p->pen.x = MARGINLEFT;
 				p->pen.y = MARGINTOP + app->ts->GetHeight();
 			}
-			linebegan = false;
 		}
 	}
+
 	if (!stricmp(el,"body"))
 	{
 		if (!page->buf)
 		{
 			page->buf = new u8[page->length];
-			if (!page->buf) app->ts->PrintString("[memory error]\n");
+			if (!page->buf)
+				app->ts->PrintStatusMessage("[memory error storing page]\n");
 		}
 		strncpy((char*)page->buf,(char*)app->pagebuf,page->length);
 		app->parse_pop(p);
 	}
-	else if (!( stricmp(el,"title") 
-		&& stricmp(el,"head")
-		&& stricmp(el,"pre")
-		&& stricmp(el,"html")
-		&& stricmp(el,"h1")
-		&& stricmp(el,"h2")
-		&& stricmp(el,"h3")
-		&& stricmp(el,"h4")
-		&& stricmp(el,"h5")
-		&& stricmp(el,"h6")
-		&& stricmp(el,"dt")
-		&& stricmp(el,"ul")
-		&& stricmp(el,"ol")
-		))
-	{
-		app->parse_pop(p);
-	}
+
+	app->parse_pop(p);
+
 
 }  /* End of end_hndl */
 

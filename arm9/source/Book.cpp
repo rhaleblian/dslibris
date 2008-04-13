@@ -82,8 +82,8 @@ u8 Book::Index(char *filebuf)
 	app->parse_init(&parsedata);
 	parsedata.book = this;
 	XML_SetUserData(p, &parsedata);
-	XML_SetElementHandler(p, start_hndl, end_hndl);
-	XML_SetCharacterDataHandler(p, title_hndl);
+	XML_SetElementHandler(p, title_start_hndl, title_end_hndl);
+	XML_SetCharacterDataHandler(p, title_char_hndl);
 	XML_SetProcessingInstructionHandler(p, proc_hndl);
 	while (true)
 	{
