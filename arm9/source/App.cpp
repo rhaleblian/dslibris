@@ -36,8 +36,16 @@ App::App()
 	books = new Book[MAXBOOKS];
 	bookcount = 0;
 	bookcurrent = 0;
+	reopen = 0;
 	mode = APP_MODE_BOOK;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
+
+	marginleft = MARGINLEFT;
+	margintop = MARGINTOP;
+	marginright = MARGINRIGHT;
+	marginbottom = MARGINBOTTOM;
+	linespacing = LINESPACING;
+	orientation = 0;
 
 	prefs = new Prefs(this);
 }
@@ -71,45 +79,17 @@ int App::Run(void)
 	NDSX_SetBrightness_Next();
 	brightness = 0;
 
-	// initialize screens.
-	// clockwise rotation for both screens
-
-	s16 s = SIN[-128 & 0x1FF] >> 4;
-	s16 c = COS[-128 & 0x1FF] >> 4;
-
-	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-	BG3_XDX = c;
-	BG3_XDY = -s;
-	BG3_YDX = s;
-	BG3_YDY = c;
-	BG3_CX = 0 << 8;
-	BG3_CY = 256 << 8;
-	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	screen1 = (u16*)BG_BMP_RAM(0);
-	BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-	SUB_BG3_XDX = c;
-	SUB_BG3_XDY = -s;
-	SUB_BG3_YDX = s;
-	SUB_BG3_YDY = c;
-	SUB_BG3_CX = 0 << 8;
-	SUB_BG3_CY = 256 << 8;
-	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	screen0 = (u16*)BG_BMP_RAM_SUB(0);
-
 	if (!fatInitDefault()) exit(-11);
 
 	Log("\ninfo : dslibris starting up\n");
 
 	ts = new Text();
+	ts->app = this;
 	int err = ts->Init();
    	if (err) {
 		Log("fatal: starting typesetter failed\n");
 		exit(-2);
 	}
-
-	ts->PrintSplash();
 
 	// assemble library by indexing all XHTML files
 	// in the application directory.
@@ -164,7 +144,6 @@ int App::Run(void)
 	dirclose(dp);
 	swiWaitForVBlank();
 
-
 	// restore the last book and page we were reading.
 	// TODO bookmark character, not page
 
@@ -185,15 +164,58 @@ int App::Run(void)
 	for(int b=0; b<brightness; b++)
 		NDSX_SetBrightness_Next();
 
-	if(bookcurrent < 127)
+	// initialize screens.
+
+	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
+	BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
+
+	u16 angle;
+	if(orientation) {
+		angle = 128;
+		BG3_CX = 192 << 8;
+		BG3_CY = 0 << 8;
+		SUB_BG3_CX = 192 << 8;
+		SUB_BG3_CY = 0 << 8;
+		screen1 = (u16*)BG_BMP_RAM_SUB(0);
+		screen0 = (u16*)BG_BMP_RAM(0);
+	}
+	else
 	{
-		browser_init();
+		angle = 384;
+		BG3_CX = 0 << 8;
+		BG3_CY = 256 << 8;
+		SUB_BG3_CX = 0 << 8;
+		SUB_BG3_CY = 256 << 8;
+		screen0 = (u16*)BG_BMP_RAM_SUB(0);
+		screen1 = (u16*)BG_BMP_RAM(0);
+	}
+
+	s16 s = SIN[angle & 0x1FF] >> 4;
+	s16 c = COS[angle & 0x1FF] >> 4;
+	BG3_XDX = c;
+	BG3_XDY = -s;
+	BG3_YDX = s;
+	BG3_YDY = c;
+	SUB_BG3_XDX = c;
+	SUB_BG3_XDY = -s;
+	SUB_BG3_YDX = s;
+	SUB_BG3_YDY = c;
+
+	if(orientation) ts->PrintSplash(screen1); 
+	else ts->PrintSplash(screen0);
+	browser_init();
+
+	if(reopen && (bookcurrent < 127))
+	{
 		if(!OpenBook()) mode = APP_MODE_BOOK;
 	}
 	else
 	{
-		bookcurrent = 0;
-		browser_init();
+		if(bookcurrent > 126) bookcurrent = 0;
 		browser_draw();
 	}
 	swiWaitForVBlank();
@@ -269,7 +291,13 @@ void App::HandleEventInBrowser()
 
 	else if (keysDown() & KEY_TOUCH)
 	{
-		touchPosition touch = touchReadXY();		
+		touchPosition touch = touchReadXY();
+		if(orientation)
+		{
+			touch.px = 256 - touch.px;
+			touch.py = 192 - touch.py;
+		}
+
 		if(touch.px < 16) {
 			browser_nextpage();
 			browser_draw();
@@ -336,7 +364,8 @@ void App::HandleEventInBook()
 	{
 		prefs->Write();
 		mode = APP_MODE_BROWSER;			
-		ts->PrintSplash();
+		if(orientation) ts->PrintSplash(screen1);
+		else ts->PrintSplash(screen0);
 		browser_draw();
 	}
 
@@ -353,6 +382,17 @@ void App::HandleEventInBook()
 		}
 		page_draw(&pages[pagecurrent]);
 	}
+
+	// clock - only display when reading a book
+	time_t tt = time(NULL);
+	struct tm *tms = gmtime((const time_t *)&tt);
+	char tmsg[6];
+	sprintf(tmsg, "%02d:%02d", tms->tm_hour, tms->tm_min);
+	u8 offset = marginleft;
+	ts->SetScreen(screen0);
+	ts->ClearRect(offset, 240, offset+30, 255);
+	ts->SetPen(offset,250);
+	ts->PrintString(tmsg);
 }
 
 u8 App::OpenBook(void)
@@ -361,7 +401,7 @@ u8 App::OpenBook(void)
 	strcpy(msg,"[opening...]");
 	ts->SetScreen(screen1);
 	ts->ClearScreen(screen1,0,0,0);
-	ts->SetPen(MARGINLEFT,PAGE_HEIGHT/2);
+	ts->SetPen(marginleft,PAGE_HEIGHT/2);
 	bool invert = ts->GetInvert();
 	ts->SetInvert(true);
 	ts->PrintString(msg);
@@ -376,7 +416,7 @@ u8 App::OpenBook(void)
 		pagecurrent = books[bookcurrent].GetPosition();
 		page_draw(&(pages[pagecurrent]));
 		prefs->Write();
-		return 0;		
+		return 0;
 	}
 	else return 255;
 }
@@ -406,42 +446,45 @@ void App::browser_init(void)
 
 void App::browser_nextpage()
 {
-      if(browserstart+7 < bookcount)
-      { 
-              browserstart += 7;
-              bookcurrent = browserstart;
-      }
+	if(browserstart+7 < bookcount)
+	{ 
+		browserstart += 7;
+		bookcurrent = browserstart;
+	}
 }
 
 void App::browser_prevpage()
 {
-      if(browserstart-7 >= 0)
-      {
-              browserstart -= 7;
-              bookcurrent = browserstart+6;
-      }
+	if(browserstart-7 >= 0)
+	{
+		browserstart -= 7;
+		bookcurrent = browserstart+6;
+	}
 }
 
 void App::browser_draw(void)
 {
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
-
-	ts->SetScreen(screen1);
-	ts->ClearScreen(screen1,0,0,0);
+	u16* screen;
+	if(orientation) screen = screen0;
+	else screen = screen1;
+ 
+	ts->SetScreen(screen);
+	ts->ClearScreen(screen,0,0,0);
 	ts->SetPixelSize(12);
 	for (int i=browserstart;(i<bookcount) && (i<browserstart+7);i++)
 	{
 		if (i==bookcurrent)
-			buttons[i].Draw(screen1,true);
+			buttons[i].Draw(screen,true);
 		else
-			buttons[i].Draw(screen1,false);
+			buttons[i].Draw(screen,false);
 	}
 
 	if(browserstart > 6) 
-		buttonprev.Draw(screen1,false);
+		buttonprev.Draw(screen,false);
 	if(bookcount > browserstart+7)
-		buttonnext.Draw(screen1,false);
+		buttonnext.Draw(screen,false);
 
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
@@ -449,11 +492,16 @@ void App::browser_draw(void)
 
 void App::browser_redraw()
 {
-	buttons[bookcurrent].Draw(screen1,true);
+	u16 *screen;
+	if(orientation) screen = screen0;
+	else screen = screen1;
+
+	ts->SetScreen(screen);
+	buttons[bookcurrent].Draw(screen,true);
 	if(bookcurrent > browserstart)
-		buttons[bookcurrent-1].Draw(screen1,false);
+		buttons[bookcurrent-1].Draw(screen,false);
 	if(bookcurrent < bookcount-1 && bookcurrent - browserstart < 6)
-		buttons[bookcurrent+1].Draw(screen1,false);
+		buttons[bookcurrent+1].Draw(screen,false);
 }
 
 void App::page_init(page_t *page)
@@ -488,7 +536,7 @@ u8 App::page_getjustifyspacing(page_t *page, u16 i)
 	for (k=j;k>0 && page->buf[k]==' ';k--) spaces--;
 
 	if (spaces)
-		return((u8)((float)((PAGE_WIDTH-MARGINRIGHT-MARGINLEFT) - advance)
+		return((u8)((float)((PAGE_WIDTH-marginright-marginleft) - advance)
 		            / (float)spaces));
 	else return(0);
 }
@@ -521,8 +569,8 @@ void App::parse_init(parsedata_t *data)
 	data->stacksize = 0;
 	data->book = NULL;
 	data->page = NULL;
-	data->pen.x = MARGINLEFT;
-	data->pen.y = MARGINTOP;
+	data->pen.x = marginleft;
+	data->pen.y = margintop;
 }
 
 void App::parse_push(parsedata_t *data, context_t context)
@@ -574,8 +622,8 @@ bool App::parse_pagefeed(parsedata_t *data, page_t *page)
 		fb = screen1;
 		pagedone = false;
 	}
-	data->pen.x = MARGINLEFT;
-	data->pen.y = MARGINTOP + ts->GetHeight();
+	data->pen.x = marginleft;
+	data->pen.y = margintop + ts->GetHeight();
 	return pagedone;
 }
 
@@ -598,8 +646,8 @@ void App::page_draw(page_t *page)
 
 			i++;
 
-			if (ts->GetPenY() + ts->GetHeight() + LINESPACING 
-				> PAGE_HEIGHT - MARGINBOTTOM)
+			if (ts->GetPenY() + ts->GetHeight() + linespacing 
+				> PAGE_HEIGHT - marginbottom)
 			{
 				if(ts->GetScreen() == screen0) {
 					ts->SetScreen(screen1);
@@ -630,9 +678,9 @@ void App::page_draw(page_t *page)
 	else
 		sprintf((char*)msg,"< %d >",pagecurrent+1);
 	ts->SetScreen(screen1);
-	u8 offset = (u8)((PAGE_WIDTH-MARGINLEFT-MARGINRIGHT-(ts->GetAdvance(40)*7))
+	u8 offset = (u8)((PAGE_WIDTH-marginleft-marginright-(ts->GetAdvance(40)*7))
 		* (pagecurrent / (float)pagecount));
-	ts->SetPen(MARGINLEFT+offset,250);
+	ts->SetPen(marginleft+offset,250);
 	ts->PrintString(msg);
 }
 
@@ -648,5 +696,12 @@ void App::Log(std::string msg)
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,msg.c_str());
 	fclose(logfile);
+}
+
+void App::Log(const char *format, const char *msg)
+{
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,format,msg);
+	fclose(logfile);	
 }
 

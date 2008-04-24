@@ -12,7 +12,6 @@
 #include "main.h"
 #include "parse.h"
 
-#define APP_VERSION "1.1.142"
 #define APP_URL "http://ndslibris.sourceforge.net"
 #define APP_LOGFILE "dslibris.log"
 #define APP_MODE_BOOK 0
@@ -22,13 +21,14 @@ class App {
 	public:
 	Text *ts;
 	class Prefs *prefs;
-	u16 *screen0, *screen1, *fb;
+	u16 *screen0, *screen1, *screenleft, *screenright, *fb;
 	Button *buttons;
 	Button buttonprev, buttonnext;
 	u8 browserstart;
 	Book *books;
 	u8 bookcount;
 	u8 bookcurrent;
+	u8 reopen;
 	parsedata_t parsedata;
 	page_t *pages;
 	u8 *pagebuf;
@@ -37,6 +37,9 @@ class App {
 	u8 brightness;
 	char *filebuf;
 	u8 mode;
+	u8 marginleft, marginright, margintop, marginbottom;
+	u8 linespacing;
+	u8 orientation;
 
 	App();
 	~App();
@@ -45,6 +48,7 @@ class App {
 	void HandleEventInBook();
 	void Log(const char*);
 	void Log(std::string);
+	void Log(const char* format, const char *msg);
 	u8   OpenBook(void);
 	int  Run(void);
 

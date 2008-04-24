@@ -22,7 +22,8 @@ Note the libraries in 'external', prebuilt for arm-eabi; make sure you don't hav
 
 INSTALLATION
 
-Copy dslibris.nds and dslibris.ttf to the root of your media.
+Copy dslibris.nds and dslibris.ttf to the root of your media. Also copy any
+.xhtml or .xht books you want to use to the media root.
 
 DEBUGGING
 

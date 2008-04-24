@@ -283,6 +283,8 @@ int main( void)
 
 	irqInit();
 
+	initClockIRQ();
+
 	irqSet(IRQ_VBLANK, VblankHandler);
 	irqEnable(IRQ_VBLANK);
 

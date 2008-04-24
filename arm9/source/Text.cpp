@@ -3,6 +3,7 @@
 #include "Text.h"
 #include "App.h"
 #include "main.h"
+#include "version.h"
 
 Text::Text()
 {
@@ -16,12 +17,6 @@ Text::Text()
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
-}
-
-Text::Text(App *parent)
-{
-	app = parent;
-	Text();
 }
 
 static FT_Error
@@ -64,6 +59,10 @@ int Text::InitWithCacheManager(void) {
 	imagetype.height = pixelsize;
 	imagetype.width = pixelsize;
 	ftc = true;
+
+	char msg[64];
+	sprintf(msg,"%d\n",app->marginleft);
+	app->Log(msg);
 
 	return 0;
 }
@@ -162,7 +161,7 @@ void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 	else clearcolor = RGB15(31,31,31) | BIT(15);
 	for(u16 y=yl; y<yh; y++) {
 		for(u16 x=xl; x<xh; x++) {
-			screen[y*PAGE_WIDTH+x] = clearcolor;
+			screen[y*PAGE_HEIGHT+x] = clearcolor;
 		}
 	}
 }
@@ -294,8 +293,8 @@ u8 Text::GetAdvance(u32 ucs) {
 }
 
 void Text::InitPen(void) {
-	pen.x = MARGINLEFT;
-	pen.y = MARGINTOP + GetHeight();
+	pen.x = app->marginleft;
+	pen.y = app->margintop + GetHeight();
 }
 
 void Text::PrintChar(u32 ucs) {
@@ -364,14 +363,14 @@ void Text::PrintChar(u32 ucs) {
 }
 
 bool Text::PrintNewLine(void) {
-	pen.x = MARGINLEFT;
+	pen.x = app->marginleft;
 	int height = GetHeight();
-	int y = pen.y + height + LINESPACING;
-	if (y > (PAGE_HEIGHT - MARGINBOTTOM)) {
+	int y = pen.y + height + app->linespacing;
+	if (y > (PAGE_HEIGHT - app->marginbottom)) {
 		if (screen == screenleft)
 		{
 			screen = screenright;
-			pen.y = MARGINTOP + height;
+			pen.y = app->margintop + height;
 			return true;
 		}
 		else
@@ -379,7 +378,7 @@ bool Text::PrintNewLine(void) {
 	}
 	else
 	{
-		pen.y += height + LINESPACING;
+		pen.y += height + app->linespacing;
 		return true;
 	}
 }
@@ -419,14 +418,14 @@ void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 		screen[i] = RGB15(r,g,b) | BIT(15);
 }
 
-void Text::PrintSplash(void)
+void Text::PrintSplash(u16 *screen)
 {
 	bool invert = GetInvert();
 	u8 size = GetPixelSize();
 
 	SetInvert(true);
-	SetScreen(screenleft);
-	ClearScreen(screenleft,0,0,0);
+	SetScreen(screen);
+	ClearScreen(screen,0,0,0);
 	SetPen(SPLASH_LEFT,SPLASH_TOP);
 	SetPixelSize(36);
 	PrintString("dslibris");
@@ -436,9 +435,7 @@ void Text::PrintSplash(void)
 	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
 	PrintString("for Nintendo DS");
 	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
-	PrintString(APP_VERSION);
-	PrintNewLine();
-	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
+	PrintString(VERSION);
 
 	SetPixelSize(size);
 	SetInvert(invert);

@@ -10,7 +10,7 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
 export MEDIA		:=	R4tf
-export MEDIAROOT	:=	/media/SANDISK/
+export MEDIAROOT	:=	/media/M3DSREAL/
 export REMOTEHOST	:=	eris
 
 #-------------------------------------------------------------------------------
@@ -82,15 +82,11 @@ $(TARGET).$(MEDIA).nds: $(TARGET).nds
 scp: $(TARGET).$(MEDIA).nds
 	scp $(TARGET).$(MEDIA).nds $(REMOTEHOST):
 
-# copy target over network to microSD mounted under windows
-install-smb: $(TARGET).$(MEDIA).nds
-	smbclient \\\\asherah\\e fnord... -c "cd .; put dslibris.$(MEDIA).nds"
-
 # copy target to microSD mounted under Linux
 install: $(TARGET).nds
 	cp $(TARGET).nds $(MEDIAROOT)
 	sync
-#
+
 # installation including DLDI patching.
 install-dldi: $(TARGET).$(MEDIA).nds
 	cp $(TARGET).$(MEDIA).nds $(MEDIAROOT)
@@ -101,7 +97,7 @@ dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	- mkdir dist
 	rm dist/*
 	cp INSTALL.txt $(TARGET).nds data/$(TARGET).xht dist
-	cp data/Cyberbit.ttf dist/dslibris.ttf
+	cp data/LiberationSerif-Regular.ttf dist/dslibris.ttf
 	(cd dist; zip -r dslibris.zip *)
 
 dist: dist/$(TARGET).zip
@@ -114,6 +110,5 @@ mount:
 	sudo mount -t vfat -o loop -o uid=rhaleblian media.img media
 
 umount:
-	#sudo umount media
-	hdiutil unmount $(MEDIAROOT)
+	sudo umount media
 

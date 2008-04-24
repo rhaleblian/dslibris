@@ -32,7 +32,6 @@ class Text {
 	FT_Library library;
 	FT_Face face;
 	FT_Error error;
-	App *app;
 
 	bool ftc;
 	TextCache cache;
@@ -64,8 +63,9 @@ class Text {
 	FT_UInt GetGlyphIndex(u32 ucs);
 
 public:
+	App *app;
+
 	Text();
-	Text(App *parent);
 	int  Init();
 	void InitPen(void);
 
@@ -95,7 +95,7 @@ public:
 	bool PrintNewLine(void);
 	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
-	void PrintSplash(void);
+	void PrintSplash(u16 *screen);
 };
 
 #endif

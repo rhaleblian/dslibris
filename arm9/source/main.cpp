@@ -48,6 +48,7 @@ void prefs_start_hndl(	void *userdata,
 	char filename[64];
 	strcpy(filename,"");
 	u16 position = 0;
+
 	if (!stricmp(name,"screen"))
 	{
 		for(int i=0;attr[i];i+=2)
@@ -60,6 +61,10 @@ void prefs_start_hndl(	void *userdata,
 			else if(!strcmp(attr[i],"invert"))
 			{
 				app->ts->SetInvert(atoi(attr[i+1]));
+			}
+			else if(!strcmp(attr[i],"clockwise"))
+			{
+				app->orientation = atoi(attr[i+1]);
 			}
 		}
 	}
@@ -79,6 +84,10 @@ void prefs_start_hndl(	void *userdata,
 			if (!strcmp(attr[i],"file")) strcpy(filename, attr[i+1]);
 			if (!strcmp(attr[i],"position")) position = atoi(attr[i+1]);
 			if (!strcmp(attr[i],"page")) position = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"reopen") && !stricmp(name,"book"))
+			{
+				app->reopen = atoi(attr[i+1]);
+			} 
 		}
 		for(i=0;i<app->bookcount;i++)
 		{
@@ -89,6 +98,16 @@ void prefs_start_hndl(	void *userdata,
 				break;
 			}
 		}
+	}
+	else if (!stricmp(name,"margin"))
+	{
+		for (u8 i=0;attr[i];i+=2)
+		{
+			if (!strcmp(attr[i],"left")) app->marginleft = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"right")) app->marginright = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"top")) app->margintop = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"bottom")) app->marginbottom = atoi(attr[i+1]);
+		}		
 	}
 }
 
@@ -155,7 +174,10 @@ void title_char_hndl(void *userdata, const char *txt, int txtlen)
 
 	for(u8 t=0;t<txtlen;t++)
 	{
-		if(iswhitespace(txt[t])) strncat(title," ",1);
+		if(iswhitespace(txt[t])) 
+		{
+			if(strlen(title)) strncat(title," ",1);
+		}
 		else strncat(title,txt+t,1);
 
 		if (strlen(title) > 27)
@@ -204,6 +226,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 	/** reflow text on the fly, into page data structure. **/
 
 	parsedata_t *pdata = (parsedata_t *)data;
+	if (app->parse_in(pdata,TAG_TITLE)) return;	
 	if (app->parse_in(pdata,TAG_SCRIPT)) return;
 	if (app->parse_in(pdata,TAG_STYLE)) return;
 	if (app->pagecount == MAXPAGES) return;
@@ -212,8 +235,8 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 	if (page->length == 0)
 	{
 		/** starting a new page. **/
-		pdata->pen.x = MARGINLEFT;
-		pdata->pen.y = MARGINTOP + app->ts->GetHeight();
+		pdata->pen.x = app->marginleft;
+		pdata->pen.y = app->margintop + app->ts->GetHeight();
 		linebegan = false;
 	}
 
@@ -229,13 +252,23 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 		if (iswhitespace(txt[i]))
 		{
-			if(linebegan)
+			if(app->parse_in(pdata,TAG_PRE))
+			{
+				app->pagebuf[page->length++] = txt[i];
+				if(txt[i] == '\n')
+				{
+					pdata->pen.x = app->marginleft;
+					pdata->pen.y += (app->ts->GetHeight() + app->linespacing);
+				}
+				else pdata->pen.x += app->ts->GetAdvance((u16)' ');				
+			}
+			else if(linebegan && page->length
+				&& !iswhitespace(app->pagebuf[page->length-1]))
 			{
 				app->pagebuf[page->length++] = ' ';
 				pdata->pen.x += app->ts->GetAdvance((u16)' ');
 			}
 			i++;
-
 		}
 		else
 		{
@@ -267,14 +300,14 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 			/** reflow - if we overrun the margin, 
 			insert a break. **/
 
-			if ((pdata->pen.x + advance) > (PAGE_WIDTH-MARGINRIGHT))
+			if ((pdata->pen.x + advance) > (PAGE_WIDTH-app->marginright))
 			{
 				app->pagebuf[page->length] = '\n';
 				page->length++;
-				pdata->pen.x = MARGINLEFT;
-				pdata->pen.y += (app->ts->GetHeight() + LINESPACING);
+				pdata->pen.x = app->marginleft;
+				pdata->pen.y += (app->ts->GetHeight() + app->linespacing);
 
-				if (pdata->pen.y > (PAGE_HEIGHT-MARGINBOTTOM))
+				if (pdata->pen.y > (PAGE_HEIGHT-app->marginbottom))
 				{
 					if (app->parse_pagefeed(pdata,page))
 					{
@@ -341,7 +374,7 @@ void end_hndl(void *data, const char *el)
 			app->pagebuf[page->length] = '\n';
 			page->length++;
 			p->pen.x = MARGINLEFT;
-			p->pen.y += app->ts->GetHeight() + LINESPACING;
+			p->pen.y += app->ts->GetHeight() + app->linespacing;
 			if (	!stricmp(el,"p")
 				|| !strcmp(el,"h1")
 				|| !strcmp(el,"h2")
@@ -355,10 +388,10 @@ void end_hndl(void *data, const char *el)
 			{
 				app->pagebuf[page->length] = '\n';
 				page->length++;
-				p->pen.x = MARGINLEFT;
-				p->pen.y += app->ts->GetHeight() + LINESPACING;
+				p->pen.x = app->marginleft;
+				p->pen.y += app->ts->GetHeight() + app->linespacing;
 			}
-			if (p->pen.y > (PAGE_HEIGHT-MARGINBOTTOM))
+			if (p->pen.y > (PAGE_HEIGHT-app->marginbottom))
 			{
 				if (app->fb == app->screen1)
 				{
@@ -376,8 +409,8 @@ void end_hndl(void *data, const char *el)
 				{
 					app->fb = app->screen1;
 				}
-				p->pen.x = MARGINLEFT;
-				p->pen.y = MARGINTOP + app->ts->GetHeight();
+				p->pen.x = app->marginleft;
+				p->pen.y = app->margintop + app->ts->GetHeight();
 			}
 		}
 	}
