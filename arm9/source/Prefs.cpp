@@ -36,7 +36,9 @@ bool Prefs::Write(void)
 		app->brightness, app->ts->GetInvert());
 	fprintf(fp, "\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",
 		app->margintop, app->marginleft, app->marginbottom, app->marginright);
-	fprintf(fp, "\t<font size=\"%d\" />\n", app->ts->GetPixelSize());
+	fprintf(fp, "\t<font file=\"%s\" size=\"%d\" />\n",
+		app->ts->GetFontFile().c_str(),
+		app->ts->GetPixelSize());
 	fprintf(fp, "\t<book file=\"%s\" />\n", app->books[app->bookcurrent].GetFileName());
 	for(u8 i=0;i<app->bookcount; i++)
 	{

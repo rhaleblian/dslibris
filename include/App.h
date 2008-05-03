@@ -48,6 +48,7 @@ class App {
 	void HandleEventInBook();
 	void Log(const char*);
 	void Log(std::string);
+	void Log(int x);
 	void Log(const char* format, const char *msg);
 	u8   OpenBook(void);
 	int  Run(void);

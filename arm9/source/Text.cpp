@@ -2,8 +2,11 @@
 #include <fat.h>
 #include "Text.h"
 #include "App.h"
+#include "image_stack.h"
 #include "main.h"
 #include "version.h"
+
+static const int DMA_CHANNEL = 3;
 
 Text::Text()
 {
@@ -39,7 +42,7 @@ int Text::InitWithCacheManager(void) {
 	FTC_SBitCache_New(cache.manager,&cache.sbit);
 	FTC_CMapCache_New(cache.manager,&cache.cmap);
 
-	face_id.file_path = "dslibris.ttf";
+	face_id.file_path = fontfilename.c_str();
 	face_id.face_index = 0;
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &face);
 	if(error) return error;
@@ -70,13 +73,15 @@ int Text::InitWithCacheManager(void) {
 int Text::InitDefault(void) {
 	if (FT_Init_FreeType(&library)) return 1;
 	if (FT_New_Face(library, fontfilename.c_str(), 0, &face)) return 2;
-	//if (!FT_HAS_KERNING(face)) return 3;
 	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	FT_Set_Pixel_Sizes(face, 0, pixelsize);
 	screen = screenleft;
 	ClearCache();
 	InitPen();
 	ftc = false;
+	char msg[64];
+	sprintf(msg,"info : font '%s'\n", fontfilename.c_str());
+	app->Log(msg);
 	return(0);
 }
 
@@ -115,7 +120,7 @@ FT_UInt Text::GetGlyphIndex(u32 ucs)
 {
 	if(!ftc) return ucs;
 	return FTC_CMapCache_Lookup(cache.cmap,(FTC_FaceID)&face_id,
-		charmap_index,ucs);	
+		charmap_index,ucs);
 }
 
 int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit)
@@ -334,13 +339,27 @@ void Text::PrintChar(u32 ucs) {
 	}
 
 	// kern.
-	/*
 	if(codeprev) {
 		FT_Vector k;
 		error = FT_Get_Kerning(face,codeprev,ucs,FT_KERNING_UNSCALED,&k);
-		pen.x += k.x >> 6;
+		if(error) {
+			app->Log("warn : kerning lookup error ");
+			app->Log((char *)&codeprev);
+			app->Log("->");
+			app->Log((char *)&ucs);
+			app->Log("\n");
+		}
+		else if (k.x)
+		{
+			app->Log("info : kern ");
+			app->Log((int)k.x);
+			app->Log((char *)&codeprev);
+			app->Log("->");
+			app->Log((char *)&ucs);
+			app->Log("\n");
+			pen.x += k.x >> 6;
+		}
 	}
-	*/
 
 	// render to framebuffer.
 
@@ -423,6 +442,11 @@ void Text::PrintSplash(u16 *screen)
 	bool invert = GetInvert();
 	u8 size = GetPixelSize();
 
+	dmaCopyHalfWords(DMA_CHANNEL,image_stackBitmap,
+		(u16*)BG_BMP_RAM(0),image_stackBitmapLen);
+
+#ifndef GRIT
+
 	SetInvert(true);
 	SetScreen(screen);
 	ClearScreen(screen,0,0,0);
@@ -437,7 +461,19 @@ void Text::PrintSplash(u16 *screen)
 	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
 	PrintString(VERSION);
 
+#endif
+
 	SetPixelSize(size);
 	SetInvert(invert);
+}
+
+void Text::SetFontFile(char *filename, u8 style)
+{
+	fontfilename = filename;
+}
+
+string Text::GetFontFile()
+{
+	return fontfilename;
 }
 

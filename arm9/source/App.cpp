@@ -37,7 +37,7 @@ App::App()
 	bookcount = 0;
 	bookcurrent = 0;
 	reopen = 0;
-	mode = APP_MODE_BOOK;
+	mode = APP_MODE_BROWSER;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
 
 	marginleft = MARGINLEFT;
@@ -46,6 +46,7 @@ App::App()
 	marginbottom = MARGINBOTTOM;
 	linespacing = LINESPACING;
 	orientation = 0;
+	brightness = 0;
 
 	prefs = new Prefs(this);
 }
@@ -77,22 +78,41 @@ int App::Run(void)
 	// go to the lowest brightness setting.
 
 	NDSX_SetBrightness_Next();
-	brightness = 0;
+
+	// make sure we can write a log.
 
 	if (!fatInitDefault()) exit(-11);
 
-	Log("\ninfo : dslibris starting up\n");
+	Log("\ninfo : dslibris starting up.\n");
 
 	ts = new Text();
 	ts->app = this;
+
+	// read preferences.
+
+	Log("info : reading prefs.\n");
+	
+	XML_Parser p = XML_ParserCreate(NULL);
+	if (!p)
+	{
+		ts->PrintString("fatal: parser creation failed.\n");
+		Log("fatal: parser creation failed.\n");
+		exit(-6);
+	}
+	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
+	parse_init(&parsedata);
+
+	prefs->Read(p);
+
+	// init typesetter.
+
 	int err = ts->Init();
    	if (err) {
 		Log("fatal: starting typesetter failed\n");
 		exit(-2);
 	}
 
-	// assemble library by indexing all XHTML files
-	// in the application directory.
+	// construct library.
 
 	char dirname[32];
 	strcpy(dirname,BOOKDIR);
@@ -137,34 +157,47 @@ int App::Run(void)
 				ts->PrintString("fatal: cannot make parser");
 				exit(-8);
 			}
-			sprintf(msg, "info : %s\n",book->GetTitle());
+			sprintf(msg, "info : title %s\n",book->GetTitle());
+			Log(msg);			
 			bookcount++;
 		}
 	}
 	dirclose(dp);
 	swiWaitForVBlank();
 
-	// restore the last book and page we were reading.
-	// TODO bookmark character, not page
-
-	XML_Parser p = XML_ParserCreate(NULL);
-	if (!p)
-	{
-		ts->PrintString("fatal: parser creation failed\n");
-		Log("fatal: parser creation failed\n");
-		exit(-6);
-	}
-	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
-	parse_init(&parsedata);
-
-	bookcurrent = 127;
-	mode = APP_MODE_BROWSER;
-	prefs->Read(p);
+	// initialize screens.
 
 	for(int b=0; b<brightness; b++)
 		NDSX_SetBrightness_Next();
 
-	// initialize screens.
+#ifdef GRIT
+
+	vramSetMainBanks(
+		VRAM_A_MAIN_BG_0x06000000,
+		VRAM_B_MAIN_BG_0x06020000,
+		VRAM_C_SUB_BG_0x06200000,
+		VRAM_D_LCD
+	);			
+	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+
+	BG3_CR = BG_BMP16_256x256 | BG_BMP_BASE(0);
+	SUB_BG3_CR = BG_BMP16_256x256 | BG_BMP_BASE(0);
+
+	BG3_XDX = 1 << 8;
+	BG3_XDY = 0;
+	BG3_YDX = 0;
+	BG3_YDY = 1 << 8;
+	BG3_CX = 0;
+	BG3_CY = 0;
+	SUB_BG3_XDX = 1 << 8;
+	SUB_BG3_XDY = 0;
+	SUB_BG3_YDX = 0;
+	SUB_BG3_YDY = 1 << 8;
+	SUB_BG3_CX = 0;
+	SUB_BG3_CY = 0;
+
+#else
 
 	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
@@ -205,17 +238,21 @@ int App::Run(void)
 	SUB_BG3_YDX = s;
 	SUB_BG3_YDY = c;
 
+#endif
+
+	screen1 = (u16*)BG_BMP_RAM(0);
+	screen0 = (u16*)BG_BMP_RAM_SUB(0);
+
 	if(orientation) ts->PrintSplash(screen1); 
 	else ts->PrintSplash(screen0);
 	browser_init();
 
-	if(reopen && (bookcurrent < 127))
+	if(reopen)
 	{
 		if(!OpenBook()) mode = APP_MODE_BOOK;
 	}
 	else
 	{
-		if(bookcurrent > 126) bookcurrent = 0;
 		browser_draw();
 	}
 	swiWaitForVBlank();
@@ -292,31 +329,46 @@ void App::HandleEventInBrowser()
 	else if (keysDown() & KEY_TOUCH)
 	{
 		touchPosition touch = touchReadXY();
-		if(orientation)
+		touchPosition coord;
+		u8 regionprev[2], regionnext[2];
+		regionprev[0] = 0;						
+		regionprev[1] = 16;
+		regionnext[0] = 240;
+		regionnext[1] = 255;	
+
+		if(!orientation)
 		{
-			touch.px = 256 - touch.px;
-			touch.py = 192 - touch.py;
+			coord.px = 256 - touch.px;
+			coord.py = 192 - touch.py;
+		} else {
+			coord.px = touch.px;
+			coord.py = touch.py;
 		}
 
-		if(touch.px < 16) {
+		if(coord.px > regionnext[0]
+			&& coord.px < regionnext[1])
+		{
 			browser_nextpage();
 			browser_draw();
-		} else if(touch.px > 240) {
+		}
+		else if(coord.px > regionprev[0]
+			&& coord.px < regionprev[1])
+		{
 			browser_prevpage();
 			browser_draw();
 		} else {
 			for(u8 i=browserstart;
-				i<bookcount && i<browserstart+7;
+				(i<bookcount) && (i<browserstart+7);
 				i++) {
-				if (buttons[i].EnclosesPoint(touch.px, touch.py))
+				if (buttons[i].EnclosesPoint(coord.py, coord.px))
 				{
 					bookcurrent = i;
-					browser_redraw();
+					browser_draw();
 					swiWaitForVBlank();
 					if(!OpenBook()) mode = APP_MODE_BOOK;
-					break;
+					else browser_draw();					break;
 				}
-			}	
+			}
 		}
 	}	
 }
@@ -464,8 +516,11 @@ void App::browser_prevpage()
 
 void App::browser_draw(void)
 {
+	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
+
+#ifndef GRIT
 	u16* screen;
 	if(orientation) screen = screen0;
 	else screen = screen1;
@@ -485,13 +540,24 @@ void App::browser_draw(void)
 		buttonprev.Draw(screen,false);
 	if(bookcount > browserstart+7)
 		buttonnext.Draw(screen,false);
+#endif
 
+	// restore state.
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
 }
 
 void App::browser_redraw()
 {
+	// only call this when incrementing or decrementing the
+	// selected book; otherwise use browser_draw().
+
+	// save state.
+	bool invert = ts->GetInvert();
+	u8 size = ts->GetPixelSize();
+
+#ifndef GRIT
+
 	u16 *screen;
 	if(orientation) screen = screen0;
 	else screen = screen1;
@@ -502,6 +568,12 @@ void App::browser_redraw()
 		buttons[bookcurrent-1].Draw(screen,false);
 	if(bookcurrent < bookcount-1 && bookcurrent - browserstart < 6)
 		buttons[bookcurrent+1].Draw(screen,false);
+
+#endif
+
+	// restore state.
+	ts->SetInvert(invert);
+	ts->SetPixelSize(size);
 }
 
 void App::page_init(page_t *page)
@@ -695,6 +767,13 @@ void App::Log(std::string msg)
 {
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,msg.c_str());
+	fclose(logfile);
+}
+
+void App::Log(int x)
+{
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,"%d",x);		
 	fclose(logfile);
 }
 

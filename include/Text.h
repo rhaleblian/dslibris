@@ -71,6 +71,7 @@ public:
 
 	u8   GetAdvance(u32 ucs);
 	u8   GetCharCode(const char* txt, u32* code);
+	string GetFontFile();
 	u8   GetHeight(void);
 	bool GetInvert();
 	void GetPen(u16 *x, u16 *y);
@@ -84,6 +85,7 @@ public:
 	void SetInvert(bool invert);
 	void SetPen(u16 x, u16 y);
 	void SetPixelSize(u8 size);
+	void SetFontFile(char *filename, u8 style);
 	void SetScreen(u16 *s);
 
 	void ClearCache();

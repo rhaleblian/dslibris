@@ -60,7 +60,7 @@ test-tmp: $(TARGET).nds
 test-media: $(TARGET).nds
 	desmume-cli --cflash=../media.dmg dslibris.nds
 
-test: $(TARGET).nds
+test: $(TARGET).nds umount
 	desmume-cli --cflash=media.img dslibris.nds
 
 # debug target with insight and desmume under linux
@@ -107,8 +107,11 @@ upload: dist
 	ftp upload.sourceforge.net
 
 mount:
+	chmod u+w media
 	sudo mount -t vfat -o loop -o uid=rhaleblian media.img media
 
 umount:
-	sudo umount media
+	sync
+	- sudo umount media
+	chmod u-w media
 

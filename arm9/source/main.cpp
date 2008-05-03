@@ -74,6 +74,8 @@ void prefs_start_hndl(	void *userdata,
 		{
 			if(!strcmp(attr[i],"size"))
 				app->ts->SetPixelSize(atoi(attr[i+1]));
+			if(!strcmp(attr[i],"file"))
+				app->ts->SetFontFile((char *)attr[i+1],0);
 		}
 	}
 	else if (!stricmp(name,"bookmark") || !stricmp(name,"book"))
@@ -375,8 +377,16 @@ void end_hndl(void *data, const char *el)
 			page->length++;
 			p->pen.x = MARGINLEFT;
 			p->pen.y += app->ts->GetHeight() + app->linespacing;
-			if (	!stricmp(el,"p")
-				|| !strcmp(el,"h1")
+			if (!stricmp(el,"p"))
+			{
+				app->pagebuf[page->length++] = ' ';
+				app->pagebuf[page->length++] = ' ';
+				app->pagebuf[page->length++] = ' ';
+				app->pagebuf[page->length++] = ' ';
+				p->pen.x += app->ts->GetAdvance(' ') * 4;
+			}
+			else if (	
+				   !strcmp(el,"h1")
 				|| !strcmp(el,"h2")
 				|| !strcmp(el,"h3")
 				|| !strcmp(el,"h4")
