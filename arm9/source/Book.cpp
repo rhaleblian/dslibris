@@ -70,10 +70,6 @@ u8 Book::Index(char *filebuf)
 	} else strcpy(path,"");
 	strcat(path,filename.c_str());
 	
-	app->Log("info : ");	
-	app->Log(path);
-	app->Log("\n");
-
 	FILE *fp = fopen(path,"r");
 	if(!fp) return(255);
 	XML_Parser p = XML_ParserCreate(NULL);
@@ -137,4 +133,3 @@ u8 Book::Parse(char *filebuf)
 	fclose(fp);
 	return(rc);
 }
-

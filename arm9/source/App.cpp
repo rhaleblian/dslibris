@@ -36,7 +36,7 @@ App::App()
 	books = new Book[MAXBOOKS];
 	bookcount = 0;
 	bookcurrent = 0;
-	reopen = 1;
+	reopen = 0;
 	mode = APP_MODE_BROWSER;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
 
@@ -81,7 +81,8 @@ int App::Run(void)
 
 	NDSX_SetBrightness_Next();
 
-	// make sure we can write a log.
+	// get the filesystem going first
+	// so we can write a log.
 
 	if (!fatInitDefault()) exit(-11);
 
@@ -90,11 +91,6 @@ int App::Run(void)
 
 	ts = new Text();
 	ts->app = this;
-
-	// read preferences.
-
-	Log("info : reading prefs.\n");
-	
 	XML_Parser p = XML_ParserCreate(NULL);
 	if (!p)
 	{
@@ -105,9 +101,67 @@ int App::Run(void)
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
 
-	if(!prefs->Read(p))
+	// construct library.
+
+	char dirname[32];
+	strcpy(dirname,BOOKDIR);
+	sprintf(msg,"info : scanning '%s' for books.\n",dirname);
+	Log(msg);
+
+	DIR_ITER *dp = diropen(dirname);
+	if (!dp)
 	{
-		Log("error: could not open preferences.\n");
+		Log("fatal: no book directory.\n");
+		swiWaitForVBlank();
+		exit(-3);
+	}
+
+	char filename[64];
+	while (bookcount < MAXBOOKS)
+	{
+		int rc = dirnext(dp, filename, NULL);
+		if(rc) break;
+
+		//sprintf(msg,"info : found %s\n", filename);
+		//Log(msg);
+
+		char *c;
+		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
+		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
+		{
+			Book *book = &(books[bookcount]);
+			book->SetFolderName(dirname);
+			book->SetFileName(filename);
+			
+			sprintf(msg,"info : indexing book '%s'.\n", book->GetFileName());
+			Log(msg);
+
+			u8 rc = book->Index(filebuf);
+			if(rc == 255) {
+				sprintf(msg, "fatal: cannot index book '%s'.\n",
+					book->GetFileName());
+				Log(msg);
+				exit(-4);
+			}
+			if(rc == 254) {
+				sprintf(msg, "fatal: cannot make book parser.");
+				exit(-8);
+			}
+			sprintf(msg, "info : book title '%s'.\n",book->GetTitle());
+			Log(msg);
+			bookcount++;
+		}
+	}
+	dirclose(dp);
+	swiWaitForVBlank();
+
+	// read preferences.
+
+	Log("info : reading prefs.\n");
+	
+   	if(!prefs->Read(p))
+	{
+		Log("warn : could not open preferences.\n");
 	}
 
 	// init typesetter.
@@ -119,59 +173,6 @@ int App::Run(void)
 		Log("fatal: starting typesetter failed.\n");
 		exit(-2);
 	}
-
-	// construct library.
-
-	char dirname[32];
-	strcpy(dirname,BOOKDIR);
-	sprintf(msg,"info : scanning %s for books\n",dirname);
-	Log(msg);
-
-	DIR_ITER *dp = diropen(dirname);
-	if (!dp)
-	{
-		ts->PrintString("fatal: no book directory\n");
-		Log("fatal: no book directory\n");
-		swiWaitForVBlank();
-		exit(-3);
-	}
-
-	char filename[64];
-	while (bookcount < MAXBOOKS)
-	{
-		int rc = dirnext(dp, filename, NULL);
-		if(rc) break;
-
-		sprintf(msg,"info : found %s\n", filename);
-		Log(msg);
-
-		char *c;
-		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
-		{
-			Book *book = &(books[bookcount]);
-			book->SetFolderName(dirname);
-			book->SetFileName(filename);
-			
-			sprintf(msg,"info : indexing %s\n", book->GetFileName());
-			Log(msg);
-
-			u8 rc = book->Index(filebuf);
-			if(rc == 255) {
-				ts->PrintString("fatal: cannot index book");
-				exit(-4);
-			}
-			if(rc == 254) {
-				ts->PrintString("fatal: cannot make parser");
-				exit(-8);
-			}
-			sprintf(msg, "info : title %s\n",book->GetTitle());
-			Log(msg);			
-			bookcount++;
-		}
-	}
-	dirclose(dp);
-	swiWaitForVBlank();
 
 	// initialize screens.
 
@@ -290,7 +291,10 @@ void App::HandleEventInBrowser()
 	if (keysDown() & KEY_A)
 	{
 		// parse the selected book.
-		if(!OpenBook()) mode = APP_MODE_BOOK;
+		if(!OpenBook()) {
+			mode = APP_MODE_BOOK;
+			reopen = 1;
+		}
 		else browser_draw();
 	}
 
@@ -375,7 +379,8 @@ void App::HandleEventInBrowser()
 					browser_draw();
 					swiWaitForVBlank();
 					if(!OpenBook()) mode = APP_MODE_BOOK;
-					else browser_draw();					break;
+					else browser_draw();
+					break;
 				}
 			}
 		}

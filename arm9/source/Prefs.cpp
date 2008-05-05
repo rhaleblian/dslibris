@@ -17,8 +17,8 @@ bool Prefs::Read(XML_Parser p)
 	XML_SetUserData(p, (void *)app->books);
 	while (true)
 	{
-		void *buff = XML_GetBuffer(p, 64);
-		int bytes_read = fread(buff, sizeof(char), 64, fp);
+	 	void *buff = XML_GetBuffer(p, 64);
+	 	int bytes_read = fread(buff, sizeof(char), 64, fp);
 		XML_ParseBuffer(p, bytes_read, bytes_read == 0);
 		if (bytes_read == 0) break;
 	}
@@ -34,8 +34,7 @@ bool Prefs::Write(void)
 	fprintf(fp, "<dslibris>\n");
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" />\n",
 		app->brightness, app->ts->GetInvert());
-	fprintf(fp, "\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",
-		app->margintop, app->marginleft, app->marginbottom, app->marginright);
+	//	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	app->margintop, app->marginleft, app->marginbottom, app->marginright);
 	fprintf(fp, "\t<font file=\"%s\" size=\"%d\" />\n",
 		app->ts->GetFontFile().c_str(),
 		app->ts->GetPixelSize());

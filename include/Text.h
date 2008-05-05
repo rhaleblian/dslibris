@@ -49,7 +49,6 @@ class Text {
 
 	string fontfilename;
 	u16 *screen, *screenleft, *screenright;
-	u8 pixelsize;
 	FT_Vector pen;
 	bool invert;
 	bool justify;
@@ -64,6 +63,7 @@ class Text {
 
 public:
 	App *app;
+	u8 pixelsize;
 
 	Text();
 	int  Init();

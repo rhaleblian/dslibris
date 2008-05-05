@@ -10,7 +10,8 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
 export MEDIA		:=	M3DSREAL
-export MEDIAROOT	:=	/media/SD/
+# symlink the mountpoint for your sd card to 'install'
+export MEDIAROOT	:=	install
 export REMOTEHOST	:=	eris
 
 #-------------------------------------------------------------------------------
@@ -49,18 +50,16 @@ clean:
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIA).nds
 
 # run target with desmume
-test-tmp: $(TARGET).nds
+test: $(TARGET).nds
 	mkdir -p /tmp/$(TARGET)
 	cp $(TARGET).nds /tmp/$(TARGET)
-	cp $(TARGET).xml /tmp/$(TARGET)
-	cp $(TARGET).ttf /tmp/$(TARGET)
-	cp *.xht /tmp/$(TARGET)
-	(cd /tmp/$(TARGET); desmume $(TARGET).nds)
+	cp data/$(TARGET).ttf /tmp/$(TARGET)
+	cp data/$(TARGET).xml /tmp/$(TARGET)
+	cp data/*.xht /tmp/$(TARGET)
+	(cd /tmp/$(TARGET); desmume-cli $(TARGET).nds)
 
-test-media: $(TARGET).nds
-	desmume-cli --cflash=../media.dmg dslibris.nds
-
-test: $(TARGET).nds umount
+# uses a vfat file under Fedora.
+test-vfat: $(TARGET).nds
 	desmume-cli --cflash=media.img dslibris.nds
 
 # debug target with insight and desmume under linux
@@ -78,11 +77,7 @@ $(TARGET).$(MEDIA).nds: $(TARGET).nds
 	cp dslibris.nds dslibris.$(MEDIA).nds
 	dlditool $(MEDIA).dldi dslibris.$(MEDIA).nds
 
-# secure copy target to another machine
-scp: $(TARGET).$(MEDIA).nds
-	scp $(TARGET).$(MEDIA).nds $(REMOTEHOST):
-
-# copy target to microSD mounted under Linux
+# copy target to mounted microSD symlinked to $(MEDIAROOT)
 install: $(TARGET).nds
 	cp $(TARGET).nds $(MEDIAROOT)
 	sync
@@ -96,8 +91,7 @@ install-dldi: $(TARGET).$(MEDIA).nds
 dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	- mkdir dist
 	rm dist/*
-	cp INSTALL.txt $(TARGET).nds data/$(TARGET).xht dist
-	cp data/LiberationSerif-Regular.ttf dist/dslibris.ttf
+	cp INSTALL.txt $(TARGET).nds data/$(TARGET).xht data/$(TARGET).ttf data/$(TARGET).xml dist
 	(cd dist; zip -r dslibris.zip *)
 
 dist: dist/$(TARGET).zip

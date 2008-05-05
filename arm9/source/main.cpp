@@ -48,10 +48,13 @@ void prefs_start_hndl(	void *userdata,
 	char filename[64];
 	strcpy(filename,"");
 	u16 position = 0;
+	u8 i;
 
+	app->Log("prog : element %s\n", name);
+ 
 	if (!stricmp(name,"screen"))
 	{
-		for(int i=0;attr[i];i+=2)
+		for(i=0;attr[i];i+=2)
 		{
 			if(!strcmp(attr[i],"brightness"))
 			{
@@ -70,17 +73,16 @@ void prefs_start_hndl(	void *userdata,
 	}
 	else if (!stricmp(name,"font"))
 	{
-		for(int i=0;attr[i];i+=2)
+		for(i=0;attr[i];i+=2)
 		{
 			if(!strcmp(attr[i],"size"))
-				app->ts->SetPixelSize(atoi(attr[i+1]));
-//			if(!strcmp(attr[i],"file"))
-//				app->ts->SetFontFile((char *)attr[i+1],0);
+				app->ts->pixelsize = atoi(attr[i+1]);
+			if(!strcmp(attr[i],"file"))
+				app->ts->SetFontFile((char *)attr[i+1],0);
 		}
 	}
 	else if (!stricmp(name,"bookmark") || !stricmp(name,"book"))
 	{
-		u8 i;
 		for (i=0;attr[i];i+=2)
 		{
 			if (!strcmp(attr[i],"file")) strcpy(filename, attr[i+1]);
@@ -103,7 +105,7 @@ void prefs_start_hndl(	void *userdata,
 	}
 	else if (!stricmp(name,"margin"))
 	{
-		for (u8 i=0;attr[i];i+=2)
+		for (i=0;attr[i];i+=2)
 		{
 			if (!strcmp(attr[i],"left")) app->marginleft = atoi(attr[i+1]);
 			if (!strcmp(attr[i],"right")) app->marginright = atoi(attr[i+1]);
