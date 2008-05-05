@@ -9,8 +9,8 @@ include $(DEVKITARM)/ds_rules
 
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
-export MEDIA		:=	R4tf
-export MEDIAROOT	:=	/media/M3DSREAL/
+export MEDIA		:=	M3DSREAL
+export MEDIAROOT	:=	/media/SD/
 export REMOTEHOST	:=	eris
 
 #-------------------------------------------------------------------------------

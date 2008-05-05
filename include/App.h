@@ -40,6 +40,7 @@ class App {
 	u8 marginleft, marginright, margintop, marginbottom;
 	u8 linespacing;
 	u8 orientation;
+	u8 paraspacing, paraindent;
 
 	App();
 	~App();

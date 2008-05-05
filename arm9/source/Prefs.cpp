@@ -28,7 +28,7 @@ bool Prefs::Read(XML_Parser p)
 
 bool Prefs::Write(void)
 {
-	FILE* fp = fopen(PREFSPATH,"w+");
+	FILE* fp = fopen(PREFSPATH,"w");
 	if(!fp) return false;
 	
 	fprintf(fp, "<dslibris>\n");
@@ -39,13 +39,16 @@ bool Prefs::Write(void)
 	fprintf(fp, "\t<font file=\"%s\" size=\"%d\" />\n",
 		app->ts->GetFontFile().c_str(),
 		app->ts->GetPixelSize());
-	fprintf(fp, "\t<book file=\"%s\" />\n", app->books[app->bookcurrent].GetFileName());
+
+	fprintf(fp, "\t<book file=\"%s\" reopen=\"%d\" />\n",
+		app->books[app->bookcurrent].GetFileName(), app->reopen);
 	for(u8 i=0;i<app->bookcount; i++)
 	{
 		fprintf(fp, "\t<bookmark file=\"%s\" page=\"%d\" />\n",
 	        (app->books)[i].GetFileName(), app->books[i].GetPosition()+1);
 	}
 	fprintf(fp, "</dslibris>\n");
+	fprintf(fp, "\n");
 	fclose(fp);
 
 	return true;

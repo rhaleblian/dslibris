@@ -56,7 +56,7 @@ void prefs_start_hndl(	void *userdata,
 			if(!strcmp(attr[i],"brightness"))
 			{
 				app->brightness = atoi(attr[i+1]);
-				app->brightness = app->brightness > 3 ? 3 : app->brightness;	
+				app->brightness = app->brightness > 3 ? 3 : app->brightness;
 			}
 			else if(!strcmp(attr[i],"invert"))
 			{
@@ -74,8 +74,8 @@ void prefs_start_hndl(	void *userdata,
 		{
 			if(!strcmp(attr[i],"size"))
 				app->ts->SetPixelSize(atoi(attr[i+1]));
-			if(!strcmp(attr[i],"file"))
-				app->ts->SetFontFile((char *)attr[i+1],0);
+//			if(!strcmp(attr[i],"file"))
+//				app->ts->SetFontFile((char *)attr[i+1],0);
 		}
 	}
 	else if (!stricmp(name,"bookmark") || !stricmp(name,"book"))
@@ -89,7 +89,7 @@ void prefs_start_hndl(	void *userdata,
 			if (!strcmp(attr[i],"reopen") && !stricmp(name,"book"))
 			{
 				app->reopen = atoi(attr[i+1]);
-			} 
+			}
 		}
 		for(i=0;i<app->bookcount;i++)
 		{
@@ -379,11 +379,17 @@ void end_hndl(void *data, const char *el)
 			p->pen.y += app->ts->GetHeight() + app->linespacing;
 			if (!stricmp(el,"p"))
 			{
-				app->pagebuf[page->length++] = ' ';
-				app->pagebuf[page->length++] = ' ';
-				app->pagebuf[page->length++] = ' ';
-				app->pagebuf[page->length++] = ' ';
-				p->pen.x += app->ts->GetAdvance(' ') * 4;
+				for(int i=0;i<app->paraspacing;i++)
+				{
+					app->pagebuf[page->length++] = '\n';
+					p->pen.x = MARGINLEFT;
+					p->pen.y += app->ts->GetHeight() + app->linespacing;
+				}
+				for(int i=0;i<app->paraindent;i++)
+				{
+					app->pagebuf[page->length++] = ' ';
+					p->pen.x += app->ts->GetAdvance(' ');
+				}
 			}
 			else if (	
 				   !strcmp(el,"h1")
@@ -431,7 +437,7 @@ void end_hndl(void *data, const char *el)
 		{
 			page->buf = new u8[page->length];
 			if (!page->buf)
-				app->ts->PrintStatusMessage("[memory error storing page]\n");
+				app->ts->PrintStatusMessage("error: no memory to store page.\n");
 		}
 		strncpy((char*)page->buf,(char*)app->pagebuf,page->length);
 		app->parse_pop(p);

@@ -36,7 +36,7 @@ App::App()
 	books = new Book[MAXBOOKS];
 	bookcount = 0;
 	bookcurrent = 0;
-	reopen = 0;
+	reopen = 1;
 	mode = APP_MODE_BROWSER;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
 
@@ -46,6 +46,8 @@ App::App()
 	marginbottom = MARGINBOTTOM;
 	linespacing = LINESPACING;
 	orientation = 0;
+	paraspacing = 1;
+	paraindent = 0;
 	brightness = 0;
 
 	prefs = new Prefs(this);
@@ -83,7 +85,8 @@ int App::Run(void)
 
 	if (!fatInitDefault()) exit(-11);
 
-	Log("\ninfo : dslibris starting up.\n");
+	Log("\n");
+	Log("info : dslibris starting up.\n");
 
 	ts = new Text();
 	ts->app = this;
@@ -102,13 +105,18 @@ int App::Run(void)
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
 
-	prefs->Read(p);
+	if(!prefs->Read(p))
+	{
+		Log("error: could not open preferences.\n");
+	}
 
 	// init typesetter.
 
+	Log("info : starting typesetter.\n");
+
 	int err = ts->Init();
    	if (err) {
-		Log("fatal: starting typesetter failed\n");
+		Log("fatal: starting typesetter failed.\n");
 		exit(-2);
 	}
 
@@ -253,6 +261,7 @@ int App::Run(void)
 	}
 	else
 	{
+		mode = APP_MODE_BROWSER;
 		browser_draw();
 	}
 	swiWaitForVBlank();

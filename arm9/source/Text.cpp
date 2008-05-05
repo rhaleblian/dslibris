@@ -339,6 +339,7 @@ void Text::PrintChar(u32 ucs) {
 	}
 
 	// kern.
+#ifdef EXPERIMENTAL_KERNING
 	if(codeprev) {
 		FT_Vector k;
 		error = FT_Get_Kerning(face,codeprev,ucs,FT_KERNING_UNSCALED,&k);
@@ -353,13 +354,14 @@ void Text::PrintChar(u32 ucs) {
 		{
 			app->Log("info : kern ");
 			app->Log((int)k.x);
+			app->Log(" ");
 			app->Log((char *)&codeprev);
-			app->Log("->");
 			app->Log((char *)&ucs);
 			app->Log("\n");
 			pen.x += k.x >> 6;
 		}
 	}
+#endif
 
 	// render to framebuffer.
 
@@ -442,11 +444,10 @@ void Text::PrintSplash(u16 *screen)
 	bool invert = GetInvert();
 	u8 size = GetPixelSize();
 
+#ifdef GRIT
 	dmaCopyHalfWords(DMA_CHANNEL,image_stackBitmap,
 		(u16*)BG_BMP_RAM(0),image_stackBitmapLen);
-
-#ifndef GRIT
-
+#else
 	SetInvert(true);
 	SetScreen(screen);
 	ClearScreen(screen,0,0,0);
@@ -460,7 +461,6 @@ void Text::PrintSplash(u16 *screen)
 	PrintString("for Nintendo DS");
 	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
 	PrintString(VERSION);
-
 #endif
 
 	SetPixelSize(size);
