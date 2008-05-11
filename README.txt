@@ -3,7 +3,7 @@ Herein lie dslibris and supporting libraries.
 
 BUILDING
 
-Fedora, Ubuntu, OS X, and Windows XP have all been used as build platforms. The primary build platform is Fedora; the status of other platforms is unknown.
+Fedora, Ubuntu, OS X, and Windows XP have all been used as build platforms; Fedora or OS X are currently being used.
 
 Prerequisites:
 

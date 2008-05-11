@@ -5,15 +5,11 @@
 Button::Button() {
 }
 
-Button::Button(Text *typesetter) {
-	Init(typesetter);
-}
-
 void Button::Init(Text *typesetter) {
 	ts = typesetter;
-	origin.x = 0;
+	origin.x = 2;
 	origin.y = 0;
-	extent.x = 192;
+	extent.x = 188;
 	extent.y = 32;
 	strcpy((char*)text, "");
 }
@@ -71,7 +67,9 @@ void Button::Draw(u16 *fb, bool highlight) {
 }
 bool Button::EnclosesPoint(u16 x, u16 y)
 {
-	if(x > origin.x && y > origin.y && x < origin.x + extent.x && y < origin.y + extent.y) return true;
+	if (x > origin.x && 
+		y > origin.y && 
+		x < origin.x + extent.x && 
+		y < origin.y + extent.y) return true;
 	return false;
 }
-

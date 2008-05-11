@@ -32,7 +32,9 @@ App::App()
 	pagebuf = new u8[PAGEBUFSIZE];
 	pagecount = 0;
 	pagecurrent = 0;
-	
+	pagewidth = PAGE_WIDTH;
+	pageheight = PAGE_HEIGHT;
+
 	books = new Book[MAXBOOKS];
 	bookcount = 0;
 	bookcurrent = 0;
@@ -40,6 +42,8 @@ App::App()
 	mode = APP_MODE_BROWSER;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
 
+	screenwidth = SCREEN_WIDTH;
+	screenheight = SCREEN_HEIGHT;
 	marginleft = MARGINLEFT;
 	margintop = MARGINTOP;
 	marginright = MARGINRIGHT;
@@ -206,6 +210,9 @@ int App::Run(void)
 	SUB_BG3_CX = 0;
 	SUB_BG3_CY = 0;
 
+	pagewidth = screenwidth;
+	pageheight = screenheight;
+
 #else
 
 	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
@@ -254,6 +261,7 @@ int App::Run(void)
 
 	if(orientation) ts->PrintSplash(screen1); 
 	else ts->PrintSplash(screen0);
+
 	browser_init();
 
 	if(reopen)
@@ -493,19 +501,19 @@ void App::browser_init(void)
 	for (i=0;i<bookcount;i++)
 	{
 		buttons[i].Init(ts);
-		buttons[i].Move(0,((i%7+1)*32)-16);
+		buttons[i].Move(2,((i%7+1)*32)-16);
 		if (strlen(books[i].GetTitle()))
 			buttons[i].Label(books[i].GetTitle());
 		else
 			buttons[i].Label(books[i].GetFileName());
 	}
 	buttonprev.Init(ts);
-	buttonprev.Move(0,0);
-	buttonprev.Resize(192,16);
+	buttonprev.Move(2,0);
+	buttonprev.Resize(188,16);
 	buttonprev.Label("^");
 	buttonnext.Init(ts);
-	buttonnext.Move(0,240);
-	buttonnext.Resize(192,16);
+	buttonnext.Move(2,240);
+	buttonnext.Resize(188,16);
 	buttonnext.Label("v");
 	browserstart = (bookcurrent / 7) * 7;
 }

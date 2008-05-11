@@ -34,6 +34,7 @@ class App {
 	u8 *pagebuf;
 	u16 pagecount;
 	u16 pagecurrent;
+	u8 screenwidth, screenheight, pagewidth, pageheight;
 	u8 brightness;
 	char *filebuf;
 	u8 mode;

@@ -444,10 +444,9 @@ void Text::PrintSplash(u16 *screen)
 	bool invert = GetInvert();
 	u8 size = GetPixelSize();
 
-#ifdef GRIT
 	dmaCopyHalfWords(DMA_CHANNEL,image_stackBitmap,
 		(u16*)BG_BMP_RAM(0),image_stackBitmapLen);
-#else
+
 	SetInvert(true);
 	SetScreen(screen);
 	ClearScreen(screen,0,0,0);
@@ -461,7 +460,6 @@ void Text::PrintSplash(u16 *screen)
 	PrintString("for Nintendo DS");
 	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
 	PrintString(VERSION);
-#endif
 
 	SetPixelSize(size);
 	SetInvert(invert);

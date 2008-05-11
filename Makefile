@@ -90,7 +90,7 @@ install-dldi: $(TARGET).$(MEDIA).nds
 # make an archive to release on Sourceforge
 dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	- mkdir dist
-	rm dist/*
+	- rm dist/*
 	cp INSTALL.txt $(TARGET).nds data/$(TARGET).xht data/$(TARGET).ttf data/$(TARGET).xml dist
 	(cd dist; zip -r dslibris.zip *)
 
