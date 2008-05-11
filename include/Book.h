@@ -26,6 +26,7 @@ public:
 	u8   ParseHTML(char *filebuf);
 	void SetFileName(const char *filename);
 	void SetFolderName(const char *foldername);	
+	void SetFolderName(std::string &foldername);	
 	void SetPosition(s16 pos);
 	void SetTitle(const char *title);
 };

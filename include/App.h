@@ -12,6 +12,8 @@
 #include "main.h"
 #include "parse.h"
 
+#include <vector>
+
 #define APP_URL "http://ndslibris.sourceforge.net"
 #define APP_LOGFILE "dslibris.log"
 #define APP_MODE_BOOK 0
@@ -25,6 +27,7 @@ class App {
 	Button *buttons;
 	Button buttonprev, buttonnext;
 	u8 browserstart;
+	string bookdir;
 	Book *books;
 	u8 bookcount;
 	u8 bookcurrent;
@@ -34,7 +37,8 @@ class App {
 	u8 *pagebuf;
 	u16 pagecount;
 	u16 pagecurrent;
-	u8 screenwidth, screenheight, pagewidth, pageheight;
+	vector<u16> pageindices;
+	u16 screenwidth, screenheight, pagewidth, pageheight;
 	u8 brightness;
 	char *filebuf;
 	u8 mode;

@@ -24,6 +24,11 @@ void Book::SetFolderName(const char *name)
 	foldername = name;
 }
 
+void Book::SetFolderName(std::string &name)
+{
+	foldername = name;
+}
+
 void Book::SetFileName(const char *name)
 {
 	filename.clear();

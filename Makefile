@@ -51,11 +51,10 @@ clean:
 
 # run target with desmume
 test: $(TARGET).nds
-	mkdir -p /tmp/$(TARGET)
+	- mkdir -p /tmp/$(TARGET)
 	cp $(TARGET).nds /tmp/$(TARGET)
-	cp data/$(TARGET).ttf /tmp/$(TARGET)
-	cp data/$(TARGET).xml /tmp/$(TARGET)
-	cp data/*.xht /tmp/$(TARGET)
+	- mkdir -p /tmp/$(TARGET)/font
+	cp data/dslibris.ttf /tmp/$(TARGET)/font
 	(cd /tmp/$(TARGET); desmume-cli $(TARGET).nds)
 
 # uses a vfat file under Fedora.

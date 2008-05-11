@@ -63,10 +63,6 @@ int Text::InitWithCacheManager(void) {
 	imagetype.width = pixelsize;
 	ftc = true;
 
-	char msg[64];
-	sprintf(msg,"%d\n",app->marginleft);
-	app->Log(msg);
-
 	return 0;
 }
 

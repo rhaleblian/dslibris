@@ -19,7 +19,7 @@
 #define SPLASH_LEFT (MARGINLEFT+28)
 #define SPLASH_TOP (MARGINTOP+96)
 
-#define BOOKDIR "."
+#define BOOKDIR "/book/"
 #define PREFSPATH "dslibris.xml"
 #define FONTFILEPATH "dslibris.ttf"
 #define LOGFILEPATH "dslibris.log"

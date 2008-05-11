@@ -35,6 +35,7 @@ App::App()
 	pagewidth = PAGE_WIDTH;
 	pageheight = PAGE_HEIGHT;
 
+	bookdir = string(BOOKDIR);
 	books = new Book[MAXBOOKS];
 	bookcount = 0;
 	bookcurrent = 0;
@@ -107,12 +108,10 @@ int App::Run(void)
 
 	// construct library.
 
-	char dirname[32];
-	strcpy(dirname,BOOKDIR);
-	sprintf(msg,"info : scanning '%s' for books.\n",dirname);
+	sprintf(msg,"info : scanning '%s' for books.\n",bookdir.c_str());
 	Log(msg);
 
-	DIR_ITER *dp = diropen(dirname);
+	DIR_ITER *dp = diropen(bookdir.c_str());
 	if (!dp)
 	{
 		Log("fatal: no book directory.\n");
@@ -131,7 +130,7 @@ int App::Run(void)
 		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
 		{
 			Book *book = &(books[bookcount]);
-			book->SetFolderName(dirname);
+			book->SetFolderName(bookdir.c_str());
 			book->SetFileName(filename);
 			
 			sprintf(msg,"info : indexing book '%s'.\n", book->GetFileName());
@@ -144,7 +143,7 @@ int App::Run(void)
 				Log(msg);
 				exit(-4);
 			}
-			if(rc == 254) {
+			else if(rc == 254) {
 				sprintf(msg, "fatal: cannot make book parser.");
 				exit(-8);
 			}

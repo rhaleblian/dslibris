@@ -57,7 +57,14 @@ void prefs_start_hndl(	void *userdata,
 
 	app->Log("prog : element %s\n", name);
  
-	if (!stricmp(name,"screen"))
+	if (!stricmp(name,"library"))
+	{
+		for(i=0;attr[i];i+=2) {
+			if(!strcmp(attr[i],"folder"))
+				app->bookdir = std::string(attr[i+1]);
+		}
+	}
+	else if (!stricmp(name,"screen"))
 	{
 		for(i=0;attr[i];i+=2)
 		{

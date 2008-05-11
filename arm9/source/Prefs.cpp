@@ -3,6 +3,7 @@
 #include "main.h"
 #include "Prefs.h"
 #include "Book.h"
+#include <vector>
 
 Prefs::Prefs(App *parent) { app = parent; }
 Prefs::~Prefs() {}
@@ -43,7 +44,14 @@ bool Prefs::Write(void)
  	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
 			app->paraindent,
 			app->paraspacing);
-	
+	/* TODO save pagination data with current book to cache it to disk.
+	   store timestamp too in order to invalidate caches.
+	vector<u16> pageindices;
+	for(u16 i=0;i<app->pagecount;i++)
+	{
+		
+	}
+	*/
     fprintf(fp, "\t<books reopen=\"%s\">\n",
             app->reopen ? app->books[app->bookcurrent].GetFileName() : "");
     for (u8 i = 0; i < app->bookcount; i++) {
