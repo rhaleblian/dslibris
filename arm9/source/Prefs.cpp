@@ -44,13 +44,23 @@ bool Prefs::Write(void)
 			app->paraindent,
 			app->paraspacing);
 	
-	fprintf(fp, "\t<book file=\"%s\" reopen=\"%d\" />\n",
-		app->books[app->bookcurrent].GetFileName(), app->reopen);
-	for(u8 i=0;i<app->bookcount; i++)
-	{
-		fprintf(fp, "\t<bookmark file=\"%s\" page=\"%d\" />\n",
-	        (app->books)[i].GetFileName(), app->books[i].GetPosition()+1);
-	}
+    fprintf(fp, "\t<books reopen=\"%s\">\n",
+            app->reopen ? app->books[app->bookcurrent].GetFileName() : "");
+    for (u8 i = 0; i < app->bookcount; i++) {
+        Book* book = app->books + i;
+        fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\">\n",
+                book->GetFileName(), book->GetPosition() + 1);
+		std::list<u16>* bookmarks = book->GetBookmarks();
+        for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
+            fprintf(fp, "\t\t\t<bookmark page=\"%d\" />\n",
+                    *j + 1);
+        }
+
+        fprintf(fp, "\t\t</book>\n");
+    }
+
+    fprintf(fp, "\t</books>\n");
+	
 	fprintf(fp, "</dslibris>\n");
 	fprintf(fp, "\n");
 	fclose(fp);

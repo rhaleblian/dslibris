@@ -36,6 +36,11 @@ void Book::SetTitle(const char *name)
 	title = name;
 }
 
+std::list<u16>* Book::GetBookmarks()
+{
+    return &bookmarks;
+}
+
 const char* Book::GetTitle()
 {
 	return title.c_str();

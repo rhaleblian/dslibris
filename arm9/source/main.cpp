@@ -16,11 +16,16 @@ dslibris - an ebook reader for Nintendo DS
 
 App *app;
 bool linebegan = false;
+// Static vars needed for state in the XML config callback prefs_start_hndl
+char reopenName[64];
+u8 currentBook = -1;
 
 /*---------------------------------------------------------------------------*/
 
 int main(void)
 {
+	strcpy(reopenName,"");
+	
 	app = new App();
 	return app->Run();
 }
@@ -89,26 +94,51 @@ void prefs_start_hndl(	void *userdata,
 				app->ts->SetFontFile((char *)attr[i+1],0);
 		}
 	}
-	else if (!stricmp(name,"bookmark") || !stricmp(name,"book"))
+	else if (!stricmp(name, "books"))
 	{
-		for (i=0;attr[i];i+=2)
+		for (i = 0; attr[i]; i+=2) {
+			if (!strcmp(attr[i], "reopen"))
+				strcpy(reopenName, attr[i+1]);
+        }
+	}
+	else if (!stricmp(name, "book"))
+	{
+		for (i = 0; attr[i]; i+=2) {
+			if (!strcmp(attr[i], "file"))
+				strcpy(filename, attr[i+1]);
+			if (!strcmp(attr[i], "page"))
+				position = atoi(attr[i+1]);
+        }
+		
+		for(i = 0; i < app->bookcount; i++)
 		{
-			if (!strcmp(attr[i],"file")) strcpy(filename, attr[i+1]);
-			if (!strcmp(attr[i],"position")) position = atoi(attr[i+1]);
-			if (!strcmp(attr[i],"page")) position = atoi(attr[i+1]);
-			if (!strcmp(attr[i],"reopen") && !stricmp(name,"book"))
+			if(!stricmp(data[i].GetFileName(), filename))
 			{
-				app->reopen = atoi(attr[i+1]);
-			}
-		}
-		for(i=0;i<app->bookcount;i++)
-		{
-			if(!stricmp(data[i].GetFileName(),filename))
-			{
-				if(position) data[i].SetPosition(position-1);
-				if(!stricmp(name,"book")) app->bookcurrent = i;
+				currentBook = i;
+				
+				if (position)
+					data[i].SetPosition(position - 1);
+				
+				if (!stricmp(reopenName, filename))
+				{
+					app->reopen = true;
+					app->bookcurrent = i;
+				}
+				
 				break;
 			}
+		}
+	}
+	else if (!stricmp(name, "bookmark"))
+	{
+		for (i = 0; attr[i]; i+=2) {
+			if (!strcmp(attr[i], "page"))
+				position = atoi(attr[i+1]);
+        }
+		
+		if (currentBook >= 0)
+		{
+			app->books[currentBook].GetBookmarks()->push_back(position - 1);
 		}
 	}
 	else if (!stricmp(name,"margin"))

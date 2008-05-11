@@ -3,6 +3,7 @@
 
 #include <nds.h>
 #include <string>
+#include <list>
 
 class Book {
 	std::string filename;
@@ -10,9 +11,11 @@ class Book {
 	std::string title;
 	std::string author;
 	u16 position;
+    std::list<u16> bookmarks;
 
 public:
 	Book();
+    std::list<u16>* GetBookmarks(void);
 	const char* GetFileName(void);
 	const char* GetFolderName(void);
 	s16  GetPosition(void);

@@ -164,6 +164,12 @@ int App::Run(void)
 	{
 		Log("warn : could not open preferences.\n");
 	}
+	
+	// Sort bookmarks for each book
+	for(u8 i = 0; i < bookcount; i++)
+	{
+		books[bookcount].GetBookmarks()->sort();
+	}
 
 	// init typesetter.
 
@@ -338,7 +344,7 @@ void App::HandleEventInBrowser()
 		}
 	}
 
-	else if (keysDown() & KEY_SELECT)
+	else if (keysDown() & KEY_START)
 	{
 		mode = APP_MODE_BOOK;
 		page_draw(&(pages[pagecurrent]));
@@ -431,10 +437,11 @@ void App::HandleEventInBook()
 		prefs->Write();
 	}
 
-	else if (keysDown() & KEY_SELECT)
+	else if (keysDown() & KEY_START)
 	{
+		reopen = 0;
 		prefs->Write();
-		mode = APP_MODE_BROWSER;			
+		mode = APP_MODE_BROWSER;
 		if(orientation) ts->PrintSplash(screen1);
 		else ts->PrintSplash(screen0);
 		browser_draw();
@@ -454,6 +461,73 @@ void App::HandleEventInBook()
 		page_draw(&pages[pagecurrent]);
 	}
 
+	else if (keysDown() & KEY_SELECT)
+	{
+		Book* book = books + bookcurrent;
+		std::list<u16>* bookmarks = book->GetBookmarks();
+		
+		bool found = false;
+		for (std::list<u16>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
+			if (*i == pagecurrent)
+			{
+				bookmarks->erase(i);
+				found = true;
+				break;
+			}
+        }
+		
+		if (!found)
+		{
+			bookmarks->push_back(pagecurrent);
+			bookmarks->sort();
+			// TODO: Sort bookmarks
+		}
+		
+		page_draw(&pages[pagecurrent]);
+	}
+	
+	else if (keysDown() & (KEY_RIGHT | KEY_LEFT))
+	{
+		// Up Bookmark
+		Book* book = books + bookcurrent;
+		std::list<u16>* bookmarks = book->GetBookmarks();
+		
+		if (!bookmarks->empty())
+		{
+			//Find the bookmark just after the current page
+			if (keysDown() & KEY_RIGHT)
+			{
+				std::list<u16>::iterator i;
+				for (i = bookmarks->begin(); i != bookmarks->end(); i++) {
+					if (*i > pagecurrent)
+						break;
+				}
+				
+				if (i == bookmarks->end())
+					i = bookmarks->begin();
+				
+				pagecurrent = *i;
+			}
+			else // KEY_LEFT by default
+			{
+				std::list<u16>::reverse_iterator i;
+				for (i = bookmarks->rbegin(); i != bookmarks->rend(); i++) {
+					if (*i < pagecurrent)
+						break;
+				}
+				
+				if (i == bookmarks->rend())
+					i = bookmarks->rbegin();
+				
+				pagecurrent = *i;
+			}
+			
+			page_draw(&pages[pagecurrent]);
+			book->SetPosition(pagecurrent);
+			prefs->Write();
+		}
+	}
+	
 	// clock - only display when reading a book
 	time_t tt = time(NULL);
 	struct tm *tms = gmtime((const time_t *)&tt);
@@ -759,15 +833,37 @@ void App::page_draw(page_t *page)
 	}
 
 	// page number
-
-	char msg[8];
+	
+	char msg[9];
 	strcpy(msg,"");
-	if(pagecurrent == 0) 
-		sprintf((char*)msg,"[ %d >",pagecurrent+1);
-	else if(pagecurrent == pagecount)
-		sprintf((char*)msg,"< %d ]",pagecurrent+1);
-	else
-		sprintf((char*)msg,"< %d >",pagecurrent+1);
+	
+	// Find out if the page is bookmarked or not
+	bool isBookmark = false;
+	Book* book = books + bookcurrent;
+	std::list<u16>* bookmarks = book->GetBookmarks();
+	for (std::list<u16>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
+		if (*i == pagecurrent)
+		{
+			isBookmark = true;
+			break;
+		}
+	}
+	// TODO: Decide where to display the asterisk and use a more elegant solution
+	if (isBookmark) {
+		if(pagecurrent == 0) 
+			sprintf((char*)msg,"[ *%d >",pagecurrent+1);
+		else if(pagecurrent == pagecount)
+			sprintf((char*)msg,"< *%d ]",pagecurrent+1);
+		else
+			sprintf((char*)msg,"< *%d >",pagecurrent+1);
+	} else {
+		if(pagecurrent == 0) 
+			sprintf((char*)msg,"[ %d >",pagecurrent+1);
+		else if(pagecurrent == pagecount)
+			sprintf((char*)msg,"< %d ]",pagecurrent+1);
+		else
+			sprintf((char*)msg,"< %d >",pagecurrent+1);
+	}
 	ts->SetScreen(screen1);
 	u8 offset = (u8)((PAGE_WIDTH-marginleft-marginright-(ts->GetAdvance(40)*7))
 		* (pagecurrent / (float)pagecount));
