@@ -9,10 +9,10 @@ include $(DEVKITARM)/ds_rules
 
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
-export MEDIA		:=	M3DSREAL
+
 # symlink the mountpoint for your sd card to 'install'
 export MEDIAROOT	:=	install
-export REMOTEHOST	:=	eris
+export MEDIATYPE	:=	M3DSREAL
 
 #-------------------------------------------------------------------------------
 # path to tools - this can be deleted if you set the path in windows
@@ -47,7 +47,7 @@ arm9/$(TARGET).elf:
 clean:
 	$(MAKE) -C arm9 clean
 	$(MAKE) -C arm7 clean
-	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIA).nds
+	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
 
 # run target with desmume
 test: $(TARGET).nds
@@ -73,9 +73,9 @@ gdb: $(TARGET).nds
 	$(DEVKITARM)/bin/arm-eabi-gdb -x gdb.commands arm9/dslibris.arm9.elf
 
 # make DLDI patched target
-$(TARGET).$(MEDIA).nds: $(TARGET).nds
-	cp dslibris.nds dslibris.$(MEDIA).nds
-	dlditool $(MEDIA).dldi dslibris.$(MEDIA).nds
+$(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
+	cp dslibris.nds dslibris.$(MEDIATYPE).nds
+	dlditool $(MEDIATYPE).dldi dslibris.$(MEDIATYPE).nds
 
 # copy target to mounted microSD symlinked to $(MEDIAROOT)
 install: $(TARGET).nds
@@ -83,8 +83,8 @@ install: $(TARGET).nds
 	sync
 
 # installation including DLDI patching.
-install-dldi: $(TARGET).$(MEDIA).nds
-	cp $(TARGET).$(MEDIA).nds $(MEDIAROOT)
+install-dldi: $(TARGET).$(MEDIATYPE).nds
+	cp $(TARGET).$(MEDIATYPE).nds $(MEDIAROOT)
 	sync
 
 # make an archive to release on Sourceforge
