@@ -126,9 +126,6 @@ int App::Run(void)
 		int rc = dirnext(dp, filename, NULL);
 		if(rc) break;
 
-		//sprintf(msg,"info : found %s\n", filename);
-		//Log(msg);
-
 		char *c;
 		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))

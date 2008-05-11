@@ -71,6 +71,14 @@ void prefs_start_hndl(	void *userdata,
 			}
 		}
 	}
+	else if (!stricmp(name,"paragraph"))
+	{
+		for(i=0;attr[i];i+=2)
+		{
+			if(!strcmp(attr[i],"spacing")) app->paraspacing = atoi(attr[i+1]);
+			if(!strcmp(attr[i],"indent")) app->paraindent = atoi(attr[i+1]);
+		}
+	}
 	else if (!stricmp(name,"font"))
 	{
 		for(i=0;attr[i];i+=2)

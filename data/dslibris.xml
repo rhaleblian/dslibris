@@ -1,6 +1,7 @@
 <dslibris>
-	<screen brightness="0" invert="0" />
+	<screen brightness="2" invert="0" />
+	<paragraph spacing="1" indent="0" />
 	<font file="dslibris.ttf" size="12" />
-	<book file="dslibris.xht" reopen="0" />
+	<book file="dslibris.xht" reopen="1" />
 </dslibris>
 

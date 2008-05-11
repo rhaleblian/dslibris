@@ -34,11 +34,16 @@ bool Prefs::Write(void)
 	fprintf(fp, "<dslibris>\n");
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" />\n",
 		app->brightness, app->ts->GetInvert());
-	//	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	app->margintop, app->marginleft, app->marginbottom, app->marginright);
-	fprintf(fp, "\t<font file=\"%s\" size=\"%d\" />\n",
+	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
+			app->margintop, app->marginleft,
+			app->marginbottom, app->marginright);
+ 	fprintf(fp, "\t<font file=\"%s\" size=\"%d\" />\n",
 		app->ts->GetFontFile().c_str(),
 		app->ts->GetPixelSize());
-
+ 	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
+			app->paraindent,
+			app->paraspacing);
+	
 	fprintf(fp, "\t<book file=\"%s\" reopen=\"%d\" />\n",
 		app->books[app->bookcurrent].GetFileName(), app->reopen);
 	for(u8 i=0;i<app->bookcount; i++)
