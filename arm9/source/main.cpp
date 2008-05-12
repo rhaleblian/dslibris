@@ -124,7 +124,7 @@ void prefs_start_hndl(	void *userdata,
 				currentBook = i;
 				
 				if (position)
-					data[i].SetPosition(position - 1);
+					data[i].SetPosition(position);
 				
 				if (!stricmp(reopenName, filename))
 				{

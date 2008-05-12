@@ -347,6 +347,7 @@ void App::HandleEventInBrowser()
 	{
 		mode = APP_MODE_BOOK;
 		page_draw(&(pages[pagecurrent]));
+		prefs->Write();
 	}
 
 	else if (keysDown() & KEY_TOUCH)
@@ -403,25 +404,31 @@ void App::HandleEventInBook()
 	//to scroll fast if the key is kept depressed, instead of
 	//stopping at the previous / next page if KEY_UP/KEY_DOWN
 	//is pressed.
+	//Aaron - Changed KEY_UP/KEY_DOWN to KEY_R/KEY_L and removed
+	//excessive preference saving
 	
-	if (~(REG_KEYINPUT) & KEY_RIGHT)
+	if (keysUp() & (KEY_R | KEY_L))
+	{
+		// Only save preferences once the fastscrolling is done
+		prefs->Write();
+	}
+	
+	if (keysHeld() & KEY_R)
 	{
 		if (pagecurrent < pagecount)
 		{
 			pagecurrent++;
 			page_draw(&pages[pagecurrent]);
 			books[bookcurrent].SetPosition(pagecurrent);
-			prefs->Write();
 		}
 	}
-	else if (~(REG_KEYINPUT) & KEY_LEFT)
+	else if (keysHeld() & KEY_L)
 	{
 		if (pagecurrent > 0)
 		{
 			pagecurrent--;
 			page_draw(&pages[pagecurrent]);
 			books[bookcurrent].SetPosition(pagecurrent);
-			prefs->Write();
 		}
 	}
 	else if (keysDown() & (KEY_A|KEY_DOWN|KEY_R))
@@ -487,6 +494,7 @@ void App::HandleEventInBook()
 
 	else if (keysDown() & KEY_SELECT)
 	{
+		// Toggle Bookmark
 		Book* book = books + bookcurrent;
 		std::list<u16>* bookmarks = book->GetBookmarks();
 		
@@ -504,7 +512,6 @@ void App::HandleEventInBook()
 		{
 			bookmarks->push_back(pagecurrent);
 			bookmarks->sort();
-			// TODO: Sort bookmarks
 		}
 		
 		page_draw(&pages[pagecurrent]);
@@ -512,7 +519,7 @@ void App::HandleEventInBook()
 	
 	else if (keysDown() & (KEY_RIGHT | KEY_LEFT))
 	{
-		// Up Bookmark
+		// Bookmark Navigation
 		Book* book = books + bookcurrent;
 		std::list<u16>* bookmarks = book->GetBookmarks();
 		
@@ -532,7 +539,7 @@ void App::HandleEventInBook()
 				
 				pagecurrent = *i;
 			}
-			else // KEY_LEFT by default
+			else // KEY_LEFT by process of elimination
 			{
 				std::list<u16>::reverse_iterator i;
 				for (i = bookmarks->rbegin(); i != bookmarks->rend(); i++) {
