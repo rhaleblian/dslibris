@@ -71,7 +71,7 @@ void prefs_start_hndl(	void *userdata,
 			if(!strcmp(attr[i],"brightness"))
 			{
 				app->brightness = atoi(attr[i+1]);
-				app->brightness = app->brightness > 3 ? 3 : app->brightness;
+				app->brightness = app->brightness % 4;
 			}
 			else if(!strcmp(attr[i],"invert"))
 			{
@@ -124,12 +124,12 @@ void prefs_start_hndl(	void *userdata,
 				currentBook = i;
 				
 				if (position)
-					data[i].SetPosition(position);
+					data[i].SetPosition(position - 1);
 				
 				if (!stricmp(reopenName, filename))
 				{
 					app->reopen = true;
-					app->bookcurrent = i;
+					app->bookselected = i;
 				}
 				
 				break;

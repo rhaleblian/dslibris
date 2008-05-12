@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdlib.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/dir.h>
@@ -38,7 +39,7 @@ App::App()
 	bookdir = string(BOOKDIR);
 	books = new Book[MAXBOOKS];
 	bookcount = 0;
-	bookcurrent = 0;
+	bookselected = 0;
 	reopen = 0;
 	mode = APP_MODE_BROWSER;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
@@ -53,7 +54,7 @@ App::App()
 	orientation = 0;
 	paraspacing = 1;
 	paraindent = 0;
-	brightness = 0;
+	brightness = 1;
 
 	prefs = new Prefs(this);
 }
@@ -84,7 +85,7 @@ int App::Run(void)
 
 	// go to the lowest brightness setting.
 
-	NDSX_SetBrightness_Next();
+	NDSX_SetBrightness_0();
 
 	// get the filesystem going first
 	// so we can write a log.
@@ -268,7 +269,8 @@ int App::Run(void)
 
 	if(reopen)
 	{
-		if(!OpenBook()) mode = APP_MODE_BOOK;
+		if(!OpenBook())
+			mode = APP_MODE_BOOK;
 	}
 	else
 	{
@@ -301,29 +303,37 @@ void App::HandleEventInBrowser()
 	if (keysDown() & KEY_A)
 	{
 		// parse the selected book.
-		if(!OpenBook()) {
+		if(bookselected == bookcurrent) {
+			mode = APP_MODE_BOOK;
+			page_draw(&(pages[pagecurrent]));
+			reopen = 1;
+			prefs->Write();
+		} else if (!OpenBook()) {
 			mode = APP_MODE_BOOK;
 			reopen = 1;
+			prefs->Write();
 		}
-		else browser_draw();
+		else
+			browser_draw();
 	}
-
-	else if (keysDown() & KEY_B)
+	
+	else if (keysDown() & KEY_Y)
 	{
-		// return to current book.
-		mode = APP_MODE_BOOK;
-		page_draw(&pages[pagecurrent]);
+		NDSX_SetBrightness_Next();
+		brightness++;
+		brightness = brightness % 4;
+		prefs->Write();
 	}
-
+	
 	else if (keysDown() & (KEY_LEFT|KEY_L))
 	{
-		if (bookcurrent < bookcount-1)
+		if (bookselected < bookcount-1)
 		{
-			if (bookcurrent == browserstart+6) {
+			if (bookselected == browserstart+6) {
 				browser_nextpage();
 				browser_draw();
 			} else {
-				bookcurrent++;
+				bookselected++;
 				browser_redraw();
 			}
 		}
@@ -331,22 +341,23 @@ void App::HandleEventInBrowser()
 
 	else if (keysDown() & (KEY_RIGHT|KEY_R))
 	{
-		if (bookcurrent > 0)
+		if (bookselected > 0)
 		{
-			if(bookcurrent == browserstart) {
+			if(bookselected == browserstart) {
 				browser_prevpage();
 				browser_draw();
 			} else {
-				bookcurrent--;
+				bookselected--;
 				browser_redraw();
 			}				
 		}
 	}
 
-	else if (keysDown() & KEY_START)
+	else if (keysDown() & (KEY_START | KEY_B))
 	{
 		mode = APP_MODE_BOOK;
 		page_draw(&(pages[pagecurrent]));
+		reopen = 1;
 		prefs->Write();
 	}
 
@@ -386,7 +397,7 @@ void App::HandleEventInBrowser()
 				i++) {
 				if (buttons[i].EnclosesPoint(coord.py, coord.px))
 				{
-					bookcurrent = i;
+					bookselected = i;
 					browser_draw();
 					swiWaitForVBlank();
 					if(!OpenBook()) mode = APP_MODE_BOOK;
@@ -419,7 +430,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent++;
 			page_draw(&pages[pagecurrent]);
-			books[bookcurrent].SetPosition(pagecurrent);
+			books[bookselected].SetPosition(pagecurrent);
 		}
 	}
 	else if (keysHeld() & KEY_L)
@@ -428,7 +439,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent--;
 			page_draw(&pages[pagecurrent]);
-			books[bookcurrent].SetPosition(pagecurrent);
+			books[bookselected].SetPosition(pagecurrent);
 		}
 	}
 	else if (keysDown() & (KEY_A|KEY_DOWN|KEY_R))
@@ -437,7 +448,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent++;
 			page_draw(&pages[pagecurrent]);
-			books[bookcurrent].SetPosition(pagecurrent);
+			books[bookselected].SetPosition(pagecurrent);
 			prefs->Write();
 		}
 	}
@@ -448,7 +459,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent--;
 			page_draw(&pages[pagecurrent]);
-			books[bookcurrent].SetPosition(pagecurrent);
+			books[bookselected].SetPosition(pagecurrent);
 			prefs->Write();
 		}
 	}
@@ -464,7 +475,7 @@ void App::HandleEventInBook()
 	{
 		NDSX_SetBrightness_Next();
 		brightness++;
-		brightness = brightness > 3 ? 0 : brightness;
+		brightness = brightness % 4;
 		prefs->Write();
 	}
 
@@ -495,7 +506,7 @@ void App::HandleEventInBook()
 	else if (keysDown() & KEY_SELECT)
 	{
 		// Toggle Bookmark
-		Book* book = books + bookcurrent;
+		Book* book = books + bookselected;
 		std::list<u16>* bookmarks = book->GetBookmarks();
 		
 		bool found = false;
@@ -520,7 +531,7 @@ void App::HandleEventInBook()
 	else if (keysDown() & (KEY_RIGHT | KEY_LEFT))
 	{
 		// Bookmark Navigation
-		Book* book = books + bookcurrent;
+		Book* book = books + bookselected;
 		std::list<u16>* bookmarks = book->GetBookmarks();
 		
 		if (!bookmarks->empty())
@@ -585,11 +596,12 @@ u8 App::OpenBook(void)
 	swiWaitForVBlank();
 	pagecount = 0;
 	pagecurrent = 0;
+	bookcurrent = bookselected;
 	page_init(&pages[pagecurrent]);
 	ts->ClearCache();
-	if (!books[bookcurrent].Parse(filebuf))
+	if (!books[bookselected].Parse(filebuf))
 	{
-		pagecurrent = books[bookcurrent].GetPosition();
+		pagecurrent = books[bookselected].GetPosition();
 		page_draw(&(pages[pagecurrent]));
 		prefs->Write();
 		return 0;
@@ -617,7 +629,7 @@ void App::browser_init(void)
 	buttonnext.Move(2,240);
 	buttonnext.Resize(188,16);
 	buttonnext.Label("v");
-	browserstart = (bookcurrent / 7) * 7;
+	browserstart = (bookselected / 7) * 7;
 }
 
 void App::browser_nextpage()
@@ -625,7 +637,7 @@ void App::browser_nextpage()
 	if(browserstart+7 < bookcount)
 	{ 
 		browserstart += 7;
-		bookcurrent = browserstart;
+		bookselected = browserstart;
 	}
 }
 
@@ -634,7 +646,7 @@ void App::browser_prevpage()
 	if(browserstart-7 >= 0)
 	{
 		browserstart -= 7;
-		bookcurrent = browserstart+6;
+		bookselected = browserstart+6;
 	}
 }
 
@@ -654,7 +666,7 @@ void App::browser_draw(void)
 	ts->SetPixelSize(12);
 	for (int i=browserstart;(i<bookcount) && (i<browserstart+7);i++)
 	{
-		if (i==bookcurrent)
+		if (i==bookselected)
 			buttons[i].Draw(screen,true);
 		else
 			buttons[i].Draw(screen,false);
@@ -687,11 +699,11 @@ void App::browser_redraw()
 	else screen = screen1;
 
 	ts->SetScreen(screen);
-	buttons[bookcurrent].Draw(screen,true);
-	if(bookcurrent > browserstart)
-		buttons[bookcurrent-1].Draw(screen,false);
-	if(bookcurrent < bookcount-1 && bookcurrent - browserstart < 6)
-		buttons[bookcurrent+1].Draw(screen,false);
+	buttons[bookselected].Draw(screen,true);
+	if(bookselected > browserstart)
+		buttons[bookselected-1].Draw(screen,false);
+	if(bookselected < bookcount-1 && bookselected - browserstart < 6)
+		buttons[bookselected+1].Draw(screen,false);
 
 #endif
 
@@ -870,7 +882,7 @@ void App::page_draw(page_t *page)
 	
 	// Find out if the page is bookmarked or not
 	bool isBookmark = false;
-	Book* book = books + bookcurrent;
+	Book* book = books + bookselected;
 	std::list<u16>* bookmarks = book->GetBookmarks();
 	for (std::list<u16>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
 		if (*i == pagecurrent)
