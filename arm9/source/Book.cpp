@@ -61,7 +61,7 @@ const char* Book::GetFolderName()
 	return foldername.c_str();
 }
 
-s16 Book::GetPosition()
+u16 Book::GetPosition()
 {
 	return position;
 }

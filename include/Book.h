@@ -18,7 +18,7 @@ public:
     std::list<u16>* GetBookmarks(void);
 	const char* GetFileName(void);
 	const char* GetFolderName(void);
-	s16  GetPosition(void);
+	u16  GetPosition(void);
 	const char* GetTitle();
 	u8   Index(char *filebuf);	
 	void IndexHTML(char *filebuf);	
