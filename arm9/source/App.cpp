@@ -400,8 +400,18 @@ void App::HandleEventInBrowser()
 					bookselected = i;
 					browser_draw();
 					swiWaitForVBlank();
-					if(!OpenBook()) mode = APP_MODE_BOOK;
-					else browser_draw();
+					if(bookselected == bookcurrent) {
+						mode = APP_MODE_BOOK;
+						page_draw(&(pages[pagecurrent]));
+						reopen = 1;
+						prefs->Write();
+					} else if (!OpenBook()) {
+						mode = APP_MODE_BOOK;
+						reopen = 1;
+						prefs->Write();
+					}
+					else
+						browser_draw();
 					break;
 				}
 			}
@@ -430,7 +440,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent++;
 			page_draw(&pages[pagecurrent]);
-			books[bookselected].SetPosition(pagecurrent);
+			books[bookcurrent].SetPosition(pagecurrent);
 		}
 	}
 	else if (keysHeld() & KEY_L)
@@ -439,7 +449,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent--;
 			page_draw(&pages[pagecurrent]);
-			books[bookselected].SetPosition(pagecurrent);
+			books[bookcurrent].SetPosition(pagecurrent);
 		}
 	}
 	else if (keysDown() & (KEY_A|KEY_DOWN|KEY_R))
@@ -448,7 +458,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent++;
 			page_draw(&pages[pagecurrent]);
-			books[bookselected].SetPosition(pagecurrent);
+			books[bookcurrent].SetPosition(pagecurrent);
 			prefs->Write();
 		}
 	}
@@ -459,7 +469,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent--;
 			page_draw(&pages[pagecurrent]);
-			books[bookselected].SetPosition(pagecurrent);
+			books[bookcurrent].SetPosition(pagecurrent);
 			prefs->Write();
 		}
 	}
@@ -506,7 +516,7 @@ void App::HandleEventInBook()
 	else if (keysDown() & KEY_SELECT)
 	{
 		// Toggle Bookmark
-		Book* book = books + bookselected;
+		Book* book = books + bookcurrent;
 		std::list<u16>* bookmarks = book->GetBookmarks();
 		
 		bool found = false;
@@ -531,7 +541,7 @@ void App::HandleEventInBook()
 	else if (keysDown() & (KEY_RIGHT | KEY_LEFT))
 	{
 		// Bookmark Navigation
-		Book* book = books + bookselected;
+		Book* book = books + bookcurrent;
 		std::list<u16>* bookmarks = book->GetBookmarks();
 		
 		if (!bookmarks->empty())
