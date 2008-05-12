@@ -399,7 +399,32 @@ void App::HandleEventInBrowser()
 
 void App::HandleEventInBook()
 {
-	if (keysDown() & (KEY_A|KEY_DOWN|KEY_R))
+	//Keishava - assigned the right and left direction keys
+	//to scroll fast if the key is kept depressed, instead of
+	//stopping at the previous / next page if KEY_UP/KEY_DOWN
+	//is pressed.
+	
+	if (~(REG_KEYINPUT) & KEY_RIGHT)
+	{
+		if (pagecurrent < pagecount)
+		{
+			pagecurrent++;
+			page_draw(&pages[pagecurrent]);
+			books[bookcurrent].SetPosition(pagecurrent);
+			prefs->Write();
+		}
+	}
+	else if (~(REG_KEYINPUT) & KEY_LEFT)
+	{
+		if (pagecurrent > 0)
+		{
+			pagecurrent--;
+			page_draw(&pages[pagecurrent]);
+			books[bookcurrent].SetPosition(pagecurrent);
+			prefs->Write();
+		}
+	}
+	else if (keysDown() & (KEY_A|KEY_DOWN|KEY_R))
 	{
 		if (pagecurrent < pagecount)
 		{
