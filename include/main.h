@@ -19,9 +19,10 @@
 #define SPLASH_LEFT (MARGINLEFT+28)
 #define SPLASH_TOP (MARGINTOP+96)
 
+#define FONTDIR "/fonts/"
 #define BOOKDIR "/book/"
 #define PREFSPATH "dslibris.xml"
-#define FONTFILEPATH "dslibris.ttf"
+#define FONTFILEPATH "/fonts/dslibris.ttf"
 #define LOGFILEPATH "dslibris.log"
 
 /** watch out for struct alignment here? **/

@@ -38,7 +38,8 @@ bool Prefs::Write(void)
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
 			app->margintop, app->marginleft,
 			app->marginbottom, app->marginright);
- 	fprintf(fp, "\t<font file=\"%s\" size=\"%d\" />\n",
+ 	fprintf(fp, "\t<font path=\"%s\" file=\"%s\" size=\"%d\" />\n",
+ 		app->fontdir.c_str(),
 		app->ts->GetFontFile().c_str(),
 		app->ts->GetPixelSize());
  	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
@@ -52,12 +53,13 @@ bool Prefs::Write(void)
 		
 	}
 	*/
-    fprintf(fp, "\t<books reopen=\"%s\">\n",
-            app->reopen ? app->books[app->bookcurrent].GetFileName() : "");
+    fprintf(fp, "\t<books path=\"%s\" reopen=\"%s\">\n",
+    		app->bookdir.c_str(),
+            (app->reopen && app->bookcurrent >= 0) ? app->books[app->bookcurrent].GetFullPathName() : "");
     for (u8 i = 0; i < app->bookcount; i++) {
         Book* book = app->books + i;
         fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\">\n",
-                book->GetFileName(), book->GetPosition() + 1);
+                book->GetFullPathName(), book->GetPosition() + 1);
 		std::list<u16>* bookmarks = book->GetBookmarks();
         for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
             fprintf(fp, "\t\t\t<bookmark page=\"%d\" />\n",

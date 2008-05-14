@@ -105,9 +105,7 @@ u8 Book::Index(char *filebuf)
 u8 Book::Parse(char *filebuf)
 {
 	u8 rc = 0;
-	char path[128];
-	strcpy(path,foldername.c_str());
-	strcat(path,filename.c_str());
+	const char* path = GetFullPathName();
 	FILE *fp = fopen(path,"r");
 	if (!fp)
 	{
@@ -142,4 +140,13 @@ u8 Book::Parse(char *filebuf)
 	XML_ParserFree(p);
 	fclose(fp);
 	return(rc);
+}
+
+const char* Book::GetFullPathName()
+{
+	char path[MAXPATHLEN];
+	strcpy(path, foldername.c_str());
+	strcat(path, filename.c_str());
+	
+	return (const char*)path;
 }

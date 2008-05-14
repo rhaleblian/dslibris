@@ -3,6 +3,7 @@
 
 #include <nds.h>
 #include <expat.h>
+#include <unistd.h>
 
 #include "Book.h"
 #include "Button.h"
@@ -18,12 +19,26 @@
 #define APP_LOGFILE "dslibris.log"
 #define APP_MODE_BOOK 0
 #define APP_MODE_BROWSER 1
+#define APP_MODE_PREFS 2
+#define APP_MODE_PREFS_FONT 3
+
+#define PREFS_BUTTON_COUNT 5
+#define PREFS_BUTTON_BOOKS 0
+#define PREFS_BUTTON_FONTS 1
+#define PREFS_BUTTON_FONT 2
+#define PREFS_BUTTON_FONTSIZE 3
+#define PREFS_BUTTON_BRIGHTNESS 4
 
 class App {
 	public:
 	Text *ts;
 	class Prefs *prefs;
 	u16 *screen0, *screen1, *screenleft, *screenright, *fb;
+	u16 screenwidth, screenheight, pagewidth, pageheight;
+	u8 brightness;
+	u8 mode;
+	string fontdir;
+	
 	Button *buttons;
 	Button buttonprev, buttonnext;
 	u8 browserstart;
@@ -32,6 +47,7 @@ class App {
 	u8 bookcount;
 	u8 bookselected;
 	u8 bookcurrent;
+	
 	u8 reopen;
 	parsedata_t parsedata;
 	page_t *pages;
@@ -39,37 +55,73 @@ class App {
 	u16 pagecount;
 	u16 pagecurrent;
 	vector<u16> pageindices;
-	u16 screenwidth, screenheight, pagewidth, pageheight;
-	u8 brightness;
 	char *filebuf;
-	u8 mode;
 	u8 marginleft, marginright, margintop, marginbottom;
 	u8 linespacing;
 	u8 orientation;
 	u8 paraspacing, paraindent;
+	
+	Button prefsButtonBooks;
+	Button prefsButtonFonts;
+	Button prefsButtonFont;
+	Button prefsButtonFontSize;
+	Button prefsButtonBrightness;
+	Button* prefsButtons[PREFS_BUTTON_COUNT];
+	u8 prefsSelected;
+	
+	u8 fontSelected;
+	Button* fontButtons;
+	vector<Text*> fontTs;
+	u8 fontPage;
+	
 
 	App();
 	~App();
-
-	void HandleEventInBrowser();
-	void HandleEventInBook();
+	
+	void CycleBrightness();
+	
 	void Log(const char*);
 	void Log(std::string);
 	void Log(int x);
 	void Log(const char* format, const char *msg);
-	u8   OpenBook(void);
 	int  Run(void);
 
+	void HandleEventInBrowser();
 	void browser_init(void);
 	void browser_draw(void);
 	void browser_nextpage(void);
 	void browser_prevpage(void);
 	void browser_redraw(void);
+	void AttemptBookOpen();
 	
+	u8   OpenBook(void);
+	void HandleEventInBook();
 	void page_init(page_t *page);
 	void page_draw(page_t *page);
 	void page_drawmargins(void);
 	u8   page_getjustifyspacing(page_t *page, u16 i);
+	
+	void HandleEventInPrefs();
+	void PrefsInit();
+	void PrefsDraw();
+	void PrefsDraw(bool redraw);
+	void PrefsButton();
+	void PrefsIncreasePixelSize();
+	void PrefsDecreasePixelSize();
+	void PrefsRefreshButtonBooks();
+	void PrefsRefreshButtonFonts();
+	void PrefsRefreshButtonFont();
+	void PrefsRefreshButtonFontSize();
+	void PrefsRefreshButtonBrightness();
+	
+	void HandleEventInFont();
+	void FontInit();
+	void FontDeinit();
+	void FontDraw();
+	void FontDraw(bool redraw);
+	void FontNextPage();
+	void FontPreviousPage();
+	void FontButton();
 
 	void parse_printerror(XML_ParserStruct *ps);
 	bool parse_in(parsedata_t *data, context_t context);

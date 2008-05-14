@@ -85,7 +85,7 @@ public:
 	void SetInvert(bool invert);
 	void SetPen(u16 x, u16 y);
 	void SetPixelSize(u8 size);
-	void SetFontFile(char *filename, u8 style);
+	void SetFontFile(const char *filename, u8 style);
 	void SetScreen(u16 *s);
 
 	void ClearCache();

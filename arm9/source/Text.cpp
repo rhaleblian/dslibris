@@ -461,7 +461,7 @@ void Text::PrintSplash(u16 *screen)
 	SetInvert(invert);
 }
 
-void Text::SetFontFile(char *filename, u8 style)
+void Text::SetFontFile(const char *filename, u8 style)
 {
 	fontfilename = filename;
 }

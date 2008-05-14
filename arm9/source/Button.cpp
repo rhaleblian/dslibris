@@ -58,6 +58,7 @@ void Button::Draw(u16 *fb, bool highlight) {
 	}
 
 	bool invert = ts->GetInvert();
+	ts->SetScreen(fb);
 	ts->SetInvert(!highlight);
 	ts->GetPen(&x,&y);
 	ts->SetPen(ul.x+10, ul.y + ts->GetHeight());

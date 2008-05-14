@@ -17,7 +17,7 @@ dslibris - an ebook reader for Nintendo DS
 App *app;
 bool linebegan = false;
 // Static vars needed for state in the XML config callback prefs_start_hndl
-char reopenName[64];
+char reopenName[MAXPATHLEN];
 u8 currentBook = -1;
 
 /*---------------------------------------------------------------------------*/
@@ -50,7 +50,7 @@ void prefs_start_hndl(	void *userdata,
 						const XML_Char **attr)
 {
 	Book *data = (Book*)userdata;
-	char filename[64];
+	char filename[MAXPATHLEN];
 	strcpy(filename,"");
 	u16 position = 0;
 	u8 i;
@@ -97,8 +97,12 @@ void prefs_start_hndl(	void *userdata,
 		{
 			if(!strcmp(attr[i],"size"))
 				app->ts->pixelsize = atoi(attr[i+1]);
-			if(!strcmp(attr[i],"file"))
+			else if(!strcmp(attr[i],"file"))
 				app->ts->SetFontFile((char *)attr[i+1],0);
+			else if (!strcmp(attr[i], "path")) {
+				if (strlen(attr[i+1]))
+					app->fontdir = string(attr[i+1]);
+			}
 		}
 	}
 	else if (!stricmp(name, "books"))
@@ -106,6 +110,10 @@ void prefs_start_hndl(	void *userdata,
 		for (i = 0; attr[i]; i+=2) {
 			if (!strcmp(attr[i], "reopen"))
 				strcpy(reopenName, attr[i+1]);
+			else if (!strcmp(attr[i], "path")) {
+				if (strlen(attr[i+1]))
+					app->bookdir = string(attr[i+1]);
+			}
         }
 	}
 	else if (!stricmp(name, "book"))
