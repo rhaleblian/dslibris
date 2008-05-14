@@ -135,8 +135,14 @@ void App::HandleEventInFont()
 		}
 		else if(coord.px > regionprev[0] && coord.px < regionprev[1])
 		{
-			FontPreviousPage();
-			FontDraw();
+			if (fontPage > 0) {
+				FontPreviousPage();
+				FontDraw();
+			} else {
+				mode = APP_MODE_PREFS;
+				FontDeinit();
+				PrefsDraw();
+			}
 		} else {
 			for(u8 i = fontPage * 7; (i < fontTs.size()) && (i < (fontPage + 1) * 7); i++) {
 				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
@@ -192,7 +198,11 @@ void App::FontDraw(bool redraw)
 		fontButtons[i].Draw(screen, i == fontSelected);
 	}
 	if(fontPage > 0) 
-		buttonprev.Draw(screen, false);
+		buttonprev.Label("^");
+	else
+		buttonprev.Label("Cancel [Start/Select]");
+	buttonprev.Draw(screen, false);
+	
 	if((u8)fontTs.size() > (fontPage + 1) * 7)
 		buttonnext.Draw(screen, false);
 #endif

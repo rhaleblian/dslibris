@@ -34,7 +34,8 @@ bool Prefs::Write(void)
 	
 	fprintf(fp, "<dslibris>\n");
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" />\n",
-		app->brightness, app->ts->GetInvert());
+		app->brightness,
+		app->ts->GetInvert());
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
 			app->margintop, app->marginleft,
 			app->marginbottom, app->marginright);
@@ -53,13 +54,17 @@ bool Prefs::Write(void)
 		
 	}
 	*/
+ 	char* pathname = app->books[app->bookcurrent].GetFullPathName();
     fprintf(fp, "\t<books path=\"%s\" reopen=\"%s\">\n",
     		app->bookdir.c_str(),
-            (app->reopen && app->bookcurrent >= 0) ? app->books[app->bookcurrent].GetFullPathName() : "");
+            (app->reopen && app->bookcurrent >= 0) ? pathname : "");
+    delete[] pathname;
     for (u8 i = 0; i < app->bookcount; i++) {
         Book* book = app->books + i;
+        pathname = book->GetFullPathName();
         fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\">\n",
-                book->GetFullPathName(), book->GetPosition() + 1);
+                pathname, book->GetPosition() + 1);
+        delete[] pathname;
 		std::list<u16>* bookmarks = book->GetBookmarks();
         for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
             fprintf(fp, "\t\t\t<bookmark page=\"%d\" />\n",

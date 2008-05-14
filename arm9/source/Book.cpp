@@ -105,13 +105,14 @@ u8 Book::Index(char *filebuf)
 u8 Book::Parse(char *filebuf)
 {
 	u8 rc = 0;
-	const char* path = GetFullPathName();
+	char* path = GetFullPathName();
 	FILE *fp = fopen(path,"r");
 	if (!fp)
 	{
 		rc = 255;
 		return(rc);
 	}
+	delete[] path;
 
 	XML_Parser p = XML_ParserCreate(NULL);
 	parsedata_t parsedata;
@@ -142,11 +143,11 @@ u8 Book::Parse(char *filebuf)
 	return(rc);
 }
 
-const char* Book::GetFullPathName()
+char* Book::GetFullPathName()
 {
-	char path[MAXPATHLEN];
+	char* path = new char[MAXPATHLEN];
 	strcpy(path, foldername.c_str());
 	strcat(path, filename.c_str());
 	
-	return (const char*)path;
+	return (char*)path;
 }

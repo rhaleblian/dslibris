@@ -2,6 +2,7 @@
 #define _button_h
 
 #include "Text.h"
+#include <unistd.h>
 
 typedef struct {
 	u16 x;
@@ -11,7 +12,7 @@ typedef struct {
 class Button {
 	coord_t origin;
 	coord_t extent;
-	u8 text[64];
+	u8 text[MAXPATHLEN];
 	Text *ts;
 
  public:

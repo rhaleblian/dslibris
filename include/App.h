@@ -22,12 +22,13 @@
 #define APP_MODE_PREFS 2
 #define APP_MODE_PREFS_FONT 3
 
-#define PREFS_BUTTON_COUNT 5
+#define PREFS_BUTTON_COUNT 6
 #define PREFS_BUTTON_BOOKS 0
 #define PREFS_BUTTON_FONTS 1
 #define PREFS_BUTTON_FONT 2
 #define PREFS_BUTTON_FONTSIZE 3
-#define PREFS_BUTTON_BRIGHTNESS 4
+#define PREFS_BUTTON_PARASPACING 4
+#define PREFS_BUTTON_BRIGHTNESS 5
 
 class App {
 	public:
@@ -65,6 +66,7 @@ class App {
 	Button prefsButtonFonts;
 	Button prefsButtonFont;
 	Button prefsButtonFontSize;
+	Button prefsButtonParaspacing;
 	Button prefsButtonBrightness;
 	Button* prefsButtons[PREFS_BUTTON_COUNT];
 	u8 prefsSelected;
@@ -108,10 +110,13 @@ class App {
 	void PrefsButton();
 	void PrefsIncreasePixelSize();
 	void PrefsDecreasePixelSize();
+	void PrefsIncreaseParaspacing();
+	void PrefsDecreaseParaspacing();
 	void PrefsRefreshButtonBooks();
 	void PrefsRefreshButtonFonts();
 	void PrefsRefreshButtonFont();
 	void PrefsRefreshButtonFontSize();
+	void PrefsRefreshButtonParaspacing();
 	void PrefsRefreshButtonBrightness();
 	
 	void HandleEventInFont();

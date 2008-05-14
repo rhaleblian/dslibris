@@ -127,7 +127,8 @@ void prefs_start_hndl(	void *userdata,
 		
 		for(i = 0; i < app->bookcount; i++)
 		{
-			if(!stricmp(data[i].GetFullPathName(), filename))
+			char* pathname = data[i].GetFullPathName();
+			if(!stricmp(pathname, filename))
 			{
 				currentBook = i;
 				
@@ -142,6 +143,7 @@ void prefs_start_hndl(	void *userdata,
 				
 				break;
 			}
+			delete[] pathname;
 		}
 	}
 	else if (!stricmp(name, "bookmark"))

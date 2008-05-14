@@ -46,6 +46,11 @@ void App::PrefsInit()
 	PrefsRefreshButtonFontSize();
 	prefsButtons[PREFS_BUTTON_FONTSIZE] = &prefsButtonFontSize;
 	
+	prefsButtonParaspacing.Init(ts);
+	prefsButtonParaspacing.Move(2, (PREFS_BUTTON_PARASPACING + 1) * 32 - 16);
+	PrefsRefreshButtonParaspacing();
+	prefsButtons[PREFS_BUTTON_PARASPACING] = &prefsButtonParaspacing;
+	
 	prefsButtonBrightness.Init(ts);
 	prefsButtonBrightness.Move(2, (PREFS_BUTTON_BRIGHTNESS + 1) * 32 - 16);
 	PrefsRefreshButtonBrightness();
@@ -82,8 +87,26 @@ void App::PrefsRefreshButtonFontSize()
 {
 	char msg[30];
 	strcpy(msg, "");
-	sprintf((char*)msg, "Change Font Size\n    < %d >", ts->GetPixelSize());
+	if (ts->GetPixelSize() == 1)
+		sprintf((char*)msg, "Change Font Size\n    [ %d >", ts->GetPixelSize());
+	else if (ts->GetPixelSize() == 255)
+		sprintf((char*)msg, "Change Font Size\n    < %d ]", ts->GetPixelSize());
+	else
+		sprintf((char*)msg, "Change Font Size\n    < %d >", ts->GetPixelSize());
 	prefsButtonFontSize.Label(msg);
+}
+
+void App::PrefsRefreshButtonParaspacing()
+{
+	char msg[38];
+	strcpy(msg, "");
+	if (paraspacing == 0)
+		sprintf((char*)msg, "Change Paragraph Spacing\n    [ %d >", paraspacing);
+	else if (paraspacing == 255)
+		sprintf((char*)msg, "Change Paragraph Spacing\n    < %d ]", paraspacing);
+	else
+		sprintf((char*)msg, "Change Paragraph Spacing\n    < %d >", paraspacing);
+	prefsButtonParaspacing.Label(msg);
 }
 
 void App::PrefsRefreshButtonBrightness()
@@ -118,6 +141,9 @@ void App::PrefsDraw(bool redraw)
 	{
 		prefsButtons[i]->Draw(screen, i == prefsSelected);
 	}
+	
+	buttonprev.Label("Return to Browser [Start/Select]");
+	buttonprev.Draw(screen, false);
 #endif
 
 	// restore state.
@@ -140,7 +166,10 @@ void App::HandleEventInPrefs()
 		PrefsButton();
 	} else if (keysDown() & KEY_TOUCH) {
 		touchPosition touch = touchReadXY();
-		touchPosition coord;	
+		touchPosition coord;
+		u8 regionprev[2];
+		regionprev[0] = 0;
+		regionprev[1] = 16;
 
 		if(!orientation)
 		{
@@ -151,30 +180,46 @@ void App::HandleEventInPrefs()
 			coord.py = touch.py;
 		}
 		
-		for(u8 i = 0; i < PREFS_BUTTON_COUNT; i++) {
-			if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
-			{
-				if (i != prefsSelected) {
-					prefsSelected = i;
-					PrefsDraw(false);
-				}
-				
-				if (i == PREFS_BUTTON_FONTSIZE) {
-					if (coord.py < 2 + 188 / 2) {
-						PrefsDecreasePixelSize();
-					} else {
-						PrefsIncreasePixelSize();
+		if(coord.px > regionprev[0] && coord.px < regionprev[1]) {
+			mode = APP_MODE_BROWSER;
+			browser_draw();
+		} else {
+			for(u8 i = 0; i < PREFS_BUTTON_COUNT; i++) {
+				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
+				{
+					if (i != prefsSelected) {
+						prefsSelected = i;
+						PrefsDraw(false);
 					}
+					
+					if (i == PREFS_BUTTON_FONTSIZE) {
+						if (coord.py < 2 + 188 / 2) {
+							PrefsIncreasePixelSize();
+						} else {
+							PrefsDecreasePixelSize();
+						}
+					} else if (i == PREFS_BUTTON_PARASPACING) {
+						if (coord.py < 2 + 188 / 2) {
+							PrefsIncreaseParaspacing();
+						} else {
+							PrefsDecreaseParaspacing();
+						}
+					} else {
+						PrefsButton();
+					}
+					
+					break;
 				}
-				
-				PrefsButton();
-				break;
 			}
 		}
 	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & KEY_UP)) {
 		PrefsDecreasePixelSize();
 	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & KEY_DOWN)) {
 		PrefsIncreasePixelSize();
+	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & KEY_UP)) {
+		PrefsDecreaseParaspacing();
+	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & KEY_DOWN)) {
+		PrefsIncreaseParaspacing();
 	}
 }
 
@@ -194,6 +239,28 @@ void App::PrefsDecreasePixelSize()
 	if (ts->pixelsize > 1) {
 		ts->pixelsize--;
 		PrefsRefreshButtonFontSize();
+		PrefsDraw();
+		bookcurrent = -1;
+		prefs->Write();
+	}
+}
+
+void App::PrefsIncreaseParaspacing()
+{
+	if (paraspacing < 255) {
+		paraspacing++;
+		PrefsRefreshButtonParaspacing();
+		PrefsDraw();
+		bookcurrent = -1;
+		prefs->Write();
+	}
+}
+
+void App::PrefsDecreaseParaspacing()
+{
+	if (paraspacing > 0) {
+		paraspacing--;
+		PrefsRefreshButtonParaspacing();
 		PrefsDraw();
 		bookcurrent = -1;
 		prefs->Write();

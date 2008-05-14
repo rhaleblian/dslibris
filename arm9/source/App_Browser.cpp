@@ -107,8 +107,14 @@ void App::HandleEventInBrowser()
 		else if(coord.px > regionprev[0]
 			&& coord.px < regionprev[1])
 		{
-			browser_prevpage();
-			browser_draw();
+			if (browserstart > 6) {
+				browser_prevpage();
+				browser_draw();
+			} else {
+				mode = APP_MODE_PREFS;
+				prefsSelected = 0;
+				PrefsDraw();
+			}
 		} else {
 			for(u8 i=browserstart;
 				(i<bookcount) && (i<browserstart+7);
@@ -186,8 +192,12 @@ void App::browser_draw(void)
 		buttons[i].Draw(screen,i==bookselected);
 	}
 
-	if(browserstart > 6) 
-		buttonprev.Draw(screen,false);
+	if(browserstart > 6)
+		buttonprev.Label("^");
+	else
+		buttonprev.Label("Configure dslibris [Select]");
+	
+	buttonprev.Draw(screen,false);
 	if(bookcount > browserstart+7)
 		buttonnext.Draw(screen,false);
 #endif
