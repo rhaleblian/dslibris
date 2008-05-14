@@ -127,7 +127,7 @@ void prefs_start_hndl(	void *userdata,
 		
 		for(i = 0; i < app->bookcount; i++)
 		{
-			if(!stricmp(data[i].GetFileName(), filename))
+			if(!stricmp(data[i].GetFullPathName(), filename))
 			{
 				currentBook = i;
 				

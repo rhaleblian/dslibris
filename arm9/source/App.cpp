@@ -24,6 +24,8 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 
+//#define NOLOG
+
 App::App()
 {	
 	ts = NULL;
@@ -318,6 +320,9 @@ void App::CycleBrightness()
 
 void App::Log(const char *msg)
 {
+#ifdef NOLOG
+	return;
+#endif
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,msg);
 	fclose(logfile);
@@ -325,6 +330,9 @@ void App::Log(const char *msg)
 
 void App::Log(std::string msg)
 {
+#ifdef NOLOG
+	return;
+#endif
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,msg.c_str());
 	fclose(logfile);
@@ -332,6 +340,9 @@ void App::Log(std::string msg)
 
 void App::Log(int x)
 {
+#ifdef NOLOG
+	return;
+#endif
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,"%d",x);		
 	fclose(logfile);
@@ -339,6 +350,9 @@ void App::Log(int x)
 
 void App::Log(const char *format, const char *msg)
 {
+#ifdef NOLOG
+	return;
+#endif
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,format,msg);
 	fclose(logfile);	
