@@ -101,6 +101,9 @@ int App::Run(void)
 
 	ts = new Text();
 	ts->app = this;
+	ts->SetFontFile(FONTFILEPATH, 0);
+	ts->SetFontBoldFile(FONTBOLDFILEPATH, 0);
+	ts->SetFontItalicFile(FONTITALICFILEPATH, 0);
 	XML_Parser p = XML_ParserCreate(NULL);
 	if (!p)
 	{
@@ -111,11 +114,18 @@ int App::Run(void)
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
 
+	// read preferences (to load bookdir)
+	Log("info : reading prefs.\n");
+   	if(!prefs->Read(p))
+	{
+		Log("warn : could not open preferences.\n");
+	}
+	
 	// construct library.
 
 	sprintf(msg,"info : scanning '%s' for books.\n",bookdir.c_str());
 	Log(msg);
-
+	
 	DIR_ITER *dp = diropen(bookdir.c_str());
 	if (!dp)
 	{
@@ -299,7 +309,7 @@ int App::Run(void)
 			HandleEventInBook();
 		else if (mode == APP_MODE_PREFS)
 			HandleEventInPrefs();
-		else if (mode == APP_MODE_PREFS_FONT)
+		else if (mode == APP_MODE_PREFS_FONT || mode == APP_MODE_PREFS_FONT_BOLD || mode == APP_MODE_PREFS_FONT_ITALIC)
 			HandleEventInFont();
 		
 		swiWaitForVBlank();

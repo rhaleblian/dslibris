@@ -205,6 +205,8 @@ u8 App::OpenBook(void)
 	swiWaitForVBlank();
 	pagecount = 0;
 	pagecurrent = 0;
+	bookBold = false;
+	bookItalic = false;
 	page_init(&pages[pagecurrent]);
 	ts->ClearCache();
 	if (!books[bookselected].Parse(filebuf))
@@ -358,7 +360,6 @@ void App::page_draw(page_t *page)
 		if (c == '\n')
 		{
 			// line break, page breaking if necessary
-
 			i++;
 
 			if (ts->GetPenY() + ts->GetHeight() + linespacing 
@@ -372,12 +373,29 @@ void App::page_draw(page_t *page)
 				else break;
 			}
 			else if (linebegan) ts->PrintNewLine();
+		} else if (c == TEXT_BOLD) {
+			i++;
+			
+			bookBold = !bookBold;
+		} else if (c == TEXT_ITALIC) {
+			i++;
+			
+			bookItalic = !bookItalic;
 		}
 		else
 		{
-			if (c > 127) i+=ts->GetCharCode((char*)&(page->buf[i]),&c);
-			else i++;
-			ts->PrintChar(c);
+			if (c > 127)
+				i+=ts->GetCharCode((char*)&(page->buf[i]),&c);
+			else
+				i++;
+			
+			if (bookItalic)
+				ts->PrintChar(c, ts->italicFace);
+			else if (bookBold)
+				ts->PrintChar(c, ts->boldFace);
+			else
+				ts->PrintChar(c);
+			
 			linebegan = true;
 		}
 	}

@@ -61,8 +61,16 @@ void App::FontInit()
 			strcat(newFilename, filename);
 			newTs->SetFontFile(newFilename, 0);
 			
+			const char* fontfile = NULL;
 			
-			if (!stricmp(newFilename, ts->GetFontFile().c_str())) {
+			if (mode == APP_MODE_PREFS_FONT)
+				fontfile = ts->GetFontFile().c_str();
+			else if (mode == APP_MODE_PREFS_FONT_BOLD)
+				fontfile = ts->GetFontBoldFile().c_str();
+			else if (mode == APP_MODE_PREFS_FONT_ITALIC)
+				fontfile = ts->GetFontItalicFile().c_str();
+			
+			if (!stricmp(newFilename, fontfile)) {
 				fontSelected = fontTs.size();
 				fontPage = fontSelected / 7;
 			}
@@ -236,7 +244,14 @@ void App::FontButton()
 	ts->ClearScreen(screen1,0,0,0);
 	ts->SetPen(marginleft,PAGE_HEIGHT/2);
 	ts->PrintString("[saving font...]");
-	ts->SetFontFile(fontTs[fontSelected]->GetFontFile().c_str(), 0);
+	
+	if (mode == APP_MODE_PREFS_FONT)
+		ts->SetFontFile(fontTs[fontSelected]->GetFontFile().c_str(), 0);
+	else if (mode == APP_MODE_PREFS_FONT_BOLD)
+		ts->SetFontBoldFile(fontTs[fontSelected]->GetFontFile().c_str(), 0);
+	else if (mode == APP_MODE_PREFS_FONT_ITALIC)
+		ts->SetFontItalicFile(fontTs[fontSelected]->GetFontFile().c_str(), 0);
+	
 	ts->Init();
 	bookcurrent = -1; //Force repagination
 	FontDeinit();

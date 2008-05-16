@@ -15,6 +15,7 @@ typedef enum {
 	TAG_P,TAG_PRE,
 	TAG_SCRIPT,TAG_STYLE,
 	TAG_TD,TAG_TITLE,
+	TAG_STRONG,TAG_EM,
 	TAG_UL,TAG_UNKNOWN
 } context_t;
 

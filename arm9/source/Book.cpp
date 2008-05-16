@@ -8,6 +8,8 @@
 #include <errno.h>
 
 extern App *app;
+extern bool parseFontBold;
+extern bool parseFontItalic;
 
 Book::Book()
 {
@@ -114,6 +116,9 @@ u8 Book::Parse(char *filebuf)
 	}
 	delete[] path;
 
+	parseFontBold = false;
+	parseFontItalic = false;
+	
 	XML_Parser p = XML_ParserCreate(NULL);
 	parsedata_t parsedata;
 	XML_ParserReset(p,NULL);

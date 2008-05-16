@@ -41,6 +41,16 @@ void App::PrefsInit()
 	PrefsRefreshButtonFont();
 	prefsButtons[PREFS_BUTTON_FONT] = &prefsButtonFont;
 	
+	prefsButtonFontBold.Init(ts);
+	prefsButtonFontBold.Move(2, (PREFS_BUTTON_FONT_BOLD + 1) * 32 - 16);
+	PrefsRefreshButtonFontBold();
+	prefsButtons[PREFS_BUTTON_FONT_BOLD] = &prefsButtonFontBold;
+		
+	prefsButtonFontItalic.Init(ts);
+	prefsButtonFontItalic.Move(2, (PREFS_BUTTON_FONT_ITALIC + 1) * 32 - 16);
+	PrefsRefreshButtonFontItalic();
+	prefsButtons[PREFS_BUTTON_FONT_ITALIC] = &prefsButtonFontItalic;
+	
 	prefsButtonFontSize.Init(ts);
 	prefsButtonFontSize.Move(2, (PREFS_BUTTON_FONTSIZE + 1) * 32 - 16);
 	PrefsRefreshButtonFontSize();
@@ -50,11 +60,6 @@ void App::PrefsInit()
 	prefsButtonParaspacing.Move(2, (PREFS_BUTTON_PARASPACING + 1) * 32 - 16);
 	PrefsRefreshButtonParaspacing();
 	prefsButtons[PREFS_BUTTON_PARASPACING] = &prefsButtonParaspacing;
-	
-	prefsButtonBrightness.Init(ts);
-	prefsButtonBrightness.Move(2, (PREFS_BUTTON_BRIGHTNESS + 1) * 32 - 16);
-	PrefsRefreshButtonBrightness();
-	prefsButtons[PREFS_BUTTON_BRIGHTNESS] = &prefsButtonBrightness;
 	
 	prefsSelected = 0;
 }
@@ -83,6 +88,22 @@ void App::PrefsRefreshButtonFont()
 	prefsButtonFont.Label(msg);
 }
 
+void App::PrefsRefreshButtonFontBold()
+{
+	char msg[128];
+	strcpy(msg, "");
+	sprintf((char*)msg, "Change Bold Font\n    %s", ts->GetFontBoldFile().c_str());
+	prefsButtonFontBold.Label(msg);
+}
+
+void App::PrefsRefreshButtonFontItalic()
+{
+	char msg[128];
+	strcpy(msg, "");
+	sprintf((char*)msg, "Change Italic Font\n    %s", ts->GetFontItalicFile().c_str());
+	prefsButtonFontItalic.Label(msg);
+}
+
 void App::PrefsRefreshButtonFontSize()
 {
 	char msg[30];
@@ -107,11 +128,6 @@ void App::PrefsRefreshButtonParaspacing()
 	else
 		sprintf((char*)msg, "Change Paragraph Spacing\n    < %d >", paraspacing);
 	prefsButtonParaspacing.Label(msg);
-}
-
-void App::PrefsRefreshButtonBrightness()
-{
-	prefsButtonBrightness.Label("Cycle Brightness");
 }
 
 void App::PrefsDraw()
@@ -279,7 +295,21 @@ void App::PrefsButton()
 		mode = APP_MODE_PREFS_FONT;
 		FontInit();
 		FontDraw();
-	} else if (prefsSelected == PREFS_BUTTON_BRIGHTNESS) {
-		CycleBrightness();
+	} else if (prefsSelected == PREFS_BUTTON_FONT_BOLD) {
+		ts->SetScreen(screen1);
+		ts->ClearScreen(screen1,0,0,0);
+		ts->SetPen(marginleft,PAGE_HEIGHT/2);
+		ts->PrintString("[loading fonts...]");
+		mode = APP_MODE_PREFS_FONT_BOLD;
+		FontInit();
+		FontDraw();
+	} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
+		ts->SetScreen(screen1);
+		ts->ClearScreen(screen1,0,0,0);
+		ts->SetPen(marginleft,PAGE_HEIGHT/2);
+		ts->PrintString("[loading fonts...]");
+		mode = APP_MODE_PREFS_FONT_ITALIC;
+		FontInit();
+		FontDraw();
 	}
 }

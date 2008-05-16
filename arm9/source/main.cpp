@@ -19,6 +19,8 @@ bool linebegan = false;
 // Static vars needed for state in the XML config callback prefs_start_hndl
 char reopenName[MAXPATHLEN];
 u8 currentBook = -1;
+bool parseFontBold = false;
+bool parseFontItalic = false;
 
 /*---------------------------------------------------------------------------*/
 
@@ -43,6 +45,16 @@ bool iswhitespace(u8 c)
 		return false;
 		break;
 	}
+}
+
+FT_Face GetParserFace()
+{
+	if (parseFontItalic)
+		return app->ts->italicFace;
+	else if (parseFontBold)
+		return app->ts->boldFace;
+	else
+		return app->ts->face;
 }
 
 void prefs_start_hndl(	void *userdata,
@@ -97,8 +109,12 @@ void prefs_start_hndl(	void *userdata,
 		{
 			if(!strcmp(attr[i],"size"))
 				app->ts->pixelsize = atoi(attr[i+1]);
-			else if(!strcmp(attr[i],"file"))
+			else if(!strcmp(attr[i],"normal"))
 				app->ts->SetFontFile((char *)attr[i+1],0);
+			else if(!strcmp(attr[i],"bold"))
+				app->ts->SetFontBoldFile((char *)attr[i+1],0);
+			else if(!strcmp(attr[i],"italic"))
+				app->ts->SetFontItalicFile((char *)attr[i+1],0);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
 					app->fontdir = string(attr[i+1]);
@@ -188,7 +204,8 @@ void default_hndl(void *data, const XML_Char *s, int len)
 		if (!strnicmp(s,"&nbsp;",5))
 		{
 			app->pagebuf[page->length++] = ' ';
-			p->pen.x += app->ts->GetAdvance(' ');
+			p->pen.x += app->ts->GetAdvance(' ', GetParserFace());
+			
 			return;
 		}
 
@@ -210,7 +227,7 @@ void default_hndl(void *data, const XML_Char *s, int len)
 			}
 			// TODO - support 4-byte codes
 			
-			p->pen.x += app->ts->GetAdvance(code);
+			p->pen.x += app->ts->GetAdvance(code, GetParserFace());
 		}
 	}
 }  /* End default_hndl */
@@ -276,6 +293,20 @@ void start_hndl(void *data, const char *el, const char **attr)
 	else if (!stricmp(el,"title")) app->parse_push(pdata,TAG_TITLE);
 	else if (!stricmp(el,"td")) app->parse_push(pdata,TAG_TD);
 	else if (!stricmp(el,"ul")) app->parse_push(pdata,TAG_UL);
+	else if (!stricmp(el,"strong") || !stricmp(el, "b")) {
+		page_t *page = &(app->pages[app->pagecurrent]);
+		app->parse_push(pdata,TAG_STRONG);
+		app->pagebuf[page->length] = TEXT_BOLD;
+		page->length++;
+		parseFontBold = !parseFontBold;
+	}
+	else if (!stricmp(el,"em") || !stricmp(el, "i")) {
+		page_t *page = &(app->pages[app->pagecurrent]);
+		app->parse_push(pdata,TAG_EM);
+		app->pagebuf[page->length] = TEXT_ITALIC;
+		page->length++;
+		parseFontItalic = !parseFontItalic;
+	}
 	else app->parse_push(pdata,TAG_UNKNOWN);
 }  /* End of start_hndl */
 
@@ -319,13 +350,16 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 					pdata->pen.x = app->marginleft;
 					pdata->pen.y += (app->ts->GetHeight() + app->linespacing);
 				}
-				else pdata->pen.x += app->ts->GetAdvance((u16)' ');				
+				else {
+					pdata->pen.x += app->ts->GetAdvance((u16)' ', GetParserFace());
+				}
 			}
 			else if(linebegan && page->length
 				&& !iswhitespace(app->pagebuf[page->length-1]))
 			{
 				app->pagebuf[page->length++] = ' ';
-				pdata->pen.x += app->ts->GetAdvance((u16)' ');
+				pdata->pen.x += app->ts->GetAdvance((u16)' ', GetParserFace());
+					
 			}
 			i++;
 		}
@@ -348,7 +382,9 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 					code = txt[j];
 					bytes = 1;
 				}
-				advance += app->ts->GetAdvance(code);
+
+				advance += app->ts->GetAdvance(code, GetParserFace());
+					
 				if(advance > PAGE_WIDTH-MARGINRIGHT-MARGINLEFT)
 				{
 					// here's a line-long word, need to break it now.
@@ -445,7 +481,7 @@ void end_hndl(void *data, const char *el)
 				for(int i=0;i<app->paraindent;i++)
 				{
 					app->pagebuf[page->length++] = ' ';
-					p->pen.x += app->ts->GetAdvance(' ');
+					p->pen.x += app->ts->GetAdvance(' ', GetParserFace());
 				}
 			}
 			else if (	
@@ -486,10 +522,7 @@ void end_hndl(void *data, const char *el)
 				p->pen.y = app->margintop + app->ts->GetHeight();
 			}
 		}
-	}
-
-	if (!stricmp(el,"body"))
-	{
+	} else if (!stricmp(el,"body")) {
 		if (!page->buf)
 		{
 			page->buf = new u8[page->length];
@@ -498,6 +531,14 @@ void end_hndl(void *data, const char *el)
 		}
 		strncpy((char*)page->buf,(char*)app->pagebuf,page->length);
 		app->parse_pop(p);
+	} else if (!stricmp(el, "strong") || !stricmp(el, "b")) {
+		app->pagebuf[page->length] = TEXT_BOLD;
+		page->length++;
+		parseFontBold = !parseFontBold;
+	} else if (!stricmp(el, "em") || !stricmp(el, "i")) {
+		app->pagebuf[page->length] = TEXT_ITALIC;
+		page->length++;
+		parseFontItalic = !parseFontItalic;
 	}
 
 	app->parse_pop(p);
