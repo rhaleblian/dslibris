@@ -1,7 +1,7 @@
 <dslibris>
-	<screen brightness="2" invert="0" />
-	<paragraph spacing="1" indent="0" />
-	<font file="dslibris.ttf" size="12" />
-	<book file="dslibris.xht" reopen="1" />
+	<screen brightness="3" invert="0" />
+	<paragraph spacing="0" indent="4" />
+	<font path="/font/" file="dslibris.ttf" size="12" />
+	<books path="/book/" file="dslibris.xht" reopen="1" />
 </dslibris>
 

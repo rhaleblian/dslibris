@@ -54,7 +54,9 @@ test: $(TARGET).nds
 	- mkdir -p /tmp/$(TARGET)
 	cp $(TARGET).nds /tmp/$(TARGET)
 	- mkdir -p /tmp/$(TARGET)/font
-	cp data/dslibris.ttf /tmp/$(TARGET)/font
+	cp data/font/dslibris.ttf /tmp/$(TARGET)/font
+	cp data/font/dslibrisb.ttf /tmp/$(TARGET)/font
+	cp data/font/dslibrisi.ttf /tmp/$(TARGET)/font
 	(cd /tmp/$(TARGET); desmume-cli $(TARGET).nds)
 
 # uses a vfat file under Fedora.

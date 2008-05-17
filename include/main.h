@@ -19,10 +19,10 @@
 #define SPLASH_LEFT (MARGINLEFT+28)
 #define SPLASH_TOP (MARGINTOP+96)
 
-#define FONTDIR "/fonts/"
+#define FONTDIR "/font/"
 #define BOOKDIR "/book/"
 #define PREFSPATH "dslibris.xml"
-#define FONTFILEPATH "/fonts/dslibris.ttf"
+#define FONTFILEPATH "/font/dslibris.ttf"
 #define FONTBOLDFILEPATH "/fonts/dslibrisb.ttf"
 #define FONTITALICFILEPATH "/fonts/dslibrisi.ttf"
 #define LOGFILEPATH "dslibris.log"
