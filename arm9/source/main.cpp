@@ -298,14 +298,14 @@ void start_hndl(void *data, const char *el, const char **attr)
 		app->parse_push(pdata,TAG_STRONG);
 		app->pagebuf[page->length] = TEXT_BOLD_ON;
 		page->length++;
-		parseFontBold = !parseFontBold;
+		parseFontBold = true;
 	}
 	else if (!stricmp(el,"em") || !stricmp(el, "i")) {
 		page_t *page = &(app->pages[app->pagecurrent]);
 		app->parse_push(pdata,TAG_EM);
 		app->pagebuf[page->length] = TEXT_ITALIC_ON;
 		page->length++;
-		parseFontItalic = !parseFontItalic;
+		parseFontItalic = true;
 	}
 	else app->parse_push(pdata,TAG_UNKNOWN);
 }  /* End of start_hndl */
@@ -540,11 +540,11 @@ void end_hndl(void *data, const char *el)
 	} else if (!stricmp(el, "strong") || !stricmp(el, "b")) {
 		app->pagebuf[page->length] = TEXT_BOLD_OFF;
 		page->length++;
-		parseFontBold = !parseFontBold;
+		parseFontBold = false;
 	} else if (!stricmp(el, "em") || !stricmp(el, "i")) {
 		app->pagebuf[page->length] = TEXT_ITALIC_OFF;
 		page->length++;
-		parseFontItalic = !parseFontItalic;
+		parseFontItalic = false;
 	}
 
 	app->parse_pop(p);
