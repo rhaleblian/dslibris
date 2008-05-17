@@ -14,8 +14,13 @@ using namespace std;
 #define PIXELSIZE 12
 //#define DPI 72	/** probably not true for a DS - measure it **/
 #define DPI 110 /** Reference: http://www.displaymate.com/psp_ds_shootout.htm **/
-#define TEXT_BOLD 2
-#define TEXT_ITALIC 3
+#define TEXT_BOLD_ON 2
+#define TEXT_BOLD_OFF 3
+#define TEXT_ITALIC_ON 4
+#define TEXT_ITALIC_OFF 5
+#define TEXT_STYLE_NORMAL (u8)0
+#define TEXT_STYLE_BOLD (u8)1
+#define TEXT_STYLE_ITALIC (u8)2
 
 class App;
 
@@ -34,7 +39,7 @@ typedef struct TextCache_ {
 class Cache {
 public:
 	// associates each glyph cache index (value)
-	// with it's Unicode code point (key).
+	// with its Unicode code point (key).
 	map<u16, FT_GlyphSlot> cacheMap;
 	u16 cachenext;
 	
@@ -53,21 +58,11 @@ class Text {
 	FTC_SBit sbit;
 	FTC_ImageTypeRec imagetype;
 	FT_Int charmap_index;
-
-	/*
-	FT_GlyphSlotRec glyphs[CACHESIZE];	
-	u16 cache_ucs[CACHESIZE];
-	// associates each glyph cache index (value)
-	// with it's Unicode code point (key).
-	map<u16,u16> cachemap;
-	u16 cachenext;
-	*/
 	
 	map<FT_Face, Cache*> textCache;
+	map<u8, FT_Face> faces;
+	map<u8, string> filenames;
 	
-	string fontfilename;
-	string fontBoldFilename;
-	string fontItalicFilename;
 	u16 *screen, *screenleft, *screenright;
 	FT_Vector pen;
 	bool invert;
@@ -75,20 +70,25 @@ class Text {
 	u32 codeprev; // last printed char code
 
 	int CacheGlyph(u32 ucs);
+	int CacheGlyph(u32 ucs, u8 style);
 	int CacheGlyph(u32 ucs, FT_Face face);
 	int InitDefault();
 	int InitWithCacheManager();
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
+	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
 	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit);
 	FT_UInt GetGlyphIndex(u32 ucs);
 
+	u8   GetAdvance(u32 ucs, FT_Face face);
+	u8   GetStringWidth(const char *txt, FT_Face face);
+	void ClearCache(FT_Face face);
+	void PrintChar(u32 ucs, FT_Face face);
+	void PrintString(const char *string, FT_Face face);
+	
 public:
 	App *app;
 	u8 pixelsize;
-	FT_Face face;
-	FT_Face boldFace;
-	FT_Face italicFace;
 
 	Text();
 	~Text();
@@ -96,11 +96,9 @@ public:
 	void InitPen(void);
 
 	u8   GetAdvance(u32 ucs);
-	u8   GetAdvance(u32 ucs, FT_Face face);
+	u8   GetAdvance(u32 ucs, u8 style);
 	u8   GetCharCode(const char* txt, u32* code);
-	string GetFontFile();
-	string GetFontBoldFile();
-	string GetFontItalicFile();
+	string GetFontFile(u8 style);
 	u8   GetHeight(void);
 	bool GetInvert();
 	void GetPen(u16 *x, u16 *y);
@@ -109,30 +107,28 @@ public:
 	u8   GetPenY();
 	u8   GetPixelSize();
 	u16* GetScreen();
-	u8   GetStringWidth(const char *txt);
-	u8   GetStringWidth(const char *txt, FT_Face face);
+	u8   GetStringWidth(const char *txt, u8 style);
 
 	void SetInvert(bool invert);
 	void SetPen(u16 x, u16 y);
 	void SetPixelSize(u8 size);
 	void SetFontFile(const char *filename, u8 style);
-	void SetFontBoldFile(const char *filename, u8 style);
-	void SetFontItalicFile(const char *filename, u8 style);
 	void SetScreen(u16 *s);
 
 	void ClearCache();
-	void ClearCache(FT_Face face);
+	void ClearCache(u8 style);
 	void ClearRect(u16 xl, u16 yl, u16 xh, u16 yh);
 	void ClearScreen();
 	void ClearScreen(u16*, u8, u8, u8);
 
 	void PrintChar(u32 ucs);
-	void PrintChar(u32 ucs, FT_Face face);
+	void PrintChar(u32 ucs, u8 style);
 	bool PrintNewLine(void);
 	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
-	void PrintString(const char *string, FT_Face face);
+	void PrintString(const char *string, u8 style);
 	void PrintSplash(u16 *screen);
+	FT_Face GetFace(u8 style);
 };
 
 #endif

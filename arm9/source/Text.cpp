@@ -11,7 +11,7 @@ static const int DMA_CHANNEL = 3;
 Text::Text()
 {
 	codeprev = 0;
-	fontfilename = FONTFILEPATH;
+	filenames[TEXT_STYLE_NORMAL] = FONTFILEPATH;
 	ftc = false;
 	invert = false;
 	justify = false;
@@ -24,18 +24,16 @@ Text::~Text()
 {
 	ClearCache();
 	
-	map<FT_Face, Cache*>::iterator iter;   
-	for(iter = textCache.begin(); iter != textCache.end(); iter++) {
+	   
+	for(map<FT_Face, Cache*>::iterator iter = textCache.begin(); iter != textCache.end(); iter++) {
 		delete iter->second;
 	}
 
 	textCache.clear();
 	
-	if (boldFace != face)
-		FT_Done_Face(boldFace);
-	if (italicFace != face)
-		FT_Done_Face(italicFace);
-	FT_Done_Face(face);
+	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+		FT_Done_Face(iter->second);
+	}
 	
 	FT_Done_FreeType(library);
 }
@@ -60,12 +58,12 @@ int Text::InitWithCacheManager(void) {
 	FTC_SBitCache_New(cache.manager,&cache.sbit);
 	FTC_CMapCache_New(cache.manager,&cache.cmap);
 
-	face_id.file_path = fontfilename.c_str();
+	face_id.file_path = filenames[TEXT_STYLE_NORMAL].c_str();
 	face_id.face_index = 0;
-	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &face);
+	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_NORMAL]);
 	if(error) return error;
-	FT_Select_Charmap(face,FT_ENCODING_UNICODE);
-	charmap_index = FT_Get_Charmap_Index(face->charmap);
+	FT_Select_Charmap(GetFace(TEXT_STYLE_NORMAL), FT_ENCODING_UNICODE);
+	charmap_index = FT_Get_Charmap_Index(GetFace(TEXT_STYLE_NORMAL)->charmap);
 /*
 	charmap_index = 0;
 	for(int i=0; i<face->num_charmaps;i++)
@@ -87,39 +85,33 @@ int Text::InitWithCacheManager(void) {
 int Text::InitDefault(void) {
 	if (FT_Init_FreeType(&library))
 		return 1;
-	if (FT_New_Face(library, fontfilename.c_str(), 0, &face))
-		return 2;
 	
-	textCache.insert(make_pair(face, new Cache()));
-	
-	char msg[MAXPATHLEN];
-	sprintf(msg,"info : font '%s'\n", fontfilename.c_str());
-	app->Log(msg);
-	
-	if (FT_New_Face(library, fontBoldFilename.c_str(), 0, &boldFace))
-		boldFace = face;
-	else {
-		strcpy(msg,"");
-		sprintf(msg,"info : font '%s'\n", fontBoldFilename.c_str());
+	map<u8, string>::iterator iter;   
+	for (iter = filenames.begin(); iter != filenames.end(); iter++) {
+		FT_Face face;
+		
+		if (FT_New_Face(library, iter->second.c_str(), 0, &face)) {
+			// Failed; attempt to use the NORMAL style
+			map<u8, FT_Face>::iterator find = faces.find(TEXT_STYLE_NORMAL);
+			
+			if (find == faces.end())
+				return 2;
+			else
+				face = find->second;
+		}
+		
+		char msg[MAXPATHLEN];
+		strcpy(msg, "");
+		sprintf(msg,"info : font '%s'\n", iter->second.c_str());
 		app->Log(msg);
-		FT_Select_Charmap(boldFace, FT_ENCODING_UNICODE);
-		FT_Set_Pixel_Sizes(boldFace, 0, pixelsize);
-		textCache.insert(make_pair(boldFace, new Cache()));
+		
+		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
+		FT_Set_Pixel_Sizes(face, 0, pixelsize);
+		
+		textCache.insert(make_pair(face, new Cache()));
+		faces[iter->first] = face;
 	}
 	
-	if (FT_New_Face(library, fontItalicFilename.c_str(), 0, &italicFace))
-		italicFace = face;
-	else {
-		strcpy(msg,"");
-		sprintf(msg,"info : font '%s'\n", fontItalicFilename.c_str());
-		app->Log(msg);
-		FT_Select_Charmap(italicFace, FT_ENCODING_UNICODE);
-		FT_Set_Pixel_Sizes(italicFace, 0, pixelsize);
-		textCache.insert(make_pair(italicFace, new Cache()));
-	}
-	
-	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-	FT_Set_Pixel_Sizes(face, 0, pixelsize);
 	screen = screenleft;
 	ClearCache();
 	InitPen();
@@ -135,7 +127,12 @@ int Text::Init()
 
 int Text::CacheGlyph(u32 ucs)
 {
-	return CacheGlyph(ucs, face);
+	return CacheGlyph(ucs, TEXT_STYLE_NORMAL);
+}
+
+int Text::CacheGlyph(u32 ucs, u8 style)
+{
+	return CacheGlyph(ucs, GetFace(style));
 }
 
 int Text::CacheGlyph(u32 ucs, FT_Face face)
@@ -184,7 +181,12 @@ int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit)
 
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags)
 {
-	return GetGlyph(ucs, flags, face);
+	return GetGlyph(ucs, flags, TEXT_STYLE_NORMAL);
+}
+
+FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, u8 style)
+{
+	return GetGlyph(ucs, flags, GetFace(style));
 }
 
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
@@ -213,13 +215,14 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 
 void Text::ClearCache()
 {
-	ClearCache(face);
-	
-	if (boldFace != face)
-		ClearCache(boldFace);
-	
-	if (italicFace != face)
-		ClearCache(italicFace);
+	 for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+		 ClearCache(iter->second);
+	 }
+}
+
+void Text::ClearCache(u8 style)
+{
+	ClearCache(GetFace(style));
 }
 
 void Text::ClearCache(FT_Face face)
@@ -251,9 +254,9 @@ void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 	}
 }
 
-u8 Text::GetStringWidth(const char *txt)
+u8 Text::GetStringWidth(const char *txt, u8 style)
 {
-	return GetStringWidth(txt, face);
+	return GetStringWidth(txt, GetFace(style));
 }
 
 u8 Text::GetStringWidth(const char *txt, FT_Face face)
@@ -297,7 +300,7 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 }
 
 u8 Text::GetHeight() {
-	return (face->size->metrics.height >> 6);
+	return (GetFace(TEXT_STYLE_NORMAL)->size->metrics.height >> 6);
 }
 
 void Text::GetPen(u16 *x, u16 *y) {
@@ -350,17 +353,13 @@ void Text::SetPixelSize(u8 size)
 		return;
 	}
 
-	if (!size) {
-		FT_Set_Pixel_Sizes(face, 0, PIXELSIZE);
-		FT_Set_Pixel_Sizes(boldFace, 0, PIXELSIZE);
-		FT_Set_Pixel_Sizes(italicFace, 0, PIXELSIZE);
-		pixelsize = PIXELSIZE;
-	} else {
-		FT_Set_Pixel_Sizes(face, 0, size);
-		FT_Set_Pixel_Sizes(boldFace, 0, size);
-		FT_Set_Pixel_Sizes(italicFace, 0, size);
-		pixelsize = size;
+	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+		if (!size)
+			FT_Set_Pixel_Sizes(iter->second, 0, PIXELSIZE);
+		else
+			FT_Set_Pixel_Sizes(iter->second, 0, size);
 	}
+	
 	ClearCache();
 }
 
@@ -370,7 +369,11 @@ void Text::SetScreen(u16 *inscreen)
 }
 
 u8 Text::GetAdvance(u32 ucs) {
-	return GetAdvance(ucs, face);
+	return GetAdvance(ucs, TEXT_STYLE_NORMAL);
+}
+
+u8 Text::GetAdvance(u32 ucs, u8 style) {
+	return GetAdvance(ucs, GetFace(style));
 }
 
 u8 Text::GetAdvance(u32 ucs, FT_Face face) {
@@ -395,8 +398,13 @@ void Text::InitPen(void) {
 	pen.y = app->margintop + GetHeight();
 }
 
-void Text::PrintChar(u32 ucs) {
-	PrintChar(ucs, face);
+void Text::PrintChar(u32 ucs)
+{
+	PrintChar(ucs, TEXT_STYLE_NORMAL);
+}
+
+void Text::PrintChar(u32 ucs, u8 style) {
+	PrintChar(ucs, GetFace(style));
 }
 
 void Text::PrintChar(u32 ucs, FT_Face face) {
@@ -502,7 +510,11 @@ bool Text::PrintNewLine(void) {
 }
 
 void Text::PrintString(const char *s) {
-	PrintString(s, face);
+	PrintString(s, TEXT_STYLE_NORMAL);
+}
+
+void Text::PrintString(const char *s, u8 style) {
+	PrintString(s, GetFace(style));
 }
 
 void Text::PrintString(const char *s, FT_Face face) {
@@ -568,30 +580,19 @@ void Text::PrintSplash(u16 *screen)
 
 void Text::SetFontFile(const char *filename, u8 style)
 {
-	fontfilename = filename;
+	filenames[style] = filename;
 }
 
-void Text::SetFontBoldFile(const char *filename, u8 style)
+string Text::GetFontFile(u8 style)
 {
-	fontBoldFilename = filename;
+	return filenames[style];
 }
 
-void Text::SetFontItalicFile(const char *filename, u8 style)
+FT_Face Text::GetFace(u8 style)
 {
-	fontItalicFilename = filename;
-}
-
-string Text::GetFontFile()
-{
-	return fontfilename;
-}
-
-string Text::GetFontBoldFile()
-{
-	return fontBoldFilename;
-}
-
-string Text::GetFontItalicFile()
-{
-	return fontItalicFilename;
+	map<u8, FT_Face>::iterator iter = faces.find(style);
+	if (iter != faces.end())
+		return iter->second;
+	else
+		return faces[TEXT_STYLE_NORMAL];
 }

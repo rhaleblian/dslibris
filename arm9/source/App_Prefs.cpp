@@ -84,7 +84,7 @@ void App::PrefsRefreshButtonFont()
 {
 	char msg[128];
 	strcpy(msg, "");
-	sprintf((char*)msg, "Change Font\n    %s", ts->GetFontFile().c_str());
+	sprintf((char*)msg, "Change Font\n    %s", ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
 	prefsButtonFont.Label(msg);
 }
 
@@ -92,7 +92,7 @@ void App::PrefsRefreshButtonFontBold()
 {
 	char msg[128];
 	strcpy(msg, "");
-	sprintf((char*)msg, "Change Bold Font\n    %s", ts->GetFontBoldFile().c_str());
+	sprintf((char*)msg, "Change Bold Font\n    %s", ts->GetFontFile(TEXT_STYLE_BOLD).c_str());
 	prefsButtonFontBold.Label(msg);
 }
 
@@ -100,7 +100,7 @@ void App::PrefsRefreshButtonFontItalic()
 {
 	char msg[128];
 	strcpy(msg, "");
-	sprintf((char*)msg, "Change Italic Font\n    %s", ts->GetFontItalicFile().c_str());
+	sprintf((char*)msg, "Change Italic Font\n    %s", ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
 	prefsButtonFontItalic.Label(msg);
 }
 
@@ -152,7 +152,7 @@ void App::PrefsDraw(bool redraw)
 	if (redraw) {
 		ts->ClearScreen(screen,0,0,0);
 	}
-	ts->SetPixelSize(12);
+	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
 	{
 		prefsButtons[i]->Draw(screen, i == prefsSelected);

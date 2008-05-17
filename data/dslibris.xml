@@ -2,17 +2,8 @@
 	<screen brightness="1" invert="0" />
 	<margin top="10" left="12" bottom="16" right="12" />
 	<font path="/font/" size="12" normal="/font/dslibris.ttf" bold="/font/dslibrisb.ttf" italic="/font/dslibrisi.ttf" />
-	<paragraph indent="4" spacing="0" />
+	<paragraph indent="0" spacing="0" />
 	<books path="/book/" reopen="">
-		<book file="/book/DSLIBRIS.XHT" page="1">
-		</book>
-		<book file="/book/england.xhtml" page="1">
-		</book>
-		<book file="/book/LEM_MST.XHT" page="275">
-		</book>
-		<book file="/book/warbreaker.xhtml" page="402">
-			<bookmark page="402" />
-		</book>
 	</books>
 </dslibris>
 

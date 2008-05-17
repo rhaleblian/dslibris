@@ -42,9 +42,9 @@ bool Prefs::Write(void)
  	fprintf(fp, "\t<font path=\"%s\" size=\"%d\" normal=\"%s\" bold=\"%s\" italic=\"%s\" />\n",
  		app->fontdir.c_str(),
 		app->ts->GetPixelSize(),
-		app->ts->GetFontFile().c_str(),
-		app->ts->GetFontBoldFile().c_str(),
-		app->ts->GetFontItalicFile().c_str());
+		app->ts->GetFontFile(TEXT_STYLE_NORMAL).c_str(),
+		app->ts->GetFontFile(TEXT_STYLE_BOLD).c_str(),
+		app->ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
  	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
 			app->paraindent,
 			app->paraspacing);

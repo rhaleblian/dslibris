@@ -64,11 +64,11 @@ void App::FontInit()
 			const char* fontfile = NULL;
 			
 			if (mode == APP_MODE_PREFS_FONT)
-				fontfile = ts->GetFontFile().c_str();
+				fontfile = ts->GetFontFile(TEXT_STYLE_NORMAL).c_str();
 			else if (mode == APP_MODE_PREFS_FONT_BOLD)
-				fontfile = ts->GetFontBoldFile().c_str();
+				fontfile = ts->GetFontFile(TEXT_STYLE_BOLD).c_str();
 			else if (mode == APP_MODE_PREFS_FONT_ITALIC)
-				fontfile = ts->GetFontItalicFile().c_str();
+				fontfile = ts->GetFontFile(TEXT_STYLE_ITALIC).c_str();
 			
 			if (!stricmp(newFilename, fontfile)) {
 				fontSelected = fontTs.size();
@@ -78,7 +78,7 @@ void App::FontInit()
 			if (newTs->Init()) {
 				delete newTs;
 			} else {
-				newTs->SetPixelSize(12);
+				newTs->SetPixelSize(PIXELSIZE);
 				fontTs.push_back(newTs);
 			}
 		}
@@ -91,7 +91,7 @@ void App::FontInit()
 		Text* ts = fontTs[i];
 		fontButtons[i].Init(ts);
 		fontButtons[i].Move(2, ((i % 7) + 1) * 32 - 16);
-		fontButtons[i].Label(ts->GetFontFile().c_str());
+		fontButtons[i].Label(ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
 	}
 }
 
@@ -200,7 +200,7 @@ void App::FontDraw(bool redraw)
 	if (redraw) {
 		ts->ClearScreen(screen,0,0,0);
 	}
-	ts->SetPixelSize(12);
+	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = fontPage * 7; (i < fontTs.size()) && (i < (fontPage + 1) * 7); i++)
 	{
 		fontButtons[i].Draw(screen, i == fontSelected);
@@ -246,11 +246,11 @@ void App::FontButton()
 	ts->PrintString("[saving font...]");
 	
 	if (mode == APP_MODE_PREFS_FONT)
-		ts->SetFontFile(fontTs[fontSelected]->GetFontFile().c_str(), 0);
+		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(), TEXT_STYLE_NORMAL);
 	else if (mode == APP_MODE_PREFS_FONT_BOLD)
-		ts->SetFontBoldFile(fontTs[fontSelected]->GetFontFile().c_str(), 0);
+		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(),TEXT_STYLE_BOLD);
 	else if (mode == APP_MODE_PREFS_FONT_ITALIC)
-		ts->SetFontItalicFile(fontTs[fontSelected]->GetFontFile().c_str(), 0);
+		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(), TEXT_STYLE_ITALIC);
 	
 	ts->Init();
 	bookcurrent = -1; //Force repagination

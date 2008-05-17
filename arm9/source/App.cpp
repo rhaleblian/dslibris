@@ -101,9 +101,9 @@ int App::Run(void)
 
 	ts = new Text();
 	ts->app = this;
-	ts->SetFontFile(FONTFILEPATH, 0);
-	ts->SetFontBoldFile(FONTBOLDFILEPATH, 0);
-	ts->SetFontItalicFile(FONTITALICFILEPATH, 0);
+	ts->SetFontFile(FONTFILEPATH, TEXT_STYLE_NORMAL);
+	ts->SetFontFile(FONTBOLDFILEPATH, TEXT_STYLE_BOLD);
+	ts->SetFontFile(FONTITALICFILEPATH, TEXT_STYLE_ITALIC);
 	XML_Parser p = XML_ParserCreate(NULL);
 	if (!p)
 	{

@@ -352,6 +352,9 @@ void App::page_draw(page_t *page)
 	ts->ClearScreen();
 	ts->InitPen();
 	bool linebegan = false;
+	
+	bookItalic = false;
+	bookBold = false;
 
 	u16 i=0;
 	while (i<page->length)
@@ -362,39 +365,43 @@ void App::page_draw(page_t *page)
 			// line break, page breaking if necessary
 			i++;
 
-			if (ts->GetPenY() + ts->GetHeight() + linespacing 
-				> PAGE_HEIGHT - marginbottom)
+			if (ts->GetPenY() + ts->GetHeight() + linespacing > PAGE_HEIGHT - marginbottom)
 			{
 				if(ts->GetScreen() == screen0) {
 					ts->SetScreen(screen1);
 					ts->InitPen();
 					linebegan = false;
 				}
-				else break;
+				else
+					break;
 			}
-			else if (linebegan) ts->PrintNewLine();
-		} else if (c == TEXT_BOLD) {
+			else if (linebegan) {
+				ts->PrintNewLine();
+			}
+		} else if (c == TEXT_BOLD_ON) {
 			i++;
-			
-			bookBold = !bookBold;
-		} else if (c == TEXT_ITALIC) {
+			bookBold = true;
+		} else if (c == TEXT_BOLD_OFF) {
 			i++;
-			
-			bookItalic = !bookItalic;
-		}
-		else
-		{
+			bookBold = false;
+		} else if (c == TEXT_ITALIC_ON) {
+			i++;
+			bookItalic = true;
+		} else if (c == TEXT_ITALIC_OFF) {
+			i++;
+			bookItalic = false;
+		} else {
 			if (c > 127)
 				i+=ts->GetCharCode((char*)&(page->buf[i]),&c);
 			else
 				i++;
 			
 			if (bookItalic)
-				ts->PrintChar(c, ts->italicFace);
+				ts->PrintChar(c, TEXT_STYLE_ITALIC);
 			else if (bookBold)
-				ts->PrintChar(c, ts->boldFace);
+				ts->PrintChar(c, TEXT_STYLE_BOLD);
 			else
-				ts->PrintChar(c);
+				ts->PrintChar(c, TEXT_STYLE_NORMAL);
 			
 			linebegan = true;
 		}

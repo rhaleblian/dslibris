@@ -47,14 +47,14 @@ bool iswhitespace(u8 c)
 	}
 }
 
-FT_Face GetParserFace()
+u8 GetParserFace()
 {
 	if (parseFontItalic)
-		return app->ts->italicFace;
+		return TEXT_STYLE_ITALIC;
 	else if (parseFontBold)
-		return app->ts->boldFace;
+		return TEXT_STYLE_BOLD;
 	else
-		return app->ts->face;
+		return TEXT_STYLE_NORMAL;
 }
 
 void prefs_start_hndl(	void *userdata,
@@ -110,11 +110,11 @@ void prefs_start_hndl(	void *userdata,
 			if(!strcmp(attr[i],"size"))
 				app->ts->pixelsize = atoi(attr[i+1]);
 			else if(!strcmp(attr[i],"normal"))
-				app->ts->SetFontFile((char *)attr[i+1],0);
+				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_NORMAL);
 			else if(!strcmp(attr[i],"bold"))
-				app->ts->SetFontBoldFile((char *)attr[i+1],0);
+				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_BOLD);
 			else if(!strcmp(attr[i],"italic"))
-				app->ts->SetFontItalicFile((char *)attr[i+1],0);
+				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_ITALIC);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
 					app->fontdir = string(attr[i+1]);
@@ -296,14 +296,14 @@ void start_hndl(void *data, const char *el, const char **attr)
 	else if (!stricmp(el,"strong") || !stricmp(el, "b")) {
 		page_t *page = &(app->pages[app->pagecurrent]);
 		app->parse_push(pdata,TAG_STRONG);
-		app->pagebuf[page->length] = TEXT_BOLD;
+		app->pagebuf[page->length] = TEXT_BOLD_ON;
 		page->length++;
 		parseFontBold = !parseFontBold;
 	}
 	else if (!stricmp(el,"em") || !stricmp(el, "i")) {
 		page_t *page = &(app->pages[app->pagecurrent]);
 		app->parse_push(pdata,TAG_EM);
-		app->pagebuf[page->length] = TEXT_ITALIC;
+		app->pagebuf[page->length] = TEXT_ITALIC_ON;
 		page->length++;
 		parseFontItalic = !parseFontItalic;
 	}
@@ -410,7 +410,13 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 						app->page_init(page);
 						app->pagecurrent++;
 						app->pagecount++;
-						if(app->pagecount == MAXPAGES) return;
+						if (app->pagecount == MAXPAGES)
+							return;
+						
+						if (parseFontItalic)
+							app->pagebuf[page->length++] = TEXT_ITALIC_ON;
+						if (parseFontBold)
+							app->pagebuf[page->length++] = TEXT_BOLD_ON;
 					}
 				}
 				linebegan = false;
@@ -532,11 +538,11 @@ void end_hndl(void *data, const char *el)
 		strncpy((char*)page->buf,(char*)app->pagebuf,page->length);
 		app->parse_pop(p);
 	} else if (!stricmp(el, "strong") || !stricmp(el, "b")) {
-		app->pagebuf[page->length] = TEXT_BOLD;
+		app->pagebuf[page->length] = TEXT_BOLD_OFF;
 		page->length++;
 		parseFontBold = !parseFontBold;
 	} else if (!stricmp(el, "em") || !stricmp(el, "i")) {
-		app->pagebuf[page->length] = TEXT_ITALIC;
+		app->pagebuf[page->length] = TEXT_ITALIC_OFF;
 		page->length++;
 		parseFontItalic = !parseFontItalic;
 	}
