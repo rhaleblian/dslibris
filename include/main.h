@@ -23,8 +23,8 @@
 #define BOOKDIR "/book/"
 #define PREFSPATH "dslibris.xml"
 #define FONTFILEPATH "/font/dslibris.ttf"
-#define FONTBOLDFILEPATH "/fonts/dslibrisb.ttf"
-#define FONTITALICFILEPATH "/fonts/dslibrisi.ttf"
+#define FONTBOLDFILEPATH "/font/dslibrisb.ttf"
+#define FONTITALICFILEPATH "/font/dslibrisi.ttf"
 #define LOGFILEPATH "dslibris.log"
 
 /** watch out for struct alignment here? **/
