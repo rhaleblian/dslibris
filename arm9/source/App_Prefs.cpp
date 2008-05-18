@@ -141,7 +141,6 @@ void App::PrefsDraw(bool redraw)
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 
-#ifndef GRIT
 	u16* screen;
 	if (orientation)
 		screen = screen0;
@@ -158,9 +157,8 @@ void App::PrefsDraw(bool redraw)
 		prefsButtons[i]->Draw(screen, i == prefsSelected);
 	}
 	
-	buttonprev.Label("Return to Browser [Start/Select]");
-	buttonprev.Draw(screen, false);
-#endif
+	buttonprefs.Label("return");
+	buttonprefs.Draw(screen, false);
 
 	// restore state.
 	ts->SetInvert(invert);
@@ -196,7 +194,8 @@ void App::HandleEventInPrefs()
 			coord.py = touch.py;
 		}
 		
-		if(coord.px > regionprev[0] && coord.px < regionprev[1]) {
+		if (buttonprefs.EnclosesPoint(coord.py, coord.px)) {
+			buttonprefs.Label("prefs");
 			mode = APP_MODE_BROWSER;
 			browser_draw();
 		} else {

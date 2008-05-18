@@ -15,7 +15,7 @@
 
 #include <vector>
 
-#define APP_URL "http://ndslibris.sourceforge.net"
+#define APP_BROWSER_BUTTON_COUNT 6
 #define APP_LOGFILE "dslibris.log"
 #define APP_MODE_BOOK 0
 #define APP_MODE_BROWSER 1
@@ -23,6 +23,7 @@
 #define APP_MODE_PREFS_FONT 3
 #define APP_MODE_PREFS_FONT_BOLD 4
 #define APP_MODE_PREFS_FONT_ITALIC 5
+#define APP_URL "http://ndslibris.sourceforge.net"
 
 #define PREFS_BUTTON_COUNT 7
 #define PREFS_BUTTON_BOOKS 0
@@ -44,7 +45,7 @@ class App {
 	string fontdir;
 	
 	Button *buttons;
-	Button buttonprev, buttonnext;
+	Button buttonprev, buttonnext, buttonprefs;
 	u8 browserstart;
 	string bookdir;
 	Book *books;

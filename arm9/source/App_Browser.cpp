@@ -45,13 +45,14 @@ void App::HandleEventInBrowser()
 	
 	else if (keysDown() & (KEY_LEFT | KEY_L))
 	{
+		// next book.
 		if (bookselected < bookcount-1)
 		{
-			if (bookselected == browserstart+6) {
+			bookselected++;
+			if (bookselected >= browserstart+APP_BROWSER_BUTTON_COUNT) {
 				browser_nextpage();
 				browser_draw();
 			} else {
-				bookselected++;
 				browser_redraw();
 			}
 		}
@@ -59,15 +60,16 @@ void App::HandleEventInBrowser()
 
 	else if (keysDown() & (KEY_RIGHT | KEY_R))
 	{
+		// previous book.
 		if (bookselected > 0)
 		{
-			if(bookselected == browserstart) {
+			bookselected--;
+			if(bookselected < browserstart) {
 				browser_prevpage();
 				browser_draw();
 			} else {
-				bookselected--;
 				browser_redraw();
-			}				
+			}	
 		}
 	}
 
@@ -83,41 +85,40 @@ void App::HandleEventInBrowser()
 	{
 		touchPosition touch = touchReadXY();
 		touchPosition coord;
-		u8 regionprev[2], regionnext[2];
-		regionprev[0] = 0;		
-		regionprev[1] = 16;
-		regionnext[0] = 240;
-		regionnext[1] = 255;
 
 		if(!orientation)
 		{
 			coord.px = 256 - touch.px;
-			coord.py = 192 - touch.py;
+			coord.py = touch.py;
 		} else {
 			coord.px = touch.px;
-			coord.py = touch.py;
+			coord.py = 192 - touch.py;
 		}
 
-		if(coord.px > regionnext[0]
-			&& coord.px < regionnext[1])
+		if(buttonnext.EnclosesPoint(coord.py, coord.px))
 		{
 			browser_nextpage();
 			browser_draw();
 		}
-		else if(coord.px > regionprev[0]
-			&& coord.px < regionprev[1])
+		else if(buttonprev.EnclosesPoint(coord.py, coord.px))
 		{
-			if (browserstart > 6) {
-				browser_prevpage();
-				browser_draw();
-			} else {
+			browser_prevpage();
+			browser_draw();
+		}
+		else if(buttonprefs.EnclosesPoint(coord.py, coord.px))
+		{
+			if(mode != APP_MODE_PREFS) {
 				mode = APP_MODE_PREFS;
 				prefsSelected = 0;
 				PrefsDraw();
+			} else {
+				mode = APP_MODE_BROWSER;
+				browser_draw();
 			}
 		} else {
 			for(u8 i=browserstart;
-				(i<bookcount) && (i<browserstart+7);
+				(i<bookcount) &&
+				(i<browserstart+APP_BROWSER_BUTTON_COUNT);
 				i++) {
 				if (buttons[i].EnclosesPoint(coord.py, coord.px))
 				{
@@ -138,38 +139,44 @@ void App::browser_init(void)
 	for (i=0;i<bookcount;i++)
 	{
 		buttons[i].Init(ts);
-		buttons[i].Move(2,((i%7+1)*32)-16);
+		buttons[i].Move(2,((i%APP_BROWSER_BUTTON_COUNT+1)*32)-16);
 		if (strlen(books[i].GetTitle()))
 			buttons[i].Label(books[i].GetTitle());
 		else
 			buttons[i].Label(books[i].GetFileName());
 	}
 	buttonprev.Init(ts);
-	buttonprev.Move(2,0);
-	buttonprev.Resize(188,16);
-	buttonprev.Label("^");
+	buttonprev.Move(2,240);
+	buttonprev.Resize(60,16);
+	buttonprev.Label("prev");
 	buttonnext.Init(ts);
-	buttonnext.Move(2,240);
-	buttonnext.Resize(188,16);
-	buttonnext.Label("v");
-	browserstart = (bookselected / 7) * 7;
+	buttonnext.Move(130,240);
+	buttonnext.Resize(60,16);
+	buttonnext.Label("next");
+	buttonprefs.Init(ts);
+	buttonprefs.Move(66,240);
+	buttonprefs.Resize(60,16);
+	buttonprefs.Label("prefs");
+
+	browserstart = (bookselected / APP_BROWSER_BUTTON_COUNT)
+		* APP_BROWSER_BUTTON_COUNT;
 }
 
 void App::browser_nextpage()
 {
-	if(browserstart+7 < bookcount)
+	if(browserstart+APP_BROWSER_BUTTON_COUNT < bookcount)
 	{ 
-		browserstart += 7;
+		browserstart += APP_BROWSER_BUTTON_COUNT;
 		bookselected = browserstart;
 	}
 }
 
 void App::browser_prevpage()
 {
-	if(browserstart-7 >= 0)
-	{
-		browserstart -= 7;
-		bookselected = browserstart+6;
+	if(browserstart-APP_BROWSER_BUTTON_COUNT >= 0)
+	{	
+		browserstart -= APP_BROWSER_BUTTON_COUNT;
+		bookselected = browserstart+APP_BROWSER_BUTTON_COUNT-1;
 	}
 }
 
@@ -179,7 +186,6 @@ void App::browser_draw(void)
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 
-#ifndef GRIT
 	u16* screen;
 	if(orientation) screen = screen0;
 	else screen = screen1;
@@ -187,20 +193,19 @@ void App::browser_draw(void)
 	ts->SetScreen(screen);
 	ts->ClearScreen(screen,0,0,0);
 	ts->SetPixelSize(PIXELSIZE);
-	for (int i=browserstart;(i<bookcount) && (i<browserstart+7);i++)
+	for (int i=browserstart;
+		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
+		i++)
 	{
 		buttons[i].Draw(screen,i==bookselected);
 	}
-
-	if(browserstart > 6)
-		buttonprev.Label("^");
-	else
-		buttonprev.Label("Configure dslibris [Select]");
 	
-	buttonprev.Draw(screen,false);
-	if(bookcount > browserstart+7)
+	if(browserstart >= APP_BROWSER_BUTTON_COUNT)
+		buttonprev.Draw(screen,false);
+	if(bookcount >= browserstart+APP_BROWSER_BUTTON_COUNT)
 		buttonnext.Draw(screen,false);
-#endif
+
+	buttonprefs.Draw(screen,false);
 
 	// restore state.
 	ts->SetInvert(invert);
@@ -216,8 +221,6 @@ void App::browser_redraw()
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 
-#ifndef GRIT
-
 	u16 *screen;
 	if(orientation) screen = screen0;
 	else screen = screen1;
@@ -227,10 +230,9 @@ void App::browser_redraw()
 	buttons[bookselected].Draw(screen,true);
 	if(bookselected > browserstart)
 		buttons[bookselected-1].Draw(screen,false);
-	if(bookselected < bookcount-1 && bookselected - browserstart < 6)
+	if(bookselected < bookcount-1 &&
+		(bookselected - browserstart) < APP_BROWSER_BUTTON_COUNT-1)
 		buttons[bookselected+1].Draw(screen,false);
-
-#endif
 
 	// restore state.
 	ts->SetInvert(invert);

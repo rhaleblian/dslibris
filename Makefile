@@ -50,7 +50,7 @@ clean:
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
 
 # run target with desmume
-test: $(TARGET).nds
+test-tmp: $(TARGET).nds
 	- mkdir -p /tmp/$(TARGET)
 	cp $(TARGET).nds /tmp/$(TARGET)
 	- mkdir -p /tmp/$(TARGET)/font
@@ -62,6 +62,8 @@ test: $(TARGET).nds
 # uses a vfat file under Fedora.
 test-vfat: $(TARGET).nds
 	desmume-cli --cflash=media.img dslibris.nds
+
+test: test-vfat
 
 vfat-image:
 	dd if=/dev/zero of=media.img bs=1048576 count=32

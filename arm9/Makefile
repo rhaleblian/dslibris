@@ -24,10 +24,11 @@ INCLUDES	:=	../include ../include/freetype2 build
 #-----------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -O2 -Wall \
+CFLAGS	:=	-g -Wall \
 		-mcpu=arm946e-s -mtune=arm946e-s \
 		-fomit-frame-pointer -ffast-math \
 		$(ARCH)
+CFLAGS 	+=	-O2
 CFLAGS	+=	$(INCLUDE) -DARM9
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
