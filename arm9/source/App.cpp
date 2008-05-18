@@ -115,11 +115,11 @@ int App::Run(void)
 	parse_init(&parsedata);
 
 	// read preferences (to load bookdir)
-	Log("info : reading prefs.\n");
+	Log("info : reading preferences.\n");
    	if(!prefs->Read(p))
 	{
-		Log("warn : could not open preferences.\n");
-	}
+		Log("warn : could not open preferences. defaults will be used.\n");
+	} else Log("info: preferences read.\n");
 	
 	// construct library.
 
