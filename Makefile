@@ -63,6 +63,10 @@ test: $(TARGET).nds
 test-vfat: $(TARGET).nds
 	desmume-cli --cflash=media.img dslibris.nds
 
+vfat-image:
+	dd if=/dev/zero of=media.img bs=1048576 count=32
+	/sbin/mkfs.msdos -F16 media.img
+		
 # debug target with insight and desmume under linux
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/dslibris.arm9.elf &

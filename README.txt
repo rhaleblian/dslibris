@@ -16,17 +16,20 @@ To build:
 cd ndslibris/trunk
 make
 
-dslibris.nds is your target, and shows up at the root level.
+dslibris.nds is your target, and shows up in the current directory.
  
 Note the libraries in 'external', prebuilt for arm-eabi; make sure you don't have conflicting libs in your path.
 
 INSTALLATION
 
-Copy dslibris.nds and dslibris.ttf to the root of your media. Also copy any
-.xhtml or .xht books you want to use to the media root.
+see INSTALL.txt.
 
 DEBUGGING
 
 gdb and Insight have been known to work for debugging. See online forums for
-means to build an arm-eabi gdb for you platform.
+means to build an arm-eabi targeted Insight for your platform.
+
+MORE INFO
+
+http://ndslibris.sourceforge.org
 
