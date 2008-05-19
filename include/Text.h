@@ -12,7 +12,6 @@ using namespace std;
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 #define CACHESIZE 256
 #define PIXELSIZE 12
-//#define DPI 72	/** probably not true for a DS - measure it **/
 #define DPI 110 /** Reference: http://www.displaymate.com/psp_ds_shootout.htm **/
 #define TEXT_BOLD_ON 2
 #define TEXT_BOLD_OFF 3

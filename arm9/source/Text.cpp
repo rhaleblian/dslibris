@@ -6,7 +6,16 @@
 #include "main.h"
 #include "version.h"
 
-static const int DMA_CHANNEL = 3;
+int getSize(uint8 *source, uint16 *dest, uint32 arg) {
+	return *(uint32*)source;
+}
+uint8 readByte(uint8 *source) { return *source; }
+
+TDecompressionStream decomp = {getSize, NULL, readByte};
+
+void drawstack(u16 *screen) {
+	swiDecompressLZSSVram((void*)image_stackBitmap, screen, 0, &decomp);
+}
 
 Text::Text()
 {
@@ -557,12 +566,12 @@ void Text::PrintSplash(u16 *screen)
 	bool invert = GetInvert();
 	u8 size = GetPixelSize();
 
-	dmaCopyHalfWords(DMA_CHANNEL,image_stackBitmap,
-		(u16*)BG_BMP_RAM(0),image_stackBitmapLen);
+#ifdef GFX
+	drawstack(screen);
+#endif
 
-	SetInvert(true);
+	SetInvert(false);
 	SetScreen(screen);
-	ClearScreen(screen,0,0,0);
 	SetPen(SPLASH_LEFT,SPLASH_TOP);
 	SetPixelSize(36);
 	PrintString("dslibris");
@@ -576,6 +585,8 @@ void Text::PrintSplash(u16 *screen)
 
 	SetPixelSize(size);
 	SetInvert(invert);
+
+	swiWaitForVBlank();
 }
 
 void Text::SetFontFile(const char *filename, u8 style)

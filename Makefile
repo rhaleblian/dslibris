@@ -2,7 +2,7 @@
 .SUFFIXES:
 #-------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM)
+$(error "Set DEVKITARM in your environment.")
 endif
 
 include $(DEVKITARM)/ds_rules
@@ -12,7 +12,7 @@ export TOPDIR		:=	$(CURDIR)
 
 # symlink the mountpoint for your sd card to 'install'
 export MEDIAROOT	:=	install
-export MEDIATYPE	:=	M3DSREAL
+export MEDIATYPE	:=	r4tf
 
 #-------------------------------------------------------------------------------
 # path to tools - this can be deleted if you set the path in windows
@@ -65,6 +65,7 @@ test-vfat: $(TARGET).nds
 
 test: test-vfat
 
+#create a cflash image for use with desmume.
 vfat-image:
 	dd if=/dev/zero of=media.img bs=1048576 count=32
 	/sbin/mkfs.msdos -F16 media.img

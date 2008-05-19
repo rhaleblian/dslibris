@@ -1,4 +1,4 @@
-prefix=/home/rhaleblian/nds/devkitPro/devkitARM
+prefix=/opt/nds
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include

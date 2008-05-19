@@ -32,4 +32,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/home/rhaleblian/nds/devkitPro/devkitARM/lib'
+libdir='/opt/nds/lib'

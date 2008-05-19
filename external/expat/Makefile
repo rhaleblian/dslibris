@@ -24,7 +24,7 @@ srcdir = .
 top_srcdir = .
 
 
-prefix = /home/rhaleblian/nds/devkitPro/devkitARM
+prefix = /opt/devkitPro/devkitARM
 exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
@@ -105,10 +105,10 @@ CXX = arm-eabi-g++
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 
 INCLUDES = -I$(srcdir)/lib -I.
-LDFLAGS = -specs=ds_arm9.specs -mthumb -mthumb-interwork -L/home/rhaleblian/nds/devkitPro/devkitARM/lib
+LDFLAGS = 
 CPPFLAGS =  -DHAVE_EXPAT_CONFIG_H
-CFLAGS = -g -Wall -O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -DARM9 -I/home/rhaleblian/nds/devkitPro/devkitARM -Wall -Wmissing-prototypes -Wstrict-prototypes -fexceptions
-CXXFLAGS = -g -Wall -O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -mthumb -mthumb-interwork -DARM9 -I/home/rhaleblian/nds/devkitPro/devkitARM -Wall -fexceptions
+CFLAGS = -g -O2 -Wall -Wmissing-prototypes -Wstrict-prototypes -fexceptions
+CXXFLAGS = -g -O2 -Wall -fexceptions
 VSNFLAG = -version-info 6:2:5
 
 ### autoconf this?

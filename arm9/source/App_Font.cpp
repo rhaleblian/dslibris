@@ -131,26 +131,22 @@ void App::HandleEventInFont()
 		if(!orientation)
 		{
 			coord.px = 256 - touch.px;
-			coord.py = 192 - touch.py;
+			coord.py = touch.py;
 		} else {
 			coord.px = touch.px;
-			coord.py = touch.py;
+			coord.py = 192 - touch.py;
 		}
-		if(coord.px > regionnext[0] && coord.px < regionnext[1])
-		{
+
+		if(buttonnext.EnclosesPoint(coord.py,coord.px)){
 			FontNextPage();
 			FontDraw();
-		}
-		else if(coord.px > regionprev[0] && coord.px < regionprev[1])
-		{
-			if (fontPage > 0) {
-				FontPreviousPage();
-				FontDraw();
-			} else {
-				mode = APP_MODE_PREFS;
-				FontDeinit();
-				PrefsDraw();
-			}
+		} else if(buttonprev.EnclosesPoint(coord.py,coord.px)) {
+			FontPreviousPage();
+			FontDraw();
+		} else if(buttonprefs.EnclosesPoint(coord.py,coord.px)) {
+			mode = APP_MODE_PREFS;
+			FontDeinit();
+			PrefsDraw();
 		} else {
 			for(u8 i = fontPage * 7; (i < fontTs.size()) && (i < (fontPage + 1) * 7); i++) {
 				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
@@ -190,7 +186,6 @@ void App::FontDraw(bool redraw)
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 
-#ifndef GRIT
 	u16* screen;
 	if (orientation)
 		screen = screen0;
@@ -205,15 +200,13 @@ void App::FontDraw(bool redraw)
 	{
 		fontButtons[i].Draw(screen, i == fontSelected);
 	}
-	if(fontPage > 0) 
-		buttonprev.Label("^");
-	else
-		buttonprev.Label("Cancel [Start/Select]");
-	buttonprev.Draw(screen, false);
-	
+	buttonprefs.Label("Cancel");
+	buttonprefs.Draw(screen, false);
+
 	if((u8)fontTs.size() > (fontPage + 1) * 7)
 		buttonnext.Draw(screen, false);
-#endif
+	if(fontSelected > 7)
+		buttonprev.Draw(screen, false);
 
 	// restore state.
 	ts->SetInvert(invert);

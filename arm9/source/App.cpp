@@ -20,11 +20,10 @@
 #include "Book.h"
 #include "Button.h"
 #include "Text.h"
+//#include "drunkenlogo.h"
 
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
-
-//#define NOLOG
 
 App::App()
 {	
@@ -71,6 +70,39 @@ App::~App()
 	delete pages;
 	delete prefs;
 }
+           
+#if 0
+int getSize(uint8 *source, uint16 *dest, uint32 arg) {
+	return *(uint32*)source;
+}
+uint8 readByte(uint8 *source) { return *source; }
+
+TDecompressionStream decomp = {getSize, NULL, readByte};
+
+int drunkenlogo() {
+	irqInit();
+	irqEnable(IRQ_VBLANK);
+	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
+	vramSetMainBanks(
+		VRAM_A_MAIN_BG_0x06000000,
+		VRAM_B_LCD,
+		VRAM_C_SUB_BG,
+		VRAM_D_LCD);
+
+	BG3_CR = BG_BMP16_256x256;
+	BG3_XDX = 1 << 8;
+	BG3_XDY = 0;
+	BG3_YDX = 0;
+	BG3_YDY = 1 << 8;
+	
+	BG3_CX = 0;
+	BG3_CY = 0;
+
+	swiDecompressLZSSVram((void*)drunkenlogoBitmap, BG_GFX, 0, &decomp);
+
+	while(1) swiWaitForVBlank();
+}
+#endif
 
 int App::Run(void)
 {
@@ -91,8 +123,7 @@ int App::Run(void)
 
 	NDSX_SetBrightness_0();
 
-	// get the filesystem going first
-	// so we can write a log.
+	// get the filesystem going first so we can write a log.
 
 	if (!fatInitDefault()) exit(-11);
 
@@ -107,7 +138,6 @@ int App::Run(void)
 	XML_Parser p = XML_ParserCreate(NULL);
 	if (!p)
 	{
-		ts->PrintString("fatal: parser creation failed.\n");
 		Log("fatal: parser creation failed.\n");
 		exit(-6);
 	}
@@ -118,8 +148,9 @@ int App::Run(void)
 	Log("info : reading preferences.\n");
    	if(!prefs->Read(p))
 	{
-		Log("warn : could not open preferences. defaults will be used.\n");
-	} else Log("info: preferences read.\n");
+		Log("warn : could not open preferences, using defaults.\n");
+	} else 
+		Log("info: preferences read.\n");
 	
 	// construct library.
 
@@ -202,38 +233,6 @@ int App::Run(void)
 	for(int b=0; b<brightness; b++)
 		NDSX_SetBrightness_Next();
 
-#ifdef GRIT
-
-	vramSetMainBanks(
-		VRAM_A_MAIN_BG_0x06000000,
-		VRAM_B_MAIN_BG_0x06020000,
-		VRAM_C_SUB_BG_0x06200000,
-		VRAM_D_LCD
-	);			
-	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-
-	BG3_CR = BG_BMP16_256x256 | BG_BMP_BASE(0);
-	SUB_BG3_CR = BG_BMP16_256x256 | BG_BMP_BASE(0);
-
-	BG3_XDX = 1 << 8;
-	BG3_XDY = 0;
-	BG3_YDX = 0;
-	BG3_YDY = 1 << 8;
-	BG3_CX = 0;
-	BG3_CY = 0;
-	SUB_BG3_XDX = 1 << 8;
-	SUB_BG3_XDY = 0;
-	SUB_BG3_YDX = 0;
-	SUB_BG3_YDY = 1 << 8;
-	SUB_BG3_CX = 0;
-	SUB_BG3_CY = 0;
-
-	pagewidth = screenwidth;
-	pageheight = screenheight;
-
-#else
-
 	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
@@ -273,15 +272,12 @@ int App::Run(void)
 	SUB_BG3_YDX = s;
 	SUB_BG3_YDY = c;
 
-#endif
-
 	screen1 = (u16*)BG_BMP_RAM(0);
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
 
 	if(orientation) ts->PrintSplash(screen1); 
 	else ts->PrintSplash(screen0);
 
-	
 	PrefsInit();
 	browser_init();
 

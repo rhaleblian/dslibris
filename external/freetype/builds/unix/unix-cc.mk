@@ -78,7 +78,7 @@ T := -o$(space)
 #   We use our own FreeType configuration file.
 #
 CPPFLAGS := 
-CFLAGS   := -c  -g -Wall -O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -DARM9 -DFT_CONFIG_CONFIG_H="<ftconfig.h>"
+CFLAGS   := -c  -g -O2 -DFT_CONFIG_CONFIG_H="<ftconfig.h>"
 
 # ANSIFLAGS: Put there the flags used to make your compiler ANSI-compliant.
 #
@@ -92,7 +92,7 @@ CC    := $(LIBTOOL) --mode=compile $(CCraw)
 
 # Linker flags.
 #
-LDFLAGS := -specs=ds_arm9.specs
+LDFLAGS := 
 
 
 # export symbols
