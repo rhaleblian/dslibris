@@ -24,7 +24,7 @@ srcdir = .
 top_srcdir = .
 
 
-prefix = /opt/devkitPro/devkitARM
+prefix = /opt/nds
 exec_prefix = ${prefix}
 
 bindir = ${exec_prefix}/bin
