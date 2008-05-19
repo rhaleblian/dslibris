@@ -16,8 +16,8 @@
 #define PAGEBUFSIZE 2048
 #define MAXPAGES 2048
 #define MAXBOOKS 32
-#define SPLASH_LEFT (MARGINLEFT)
-#define SPLASH_TOP (MARGINTOP+32)
+#define SPLASH_LEFT 28
+#define SPLASH_TOP 44
 
 #define FONTDIR "/font/"
 #define BOOKDIR "/book/"

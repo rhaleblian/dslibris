@@ -31,7 +31,7 @@ CFLAGS	:=	-Wall \
 		$(ARCH)
 CFLAGS 	+= 	-g
 CFLAGS 	+=	-O2
-CFLAGS	+=	-DGFX
+#CFLAGS	+=	-DGFX
 CFLAGS	+=	$(INCLUDE) -DARM9
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions

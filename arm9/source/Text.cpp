@@ -566,10 +566,10 @@ void Text::PrintSplash(u16 *screen)
 	bool invert = GetInvert();
 	u8 size = GetPixelSize();
 
+	ClearScreen(screen,31,31,31);
 #ifdef GFX
 	drawstack(screen);
 #endif
-
 	SetInvert(false);
 	SetScreen(screen);
 	SetPen(SPLASH_LEFT,SPLASH_TOP);
