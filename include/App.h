@@ -51,7 +51,7 @@ class App {
 	Book *books;
 	u8 bookcount;
 	u8 bookselected;
-	u8 bookcurrent;
+	s8 bookcurrent;
 	
 	u8 reopen;
 	parsedata_t parsedata;

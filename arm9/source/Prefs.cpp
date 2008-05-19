@@ -56,10 +56,18 @@ bool Prefs::Write(void)
 		
 	}
 	*/
- 	char* pathname = app->books[app->bookcurrent].GetFullPathName();
+ 	char* pathname;
+ 	
+ 	if (app->reopen && (app->bookcurrent >= 0))
+ 		pathname = app->books[app->bookcurrent].GetFullPathName();
+ 	else {
+ 		pathname = new char[2];
+ 		strcpy(pathname, "");
+ 	}
     fprintf(fp, "\t<books path=\"%s\" reopen=\"%s\">\n",
     		app->bookdir.c_str(),
-            (app->reopen && app->bookcurrent >= 0) ? pathname : "");
+    		pathname);
+    
     delete[] pathname;
     for (u8 i = 0; i < app->bookcount; i++) {
         Book* book = app->books + i;
