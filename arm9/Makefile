@@ -25,14 +25,11 @@ DATA		:=  ../data
 #-----------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-Wall \
-		-mcpu=arm946e-s -mtune=arm946e-s \
-		-fomit-frame-pointer -ffast-math \
-		$(ARCH)
+CFLAGS	:=	-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
+		-ffast-math -Wall $(ARCH) $(INCLUDE) -DARM9
 CFLAGS 	+= 	-g
 CFLAGS 	+=	-O2
-#CFLAGS	+=	-DGFX
-CFLAGS	+=	$(INCLUDE) -DARM9
+CFLAGS	+=	-DGFX
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
@@ -43,7 +40,7 @@ LDFLAGS	=	-L../lib -specs=ds_arm9.specs -g $(ARCH) -mno-fpu \
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #-----------------------------------------------------------------------
-LIBS	:= -lz -lfreetype -lexpat -lfat -lnds9
+LIBS	:= -lfreetype -lexpat -lfat -lz -ldswifi9 -lnds9
 
 #-----------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level

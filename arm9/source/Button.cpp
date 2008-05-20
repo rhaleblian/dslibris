@@ -39,15 +39,15 @@ void Button::Draw(u16 *fb, bool highlight) {
 	u16 y;
 
 	u16 bgcolor;
-	if(highlight) bgcolor = RGB15(31,31,31) | BIT(15);
-	else bgcolor = RGB15(0,0,0) | BIT(15);
+	if(highlight) bgcolor = RGB15(31,31,15) | BIT(15);
+	else bgcolor = RGB15(31,31,31) | BIT(15);
 	for (y=ul.y;y<lr.y;y++) {
 		for (x=ul.x;x<lr.x;x++) {
 			fb[y*SCREEN_WIDTH + x] = bgcolor;
 		}
 	}
 
-	u16 bordercolor = RGB15(15,15,15) | BIT(15);
+	u16 bordercolor = RGB15(22,22,22) | BIT(15);
 	for (x=ul.x;x<lr.x;x++) {
 		fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
 		fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
@@ -59,10 +59,12 @@ void Button::Draw(u16 *fb, bool highlight) {
 
 	bool invert = ts->GetInvert();
 	ts->SetScreen(fb);
-	ts->SetInvert(!highlight);
+	ts->SetInvert(false);
 	ts->GetPen(&x,&y);
 	ts->SetPen(ul.x+10, ul.y + ts->GetHeight());
+	if(highlight) ts->usebgcolor = true;
 	ts->PrintString((const char*)text);
+	ts->usebgcolor = false;
 	ts->SetPen(x,y);
 	ts->SetInvert(invert);
 }

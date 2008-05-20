@@ -195,14 +195,16 @@ void App::HandleEventInBook()
 
 u8 App::OpenBook(void)
 {
-	ts->SetScreen(screen1);
-	ts->ClearScreen(screen1,0,0,0);
-	ts->SetPen(marginleft,PAGE_HEIGHT/2);
 	bool invert = ts->GetInvert();
-	ts->SetInvert(true);
-	ts->PrintString("[opening...]");
+	u16 *screen = ts->GetScreen();
+	ts->SetScreen(screen0);
+	ts->SetPen(20,PAGE_HEIGHT/2 - 10);
+	ts->SetInvert(false);
+	ts->PrintString("[opening book...]");
 	ts->SetInvert(invert);
+	ts->SetScreen(screen);
 	swiWaitForVBlank();
+
 	pagecount = 0;
 	pagecurrent = 0;
 	bookBold = false;

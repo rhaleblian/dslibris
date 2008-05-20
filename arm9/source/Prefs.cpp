@@ -1,9 +1,9 @@
 #include <stdio.h>
+#include <vector>
 #include "nds.h"
 #include "main.h"
 #include "Prefs.h"
 #include "Book.h"
-#include <vector>
 
 Prefs::Prefs(App *parent) { app = parent; }
 Prefs::~Prefs() {}

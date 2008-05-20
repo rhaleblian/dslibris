@@ -148,8 +148,9 @@ void App::PrefsDraw(bool redraw)
 		screen = screen1;
  
 	ts->SetScreen(screen);
+	ts->SetInvert(false);
 	if (redraw) {
-		ts->ClearScreen(screen,0,0,0);
+		ts->ClearScreen(screen,31,31,31);
 	}
 	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
@@ -288,7 +289,7 @@ void App::PrefsButton()
 	} else if (prefsSelected == PREFS_BUTTON_FONTS) {
 	} else if (prefsSelected == PREFS_BUTTON_FONT) {
 		ts->SetScreen(screen1);
-		ts->ClearScreen(screen1,0,0,0);
+		ts->ClearScreen(screen1,31,31,31);
 		ts->SetPen(marginleft,PAGE_HEIGHT/2);
 		ts->PrintString("[loading fonts...]");
 		mode = APP_MODE_PREFS_FONT;
@@ -296,7 +297,7 @@ void App::PrefsButton()
 		FontDraw();
 	} else if (prefsSelected == PREFS_BUTTON_FONT_BOLD) {
 		ts->SetScreen(screen1);
-		ts->ClearScreen(screen1,0,0,0);
+		ts->ClearScreen(screen1,31,31,31);
 		ts->SetPen(marginleft,PAGE_HEIGHT/2);
 		ts->PrintString("[loading fonts...]");
 		mode = APP_MODE_PREFS_FONT_BOLD;
@@ -304,7 +305,7 @@ void App::PrefsButton()
 		FontDraw();
 	} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
 		ts->SetScreen(screen1);
-		ts->ClearScreen(screen1,0,0,0);
+		ts->ClearScreen(screen1,31,31,31);
 		ts->SetPen(marginleft,PAGE_HEIGHT/2);
 		ts->PrintString("[loading fonts...]");
 		mode = APP_MODE_PREFS_FONT_ITALIC;

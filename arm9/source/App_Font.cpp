@@ -192,8 +192,9 @@ void App::FontDraw(bool redraw)
 	else
 		screen = screen1;
  
+	ts->SetInvert(false);
 	if (redraw) {
-		ts->ClearScreen(screen,0,0,0);
+		ts->ClearScreen(screen,31,31,31);
 	}
 	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = fontPage * 7; (i < fontTs.size()) && (i < (fontPage + 1) * 7); i++)
@@ -233,11 +234,14 @@ void App::FontPreviousPage()
 
 void App::FontButton()
 {
+	bool invert = ts->GetInvert();
 	ts->SetScreen(screen1);
-	ts->ClearScreen(screen1,0,0,0);
+	ts->SetInvert(false);
+	ts->ClearScreen(screen1,31,31,31);
 	ts->SetPen(marginleft,PAGE_HEIGHT/2);
 	ts->PrintString("[saving font...]");
-	
+	ts->SetInvert(invert);
+
 	if (mode == APP_MODE_PREFS_FONT)
 		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(), TEXT_STYLE_NORMAL);
 	else if (mode == APP_MODE_PREFS_FONT_BOLD)

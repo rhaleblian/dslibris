@@ -11,14 +11,17 @@ int getSize(uint8 *source, uint16 *dest, uint32 arg) {
 }
 uint8 readByte(uint8 *source) { return *source; }
 
-TDecompressionStream decomp = {getSize, NULL, readByte};
-
 void drawstack(u16 *screen) {
+	TDecompressionStream decomp = {getSize, NULL, readByte};
 	swiDecompressLZSSVram((void*)image_stackBitmap, screen, 0, &decomp);
 }
 
 Text::Text()
 {
+	bgcolor.r = 31;
+	bgcolor.g = 31;
+	bgcolor.b = 15;
+	usebgcolor = false;
 	codeprev = 0;
 	filenames[TEXT_STYLE_NORMAL] = FONTFILEPATH;
 	ftc = false;
@@ -482,14 +485,24 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	u16 gx, gy;
 	for (gy=0; gy<height; gy++) {
 		for (gx=0; gx<width; gx++) {
-			u16 a = buffer[gy*width+gx];
+			u8 a = buffer[gy*width+gx];
 			if (a) {
 				u16 sx = (pen.x+gx+bx);
 				u16 sy = (pen.y+gy-by);
-				int l;
-				if (invert) l = a >> 3;
-				else l = (255-a) >> 3;
-				screen[sy*SCREEN_WIDTH+sx] = RGB15(l,l,l) | BIT(15);
+				if(usebgcolor) {
+					u32 r,g,b;
+					u8 alpha = 255-a;
+					r = (bgcolor.r * alpha);
+					g = (bgcolor.g * alpha);
+					b = (bgcolor.b * alpha);
+					screen[sy*SCREEN_WIDTH+sx]
+						= RGB15(r/256,g/256,b/256) | BIT(15);
+				} else {
+					u8 l;
+					if (invert) l = a >> 3;
+					else l = (255-a) >> 3;
+					screen[sy*SCREEN_WIDTH+sx] = RGB15(l,l,l) | BIT(15);
+				}
 			}
 		}
 	}
@@ -572,7 +585,7 @@ void Text::PrintSplash(u16 *screen)
 #endif
 	SetInvert(false);
 	SetScreen(screen);
-	SetPen(SPLASH_LEFT,SPLASH_TOP);
+	SetPen(20,40);
 	SetPixelSize(36);
 	PrintString("dslibris");
 	SetPixelSize(10);

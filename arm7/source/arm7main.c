@@ -4,6 +4,9 @@
 #include <nds/reload.h>
 #include <nds/arm7/touch.h>
 #include <nds/arm7/clock.h>
+#ifdef WIFIDEBUG
+#include <dswifi7.h>
+#endif
 #include "ndsx_brightness.h"
 
 /**-------------------------------------------------------------------------**/
@@ -204,6 +207,10 @@ void VblankHandler(void) {
     }
   }
 
+#ifdef WIFIDEBUG
+	Wifi_Update();
+#endif
+
 }
 
 /**-------------------------------------------------------------------------**/
@@ -288,6 +295,11 @@ int main( void)
 	irqSet(IRQ_VBLANK, VblankHandler);
 	irqEnable(IRQ_VBLANK);
 
+#ifdef WIFIDEBUG
+	irqSet(IRQ_WIFI,Wifi_Interrupt);
+	irqEnable(IRQ_WIFI);
+#endif
+
 	irqSet(IRQ_FIFO_NOT_EMPTY,FifoHandler); // set up fifo irq
 	irqEnable(IRQ_FIFO_NOT_EMPTY);
 	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ;
@@ -297,31 +309,8 @@ int main( void)
 /*
 	irqSet(IRQ_KEYS, KeydownHandler);
 	irqEnable(IRQ_KEYS);
-*/
+*/	
 	// Keep the ARM7 out of main RAM
-	while (1) {
-		//if (LOADNDS->PATH != 0) {
-		    //LOADNDS->ARM7FUNC(LOADNDS->PATH);
-		//}
-		swiWaitForVBlank();
-	}
+	while (1) swiWaitForVBlank();
 }
-
-#if 0
-//-----------------------------------------------------------------------------
-int main7(int argc, char ** argv) {
-
-	IPC->aux=PM_BACKLIGHT_BOTTOM | PM_BACKLIGHT_TOP;
-	//IPC->aux=0;
-	//	wifiMain();
-	LOADNDS->PATH = 0;
-	// Keep the ARM7 out of main RAM
-	while (1) {
-		/*if (LOADNDS->PATH != 0) {
-			LOADNDS->ARM7FUNC(LOADNDS->PATH);
-		}*/
-		swiWaitForVBlank();
-	}
-}
-#endif
 

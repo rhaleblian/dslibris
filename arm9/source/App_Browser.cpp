@@ -191,7 +191,8 @@ void App::browser_draw(void)
 	else screen = screen1;
  
 	ts->SetScreen(screen);
-	ts->ClearScreen(screen,0,0,0);
+	ts->SetInvert(false);
+	ts->ClearScreen(screen,31,31,31);
 	ts->SetPixelSize(PIXELSIZE);
 	for (int i=browserstart;
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
@@ -226,6 +227,7 @@ void App::browser_redraw()
 	else screen = screen1;
 
 	ts->SetScreen(screen);
+	ts->SetInvert(false);
 	ts->SetPixelSize(PIXELSIZE);
 	buttons[bookselected].Draw(screen,true);
 	if(bookselected > browserstart)

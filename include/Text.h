@@ -87,7 +87,9 @@ class Text {
 	
 public:
 	App *app;
-	u8 pixelsize;
+	u8 pixelsize;	
+	struct { u8 r; u8 g; u8 b; } bgcolor;
+	bool usebgcolor;
 
 	Text();
 	~Text();
