@@ -392,13 +392,11 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				}
 			}
 
-			/** reflow - if we overrun the margin, 
-			insert a break. **/
+			// reflow - if we overrun the margin, insert a break.
 
 			if ((pdata->pen.x + advance) > (PAGE_WIDTH-app->marginright))
 			{
-				app->pagebuf[page->length] = '\n';
-				page->length++;
+				app->pagebuf[page->length++] = '\n';
 				pdata->pen.x = app->marginleft;
 				pdata->pen.y += (app->ts->GetHeight() + app->linespacing);
 

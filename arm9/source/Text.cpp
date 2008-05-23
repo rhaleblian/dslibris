@@ -6,6 +6,8 @@
 #include "main.h"
 #include "version.h"
 
+// TODO move this to an image service class
+
 int getSize(uint8 *source, uint16 *dest, uint32 arg) {
 	return *(uint32*)source;
 }
@@ -15,6 +17,8 @@ void drawstack(u16 *screen) {
 	TDecompressionStream decomp = {getSize, NULL, readByte};
 	swiDecompressLZSSVram((void*)image_stackBitmap, screen, 0, &decomp);
 }
+
+// end TODO
 
 Text::Text()
 {
@@ -37,7 +41,8 @@ Text::~Text()
 	ClearCache();
 	
 	   
-	for(map<FT_Face, Cache*>::iterator iter = textCache.begin(); iter != textCache.end(); iter++) {
+	for(map<FT_Face, Cache*>::iterator iter = textCache.begin();
+		iter != textCache.end(); iter++) {
 		delete iter->second;
 	}
 
@@ -76,16 +81,6 @@ int Text::InitWithCacheManager(void) {
 	if(error) return error;
 	FT_Select_Charmap(GetFace(TEXT_STYLE_NORMAL), FT_ENCODING_UNICODE);
 	charmap_index = FT_Get_Charmap_Index(GetFace(TEXT_STYLE_NORMAL)->charmap);
-/*
-	charmap_index = 0;
-	for(int i=0; i<face->num_charmaps;i++)
-	{
-		if((face->charmaps)[i]->encoding == FT_ENCODING_UNICODE)
-		{
-			charmap_index = i;
-		}
-	}
-*/
 	imagetype.face_id = (FTC_FaceID)&face_id;
 	imagetype.height = pixelsize;
 	imagetype.width = pixelsize;
@@ -204,14 +199,13 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, u8 style)
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 {
 	if(ftc) return NULL;
-	/*
-	int i;
-	for(i=0;i<textCache[face]->cachenext;i++)
-	{
-		if(textCache[face]->cache_ucs[i] == ucs) return &textCache[face]->glyphs[i];
-	}
-	*/
-	
+
+#if 0
+	for(int i=0;i<textCache[face]->cachenext;i++)
+		if(textCache[face]->cache_ucs[i] == ucs)
+			return &textCache[face]->glyphs[i];
+#endif	
+
 	map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
 	
 	if (iter != textCache[face]->cacheMap.end())
@@ -394,11 +388,11 @@ u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 		return GetGlyph(ucs, FT_LOAD_DEFAULT, face)->advance.x >> 6;
 
 	imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;
-/*
+#if 0
 	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
 		GetGlyphIndex(ucs),&sbit,NULL);
 	return sbit->xadvance;
-*/
+#endif
 	FT_Glyph glyph;
 	FTC_ImageType type = &imagetype;
 	error = FTC_ImageCache_Lookup(cache.image,type,GetGlyphIndex(ucs),&glyph,NULL);
@@ -532,7 +526,7 @@ bool Text::PrintNewLine(void) {
 }
 
 void Text::PrintString(const char *s) {
-	PrintString(s, TEXT_STYLE_NORMAL);
+	PrintString(s, TEXT_STYLE_BROWSER);
 }
 
 void Text::PrintString(const char *s, u8 style) {
@@ -586,15 +580,15 @@ void Text::PrintSplash(u16 *screen)
 	SetInvert(false);
 	SetScreen(screen);
 	SetPen(20,40);
-	SetPixelSize(36);
-	PrintString("dslibris");
-	SetPixelSize(10);
+	SetPixelSize(30);
+	PrintString("dslibris", TEXT_STYLE_SPLASH);
+	SetPixelSize(11);
 	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
-	PrintString("an ebook reader");
+	PrintString("an ebook reader", TEXT_STYLE_BROWSER);
 	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
-	PrintString("for Nintendo DS");
+	PrintString("for Nintendo DS", TEXT_STYLE_BROWSER);
 	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
-	PrintString(VERSION);
+	PrintString(VERSION, TEXT_STYLE_BROWSER);
 
 	SetPixelSize(size);
 	SetInvert(invert);
@@ -612,6 +606,12 @@ string Text::GetFontFile(u8 style)
 	return filenames[style];
 }
 
+bool Text::SetFace(u8 style)
+{
+	// ha!
+	return false;
+}
+
 FT_Face Text::GetFace(u8 style)
 {
 	map<u8, FT_Face>::iterator iter = faces.find(style);
@@ -620,3 +620,4 @@ FT_Face Text::GetFace(u8 style)
 	else
 		return faces[TEXT_STYLE_NORMAL];
 }
+

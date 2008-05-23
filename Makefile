@@ -61,7 +61,7 @@ test-tmp: $(TARGET).nds
 
 # uses a vfat file under Fedora.
 test-vfat: $(TARGET).nds
-	desmume-cli --cflash=media.img dslibris.nds
+	desmume-glade --cflash=media.img dslibris.nds
 
 test: test-vfat
 
@@ -73,7 +73,7 @@ vfat-image:
 # debug target with insight and desmume under linux
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/dslibris.arm9.elf &
-	desmume-cli --cflash=media.img --arm9gdb=20000 $(TARGET).nds &
+	desmume-glade --cflash=media.img --arm9gdb=20000 $(TARGET).nds &
 
 gdb: $(TARGET).nds
 	desmume-cli --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &

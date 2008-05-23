@@ -1,3 +1,25 @@
+/* 
+
+dslibris - an ebook reader for the Nintendo DS.
+
+ Copyright (C) 2007-2008 Ray Haleblian
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+*/
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdlib.h>
@@ -107,6 +129,9 @@ int App::Run(void)
 	ts->SetFontFile(FONTFILEPATH, TEXT_STYLE_NORMAL);
 	ts->SetFontFile(FONTBOLDFILEPATH, TEXT_STYLE_BOLD);
 	ts->SetFontFile(FONTITALICFILEPATH, TEXT_STYLE_ITALIC);
+	ts->SetFontFile("/font/verdana.ttf", TEXT_STYLE_BROWSER);
+	ts->SetFontFile("/font/verdana.ttf", TEXT_STYLE_SPLASH);
+
 	XML_Parser p = XML_ParserCreate(NULL);
 	if (!p)
 	{
@@ -257,14 +282,14 @@ int App::Run(void)
 	PrefsInit();
 	browser_init();
 
-	Log("browsers populated.\n");
+	Log("progr: browsers populated.\n");
 
 	mode = APP_MODE_BROWSER;
 	browser_draw();
 
 	if(reopen && !OpenBook())
 	{
-		Log("reopened current book.\n");
+		Log("info : reopened current book.\n");
 		mode = APP_MODE_BOOK;
 	}
 	swiWaitForVBlank();
@@ -282,7 +307,9 @@ int App::Run(void)
 			HandleEventInBook();
 		else if (mode == APP_MODE_PREFS)
 			HandleEventInPrefs();
-		else if (mode == APP_MODE_PREFS_FONT || mode == APP_MODE_PREFS_FONT_BOLD || mode == APP_MODE_PREFS_FONT_ITALIC)
+		else if (mode == APP_MODE_PREFS_FONT 
+			|| mode == APP_MODE_PREFS_FONT_BOLD
+			|| mode == APP_MODE_PREFS_FONT_ITALIC)
 			HandleEventInFont();
 		
 		swiWaitForVBlank();

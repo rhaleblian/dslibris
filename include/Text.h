@@ -20,6 +20,8 @@ using namespace std;
 #define TEXT_STYLE_NORMAL (u8)0
 #define TEXT_STYLE_BOLD (u8)1
 #define TEXT_STYLE_ITALIC (u8)2
+#define TEXT_STYLE_BROWSER (u8)3
+#define TEXT_STYLE_SPLASH (u8)4
 
 class App;
 
@@ -99,6 +101,7 @@ public:
 	u8   GetAdvance(u32 ucs);
 	u8   GetAdvance(u32 ucs, u8 style);
 	u8   GetCharCode(const char* txt, u32* code);
+	FT_Face GetFace(u8 style);
 	string GetFontFile(u8 style);
 	u8   GetHeight(void);
 	bool GetInvert();
@@ -113,6 +116,7 @@ public:
 	void SetInvert(bool invert);
 	void SetPen(u16 x, u16 y);
 	void SetPixelSize(u8 size);
+	bool SetFace(u8 style);
 	void SetFontFile(const char *filename, u8 style);
 	void SetScreen(u16 *s);
 
@@ -129,7 +133,6 @@ public:
 	void PrintString(const char *string);
 	void PrintString(const char *string, u8 style);
 	void PrintSplash(u16 *screen);
-	FT_Face GetFace(u8 style);
 };
 
 #endif

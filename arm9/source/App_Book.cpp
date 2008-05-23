@@ -428,11 +428,11 @@ void App::page_draw(page_t *page)
 	// TODO: Decide where to display the asterisk and use a more elegant solution
 	if (isBookmark) {
 		if(pagecurrent == 0) 
-			sprintf((char*)msg,"[ *%d >",pagecurrent+1);
+			sprintf((char*)msg,"[ %d* >",pagecurrent+1);
 		else if(pagecurrent == pagecount)
-			sprintf((char*)msg,"< *%d ]",pagecurrent+1);
+			sprintf((char*)msg,"< %d* ]",pagecurrent+1);
 		else
-			sprintf((char*)msg,"< *%d >",pagecurrent+1);
+			sprintf((char*)msg,"< %d* >",pagecurrent+1);
 	} else {
 		if(pagecurrent == 0) 
 			sprintf((char*)msg,"[ %d >",pagecurrent+1);

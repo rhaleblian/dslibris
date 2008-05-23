@@ -63,7 +63,7 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->GetPen(&x,&y);
 	ts->SetPen(ul.x+10, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
-	ts->PrintString((const char*)text);
+	ts->PrintString((const char*)text, TEXT_STYLE_BROWSER);
 	ts->usebgcolor = false;
 	ts->SetPen(x,y);
 	ts->SetInvert(invert);
