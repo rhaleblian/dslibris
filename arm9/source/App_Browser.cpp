@@ -30,6 +30,13 @@ void App::HandleEventInBrowser()
 	{
 		AttemptBookOpen();
 	}
+
+	//Keishava - added KEY_DOWN to eliminate need to move finger to the 'A' switch
+	//for selecting a book from the browser.
+	else if (keysDown() & KEY_DOWN)
+	{
+		AttemptBookOpen();
+	}
 	
 	else if (keysDown() & KEY_Y)
 	{
