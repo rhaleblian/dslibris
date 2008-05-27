@@ -75,6 +75,10 @@ debug: $(TARGET).nds
 	arm-eabi-insight arm9/dslibris.arm9.elf &
 	desmume-glade --cflash=media.img --arm9gdb=20000 $(TARGET).nds &
 
+debug7: $(TARGET).nds
+	arm-eabi-insight arm7/dslibris.arm7.elf &
+	desmume-glade --cflash=media.img --arm7gdb=20001 $(TARGET).nds &
+	
 gdb: $(TARGET).nds
 	desmume-cli --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &
 	sleep 4
@@ -84,6 +88,8 @@ gdb: $(TARGET).nds
 $(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
 	cp dslibris.nds dslibris.$(MEDIATYPE).nds
 	dlditool $(MEDIATYPE).dldi dslibris.$(MEDIATYPE).nds
+
+dldi: $(TARGET).$(MEDIATYPE).nds
 
 # copy target to mounted microSD symlinked to $(MEDIAROOT)
 install: $(TARGET).nds

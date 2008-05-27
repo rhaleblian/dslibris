@@ -1,24 +1,5 @@
-/* 
 
-dslibris - an ebook reader for the Nintendo DS.
-
- Copyright (C) 2007-2008 Ray Haleblian
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-
-*/
+#include "App.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -28,23 +9,27 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <sys/dir.h>
 #include <sys/stat.h>
 
-#include <expat.h>
-
 #include <fat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
-
-#ifdef WIFIDEBUG
 #include <dswifi9.h>
+#include <DSGUI/BGUI.h>
+
+#ifdef DEBUGTCP
 #include <debug_stub.h>
 #include <debug_tcp.h>
 #endif
+
+#ifdef FTP
+#include <BFTPServer.h>
+#include <BFTPConfigurator.h>
+#endif
+
+#include <nds/registers_alt.h>
+#include <nds/reload.h>
 
 #include "ndsx_brightness.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
-#include "App.h"
 #include "Book.h"
 #include "Button.h"
 #include "Text.h"
@@ -104,18 +89,12 @@ int App::Run(void)
 	char msg[128];
 
 	powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
-	defaultExceptionHandler();  // guru meditation!
-
-	// set up ARM7 interrupts and IPC.
-
 	irqInit();
+	WifiInit();
+
 	irqEnable(IRQ_VBLANK);
 	irqEnable(IRQ_VCOUNT);
 	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
-
-	// go to the lowest brightness setting.
-
-	NDSX_SetBrightness_0();
 
 	// get the filesystem going first so we can write a log.
 
@@ -227,6 +206,139 @@ int App::Run(void)
 
 	// initialize screens.
 
+	InitScreens();
+
+	Log("progr: display oriented.\n");
+
+	if(orientation) ts->PrintSplash(screen1);
+	else ts->PrintSplash(screen0);
+
+	Log("progr: splash presented.\n");
+
+	PrefsInit();
+	browser_init();
+
+	Log("progr: browsers populated.\n");
+
+	mode = APP_MODE_BROWSER;
+	browser_draw();
+
+#ifdef DEBUGTCP
+	// enable remote TCP debugging.
+	WifiConnect();
+
+	PrintStatus("[enabling debug stub]");
+	swiWaitForVBlank();
+
+	struct tcp_debug_comms_init_data init_data;
+	init_data.port = 30000;
+	if(!init_debug(&tcpCommsIf_debug, &init_data))
+		PrintStatus("[debug stub failed]");
+	else
+		PrintStatus("[debug stub initialized]");
+
+	swiWaitForVBlank();
+	debugHalt();
+#endif
+
+#ifdef FTP
+	BFTPServer server;
+	BFTPConfigurator configurator(&server);
+	configurator.configureFromFile("/data/settings/ftp.conf");
+
+	Log("info : FTP service configured.\n");
+	PrintStatus("[FTP enabled]");
+#endif
+
+	if(reopen && !OpenBook())
+	{
+		Log("info : reopened current book.\n");
+		mode = APP_MODE_BOOK;
+	}
+	swiWaitForVBlank();
+
+	// start event loop.
+
+	bool poll = true;
+	while (poll)
+	{
+		scanKeys();
+
+		if(mode == APP_MODE_BROWSER)
+			HandleEventInBrowser();
+		else if (mode == APP_MODE_BOOK)
+			HandleEventInBook();
+		else if (mode == APP_MODE_PREFS)
+			HandleEventInPrefs();
+		else if (mode == APP_MODE_PREFS_FONT 
+			|| mode == APP_MODE_PREFS_FONT_BOLD
+			|| mode == APP_MODE_PREFS_FONT_ITALIC)
+			HandleEventInFont();
+
+#ifdef FTP
+		server.handle();		
+#endif
+		swiWaitForVBlank();
+	}
+
+	if(p)
+		XML_ParserFree(p);
+	exit(0);
+}
+
+void App::CycleBrightness()
+{
+	brightness++;
+	brightness = brightness % 4;
+	BGUI::get()->setBacklightBrightness(brightness);
+	prefs->Write();
+}
+
+void App::Log(const char *msg)
+{
+#ifdef NOLOG
+	return;
+#endif
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,msg);
+	fclose(logfile);
+}
+
+void App::Log(std::string msg)
+{
+#ifdef NOLOG
+	return;
+#else
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,msg.c_str());
+	fclose(logfile);
+#endif
+}
+
+void App::Log(int x)
+{
+#ifdef NOLOG
+	return;
+#else
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,"%d",x);		
+	fclose(logfile);
+#endif
+}
+
+void App::Log(const char *format, const char *msg)
+{
+#ifdef NOLOG
+	return;
+#else
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,format,msg);
+	fclose(logfile);
+#endif
+}
+
+void App::InitScreens() {
+	NDSX_SetBrightness_0();
 	for(int b=0; b<brightness; b++)
 		NDSX_SetBrightness_Next();
 
@@ -271,100 +383,5 @@ int App::Run(void)
 
 	screen1 = (u16*)BG_BMP_RAM(0);
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
-
-	Log("progr: display oriented.\n");
-
-	if(orientation) ts->PrintSplash(screen1);
-	else ts->PrintSplash(screen0);
-
-	Log("progr: splash presented.\n");
-
-	PrefsInit();
-	browser_init();
-
-	Log("progr: browsers populated.\n");
-
-	mode = APP_MODE_BROWSER;
-	browser_draw();
-
-	if(reopen && !OpenBook())
-	{
-		Log("info : reopened current book.\n");
-		mode = APP_MODE_BOOK;
-	}
-	swiWaitForVBlank();
-
-	// start event loop.
-
-	bool poll = true;
-	while (poll)
-	{
-		scanKeys();
-
-		if(mode == APP_MODE_BROWSER)
-			HandleEventInBrowser();
-		else if (mode == APP_MODE_BOOK)
-			HandleEventInBook();
-		else if (mode == APP_MODE_PREFS)
-			HandleEventInPrefs();
-		else if (mode == APP_MODE_PREFS_FONT 
-			|| mode == APP_MODE_PREFS_FONT_BOLD
-			|| mode == APP_MODE_PREFS_FONT_ITALIC)
-			HandleEventInFont();
-		
-		swiWaitForVBlank();
-	}
-
-	if(p)
-		XML_ParserFree(p);
-	exit(0);
-}
-
-void App::CycleBrightness()
-{
-	NDSX_SetBrightness_Next();
-	brightness++;
-	brightness = brightness % 4;
-	prefs->Write();
-}
-
-void App::Log(const char *msg)
-{
-#ifdef NOLOG
-	return;
-#endif
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,msg);
-	fclose(logfile);
-}
-
-void App::Log(std::string msg)
-{
-#ifdef NOLOG
-	return;
-#endif
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,msg.c_str());
-	fclose(logfile);
-}
-
-void App::Log(int x)
-{
-#ifdef NOLOG
-	return;
-#endif
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,"%d",x);		
-	fclose(logfile);
-}
-
-void App::Log(const char *format, const char *msg)
-{
-#ifdef NOLOG
-	return;
-#endif
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,format,msg);
-	fclose(logfile);	
 }
 

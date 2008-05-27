@@ -26,10 +26,18 @@ DATA		:=  ../data
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
-		-ffast-math -Wall $(ARCH) $(INCLUDE) -DARM9
-CFLAGS 	+= 	-g
+		-ffast-math -Wall $(ARCH) $(INCLUDE) -DARM9 -DGFX
+
+# to enable this, define DEBUG in env and invoke make -e
+ifeq ($(DEBUG),)
 CFLAGS 	+=	-O2
-CFLAGS	+=	-DGFX
+else
+CFLAGS 	+= 	-g
+endif
+
+# uncomment this for TCP debugging on target,
+# or set this var in environment and invoke make -e
+#CFLAGS	+=	-DDEBUGOVERWIFI
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
@@ -40,7 +48,8 @@ LDFLAGS	=	-L../lib -specs=ds_arm9.specs -g $(ARCH) -mno-fpu \
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #-----------------------------------------------------------------------
-LIBS	:= -lfreetype -lexpat -lfat -lz -ldswifi9 -lnds9
+LIBS	:= -lDSFTP -lDSGUI -lfreetype -lexpat -lfat -lz \
+			-ldebugstub9 -ldebugtcp9 -ldswifi9 -lnds9
 
 #-----------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level

@@ -200,7 +200,7 @@ u8 App::OpenBook(void)
 	ts->SetScreen(screen0);
 	ts->SetPen(20,PAGE_HEIGHT/2 - 10);
 	ts->SetInvert(false);
-	ts->PrintString("[opening book...]");
+	PrintStatus("[opening book...]");
 	ts->SetInvert(invert);
 	ts->SetScreen(screen);
 	swiWaitForVBlank();

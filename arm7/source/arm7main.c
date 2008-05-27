@@ -1,15 +1,37 @@
+/*
+
+dslibris - An ebook reader for Nintendo DS.
+ 
+ Copyright (C) 2007 Ray Haleblian
+ Portions gratefully stolen from DSGUI, DSFTP, and devkitPro.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+*/
+
 #include <nds.h>
 #include <stdlib.h>
 #include <nds/bios.h>
 #include <nds/reload.h>
 #include <nds/arm7/touch.h>
 #include <nds/arm7/clock.h>
-#ifdef WIFIDEBUG
 #include <dswifi7.h>
-#endif
-#include "ndsx_brightness.h"
+#include <DSGUI/BIPCCodes.h>
+#include "pm.h"
 
-/**-------------------------------------------------------------------------**/
+/**-----------------------------------------------------------------------**/
 void startSound(int sampleRate, const void* data, u32 bytes,
 				u8 channel, u8 vol,  u8 pan, u8 format) {
 
@@ -21,7 +43,7 @@ void startSound(int sampleRate, const void* data, u32 bytes,
 }
 
 
-/**-------------------------------------------------------------------------**/
+/**-----------------------------------------------------------------------**/
 s32 getFreeSoundChannel()
 {
 	int i;
@@ -35,13 +57,13 @@ int vcount;
 touchPosition first,tempPos;
 
 
-/**-------------------------------------------------------------------------**/
+/**-----------------------------------------------------------------------**/
 void KeydownHandler()
 {
 	VBLANK_INTR_WAIT_FLAGS |= IRQ_KEYS;
 }
 
-/**-------------------------------------------------------------------------**/
+/**-----------------------------------------------------------------------**/
 void VcountHandler()
 {  
 	static int lastbut = -1;
@@ -129,7 +151,7 @@ void VcountHandler()
 }
 
 
-/**-------------------------------------------------------------------------**/
+/**-----------------------------------------------------------------------**/
 void VblankHandler(void) {
 
   static int heartbeat = 0;
@@ -207,76 +229,58 @@ void VblankHandler(void) {
     }
   }
 
-#ifdef WIFIDEBUG
 	Wifi_Update();
-#endif
 
 }
 
-/**-------------------------------------------------------------------------**/
+/**-----------------------------------------------------------------------**/
 // callback to allow wifi library to notify arm9
 void arm7_synctoarm9() { // send fifo message
-  REG_IPC_FIFO_TX = 0x87654321;
+//  REG_IPC_FIFO_TX = 0x87654321;
+  REG_IPC_FIFO_TX = IPC_WIFI_SYNC;
+
 }
 
-/**-------------------------------------------------------------------------**/
+/**-----------------------------------------------------------------------**/
 // interrupt handler to allow incoming notifications from arm9
 
-#define GET_BRIGHTNESS      (0x1211B210)
-#define SET_BRIGHTNESS_0    (0x1211B211)
-#define SET_BRIGHTNESS_1    (0x1211B212)
-#define SET_BRIGHTNESS_2    (0x1211B213)
-#define SET_BRIGHTNESS_3    (0x1211B214)
-
 void arm7_fifo() { // check incoming fifo messages
-  int syncd = 0;
-  while ( !(REG_IPC_FIFO_CR & IPC_FIFO_RECV_EMPTY)) {
-    u32 msg = REG_IPC_FIFO_RX;
-    if ( msg == 0x87654321 && !syncd) {
-      syncd = 1;
-    }
-    else if(msg == GET_BRIGHTNESS)
+	bool top, bottom;
+	u32 msg = REG_IPC_FIFO_RX;
+
+	switch(IPC_COMMAND(msg))
     {
-      // send back the value (0 - 3)
-      REG_IPC_FIFO_TX = readPowerManagement((4)) - 64;
-    }
-    else if(msg == SET_BRIGHTNESS_0)
-    {
-      // write value (0)
-      writePowerManagement((4), 0);
-    }
-    else if(msg == SET_BRIGHTNESS_1)
-    {
-      // write value (1)
-      writePowerManagement((4), 1);
-    }
-    else if(msg == SET_BRIGHTNESS_2)
-    {
-      // write value (2)
-      writePowerManagement((4), 2);
-    }
-    else if(msg == SET_BRIGHTNESS_3)
-    {
-      // write value (3)
-      writePowerManagement((4), 3);
-    }
-  }
+		case IPC_WIFI_SYNC:
+		Wifi_Sync();
+		REG_IPC_FIFO_TX = IPC_OK;
+		break;
+
+		case IPC_BACKLIGHT:
+		if(IPC_ARG(msg) != IPC_GET)
+		pmSwitchBacklight(msg & IPC_BACKLIGHT_TOP,
+			msg & IPC_BACKLIGHT_BOTTOM);
+		pmGetBacklight(&top, &bottom);
+		REG_IPC_FIFO_TX = (IPC_OK |
+			(top ? IPC_BACKLIGHT_TOP : 0) |
+			(bottom ? IPC_BACKLIGHT_BOTTOM : 0));
+		break;
+		  
+		case IPC_BRIGHTNESS:
+		if(IPC_ARG(msg) != IPC_GET)
+			pmSetBacklightBrightness(IPC_ARG(msg));		
+		REG_IPC_FIFO_TX = IPC_OK | pmGetBacklightBrightness();
+		break;
+		  
+		case IPC_POWEROFF:
+		pmPowerOff();
+		REG_IPC_FIFO_TX = IPC_OK;
+
+	}
 }
 
-
-void FifoHandler()
-{
-    u32 msg = REG_IPC_FIFO_RX;
-    NDSX_BrightnessFifo(msg);
-}
-
-
-/**-------------------------------------------------------------------------**/
+/**-----------------------------------------------------------------------**/
 int main( void)
 {
-	// reload
-	//LOADNDS->PATH = 0;
-
 	// enable & prepare fifo asap
 	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR; 
 
@@ -295,22 +299,57 @@ int main( void)
 	irqSet(IRQ_VBLANK, VblankHandler);
 	irqEnable(IRQ_VBLANK);
 
-#ifdef WIFIDEBUG
 	irqSet(IRQ_WIFI,Wifi_Interrupt);
 	irqEnable(IRQ_WIFI);
-#endif
 
-	irqSet(IRQ_FIFO_NOT_EMPTY,FifoHandler); // set up fifo irq
-	irqEnable(IRQ_FIFO_NOT_EMPTY);
-	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ;
+	{
+		// sync with arm9 and init wifi
+		u32 fifo_temp;   
+
+		while(1) { // wait for magic number
+			while(REG_IPC_FIFO_CR&IPC_FIFO_RECV_EMPTY) swiWaitForVBlank();
+			fifo_temp=REG_IPC_FIFO_RX;
+			if(fifo_temp==IPC_WIFI_INIT) break;
+		}
+		while(REG_IPC_FIFO_CR&IPC_FIFO_RECV_EMPTY) swiWaitForVBlank();
+		fifo_temp=REG_IPC_FIFO_RX; // give next value to wifi_init
+		Wifi_Init(fifo_temp);
+
+		irqSet(IRQ_FIFO_NOT_EMPTY,arm7_fifo); // set up fifo irq
+		irqEnable(IRQ_FIFO_NOT_EMPTY);
+		REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_RECV_IRQ;
+
+		// allow wifi lib to notify arm9
+		Wifi_SetSyncHandler(arm7_synctoarm9);
+
+	} // arm7 wifi init complete
 
 	irqSet(IRQ_VCOUNT, VcountHandler);
 	irqEnable(IRQ_VCOUNT);
-/*
+
+#if 0
 	irqSet(IRQ_KEYS, KeydownHandler);
 	irqEnable(IRQ_KEYS);
-*/	
+#endif
+
 	// Keep the ARM7 out of main RAM
-	while (1) swiWaitForVBlank();
+	while (1) {
+		swiWaitForVBlank();
+
+		// reboot?
+		if((*(vu32*)0x27ffffc) != 0)
+		{
+			REG_IE = 0;
+			REG_IME = 0;
+			REG_IF = 0xffff;
+
+			typedef void (*eloop_type)(void);
+			eloop_type eloop = *(eloop_type*)0x27ffffc;
+			*(vu32*)0x27ffffc = 0;
+			*(vu32*)0x27ffff8 = 0;
+
+			eloop();
+		}
+	}
 }
 

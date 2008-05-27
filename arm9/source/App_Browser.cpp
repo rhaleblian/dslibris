@@ -265,3 +265,14 @@ void App::AttemptBookOpen()
 	} else
 		browser_draw();
 }
+
+void App::PrintStatus(const char *msg) {
+	bool invert = ts->GetInvert();
+	ts->SetScreen(screen0);
+	ts->SetInvert(false);
+	ts->ClearRect(0,PAGE_HEIGHT/2-36,255,PAGE_HEIGHT/2-12);
+	ts->SetPen(20,PAGE_HEIGHT/2-16);
+	ts->PrintString(msg);
+	ts->SetInvert(invert);
+}
+

@@ -31,7 +31,7 @@ CFLAGS	:=	-Wformat=2 -Wall -Winline \
 		$(ARCH)
 CFLAGS	+= 	-g
 CFLAGS	+=	-O2
-CFLAGS	+=	$(INCLUDE) -DARM7
+CFLAGS	+=	$(INCLUDE) -DARM7 -DWIFI
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)

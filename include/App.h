@@ -35,6 +35,11 @@
 #define PREFS_BUTTON_PARASPACING 6
 
 class App {
+	private:
+	void InitScreens();
+	void WifiInit();
+	bool WifiConnect();
+
 	public:
 	Text *ts;
 	class Prefs *prefs;
@@ -88,6 +93,8 @@ class App {
 	~App();
 	
 	void CycleBrightness();
+	void PrintStatus(const char *msg);
+	void PrintStatus(string msg);
 	
 	void Log(const char*);
 	void Log(std::string);
@@ -142,9 +149,6 @@ class App {
 	bool parse_pagefeed(parsedata_t *data, page_t *page);
 	context_t parse_pop(parsedata_t *data);
 	void parse_push(parsedata_t *data, context_t context);
-
-//	bool prefs_read(XML_Parser p);
-//	bool prefs_write(void);
 };
 
 #endif
