@@ -34,7 +34,7 @@ gdb and insight-6.6 have been known to work for debugging. See online forums for
 
 MORE INFO
 
-http://ndslibris.sourceforge.org
+http://ndslibris.sourceforge.net
 
 - ray haleblian
 
