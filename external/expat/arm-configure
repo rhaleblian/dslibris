@@ -1,6 +1,5 @@
 #!/bin/sh
-CFLAGS=-Wall -O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -DARM9 -I$DEVKITARM -thumb -thumb-interwork
-CXXFLAGS=$CFLAGS -fno-rtti -fno-exceptions
-LDFLAGS=-specs=ds_arm9.specs -L$DEVKITARM/lib
-./configure --host=arm-eabi --prefix=/opt/nds
+./configure --disable-shared --enable-static=expat --host arm-eabi \
+CFLAGS='-mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer' \
+LDFLAGS='-specs=ds_arm9.specs'
 
