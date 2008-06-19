@@ -24,7 +24,7 @@ public:
 	u8   Index(char *filebuf);	
 	void IndexHTML(char *filebuf);	
 	u8   Parse(char *filebuf);
-	u8   ParseHTML(char *filebuf);
+	int  ParseHTML(char *filebuf);
 	void SetFileName(const char *filename);
 	void SetFolderName(const char *foldername);	
 	void SetFolderName(std::string &foldername);	

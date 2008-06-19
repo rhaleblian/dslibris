@@ -17,7 +17,7 @@ include $(DEVKITARM)/ds_rules
 TARGET		:=	dslibris
 BUILD		:=	build
 SOURCES		:=	source
-INCLUDES	:=	../include ../include/freetype2 build
+INCLUDES	:=	../include ../include/freetype2 ../include/tidy build
 DATA		:=  ../data
 
 #-----------------------------------------------------------------------
@@ -48,7 +48,7 @@ LDFLAGS	=	-L../lib -specs=ds_arm9.specs -g $(ARCH) -mno-fpu \
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #-----------------------------------------------------------------------
-LIBS	:= -lDSFTP -lDSGUI -lfreetype -lexpat -lfat -lz \
+LIBS	:= -lDSFTP -lDSGUI -lfreetype -lexpat -ltidy -lfat -lz \
 			-ldebugstub9 -ldebugtcp9 -ldswifi9 -lnds9
 
 #-----------------------------------------------------------------------
