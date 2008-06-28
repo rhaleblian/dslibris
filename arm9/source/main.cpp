@@ -523,9 +523,9 @@ void end_hndl(void *data, const char *el)
 			}
 			if (p->pen.y > (PAGE_HEIGHT-app->marginbottom))
 			{
-				if (app->fb == app->screen1)
+				if (app->ts->GetScreen() == app->screen1)
 				{
-					app->fb = app->screen0;
+					app->ts->SetScreen(app->screen0);
 					if (!page->buf)
 						page->buf = (u8*)new u8[page->length];
 					strncpy((char*)page->buf,(char *)app->pagebuf,page->length);
@@ -537,7 +537,7 @@ void end_hndl(void *data, const char *el)
 				}
 				else
 				{
-					app->fb = app->screen1;
+					app->ts->SetScreen(app->screen1);
 				}
 				p->pen.x = app->marginleft;
 				p->pen.y = app->margintop + app->ts->GetHeight();

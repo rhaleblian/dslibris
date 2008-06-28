@@ -26,18 +26,21 @@ DATA		:=  ../data
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
-		-ffast-math -Wall $(ARCH) $(INCLUDE) -DARM9 -DGFX
+		-ffast-math -Wall $(ARCH) $(INCLUDE) -DARM9
 
 # to enable this, define DEBUG in env and invoke make -e
 ifeq ($(DEBUG),)
 CFLAGS 	+=	-O2
 else
-CFLAGS 	+= 	-g
+CFLAGS 	+= 	-g -O0
 endif
 
 # uncomment this for TCP debugging on target,
 # or set this var in environment and invoke make -e
-#CFLAGS	+=	-DDEBUGOVERWIFI
+#CFLAGS	+=	-DDEBUGTCP
+
+# uncomment for DSFTP server
+#CFLAGS +=  -DFTP
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 

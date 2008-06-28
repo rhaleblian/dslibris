@@ -195,14 +195,13 @@ void App::HandleEventInBook()
 
 u8 App::OpenBook(void)
 {
-	bool invert = ts->GetInvert();
-	u16 *screen = ts->GetScreen();
 	ts->SetScreen(screen0);
 	ts->SetPen(20,PAGE_HEIGHT/2 - 10);
+	bool invert = ts->GetInvert();
 	ts->SetInvert(false);
 	PrintStatus("[opening book...]");
 	ts->SetInvert(invert);
-	ts->SetScreen(screen);
+
 	swiWaitForVBlank();
 
 	pagecount = 0;
@@ -318,8 +317,9 @@ bool App::parse_pagefeed(parsedata_t *data, page_t *page)
 	// called when we are at the end of one of the facing pages.
 
 	bool pagedone = false;
-	
-	if (fb == screen1)
+	u16 *screen = ts->GetScreen();
+
+	if (screen == screen1)
 	{
 		// we left the right page, save chars into this page.
 
@@ -333,12 +333,12 @@ bool App::parse_pagefeed(parsedata_t *data, page_t *page)
 			}
 		}
 		memcpy(page->buf,pagebuf,page->length * sizeof(u8));
-		fb = screen0;
+		ts->SetScreen(screen0);
 		pagedone = true;
 	}
 	else
 	{
-		fb = screen1;
+		ts->SetScreen(screen1);
 		pagedone = false;
 	}
 	data->pen.x = marginleft;
@@ -447,3 +447,4 @@ void App::page_draw(page_t *page)
 	ts->SetPen(marginleft+offset,250);
 	ts->PrintString(msg);
 }
+
