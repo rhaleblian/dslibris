@@ -10,6 +10,7 @@ Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms
 	libnds
 	libfat
 	libwifi
+    masscat's DS wifi debug stub library
   Set DEVKITPRO and DEVKITARM set in your environment.
 * on Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
 * optionally, desmume 0.7.3 if you want to debug with gdb.

@@ -104,15 +104,20 @@ install-dldi: $(TARGET).$(MEDIATYPE).nds
 # make an archive to release on Sourceforge
 dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	- mkdir dist
-	- rm dist/*
-	cp INSTALL.txt $(TARGET).nds data/$(TARGET).xht data/$(TARGET).ttf data/$(TARGET).xml dist
+	- rm -r dist/*
+	cp INSTALL.txt $(TARGET).nds data/$(TARGET).xml dist
+	- mkdir dist/font
+	cp data/font/dslibris*.ttf dist/font
+	cp data/font/verdana*.ttf dist/font
+	- mkdir dist/book	
+	cp data/book/dslibris.xht dist/book
 	(cd dist; zip -r dslibris.zip *)
 
 dist: dist/$(TARGET).zip
 
 # transfer a release zip for posting.
 upload: dist
-	ftp upload.sourceforge.net
+	cadaver https://frs.sourceforge.net/r/ra/rayh23/uploads
 
 mount:
 	chmod u+w media
