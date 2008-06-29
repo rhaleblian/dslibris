@@ -95,6 +95,7 @@ class App {
 	void CycleBrightness();
 	void PrintStatus(const char *msg);
 	void PrintStatus(string msg);
+	void UpdateClock();
 	
 	void Log(const char*);
 	void Log(std::string);

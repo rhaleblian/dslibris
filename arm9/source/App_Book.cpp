@@ -31,14 +31,10 @@ void App::HandleEventInBook()
 	//stopping at the previous / next page if KEY_UP/KEY_DOWN
 	//is pressed.
 	//Aaron - Removed excessive preference saving
-	
-	if (keysUp() & (KEY_RIGHT | KEY_LEFT))
-	{
-		// Only save preferences once the fastscrolling is done
-		prefs->Write();
-	}
-	
-	if (keysHeld() & KEY_RIGHT)
+
+	u32 keys = keysDownRepeat();
+
+	if (keys & (KEY_A|KEY_R|KEY_DOWN))
 	{
 		if (pagecurrent < pagecount)
 		{
@@ -47,60 +43,40 @@ void App::HandleEventInBook()
 			books[bookcurrent].SetPosition(pagecurrent);
 		}
 	}
-	else if (keysHeld() & KEY_LEFT)
+
+	else if (keys & (KEY_B|KEY_L|KEY_UP))
 	{
-		if (pagecurrent > 0)
+		if(pagecurrent > 0)
 		{
 			pagecurrent--;
 			page_draw(&pages[pagecurrent]);
 			books[bookcurrent].SetPosition(pagecurrent);
 		}
 	}
-	else if (keysDown() & (KEY_A | KEY_DOWN))
-	{
-		if (pagecurrent < pagecount)
-		{
-			pagecurrent++;
-			page_draw(&pages[pagecurrent]);
-			books[bookcurrent].SetPosition(pagecurrent);
-			prefs->Write();
-		}
-	}
 
-	else if (keysDown() & (KEY_B | KEY_UP))
-	{
-		if (pagecurrent > 0)
-		{
-			pagecurrent--;
-			page_draw(&pages[pagecurrent]);
-			books[bookcurrent].SetPosition(pagecurrent);
-			prefs->Write();
-		}
-	}
+	keys = keysDown();
 
-	else if (keysDown() & KEY_X)
+	if (keys & KEY_X)
 	{
 		ts->SetInvert(!ts->GetInvert());
 		page_draw(&pages[pagecurrent]);
-		prefs->Write();
 	}
 
-	else if (keysDown() & KEY_Y)
+	else if (keys & KEY_Y)
 	{
 		CycleBrightness();
 	}
 
-	else if (keysDown() & KEY_START)
+	else if (keys & KEY_START)
 	{
 		reopen = 0;
-		prefs->Write();
 		mode = APP_MODE_BROWSER;
 		if(orientation) ts->PrintSplash(screen1);
 		else ts->PrintSplash(screen0);
 		browser_draw();
 	}
 
-	else if (keysDown() & KEY_TOUCH)
+	else if (keys & KEY_TOUCH)
 	{
 		touchPosition touch = touchReadXY();
 		if (touch.py < 96)
@@ -114,12 +90,12 @@ void App::HandleEventInBook()
 		page_draw(&pages[pagecurrent]);
 	}
 
-	else if (keysDown() & KEY_SELECT)
+	else if (keys & KEY_SELECT)
 	{
 		// Toggle Bookmark
 		Book* book = books + bookcurrent;
 		std::list<u16>* bookmarks = book->GetBookmarks();
-		
+	
 		bool found = false;
 		for (std::list<u16>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
 			if (*i == pagecurrent)
@@ -128,69 +104,58 @@ void App::HandleEventInBook()
 				found = true;
 				break;
 			}
-        }
-		
+	    }
+	
 		if (!found)
 		{
 			bookmarks->push_back(pagecurrent);
 			bookmarks->sort();
 		}
-		
+	
 		page_draw(&pages[pagecurrent]);
 	}
-	
-	else if (keysDown() & (KEY_R | KEY_L))
+	else if (keys & (KEY_LEFT | KEY_RIGHT))
 	{
 		// Bookmark Navigation
 		Book* book = books + bookcurrent;
 		std::list<u16>* bookmarks = book->GetBookmarks();
-		
+	
 		if (!bookmarks->empty())
 		{
 			//Find the bookmark just after the current page
-			if (keysDown() & KEY_R)
+			if (keys & KEY_LEFT)
 			{
 				std::list<u16>::iterator i;
 				for (i = bookmarks->begin(); i != bookmarks->end(); i++) {
 					if (*i > pagecurrent)
 						break;
 				}
-				
+			
 				if (i == bookmarks->end())
 					i = bookmarks->begin();
-				
+			
 				pagecurrent = *i;
 			}
-			else // KEY_L by process of elimination
+			else // KEY_OTHER by process of elimination
 			{
 				std::list<u16>::reverse_iterator i;
 				for (i = bookmarks->rbegin(); i != bookmarks->rend(); i++) {
 					if (*i < pagecurrent)
 						break;
 				}
-				
+			
 				if (i == bookmarks->rend())
 					i = bookmarks->rbegin();
-				
+			
 				pagecurrent = *i;
 			}
-			
+		
 			page_draw(&pages[pagecurrent]);
 			book->SetPosition(pagecurrent);
-			prefs->Write();
 		}
 	}
-	
-	// clock - only display when reading a book
-	time_t tt = time(NULL);
-	struct tm *tms = gmtime((const time_t *)&tt);
-	char tmsg[6];
-	sprintf(tmsg, "%02d:%02d", tms->tm_hour, tms->tm_min);
-	u8 offset = marginleft;
-	ts->SetScreen(screen0);
-	ts->ClearRect(offset, 240, offset+30, 255);
-	ts->SetPen(offset,250);
-	ts->PrintString(tmsg);
+
+	if(keysUp()) prefs->Write();
 }
 
 u8 App::OpenBook(void)

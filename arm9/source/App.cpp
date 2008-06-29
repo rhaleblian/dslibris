@@ -258,7 +258,8 @@ int App::Run(void)
 	swiWaitForVBlank();
 
 	// start event loop.
-
+	
+	keysSetRepeat(60,2);
 	bool poll = true;
 	while (poll)
 	{
@@ -292,6 +293,21 @@ void App::CycleBrightness()
 	brightness = brightness % 4;
 	BGUI::get()->setBacklightBrightness(brightness);
 	prefs->Write();
+}
+
+void App::UpdateClock()
+{
+	time_t tt = time(NULL);
+	struct tm *tms = gmtime((const time_t *)&tt);
+	char tmsg[6];
+	sprintf(tmsg, "%02d:%02d", tms->tm_hour, tms->tm_min);
+	u8 offset = marginleft;
+	u16 *screen = ts->GetScreen();
+	ts->SetScreen(screen0);
+	ts->ClearRect(offset, 240, offset+30, 255);
+	ts->SetPen(offset,250);
+	ts->PrintString(tmsg);
+	ts->SetScreen(screen);
 }
 
 void App::Log(const char *msg)
