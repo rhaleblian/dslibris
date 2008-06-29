@@ -279,6 +279,7 @@ int App::Run(void)
 #ifdef FTP
 		server.handle();		
 #endif
+		//UpdateClock();
 		swiWaitForVBlank();
 	}
 
@@ -297,10 +298,8 @@ void App::CycleBrightness()
 
 void App::UpdateClock()
 {
-	time_t tt = time(NULL);
-	struct tm *tms = gmtime((const time_t *)&tt);
-	char tmsg[6];
-	sprintf(tmsg, "%02d:%02d", tms->tm_hour, tms->tm_min);
+	char tmsg[8];
+	sprintf(tmsg, "%02d:%02d", IPC->time.rtc.hours, IPC->time.rtc.minutes);
 	u8 offset = marginleft;
 	u16 *screen = ts->GetScreen();
 	ts->SetScreen(screen0);

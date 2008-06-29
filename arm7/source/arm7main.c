@@ -196,8 +196,8 @@ void VblankHandler(void) {
   // Update the IPC struct
   //IPC->heartbeat	= heartbeat;
   IPC->buttons		= but;
-  IPC->touchX			= x;
-  IPC->touchY			= y;
+  IPC->touchX		= x;
+  IPC->touchY		= y;
   IPC->touchXpx		= xpx;
   IPC->touchYpx		= ypx;
   IPC->touchZ1		= z1;
@@ -326,11 +326,6 @@ int main( void)
 
 	irqSet(IRQ_VCOUNT, VcountHandler);
 	irqEnable(IRQ_VCOUNT);
-
-#if 0
-	irqSet(IRQ_KEYS, KeydownHandler);
-	irqEnable(IRQ_KEYS);
-#endif
 
 	// Keep the ARM7 out of main RAM
 	while (1) {

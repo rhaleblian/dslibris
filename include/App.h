@@ -87,7 +87,6 @@ class App {
 	Button* fontButtons;
 	vector<Text*> fontTs;
 	u8 fontPage;
-	
 
 	App();
 	~App();
@@ -96,7 +95,7 @@ class App {
 	void PrintStatus(const char *msg);
 	void PrintStatus(string msg);
 	void UpdateClock();
-	
+
 	void Log(const char*);
 	void Log(std::string);
 	void Log(int x);
