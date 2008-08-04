@@ -15,7 +15,6 @@
 #define BUFSIZE 1024
 #define PAGEBUFSIZE 2048
 #define MAXPAGES 2048
-#define MAXBOOKS 32
 #define SPLASH_LEFT 28
 #define SPLASH_TOP 44
 

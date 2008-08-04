@@ -40,7 +40,6 @@
 App::App()
 {	
 	ts = NULL;
-	buttons = new Button[MAXBOOKS];
 	browserstart = 0;
 	pages = new page_t[MAXPAGES];
 	pagebuf = new u8[PAGEBUFSIZE];
@@ -51,7 +50,6 @@ App::App()
 
 	fontdir = string(FONTDIR);
 	bookdir = string(BOOKDIR);
-	books = new Book[MAXBOOKS];
 	bookcount = 0;
 	bookselected = 0;
 	bookcurrent = -1;
@@ -77,8 +75,6 @@ App::App()
 App::~App()
 {
 	free(filebuf);
-	delete books;
-	delete buttons;
 	delete pages;
 	delete prefs;
 }           
@@ -142,17 +138,15 @@ int App::Run(void)
 	}
 
 	char filename[MAXPATHLEN];
-	while (bookcount < MAXBOOKS)
+	while(!dirnext(dp, filename, NULL))
 	{
-		int rc = dirnext(dp, filename, NULL);
-		if(rc)
-			break;
-
 		char *c;
 		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
 		{
-			Book *book = &(books[bookcount]);
+			//Book *book = &(books[bookcount]);
+			Book *book = new Book();
+			books.push_back(book);
 			book->SetFolderName(bookdir.c_str());
 			
 			book->SetFileName(filename);
@@ -187,11 +181,11 @@ int App::Run(void)
 	{
 		Log("warn : could not open preferences.\n");
 	}
-	
+
 	// Sort bookmarks for each book
 	for(u8 i = 0; i < bookcount; i++)
 	{
-		books[bookcount].GetBookmarks()->sort();
+		books[i]->GetBookmarks()->sort();
 	}
 
 	// init typesetter.

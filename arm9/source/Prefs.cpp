@@ -15,7 +15,7 @@ bool Prefs::Read(XML_Parser p)
 
 	XML_ParserReset(p, NULL);
 	XML_SetStartElementHandler(p, prefs_start_hndl);
-	XML_SetUserData(p, (void *)app->books);
+	XML_SetUserData(p, (void *)&(app->books));
 	while (true)
 	{
 	 	void *buff = XML_GetBuffer(p, 64);
@@ -59,7 +59,7 @@ bool Prefs::Write(void)
  	char* pathname;
  	
  	if (app->reopen && (app->bookcurrent >= 0))
- 		pathname = app->books[app->bookcurrent].GetFullPathName();
+ 		pathname = app->books[app->bookcurrent]->GetFullPathName();
  	else {
  		pathname = new char[2];
  		strcpy(pathname, "");
@@ -70,7 +70,7 @@ bool Prefs::Write(void)
     
     delete[] pathname;
     for (u8 i = 0; i < app->bookcount; i++) {
-        Book* book = app->books + i;
+        Book* book = app->books[i];
         pathname = book->GetFullPathName();
         fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\">\n",
                 pathname, book->GetPosition() + 1);

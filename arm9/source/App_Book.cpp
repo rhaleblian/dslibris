@@ -40,7 +40,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent++;
 			page_draw(&pages[pagecurrent]);
-			books[bookcurrent].SetPosition(pagecurrent);
+			books[bookcurrent]->SetPosition(pagecurrent);
 		}
 	}
 
@@ -50,7 +50,7 @@ void App::HandleEventInBook()
 		{
 			pagecurrent--;
 			page_draw(&pages[pagecurrent]);
-			books[bookcurrent].SetPosition(pagecurrent);
+			books[bookcurrent]->SetPosition(pagecurrent);
 		}
 	}
 
@@ -93,7 +93,7 @@ void App::HandleEventInBook()
 	else if (keys & KEY_SELECT)
 	{
 		// Toggle Bookmark
-		Book* book = books + bookcurrent;
+		Book* book = books[bookcurrent];
 		std::list<u16>* bookmarks = book->GetBookmarks();
 	
 		bool found = false;
@@ -117,7 +117,7 @@ void App::HandleEventInBook()
 	else if (keys & (KEY_LEFT | KEY_RIGHT))
 	{
 		// Bookmark Navigation
-		Book* book = books + bookcurrent;
+		Book* book = books[bookcurrent];
 		std::list<u16>* bookmarks = book->GetBookmarks();
 	
 		if (!bookmarks->empty())
@@ -175,10 +175,10 @@ u8 App::OpenBook(void)
 	bookItalic = false;
 	page_init(&pages[pagecurrent]);
 	ts->ClearCache();
-	if (!books[bookselected].Parse(filebuf))
+	if (!books[bookselected]->Parse(filebuf))
 	{
 		bookcurrent = bookselected;
-		pagecurrent = books[bookselected].GetPosition();
+		pagecurrent = books[bookselected]->GetPosition();
 		page_draw(&(pages[pagecurrent]));
 		prefs->Write();
 		return 0;
@@ -381,7 +381,7 @@ void App::page_draw(page_t *page)
 	
 	// Find out if the page is bookmarked or not
 	bool isBookmark = false;
-	Book* book = books + bookselected;
+	Book* book = books[bookselected];
 	std::list<u16>* bookmarks = book->GetBookmarks();
 	for (std::list<u16>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
 		if (*i == pagecurrent)

@@ -127,7 +127,7 @@ void App::HandleEventInBrowser()
 				(i<bookcount) &&
 				(i<browserstart+APP_BROWSER_BUTTON_COUNT);
 				i++) {
-				if (buttons[i].EnclosesPoint(coord.py, coord.px))
+				if (buttons[i]->EnclosesPoint(coord.py, coord.px))
 				{
 					bookselected = i;
 					browser_draw();
@@ -145,12 +145,13 @@ void App::browser_init(void)
 	u8 i;
 	for (i=0;i<bookcount;i++)
 	{
-		buttons[i].Init(ts);
-		buttons[i].Move(2,((i%APP_BROWSER_BUTTON_COUNT+1)*32)-16);
-		if (strlen(books[i].GetTitle()))
-			buttons[i].Label(books[i].GetTitle());
+		buttons.push_back(new Button());
+		buttons[i]->Init(ts);
+		buttons[i]->Move(2,((i%APP_BROWSER_BUTTON_COUNT+1)*32)-16);
+		if (strlen(books[i]->GetTitle()))
+			buttons[i]->Label(books[i]->GetTitle());
 		else
-			buttons[i].Label(books[i].GetFileName());
+			buttons[i]->Label(books[i]->GetFileName());
 	}
 	buttonprev.Init(ts);
 	buttonprev.Move(2,240);
@@ -205,7 +206,7 @@ void App::browser_draw(void)
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 		i++)
 	{
-		buttons[i].Draw(screen,i==bookselected);
+		buttons[i]->Draw(screen,i==bookselected);
 	}
 	
 	if(browserstart >= APP_BROWSER_BUTTON_COUNT)
@@ -236,12 +237,12 @@ void App::browser_redraw()
 	ts->SetScreen(screen);
 	ts->SetInvert(false);
 	ts->SetPixelSize(PIXELSIZE);
-	buttons[bookselected].Draw(screen,true);
+	buttons[bookselected]->Draw(screen,true);
 	if(bookselected > browserstart)
-		buttons[bookselected-1].Draw(screen,false);
+		buttons[bookselected-1]->Draw(screen,false);
 	if(bookselected < bookcount-1 &&
 		(bookselected - browserstart) < APP_BROWSER_BUTTON_COUNT-1)
-		buttons[bookselected+1].Draw(screen,false);
+		buttons[bookselected+1]->Draw(screen,false);
 
 	// restore state.
 	ts->SetInvert(invert);

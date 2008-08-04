@@ -14,6 +14,7 @@
 #include "parse.h"
 
 #include <vector>
+#include <list>
 
 #define APP_BROWSER_BUTTON_COUNT 6
 #define APP_LOGFILE "dslibris.log"
@@ -49,11 +50,11 @@ class App {
 	u8 mode;
 	string fontdir;
 	
-	Button *buttons;
+	vector<Button*> buttons;
 	Button buttonprev, buttonnext, buttonprefs;
 	u8 browserstart;
 	string bookdir;
-	Book *books;
+	vector<Book*> books;
 	u8 bookcount;
 	u8 bookselected;
 	s8 bookcurrent;

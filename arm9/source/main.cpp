@@ -188,7 +188,7 @@ void prefs_start_hndl(	void *userdata,
 		
 		if (currentBook >= 0)
 		{
-			app->books[currentBook].GetBookmarks()->push_back(position - 1);
+			app->books[currentBook]->GetBookmarks()->push_back(position - 1);
 		}
 	}
 	else if (!stricmp(name,"margin"))

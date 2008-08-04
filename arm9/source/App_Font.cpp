@@ -38,13 +38,9 @@ void App::FontInit()
 	fontSelected = 0;
 	
 	char filename[MAXPATHLEN];
-	while (fontTs.size() < MAXBOOKS)
-	{
-		struct stat st;
-		int rc = dirnext(dp, filename, &st);
-		if(rc)
-			break;
-		
+	struct stat st;
+	while(!dirnext(dp, filename, &st))
+	{	
 		// Don't try folders
 		if (st.st_mode & S_IFDIR)
 			continue;
