@@ -104,7 +104,6 @@ u8 Book::Index(char *filebuf)
 	return(0);
 }
 
-#if 0
 
 int Book::ParseHTML(char *input)
 {
@@ -115,43 +114,48 @@ int Book::ParseHTML(char *input)
 
 	char *path = GetFullPathName();
 	FILE *fp = fopen(path,"r");
-	fread(input,1,BUFSIZE,fp);
-	fclose(fp);
+	FILE *op = fopen("tmp.xhtml","w");
 
 	TidyDoc tdoc = tidyCreate();
 	tidyBufInit(&output);
 	tidyBufInit(&errbuf);
-  //printf( "Tidying:\t\%s\\n", input );
-  ok = tidyOptSetBool( tdoc, TidyXhtmlOut, yes );  // Convert to XHTML
-  if ( ok )
-    rc = tidySetErrorBuffer( tdoc, &errbuf );      // Capture diagnostics
-  if ( rc >= 0 )
-    rc = tidyParseString( tdoc, input );           // Parse the input
-  if ( rc >= 0 )
-    rc = tidyCleanAndRepair( tdoc );               // Tidy it up!
-  if ( rc >= 0 )
-    rc = tidyRunDiagnostics( tdoc );               // Kvetch
-  if ( rc > 1 )                                    // If error, force output.
-    rc = ( tidyOptSetBool(tdoc, TidyForceOutput, yes) ? rc : -1 );
-  if ( rc >= 0 )
-    rc = tidySaveBuffer( tdoc, &output );          // Pretty Print
-  if ( rc >= 0 )
-  {
-    if ( rc > 0 )
-      printf( "\\nDiagnostics:\\n\\n\%s", errbuf.bp );
-    //printf( "\\nAnd here is the result:\\n\\n\%s", output.bp );
-  }
-  else
+	ok = tidyOptSetBool( tdoc, TidyXhtmlOut, yes );  // Convert to XHTML
+	if ( ok )
+		rc = tidySetErrorBuffer( tdoc, &errbuf );    // Capture diagnostics
+
+	while(fread(input,1,BUFSIZE,fp))
+	{
+		if ( rc >= 0 )
+			rc = tidyParseString( tdoc, input );     // Parse the input
+		if ( rc >= 0 )
+			rc = tidyCleanAndRepair( tdoc );         // Tidy it up!
+	}
+
+	if ( rc >= 0 )
+	rc = tidyRunDiagnostics( tdoc );               // Kvetch
+	if ( rc > 1 )                                  // If error, force output.
+	rc = ( tidyOptSetBool(tdoc, TidyForceOutput, yes) ? rc : -1 );
+	if ( rc >= 0 )
+	rc = tidySaveBuffer( tdoc, &output );          // Pretty Print
+	if ( rc >= 0 )
+	{
+	if ( rc > 0 )
+	  	printf( "\\nDiagnostics:\\n\\n\%s", errbuf.bp );
+		fprintf( op, "%s", output.bp );
+	}
+	else
     printf( "A severe error (\%d) occurred.\\n", rc );
 
-  tidyBufFree( &output );
-  tidyBufFree( &errbuf );
-  tidyRelease( tdoc );
+	fclose(fp);
+	fclose(op);
 
-  return rc;
+	tidyBufFree( &output );
+	tidyBufFree( &errbuf );
+	tidyRelease( tdoc );
+
+	return rc;
 }
 
-#endif
 
 u8 Book::Parse(char *filebuf)
 {

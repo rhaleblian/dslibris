@@ -142,9 +142,17 @@ int App::Run(void)
 	{
 		char *c;
 		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
+		if (!stricmp(".htm",c) || !stricmp(".html",c))
 		{
-			//Book *book = &(books[bookcount]);
+			Book *book = new Book();
+			books.push_back(book);
+			book->SetFolderName(bookdir.c_str());
+			book->SetFileName(filename);
+			book->SetTitle(filename);
+			bookcount++;
+		}
+		else if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
+		{
 			Book *book = new Book();
 			books.push_back(book);
 			book->SetFolderName(bookdir.c_str());

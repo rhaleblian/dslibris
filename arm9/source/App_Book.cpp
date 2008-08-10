@@ -175,6 +175,14 @@ u8 App::OpenBook(void)
 	bookItalic = false;
 	page_init(&pages[pagecurrent]);
 	ts->ClearCache();
+	const char *filename = books[bookselected]->GetFileName();
+	const char *c;
+	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
+	if(!strcmp(c,".htm") || !strcmp(c,".html"))
+	{
+		books[bookselected]->ParseHTML(filebuf);
+		return 1;
+	}		
 	if (!books[bookselected]->Parse(filebuf))
 	{
 		bookcurrent = bookselected;
