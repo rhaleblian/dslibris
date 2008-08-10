@@ -89,6 +89,9 @@ class App {
 	vector<Text*> fontTs;
 	u8 fontPage;
 
+	bool enablelogging;
+	bool enableftp;
+
 	App();
 	~App();
 	

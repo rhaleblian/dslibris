@@ -113,16 +113,17 @@ int Book::ParseHTML(char *input)
 	Bool ok;
 
 	char *path = GetFullPathName();
-	FILE *fp = fopen(path,"r");
-	FILE *op = fopen("tmp.xhtml","w");
+//	FILE *fp = fopen(path,"r");
+//	FILE *op = fopen("tmp.xhtml","w");
 
 	TidyDoc tdoc = tidyCreate();
-	tidyBufInit(&output);
-	tidyBufInit(&errbuf);
+//	tidyBufInit(&output);
+//	tidyBufInit(&errbuf);
 	ok = tidyOptSetBool( tdoc, TidyXhtmlOut, yes );  // Convert to XHTML
 	if ( ok )
-		rc = tidySetErrorBuffer( tdoc, &errbuf );    // Capture diagnostics
-
+		//rc = tidySetErrorBuffer( tdoc, &errbuf );    // Capture diagnostics
+		tidySetErrorFile( tdoc , "dslibris.log" );
+/*
 	while(fread(input,1,BUFSIZE,fp))
 	{
 		if ( rc >= 0 )
@@ -130,28 +131,50 @@ int Book::ParseHTML(char *input)
 		if ( rc >= 0 )
 			rc = tidyCleanAndRepair( tdoc );         // Tidy it up!
 	}
+*/
+
+	rc = tidyParseFile( tdoc, path );
+	if ( rc >= 0 )
+		rc = tidyCleanAndRepair( tdoc );         // Tidy it up!
 
 	if ( rc >= 0 )
-	rc = tidyRunDiagnostics( tdoc );               // Kvetch
+		rc = tidyRunDiagnostics( tdoc );               // Kvetch
 	if ( rc > 1 )                                  // If error, force output.
-	rc = ( tidyOptSetBool(tdoc, TidyForceOutput, yes) ? rc : -1 );
-	if ( rc >= 0 )
-	rc = tidySaveBuffer( tdoc, &output );          // Pretty Print
+		rc = ( tidyOptSetBool(tdoc, TidyForceOutput, yes) ? rc : -1 );
+	rc = tidyOptSetBool( tdoc, TidyNumEntities, yes );
+	if ( rc > 1 )
+		rc = tidySetCharEncoding ( tdoc, "utf8" );
+
+//	if ( rc >= 0 )
+//		rc = tidySaveBuffer( tdoc, &output );          // Pretty Print
+/*
 	if ( rc >= 0 )
 	{
-	if ( rc > 0 )
-	  	printf( "\\nDiagnostics:\\n\\n\%s", errbuf.bp );
-		fprintf( op, "%s", output.bp );
+		if ( rc > 0 )
+			fprintf( op, "%s", output.bp );
 	}
 	else
-    printf( "A severe error (\%d) occurred.\\n", rc );
+		printf( "A severe error (\%d) occurred.\\n", rc );
+*/
 
-	fclose(fp);
-	fclose(op);
+	tidySaveFile( tdoc, "/tmp.xhtml" );
 
-	tidyBufFree( &output );
-	tidyBufFree( &errbuf );
+//	fclose(fp);
+//	fclose(op);
+
+//	tidyBufFree( &output );
+//	tidyBufFree( &errbuf );
 	tidyRelease( tdoc );
+
+	char file[256];
+	char folder[256];
+	strcpy(file,GetFileName());
+	strcpy(folder,GetFolderName());
+	SetFileName("tmp.xhtml");
+	SetFolderName("/");	
+	rc = Parse(input);
+	SetFileName(file);
+	SetFolderName(folder);
 
 	return rc;
 }

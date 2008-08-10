@@ -180,8 +180,14 @@ u8 App::OpenBook(void)
 	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 	if(!strcmp(c,".htm") || !strcmp(c,".html"))
 	{
-		books[bookselected]->ParseHTML(filebuf);
-		return 1;
+		if(!books[bookselected]->ParseHTML(filebuf))
+		{
+			bookcurrent = bookselected;
+			pagecurrent = books[bookselected]->GetPosition();
+			page_draw(&(pages[pagecurrent]));
+			prefs->Write();			
+			return 0;
+		}
 	}		
 	if (!books[bookselected]->Parse(filebuf))
 	{
@@ -191,8 +197,8 @@ u8 App::OpenBook(void)
 		prefs->Write();
 		return 0;
 	}
-	else
-		return 255;
+
+	return 255;
 }
 
 void App::page_init(page_t *page)

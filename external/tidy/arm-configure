@@ -1,6 +1,6 @@
 #!/bin/sh
-./configure --host=arm-eabi --prefix=/home/rhaleblian/ndslibris/trunk \
-    CFLAGS="-g -Wall -O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -DARM9 -DSUPPORT_POSIX_MAPPED_FILES=0 -DPRESERVE_FILE_TIMES=0" \
+./configure --host=arm-eabi --prefix=$DEVKITARM \
+    CFLAGS="-Wall -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -DARM9 -DSUPPORT_POSIX_MAPPED_FILES=0 -DPRESERVE_FILE_TIMES=0" \
     CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions" \
     LDFLAGS="-specs=ds_arm9.specs"
 

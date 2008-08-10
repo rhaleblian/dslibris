@@ -18,10 +18,8 @@
 #include <debug_tcp.h>
 #endif
 
-#ifdef FTP
 #include <BFTPServer.h>
 #include <BFTPConfigurator.h>
-#endif
 
 #include <nds/registers_alt.h>
 #include <nds/reload.h>
@@ -68,6 +66,9 @@ App::App()
 	paraspacing = 1;
 	paraindent = 0;
 	brightness = 1;
+
+	enableftp = FALSE;
+	enablelogging = TRUE;
 
 	prefs = new Prefs(this);
 }
@@ -243,14 +244,15 @@ int App::Run(void)
 	debugHalt();
 #endif
 
-#ifdef FTP
 	BFTPServer server;
-	BFTPConfigurator configurator(&server);
-	configurator.configureFromFile("/data/settings/ftp.conf");
+	if(enableftp)
+	{
+		BFTPConfigurator configurator(&server);
+		configurator.configureFromFile("/data/settings/ftp.conf");
 
-	Log("info : FTP service configured.\n");
-	PrintStatus("[FTP enabled]");
-#endif
+		Log("info : FTP service configured.\n");
+		PrintStatus("[FTP enabled]");
+	}
 
 	if(reopen && !OpenBook())
 	{
@@ -278,9 +280,11 @@ int App::Run(void)
 			|| mode == APP_MODE_PREFS_FONT_ITALIC)
 			HandleEventInFont();
 
-#ifdef FTP
-		server.handle();		
-#endif
+		if(enableftp)
+		{
+			server.handle();		
+		}
+
 		//UpdateClock();
 		swiWaitForVBlank();
 	}
@@ -313,45 +317,42 @@ void App::UpdateClock()
 
 void App::Log(const char *msg)
 {
-#ifdef NOLOG
-	return;
-#endif
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,msg);
-	fclose(logfile);
+	if(enablelogging)
+	{
+		FILE *logfile = fopen(LOGFILEPATH,"a");
+		fprintf(logfile,msg);
+		fclose(logfile);
+	}
 }
 
 void App::Log(std::string msg)
 {
-#ifdef NOLOG
-	return;
-#else
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,msg.c_str());
-	fclose(logfile);
-#endif
+	if(enablelogging)
+	{
+		FILE *logfile = fopen(LOGFILEPATH,"a");
+		fprintf(logfile,msg.c_str());
+		fclose(logfile);
+	}
 }
 
 void App::Log(int x)
 {
-#ifdef NOLOG
-	return;
-#else
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,"%d",x);		
-	fclose(logfile);
-#endif
+	if(enablelogging)
+	{
+		FILE *logfile = fopen(LOGFILEPATH,"a");
+		fprintf(logfile,"%d",x);		
+		fclose(logfile);
+	}
 }
 
 void App::Log(const char *format, const char *msg)
 {
-#ifdef NOLOG
-	return;
-#else
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,format,msg);
-	fclose(logfile);
-#endif
+	if(enablelogging)
+	{
+		FILE *logfile = fopen(LOGFILEPATH,"a");
+		fprintf(logfile,format,msg);
+		fclose(logfile);
+	}
 }
 
 void App::InitScreens() {
