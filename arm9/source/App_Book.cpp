@@ -69,7 +69,7 @@ void App::HandleEventInBook()
 
 	else if (keys & KEY_START)
 	{
-		reopen = 0;
+		option.reopen = false;
 		mode = APP_MODE_BROWSER;
 		if(orientation) ts->PrintSplash(screen1);
 		else ts->PrintSplash(screen0);

@@ -35,7 +35,7 @@ App *app;
 bool linebegan = false;
 // Static vars needed for state in the XML config callback prefs_start_hndl
 char reopenName[MAXPATHLEN];
-u8 currentBook = -1;
+int book = -1;
 bool parseFontBold = false;
 bool parseFontItalic = false;
 
@@ -142,7 +142,7 @@ void prefs_start_hndl(	void *userdata,
 	{
 		for (i = 0; attr[i]; i+=2) {
 			if (!strcmp(attr[i], "reopen"))
-				strcpy(reopenName, attr[i+1]);
+				app->option.reopen = atoi(attr[i+1]);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
 					app->bookdir = string(attr[i+1]);
@@ -156,27 +156,31 @@ void prefs_start_hndl(	void *userdata,
 				strcpy(filename, attr[i+1]);
 			if (!strcmp(attr[i], "page"))
 				position = atoi(attr[i+1]);
+			if (!strcmp(attr[i], "current"))
+			{
+				app->bookcurrent = i;
+				app->bookselected = i;
+			}
         }
-		
+		// Find the book index for this library entry,
+		// to know the context for bookmarks.
 		for(i = 0; i < app->bookcount; i++)
 		{
-			char* pathname = data[i].GetFullPathName();
-			if(!stricmp(pathname, filename))
+			if(!stricmp(data[i].GetFileName(), filename))
 			{
-				currentBook = i;
+				book = i;
 				
 				if (position)
 					data[i].SetPosition(position - 1);
-				
+/*				
 				if (!stricmp(reopenName, filename))
 				{
 					app->reopen = true;
 					app->bookselected = i;
 				}
-				
+*/				
 				break;
 			}
-			delete[] pathname;
 		}
 	}
 	else if (!stricmp(name, "bookmark"))
@@ -186,9 +190,9 @@ void prefs_start_hndl(	void *userdata,
 				position = atoi(attr[i+1]);
         }
 		
-		if (currentBook >= 0)
+		if (book >= 0)
 		{
-			app->books[currentBook]->GetBookmarks()->push_back(position - 1);
+			app->books[book]->GetBookmarks()->push_back(position - 1);
 		}
 	}
 	else if (!stricmp(name,"margin"))
@@ -201,6 +205,11 @@ void prefs_start_hndl(	void *userdata,
 			if (!strcmp(attr[i],"bottom")) app->marginbottom = atoi(attr[i+1]);
 		}		
 	}
+}
+
+void prefs_end_hndl(void *data, const char *name)
+{
+	if (!stricmp(name,"book")) book = -1;
 }
 
 int unknown_hndl(void *encodingHandlerData,
@@ -375,8 +384,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				&& !iswhitespace(app->pagebuf[page->length-1]))
 			{
 				app->pagebuf[page->length++] = ' ';
-				pdata->pen.x += app->ts->GetAdvance((u16)' ', GetParserFace());
-					
+				pdata->pen.x += app->ts->GetAdvance((u16)' ', GetParserFace());	
 			}
 			i++;
 		}

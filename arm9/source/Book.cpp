@@ -111,8 +111,8 @@ int Book::ParseHTML(char *input)
 	TidyBuffer errbuf;
 	int rc = -1;
 	Bool ok;
-
-	char *path = GetFullPathName();
+	char path[256];
+	sprintf(path,"%s%s",GetFolderName(),GetFileName());
 //	FILE *fp = fopen(path,"r");
 //	FILE *op = fopen("tmp.xhtml","w");
 
@@ -183,7 +183,8 @@ int Book::ParseHTML(char *input)
 u8 Book::Parse(char *filebuf)
 {
 	u8 rc = 0;
-	char* path = GetFullPathName();
+	char path[256];
+	sprintf(path,"%s%s",GetFolderName(),GetFileName());
 	FILE *fp = fopen(path,"r");
 	if (!fp)
 	{
@@ -224,11 +225,3 @@ u8 Book::Parse(char *filebuf)
 	return(rc);
 }
 
-char* Book::GetFullPathName()
-{
-	char* path = new char[MAXPATHLEN];
-	strcpy(path, foldername.c_str());
-	strcat(path, filename.c_str());
-	
-	return (char*)path;
-}

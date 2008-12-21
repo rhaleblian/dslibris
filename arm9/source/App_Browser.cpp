@@ -84,7 +84,7 @@ void App::HandleEventInBrowser()
 	{
 		mode = APP_MODE_BOOK;
 		page_draw(&(pages[pagecurrent]));
-		reopen = 1;
+		option.reopen = true;
 		prefs->Write();
 	}
 
@@ -255,12 +255,12 @@ void App::AttemptBookOpen()
 	if(bookselected == bookcurrent) {
 		mode = APP_MODE_BOOK;
 		page_draw(&(pages[pagecurrent]));
-		reopen = 1;
+		option.reopen = true;
 		prefs->Write();
 	// Parse the selected book.
 	} else if (!OpenBook()) {
 		mode = APP_MODE_BOOK;
-		reopen = 1;
+		option.reopen = true;
 		prefs->Write();
 	// Fail...
 	} else

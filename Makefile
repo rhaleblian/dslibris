@@ -120,11 +120,10 @@ upload: dist
 	cadaver https://frs.sourceforge.net/r/ra/rayh23/uploads
 
 mount:
-	chmod u+w media
+	- mkdir media
 	sudo mount -t vfat -o loop -o uid=rhaleblian media.img media
 
 umount:
 	sync
 	- sudo umount media
-	chmod u-w media
-
+	- rmdir media

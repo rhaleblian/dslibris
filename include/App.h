@@ -59,7 +59,9 @@ class App {
 	u8 bookselected;
 	s8 bookcurrent;
 	
-	u8 reopen;
+	struct {
+		bool reopen; //! reopen book from last session?
+	} option;
 	parsedata_t parsedata;
 	page_t *pages;
 	u8 *pagebuf;

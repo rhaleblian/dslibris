@@ -51,7 +51,7 @@ App::App()
 	bookcount = 0;
 	bookselected = 0;
 	bookcurrent = -1;
-	reopen = 0;
+	option.reopen = false;
 	mode = APP_MODE_BROWSER;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
 
@@ -118,12 +118,12 @@ int App::Run(void)
 	parse_init(&parsedata);
 
 	// read preferences (to load bookdir)
-	Log("info : reading preferences.\n");
+	Log("info : reading preferences to determine book directory.\n");
    	if(!prefs->Read(p))
 	{
-		Log("warn : could not open preferences, using defaults.\n");
+		Log("warn : could not open preferences, created defaults.\n");
 	} else 
-		Log("info: preferences read.\n");
+		Log("info : preferences read.\n");
 	
 	// construct library.
 
@@ -226,6 +226,8 @@ int App::Run(void)
 	mode = APP_MODE_BROWSER;
 	browser_draw();
 
+	Log("progr: browser displayed.\n");
+
 #ifdef DEBUGTCP
 	// enable remote TCP debugging.
 	WifiConnect();
@@ -254,7 +256,7 @@ int App::Run(void)
 		PrintStatus("[FTP enabled]");
 	}
 
-	if(reopen && !OpenBook())
+	if(option.reopen && !OpenBook())
 	{
 		Log("info : reopened current book.\n");
 		mode = APP_MODE_BOOK;

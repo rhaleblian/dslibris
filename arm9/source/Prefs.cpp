@@ -15,6 +15,7 @@ bool Prefs::Read(XML_Parser p)
 
 	XML_ParserReset(p, NULL);
 	XML_SetStartElementHandler(p, prefs_start_hndl);
+	XML_SetEndElementHandler(p, prefs_end_hndl);
 	XML_SetUserData(p, (void *)&(app->books));
 	while (true)
 	{
@@ -56,25 +57,16 @@ bool Prefs::Write(void)
 		
 	}
 	*/
- 	char* pathname;
- 	
- 	if (app->reopen && (app->bookcurrent >= 0))
- 		pathname = app->books[app->bookcurrent]->GetFullPathName();
- 	else {
- 		pathname = new char[2];
- 		strcpy(pathname, "");
- 	}
-    fprintf(fp, "\t<books path=\"%s\" reopen=\"%s\">\n",
+    fprintf(fp, "\t<books path=\"%s\" reopen=\"%d\">\n",
     		app->bookdir.c_str(),
-    		pathname);
+    		app->option.reopen);
     
-    delete[] pathname;
     for (u8 i = 0; i < app->bookcount; i++) {
         Book* book = app->books[i];
-        pathname = book->GetFullPathName();
-        fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\">\n",
-                pathname, book->GetPosition() + 1);
-        delete[] pathname;
+        fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\"",
+                book->GetFileName(), book->GetPosition() + 1);
+		if(app->bookcurrent == i) fprintf(fp," current=\"1\"");
+		fprintf(fp,">\n");		
 		std::list<u16>* bookmarks = book->GetBookmarks();
         for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
             fprintf(fp, "\t\t\t<bookmark page=\"%d\" />\n",
