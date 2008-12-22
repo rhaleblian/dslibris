@@ -1,6 +1,0 @@
-#!/bin/sh
-./configure --prefix=/opt/nds --disable-shared --enable-static=expat --host arm-eabi \
-CFLAGS='-mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer' \
-CXXFLAGS='-fno-exceptions' \
-LDFLAGS='-specs=ds_arm9.specs'
-

@@ -1,6 +1,0 @@
-#!/bin/sh
-CFLAGS="-Wall -O2 -mcpu=arm9tdmi -mtune=arm9tdmi -fomit-frame-pointer -ffast-math -DARM9 -thumb -thumb-interwork"
-CXXFLAGS="$CFLAGS -fno-rtti -fno-exceptions"
-LDFLAGS="-specs=ds_arm9.specs -L..\..\lib"
-./configure --host=arm-eabi --prefix=/opt/nds
-
