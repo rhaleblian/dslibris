@@ -49,23 +49,23 @@ clean:
 	$(MAKE) -C arm7 clean
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
 
-# run target with desmume
+# run target with desmume and files in /tmp. not used anymore.
 test-tmp: $(TARGET).nds
 	- mkdir -p /tmp/$(TARGET)
 	cp $(TARGET).nds /tmp/$(TARGET)
+	- mkdir -p /tmp/$(TARGET)/book
+	cp data/book/* /tmp/$(TARGET)/book
 	- mkdir -p /tmp/$(TARGET)/font
-	cp data/font/dslibris.ttf /tmp/$(TARGET)/font
-	cp data/font/dslibrisb.ttf /tmp/$(TARGET)/font
-	cp data/font/dslibrisi.ttf /tmp/$(TARGET)/font
+	cp data/font/* /tmp/$(TARGET)/font
 	(cd /tmp/$(TARGET); desmume-cli $(TARGET).nds)
 
-# uses a vfat file under Fedora.
+# run target with a vfat image file. the assumed testing method now.
 test-vfat: $(TARGET).nds
 	desmume --cflash=media.img dslibris.nds
 
 test: test-vfat
 
-#create a cflash image for use with desmume.
+#create a cflash image for use with desmume and test-vfat rule.
 vfat-image:
 	dd if=/dev/zero of=media.img bs=1048576 count=32
 	/sbin/mkfs.msdos -F16 media.img
@@ -115,7 +115,7 @@ dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 
 dist: dist/$(TARGET).zip
 
-# transfer a release zip for posting.
+# transfer a release zip for posting. obsolete?
 upload: dist
 	cadaver https://frs.sourceforge.net/r/ra/rayh23/uploads
 

@@ -1,6 +1,6 @@
 
 %.s %.h : %.png %.grit
-	grit $< -fts -o$*
+	$(DEVKITARM)/bin/grit $< -fts -o$*
 
 image_stack:
 

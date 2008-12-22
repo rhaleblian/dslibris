@@ -183,13 +183,12 @@ int App::Run(void)
 	swiWaitForVBlank();
 
 	// read preferences.
-
-	Log("info : reading prefs.\n");
 	
    	if(!prefs->Read(p))
 	{
 		Log("warn : could not open preferences.\n");
 	}
+	else Log("info : read preferences.\n");
 
 	// Sort bookmarks for each book
 	for(u8 i = 0; i < bookcount; i++)
@@ -199,12 +198,11 @@ int App::Run(void)
 
 	// init typesetter.
 
-	Log("info : starting typesetter.\n");
-
 	int err = ts->Init();
    	if (err) {
-		Log("fatal: starting typesetter failed.\n");
-		exit(-2);
+		sprintf(msg, "fatal: starting typesetter failed (%d).\n", err);
+		Log(msg);
+		exit(err);
 	} else Log("info : typesetter started.\n");
 
 	// initialize screens.
