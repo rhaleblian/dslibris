@@ -121,9 +121,6 @@ $(OUTPUT).arm9.elf	:	$(OFILES)
 	@echo $(notdir $<)
 	$(bin2o)
 
-%.s %.h : %.png %.grit
-	grit $< -fts -o$*
-
 -include $(DEPENDS)
 
 #-----------------------------------------------------------------------------
