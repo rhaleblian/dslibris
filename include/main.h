@@ -21,9 +21,11 @@
 #define FONTDIR "/font/"
 #define BOOKDIR "/book/"
 #define PREFSPATH "dslibris.xml"
-#define FONTFILEPATH "/font/dslibris.ttf"
-#define FONTBOLDFILEPATH "/font/dslibrisb.ttf"
-#define FONTITALICFILEPATH "/font/dslibrisi.ttf"
+#define FONTFILEPATH "/font/LiberationSerif-Regular.ttf"
+#define FONTBOLDFILEPATH "/font/LiberationSerif-Bold.ttf"
+#define FONTITALICFILEPATH "/font/LiberationSerif-Italic.ttf"
+#define FONTBROWSERFILEPATH "/font/LiberationSans-Regular.ttf"
+#define FONTSPLASHFILEPATH "/font/LiberationSans-Regular.ttf"
 #define LOGFILEPATH "dslibris.log"
 
 /** watch out for struct alignment here? **/

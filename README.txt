@@ -6,11 +6,11 @@ PREREQUISITES
 Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently it's Fedora Core 8 and Arch Linux. Have:
 
 * devkitPro installed with components:
-	devkitARM
+	devkitARM r20
 	libnds
 	libfat
 	libwifi
-    masscat's DS wifi debug stub library
+	masscat's DS wifi debug stub library
   Set DEVKITPRO and DEVKITARM set in your environment.
 * on Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
 * optionally, desmume 0.7.3 if you want to debug with gdb.

@@ -105,8 +105,8 @@ int App::Run(void)
 	ts->SetFontFile(FONTFILEPATH, TEXT_STYLE_NORMAL);
 	ts->SetFontFile(FONTBOLDFILEPATH, TEXT_STYLE_BOLD);
 	ts->SetFontFile(FONTITALICFILEPATH, TEXT_STYLE_ITALIC);
-	ts->SetFontFile("/font/verdana.ttf", TEXT_STYLE_BROWSER);
-	ts->SetFontFile("/font/verdana.ttf", TEXT_STYLE_SPLASH);
+	ts->SetFontFile(FONTBROWSERFILEPATH, TEXT_STYLE_BROWSER);
+	ts->SetFontFile(FONTSPLASHFILEPATH, TEXT_STYLE_SPLASH);
 
 	XML_Parser p = XML_ParserCreate(NULL);
 	if (!p)
@@ -362,10 +362,10 @@ void App::InitScreens() {
 	for(int b=0; b<brightness; b++)
 		NDSX_SetBrightness_Next();
 
-	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+	//BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+	//BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
 	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 
