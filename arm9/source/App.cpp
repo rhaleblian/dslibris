@@ -34,6 +34,8 @@
 
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
+#define BACKGROUND           (*((bg_attribute *)0x04000008))
+#define BACKGROUND_SUB       (*((bg_attribute *)0x04001008))
 
 App::App()
 {	
@@ -118,12 +120,12 @@ int App::Run(void)
 	parse_init(&parsedata);
 
 	// read preferences (to load bookdir)
-	Log("info : reading preferences to determine book directory.\n");
+
    	if(!prefs->Read(p))
 	{
-		Log("warn : could not open preferences, created defaults.\n");
+		Log("warn : could not open preferences.\n");
 	} else 
-		Log("info : preferences read.\n");
+		Log("info : read preferences.\n");
 	
 	// construct library.
 
@@ -143,16 +145,7 @@ int App::Run(void)
 	{
 		char *c;
 		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-		if (!stricmp(".htm",c) || !stricmp(".html",c))
-		{
-			Book *book = new Book();
-			books.push_back(book);
-			book->SetFolderName(bookdir.c_str());
-			book->SetFileName(filename);
-			book->SetTitle(filename);
-			bookcount++;
-		}
-		else if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
+		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
 		{
 			Book *book = new Book();
 			books.push_back(book);
@@ -226,39 +219,13 @@ int App::Run(void)
 
 	Log("progr: browser displayed.\n");
 
-#ifdef DEBUGTCP
-	// enable remote TCP debugging.
-	WifiConnect();
-
-	PrintStatus("[enabling debug stub]");
-	swiWaitForVBlank();
-
-	struct tcp_debug_comms_init_data init_data;
-	init_data.port = 30000;
-	if(!init_debug(&tcpCommsIf_debug, &init_data))
-		PrintStatus("[debug stub failed]");
-	else
-		PrintStatus("[debug stub initialized]");
-
-	swiWaitForVBlank();
-	debugHalt();
-#endif
-
-	BFTPServer server;
-	if(enableftp)
-	{
-		BFTPConfigurator configurator(&server);
-		configurator.configureFromFile("/data/settings/ftp.conf");
-
-		Log("info : FTP service configured.\n");
-		PrintStatus("[FTP enabled]");
-	}
-
 	if(option.reopen && !OpenBook())
 	{
 		Log("info : reopened current book.\n");
 		mode = APP_MODE_BOOK;
 	}
+	else Log("warn : could not reopen current book.\n");
+
 	swiWaitForVBlank();
 
 	// start event loop.
@@ -280,12 +247,6 @@ int App::Run(void)
 			|| mode == APP_MODE_PREFS_FONT_ITALIC)
 			HandleEventInFont();
 
-		if(enableftp)
-		{
-			server.handle();		
-		}
-
-		//UpdateClock();
 		swiWaitForVBlank();
 	}
 
@@ -335,12 +296,12 @@ void App::Log(std::string msg)
 	}
 }
 
-void App::Log(int x)
+void App::Log(int i)
 {
 	if(enablelogging)
 	{
 		FILE *logfile = fopen(LOGFILEPATH,"a");
-		fprintf(logfile,"%d",x);		
+		fprintf(logfile,"%d",i);		
 		fclose(logfile);
 	}
 }
@@ -360,10 +321,10 @@ void App::InitScreens() {
 	for(int b=0; b<brightness; b++)
 		NDSX_SetBrightness_Next();
 
-	//BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	//BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
+	BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
 	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
 	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
 

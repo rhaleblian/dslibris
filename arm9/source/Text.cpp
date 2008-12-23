@@ -2,23 +2,8 @@
 #include <fat.h>
 #include "Text.h"
 #include "App.h"
-#include "image_stack.h"
 #include "main.h"
 #include "version.h"
-
-// TODO move this to an image service class
-
-int getSize(uint8 *source, uint16 *dest, uint32 arg) {
-	return *(uint32*)source;
-}
-uint8 readByte(uint8 *source) { return *source; }
-
-void drawstack(u16 *screen) {
-	TDecompressionStream decomp = {getSize, NULL, readByte};
-	swiDecompressLZSSVram((void*)image_stackBitmap, screen, 0, &decomp);
-}
-
-// end TODO
 
 Text::Text()
 {
@@ -574,7 +559,6 @@ void Text::PrintSplash(u16 *screen)
 	u8 size = GetPixelSize();
 
 	ClearScreen(screen,31,31,31);
-	drawstack(screen);
 	SetInvert(false);
 	SetScreen(screen);
 	SetPen(20,40);
