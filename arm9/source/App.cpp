@@ -13,14 +13,6 @@
 #include <dswifi9.h>
 #include <DSGUI/BGUI.h>
 
-#ifdef DEBUGTCP
-#include <debug_stub.h>
-#include <debug_tcp.h>
-#endif
-
-#include <BFTPServer.h>
-#include <BFTPConfigurator.h>
-
 #include <nds/registers_alt.h>
 #include <nds/reload.h>
 
@@ -89,15 +81,18 @@ int App::Run(void)
 
 	powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
 	irqInit();
-	WifiInit();
-
 	irqEnable(IRQ_VBLANK);
 	irqEnable(IRQ_VCOUNT);
 	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
 
-	// get the filesystem going first so we can write a log.
+	InitScreens();
 
-	if (!fatInitDefault()) exit(-11);
+	// Get the filesystem going first so we can write a log.
+
+	if (!fatInitDefault()) {
+		Fatal("[filesystem mount failed]");
+		while(1) swiWaitForVBlank();
+	}
 
 	Log("\n");
 	Log("info : dslibris starting up.\n");
@@ -114,7 +109,7 @@ int App::Run(void)
 	if (!p)
 	{
 		Log("fatal: parser creation failed.\n");
-		exit(-6);
+		Fatal("fatal: parser creation failed.\n");
 	}
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
@@ -136,8 +131,7 @@ int App::Run(void)
 	if (!dp)
 	{
 		Log("fatal: no book directory.\n");
-		swiWaitForVBlank();
-		exit(-3);
+		Fatal("fatal: no book directory.\n");
 	}
 
 	char filename[MAXPATHLEN];
@@ -161,11 +155,12 @@ int App::Run(void)
 				sprintf(msg, "fatal: cannot index book '%s'.\n",
 					book->GetFileName());
 				Log(msg);
-				exit(-4);
+				Fatal(msg);
 			}
 			else if(rc == 254) {
-				sprintf(msg, "fatal: cannot make book parser.");
-				exit(-8);
+				sprintf(msg, "fatal: cannot make book parser.\n");
+				Log(msg);
+				Fatal(msg);
 			}
 			sprintf(msg, "info : book title '%s'.\n",book->GetTitle());
 			Log(msg);
@@ -175,6 +170,8 @@ int App::Run(void)
 	dirclose(dp);
 	swiWaitForVBlank();
 
+	Log("progr: books indexed.\n");
+
 	// read preferences.
 	
    	if(!prefs->Read(p))
@@ -183,7 +180,7 @@ int App::Run(void)
 	}
 	else Log("info : read preferences.\n");
 
-	// Sort bookmarks for each book
+	// Sort bookmarks for each book.
 	for(u8 i = 0; i < bookcount; i++)
 	{
 		books[i]->GetBookmarks()->sort();
@@ -195,12 +192,12 @@ int App::Run(void)
    	if (err) {
 		sprintf(msg, "fatal: starting typesetter failed (%d).\n", err);
 		Log(msg);
-		exit(err);
+		Fatal(msg);
 	} else Log("info : typesetter started.\n");
 
 	// initialize screens.
 
-	InitScreens();
+	//InitScreens();
 
 	Log("progr: display oriented.\n");
 
@@ -317,9 +314,9 @@ void App::Log(const char *format, const char *msg)
 }
 
 void App::InitScreens() {
-	NDSX_SetBrightness_0();
-	for(int b=0; b<brightness; b++)
-		NDSX_SetBrightness_Next();
+//	NDSX_SetBrightness_0();
+//	for(int b=0; b<brightness; b++)
+//		NDSX_SetBrightness_Next();
 
 	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
 	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
@@ -362,5 +359,20 @@ void App::InitScreens() {
 
 	screen1 = (u16*)BG_BMP_RAM(0);
 	screen0 = (u16*)BG_BMP_RAM_SUB(0);
+}
+
+void App::Fatal(const char *msg)
+{
+	//! We never return from this!
+	videoSetMode(0);
+	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);
+	vramSetBankC(VRAM_C_SUB_BG);
+	SUB_BG0_CR = BG_MAP_BASE(31);
+	BG_PALETTE_SUB[255] = RGB15(31,31,31);
+	consoleInitDefault(
+		(u16*)SCREEN_BASE_BLOCK_SUB(31),
+		(u16*)CHAR_BASE_BLOCK_SUB(0),16);
+	iprintf(msg);
+	while(1) swiWaitForVBlank();
 }
 

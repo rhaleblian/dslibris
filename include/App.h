@@ -1,6 +1,54 @@
 #ifndef APP_H
 #define APP_H
 
+/*!
+\mainpage
+
+Welcome to the documentation for dslibris, a book reader for Nintendo DS.
+
+\section Prerequisites
+
+Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently we're on Ubuntu 8.04 and Arch Linux. Have
+  - devkitPro v20 installed, including
+	devkitARM,
+	libnds,
+	libfat,
+	libwifi,
+	and masscat's DS wifi debug stub library.
+  - On Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
+  - Optionally, desmume 0.7.3 or better and Insight, if you want to debug with gdb (see Debugging).
+  - A media card and a DLDI patcher, but you knew that.
+
+Set DEVKITPRO and DEVKITARM in your environment.
+
+\section Building
+
+\code
+cd ndslibris/trunk  # or wherever you put the SVN trunk
+make
+\endcode
+
+dslibris.nds should show up in your current directory.
+ 
+Note the libraries in 'external' are required prebuilts for arm-eabi; make sure you don't have conflicting libs in your path.
+
+\section Installation
+
+see INSTALL.txt.
+
+\section Debugging
+
+gdb and insight-6.6 have been known to work for debugging. See online forums for means to build an arm-eabi targeted Insight for your platform.
+
+\section Homepage
+
+http://sourceforge.net/projects/ndslibris
+
+\author ray haleblian
+
+*/
+
+
 #include <nds.h>
 #include <expat.h>
 #include <unistd.h>
@@ -24,7 +72,7 @@
 #define APP_MODE_PREFS_FONT 3
 #define APP_MODE_PREFS_FONT_BOLD 4
 #define APP_MODE_PREFS_FONT_ITALIC 5
-#define APP_URL "http://ndslibris.sourceforge.net"
+#define APP_URL "http://sourceforge.net/projects/ndslibris"
 
 #define PREFS_BUTTON_COUNT 7
 #define PREFS_BUTTON_BOOKS 0
@@ -40,6 +88,7 @@ class App {
 	void InitScreens();
 	void WifiInit();
 	bool WifiConnect();
+	void Fatal(const char *msg);
 
 	public:
 	Text *ts;
@@ -91,6 +140,10 @@ class App {
 	vector<Text*> fontTs;
 	u8 fontPage;
 
+	//BImage *image0;
+	//BScreen *bscreen0;
+	//BProgressBar *progressbar;
+
 	bool enablelogging;
 	bool enableftp;
 
@@ -100,6 +153,7 @@ class App {
 	void CycleBrightness();
 	void PrintStatus(const char *msg);
 	void PrintStatus(string msg);
+	void SetProgress(int amount);
 	void UpdateClock();
 
 	void Log(const char*);

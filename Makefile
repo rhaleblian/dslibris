@@ -1,4 +1,10 @@
 #-------------------------------------------------------------------------------
+# Modify for local site.
+#-------------------------------------------------------------------------------
+export MEDIAROOT	:=	/media/SANDISK
+export MEDIADLDI	:=	r4tf
+
+#-------------------------------------------------------------------------------
 .SUFFIXES:
 #-------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITARM)),)
@@ -9,10 +15,6 @@ include $(DEVKITARM)/ds_rules
 
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
-
-# symlink the mountpoint for your sd card to 'install'
-export MEDIAROOT	:=	install
-export MEDIATYPE	:=	r4tf
 
 #-------------------------------------------------------------------------------
 # path to tools - this can be deleted if you set the path in windows
@@ -49,35 +51,25 @@ clean:
 	$(MAKE) -C arm7 clean
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
 
-# run target with desmume and files in /tmp. not used anymore.
-test-tmp: $(TARGET).nds
-	- mkdir -p /tmp/$(TARGET)
-	cp $(TARGET).nds /tmp/$(TARGET)
-	- mkdir -p /tmp/$(TARGET)/book
-	cp data/book/* /tmp/$(TARGET)/book
-	- mkdir -p /tmp/$(TARGET)/font
-	cp data/font/* /tmp/$(TARGET)/font
-	(cd /tmp/$(TARGET); desmume-cli $(TARGET).nds)
-
-# run target with a vfat image file. the assumed testing method now.
-test-vfat: $(TARGET).nds
+# Run target with a vfat image file. the assumed testing method now.
+test: $(TARGET).nds
 	desmume --cflash=media.img dslibris.nds
 
-test: test-vfat
-
-#create a cflash image for use with desmume and test-vfat rule.
-vfat-image:
+# Create a cflash image for use with test and debug rules. Linux only.
+media:
 	dd if=/dev/zero of=media.img bs=1048576 count=32
 	/sbin/mkfs.msdos -F16 media.img
 		
-# debug target with insight and desmume under linux
+# Debug target with insight and desmume under Linux.
 debug: $(TARGET).nds
-	arm-eabi-insight arm9/dslibris.arm9.elf &
 	desmume --cflash=media.img --arm9gdb=20000 $(TARGET).nds &
+	sleep 2
+	arm-eabi-insight arm9/dslibris.arm9.elf &
 
 debug7: $(TARGET).nds
-	arm-eabi-insight arm7/dslibris.arm7.elf &
 	desmume --cflash=media.img --arm7gdb=20001 $(TARGET).nds &
+	sleep 2
+	arm-eabi-insight arm7/dslibris.arm7.elf &
 	
 gdb: $(TARGET).nds
 	desmume-cli --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &
@@ -127,3 +119,9 @@ umount:
 	sync
 	- sudo umount media
 	- rmdir media
+
+##! For true TF card, not CFLASH image.
+eject:
+	sync
+	- sudo umount $(MEDIAROOT)
+

@@ -26,12 +26,6 @@
 
 void App::HandleEventInBook()
 {
-	//Keishava - assigned the right and left direction keys
-	//to scroll fast if the key is kept depressed, instead of
-	//stopping at the previous / next page if KEY_UP/KEY_DOWN
-	//is pressed.
-	//Aaron - Removed excessive preference saving
-
 	u32 keys = keysDownRepeat();
 
 	if (keys & (KEY_A|KEY_R|KEY_DOWN))
@@ -69,6 +63,7 @@ void App::HandleEventInBook()
 
 	else if (keys & KEY_START)
 	{
+		// return to browser.
 		option.reopen = false;
 		mode = APP_MODE_BROWSER;
 		if(orientation) ts->PrintSplash(screen1);
@@ -78,6 +73,7 @@ void App::HandleEventInBook()
 
 	else if (keys & KEY_TOUCH)
 	{
+		// turn page on touch.
 		touchPosition touch = touchReadXY();
 		if (touch.py < 96)
 		{
@@ -178,27 +174,17 @@ u8 App::OpenBook(void)
 	const char *filename = books[bookselected]->GetFileName();
 	const char *c;
 	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-	if(!strcmp(c,".htm") || !strcmp(c,".html"))
+	if (books[bookselected]->Parse(filebuf))
 	{
-		if(!books[bookselected]->ParseHTML(filebuf))
-		{
-			bookcurrent = bookselected;
-			pagecurrent = books[bookselected]->GetPosition();
-			page_draw(&(pages[pagecurrent]));
-			prefs->Write();			
-			return 0;
-		}
-	}		
-	if (!books[bookselected]->Parse(filebuf))
-	{
-		bookcurrent = bookselected;
-		pagecurrent = books[bookselected]->GetPosition();
-		page_draw(&(pages[pagecurrent]));
-		prefs->Write();
-		return 0;
+		PrintStatus("[could not open book]");
+		return 255;
 	}
 
-	return 255;
+	bookcurrent = bookselected;
+	pagecurrent = books[bookselected]->GetPosition();
+	page_draw(&(pages[pagecurrent]));
+	prefs->Write();
+	return 0;
 }
 
 void App::page_init(page_t *page)

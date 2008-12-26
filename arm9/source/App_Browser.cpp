@@ -30,9 +30,6 @@ void App::HandleEventInBrowser()
 	{
 		AttemptBookOpen();
 	}
-
-	//Keishava - added KEY_DOWN to eliminate need to move finger to the 'A' switch
-	//for selecting a book from the browser.
 	else if (keysDown() & KEY_DOWN)
 	{
 		AttemptBookOpen();
@@ -223,6 +220,7 @@ void App::browser_draw(void)
 
 void App::browser_redraw()
 {
+	//! Redraw all buttons visible in the browser.
 	// only call this when incrementing or decrementing the
 	// selected book; otherwise use browser_draw().
 
@@ -267,13 +265,25 @@ void App::AttemptBookOpen()
 		browser_draw();
 }
 
+#define STATUSBOX_X 20
+#define STATUSBOX_Y 220
+#define STATUSBOX_W (PAGE_WIDTH-(STATUSBOX_X*2))
+#define STATUSBOX_H 24
+
 void App::PrintStatus(const char *msg) {
 	bool invert = ts->GetInvert();
+	u16* screen = ts->GetScreen();
+	u8 pixelsize = ts->GetPixelSize();
+	
+	ts->SetPixelSize(11);
 	ts->SetScreen(screen0);
 	ts->SetInvert(false);
-	ts->ClearRect(0,PAGE_HEIGHT/2-36,255,PAGE_HEIGHT/2-12);
-	ts->SetPen(20,PAGE_HEIGHT/2-16);
+	ts->ClearRect(0,220,255,255);
+	ts->SetPen(20,STATUSBOX_Y);
 	ts->PrintString(msg);
+
+	ts->SetPixelSize(pixelsize);
+	ts->SetScreen(screen);
 	ts->SetInvert(invert);
 }
 

@@ -20,6 +20,5 @@ INSTALLATION
 
 TROUBLESHOOTING
 
-Look for the file DSLIBRIS.LOG on your media root.
-Send this file to developers when you encounter a problem.
-
+Look for the file DSLIBRIS.LOG on your media root. Send this file to 
+developers when you encounter a problem.
