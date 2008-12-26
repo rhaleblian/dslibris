@@ -331,6 +331,7 @@ int main( void)
 	while (1) {
 		swiWaitForVBlank();
 
+#if 0
 		// reboot?
 		if((*(vu32*)0x27ffffc) != 0)
 		{
@@ -345,6 +346,7 @@ int main( void)
 
 			eloop();
 		}
+#endif
 	}
 }
 
