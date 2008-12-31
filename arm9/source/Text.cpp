@@ -21,6 +21,7 @@ Text::Text()
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
 }
+
 Text::~Text()
 {
 	ClearCache();
@@ -239,9 +240,10 @@ void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 	if(invert) clearcolor = RGB15(0,0,0) | BIT(15);
 	else clearcolor = RGB15(31,31,31) | BIT(15);
 	for(u16 y=yl; y<yh; y++) {
-		for(u16 x=xl; x<xh; x++) {
-			screen[y*PAGE_HEIGHT+x] = clearcolor;
-		}
+//		for(u16 x=xl; x<xh; x++) {
+			//screen[y*PAGE_HEIGHT+x] = clearcolor;
+//		}
+		dmaCopyHalfWords(3,(void*)&clearcolor,(void*)(screen+y*PAGE_HEIGHT),(xh-xl)*2);
 	}
 }
 
@@ -265,7 +267,7 @@ u8 Text::GetStringWidth(const char *txt, FT_Face face)
 
 
 u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
-	// given a UTF-8 encoding, fill in the Unicode/UCS code point.
+	//! given a UTF-8 encoding, fill in the Unicode/UCS code point.
 	// returns the bytelength of the encoding, for advancing
 	// to the next character.
 	// returns 0 if encoding could not be translated.
@@ -555,13 +557,14 @@ void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 
 void Text::PrintSplash(u16 *screen)
 {
-	bool invert = GetInvert();
-	u8 size = GetPixelSize();
+//	bool invert = GetInvert();
+//	u8 size = GetPixelSize();
+//	u16 *s = GetScreen();
 
-	ClearScreen(screen,31,31,31);
-	SetInvert(false);
-	SetScreen(screen);
-	SetPen(20,40);
+//	ClearScreen(screen,31,31,31);
+//	SetInvert(false);
+//	SetScreen(screen);
+/*	SetPen(20,40);
 	SetPixelSize(30);
 	PrintString("dslibris", TEXT_STYLE_SPLASH);
 	SetPixelSize(11);
@@ -571,11 +574,12 @@ void Text::PrintSplash(u16 *screen)
 	PrintString("for Nintendo DS", TEXT_STYLE_BROWSER);
 	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
 	PrintString(VERSION, TEXT_STYLE_BROWSER);
-
-	SetPixelSize(size);
-	SetInvert(invert);
-
-	swiWaitForVBlank();
+*/
+	splash();
+	app->PrintStatus(VERSION);
+//	SetPixelSize(size);
+//	SetInvert(invert);
+//	SetScreen(s);
 }
 
 void Text::SetFontFile(const char *filename, u8 style)
@@ -603,3 +607,9 @@ FT_Face Text::GetFace(u8 style)
 		return faces[TEXT_STYLE_NORMAL];
 }
 
+void Text::SwapScreens()
+{
+	u16 *tmp = screenleft;
+	screenleft = screenright;
+	screenright = tmp;
+}

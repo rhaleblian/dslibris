@@ -1,0 +1,7 @@
+support epub.
+fix page 1 skipping.
+speed up parse.
+speed up text redraw in browser.
+restore fakey orientation.
+integrate calibre and gutenmark.
+

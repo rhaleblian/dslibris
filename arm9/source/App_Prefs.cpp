@@ -9,11 +9,7 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
 
-#include "ndsx_brightness.h"
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "App.h"
@@ -66,48 +62,36 @@ void App::PrefsInit()
 
 void App::PrefsRefreshButtonBooks()
 {
-	char msg[128];
-	strcpy(msg, "");
 	sprintf((char*)msg, "Book Folder\n    %s", bookdir.c_str());
 	prefsButtonBooks.Label(msg);
 }
 
 void App::PrefsRefreshButtonFonts()
 {
-	char msg[128];
-	strcpy(msg, "");
 	sprintf((char*)msg, "Font Folder\n    %s", fontdir.c_str());
 	prefsButtonFonts.Label(msg);
 }
 
 void App::PrefsRefreshButtonFont()
 {
-	char msg[128];
-	strcpy(msg, "");
 	sprintf((char*)msg, "Change Font\n    %s", ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
 	prefsButtonFont.Label(msg);
 }
 
 void App::PrefsRefreshButtonFontBold()
 {
-	char msg[128];
-	strcpy(msg, "");
 	sprintf((char*)msg, "Change Bold Font\n    %s", ts->GetFontFile(TEXT_STYLE_BOLD).c_str());
 	prefsButtonFontBold.Label(msg);
 }
 
 void App::PrefsRefreshButtonFontItalic()
 {
-	char msg[128];
-	strcpy(msg, "");
 	sprintf((char*)msg, "Change Italic Font\n    %s", ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
 	prefsButtonFontItalic.Label(msg);
 }
 
 void App::PrefsRefreshButtonFontSize()
 {
-	char msg[30];
-	strcpy(msg, "");
 	if (ts->GetPixelSize() == 1)
 		sprintf((char*)msg, "Change Font Size\n    [ %d >", ts->GetPixelSize());
 	else if (ts->GetPixelSize() == 255)
@@ -119,8 +103,6 @@ void App::PrefsRefreshButtonFontSize()
 
 void App::PrefsRefreshButtonParaspacing()
 {
-	char msg[38];
-	strcpy(msg, "");
 	if (paraspacing == 0)
 		sprintf((char*)msg, "Change Paragraph Spacing\n    [ %d >", paraspacing);
 	else if (paraspacing == 255)
@@ -140,18 +122,11 @@ void App::PrefsDraw(bool redraw)
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
+	u16* screen = ts->GetScreen();
 
-	u16* screen;
-	if (orientation)
-		screen = screen0;
-	else
-		screen = screen1;
- 
-	ts->SetScreen(screen);
+	ts->SetScreen(screenright);
 	ts->SetInvert(false);
-	if (redraw) {
-		ts->ClearScreen(screen,31,31,31);
-	}
+	if (redraw) ts->ClearScreen();
 	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
 	{
@@ -164,6 +139,7 @@ void App::PrefsDraw(bool redraw)
 	// restore state.
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
+	ts->SetScreen(screen);
 }
 
 void App::HandleEventInPrefs()
@@ -180,7 +156,8 @@ void App::HandleEventInPrefs()
 	} else if (keysDown() & KEY_A) {
 		PrefsButton();
 	} else if (keysDown() & KEY_TOUCH) {
-		touchPosition touch = touchReadXY();
+		touchPosition touch;
+		touchRead(&touch);
 		touchPosition coord;
 		u8 regionprev[2];
 		regionprev[0] = 0;
@@ -285,30 +262,20 @@ void App::PrefsDecreaseParaspacing()
 
 void App::PrefsButton()
 {
-	if (prefsSelected == PREFS_BUTTON_BOOKS) {
-	} else if (prefsSelected == PREFS_BUTTON_FONTS) {
-	} else if (prefsSelected == PREFS_BUTTON_FONT) {
-		ts->SetScreen(screen1);
-		ts->ClearScreen(screen1,31,31,31);
+	if (prefsSelected != PREFS_BUTTON_BOOKS)
+	{ 
+		if(prefsSelected == PREFS_BUTTON_FONTS) {
+		} else if (prefsSelected == PREFS_BUTTON_FONT) {
+			mode = APP_MODE_PREFS_FONT;
+		} else if (prefsSelected == PREFS_BUTTON_FONT_BOLD) {
+			mode = APP_MODE_PREFS_FONT_BOLD;
+		} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
+			mode = APP_MODE_PREFS_FONT_ITALIC;
+		}
+		ts->SetScreen(screenright);
+		ts->ClearScreen();
 		ts->SetPen(marginleft,PAGE_HEIGHT/2);
 		ts->PrintString("[loading fonts...]");
-		mode = APP_MODE_PREFS_FONT;
-		FontInit();
-		FontDraw();
-	} else if (prefsSelected == PREFS_BUTTON_FONT_BOLD) {
-		ts->SetScreen(screen1);
-		ts->ClearScreen(screen1,31,31,31);
-		ts->SetPen(marginleft,PAGE_HEIGHT/2);
-		ts->PrintString("[loading fonts...]");
-		mode = APP_MODE_PREFS_FONT_BOLD;
-		FontInit();
-		FontDraw();
-	} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
-		ts->SetScreen(screen1);
-		ts->ClearScreen(screen1,31,31,31);
-		ts->SetPen(marginleft,PAGE_HEIGHT/2);
-		ts->PrintString("[loading fonts...]");
-		mode = APP_MODE_PREFS_FONT_ITALIC;
 		FontInit();
 		FontDraw();
 	}

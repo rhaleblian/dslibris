@@ -9,11 +9,7 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
 
-#include "ndsx_brightness.h"
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "App.h"
@@ -64,17 +60,18 @@ void App::HandleEventInBook()
 	else if (keys & KEY_START)
 	{
 		// return to browser.
-		option.reopen = false;
 		mode = APP_MODE_BROWSER;
-		if(orientation) ts->PrintSplash(screen1);
-		else ts->PrintSplash(screen0);
+		ts->PrintSplash(screenleft);
+		reopen = false; // Resume in browser, not in book.
+		prefs->Write();
 		browser_draw();
 	}
 
 	else if (keys & KEY_TOUCH)
 	{
 		// turn page on touch.
-		touchPosition touch = touchReadXY();
+		touchPosition touch;
+ 		touchRead(&touch);
 		if (touch.py < 96)
 		{
 			if (pagecurrent > 0) pagecurrent--;
@@ -156,13 +153,7 @@ void App::HandleEventInBook()
 
 u8 App::OpenBook(void)
 {
-	ts->SetScreen(screen0);
-	ts->SetPen(20,PAGE_HEIGHT/2 - 10);
-	bool invert = ts->GetInvert();
-	ts->SetInvert(false);
 	PrintStatus("[opening book...]");
-	ts->SetInvert(invert);
-
 	swiWaitForVBlank();
 
 	pagecount = 0;
@@ -171,7 +162,10 @@ u8 App::OpenBook(void)
 	bookItalic = false;
 	page_init(&pages[pagecurrent]);
 	ts->ClearCache();
+	ts->SetScreen(screenleft);
 	const char *filename = books[bookselected]->GetFileName();
+
+	// c will point to the file's extension.
 	const char *c;
 	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 	if (books[bookselected]->Parse(filebuf))
@@ -227,24 +221,12 @@ u8 App::page_getjustifyspacing(page_t *page, u16 i)
 
 void App::parse_printerror(XML_Parser p)
 {
-	u16 *screen = ts->GetScreen();
-	u16 x,y;
-	ts->GetPen(x,y);
-
-	char msg[256];
-	sprintf(msg,"line %d, col %d: %s\n",
+	sprintf(msg,"%d:%d: %s\n",
 		(int)XML_GetCurrentLineNumber(p),
 		(int)XML_GetCurrentColumnNumber(p),
 		XML_ErrorString(XML_GetErrorCode(p)));
 	Log(msg);
-
-	ts->SetScreen(screen0);
-	ts->InitPen();
-	ts->ClearScreen();
-	ts->PrintString(msg);
-
-	ts->SetScreen(screen);
-	ts->SetPen(x,y);
+	PrintStatus(msg);
 }
 
 void App::parse_init(parsedata_t *data)
@@ -284,7 +266,7 @@ bool App::parse_pagefeed(parsedata_t *data, page_t *page)
 	bool pagedone = false;
 	u16 *screen = ts->GetScreen();
 
-	if (screen == screen1)
+	if (screen == screenright)
 	{
 		// we left the right page, save chars into this page.
 
@@ -298,12 +280,12 @@ bool App::parse_pagefeed(parsedata_t *data, page_t *page)
 			}
 		}
 		memcpy(page->buf,pagebuf,page->length * sizeof(u8));
-		ts->SetScreen(screen0);
+		ts->SetScreen(screenleft);
 		pagedone = true;
 	}
 	else
 	{
-		ts->SetScreen(screen1);
+		ts->SetScreen(screenright);
 		pagedone = false;
 	}
 	data->pen.x = marginleft;
@@ -313,9 +295,9 @@ bool App::parse_pagefeed(parsedata_t *data, page_t *page)
 
 void App::page_draw(page_t *page)
 {
-	ts->SetScreen(screen1);
+	ts->SetScreen(screenright);
 	ts->ClearScreen();
-	ts->SetScreen(screen0);
+	ts->SetScreen(screenleft);
 	ts->ClearScreen();
 	ts->InitPen();
 	bool linebegan = false;
@@ -334,8 +316,8 @@ void App::page_draw(page_t *page)
 
 			if (ts->GetPenY() + ts->GetHeight() + linespacing > PAGE_HEIGHT - marginbottom)
 			{
-				if(ts->GetScreen() == screen0) {
-					ts->SetScreen(screen1);
+				if(ts->GetScreen() == screenleft) {
+					ts->SetScreen(screenright);
 					ts->InitPen();
 					linebegan = false;
 				}
@@ -376,9 +358,6 @@ void App::page_draw(page_t *page)
 
 	// page number
 	
-	char msg[9];
-	strcpy(msg,"");
-	
 	// Find out if the page is bookmarked or not
 	bool isBookmark = false;
 	Book* book = books[bookselected];
@@ -406,7 +385,7 @@ void App::page_draw(page_t *page)
 		else
 			sprintf((char*)msg,"< %d >",pagecurrent+1);
 	}
-	ts->SetScreen(screen1);
+	ts->SetScreen(screenright);
 	u8 offset = (u8)((PAGE_WIDTH-marginleft-marginright-(ts->GetAdvance(40)*7))
 		* (pagecurrent / (float)pagecount));
 	ts->SetPen(marginleft+offset,250);

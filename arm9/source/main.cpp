@@ -21,47 +21,97 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 #include <nds.h>
-
+#include <stdio.h>
 #include <expat.h>
-#include "types.h"
+
 #include "App.h"
 #include "Book.h"
 #include "Button.h"
 #include "Text.h"
 #include "main.h"
 #include "parse.h"
+#include "splash.h"
 
 App *app;
 bool linebegan = false;
 // Static vars needed for state in the XML config callback prefs_start_hndl
-char reopenName[MAXPATHLEN];
-int book = -1;
+//char reopenName[MAXPATHLEN];
+int book = -1; //! Current book context.
 bool parseFontBold = false;
 bool parseFontItalic = false;
 
 /*---------------------------------------------------------------------------*/
 
-int main(void)
+void spin()
 {
-	strcpy(reopenName,"");
-	
-	app = new App();
-	return app->Run();
+	while (1) swiWaitForVBlank();
+}
+
+void greenblue()
+{
+	u16 green = ARGB16(1,0,15,0);
+	u16 blue = ARGB16(1,0,0,15);
+	for(int i=0; i<256; i++)
+	{
+		for(int j=0; j<256; j++) {
+			BG_BMP_RAM(0)[j+i*256] = green;
+			BG_BMP_RAM_SUB(0)[j+i*256] = blue;
+		}
+	}
 }
 
 bool iswhitespace(u8 c)
 {
 	switch (c)
 	{
-	case ' ':
-	case '\t':
-	case '\n':
-		return true;
-		break;
-	default:
-		return false;
-		break;
+		case ' ':
+		case '\t':
+		case '\n':
+			return true;
+			break;
+		default:
+			return false;
+			break;
 	}
+}
+
+void initScreenLeft()
+{	
+	//! Bring up left screen.
+	videoSetMode(MODE_5_2D);
+	vramSetBankA(VRAM_A_MAIN_BG);
+	int bgMain = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bgSetCenter(bgMain,0,0);
+	bgRotate(bgMain,-8192);
+	bgScroll(bgMain,0,256);
+	bgUpdate(bgMain);
+	decompress(splashBitmap, BG_GFX, LZ77Vram);
+}
+
+void splash()
+{
+	//! Draw graphic, the left screen must be initialized. 
+	decompress(splashBitmap, BG_GFX, LZ77Vram);
+}
+
+int main(void)
+{
+	defaultExceptionHandler();
+
+	initScreenLeft();
+	
+	consoleDemoInit();
+	iprintf("dslibris 1.3.\n");
+
+	if(!fatInitDefault())
+	{
+		iprintf("fatal: no filesystem.\n");
+	//	spin();
+	}
+
+//	strcpy(reopenName,"");
+	app = new App();
+	return app->Run();
 }
 
 u8 GetParserFace()
@@ -78,14 +128,16 @@ void prefs_start_hndl(	void *userdata,
 						const XML_Char *name,
 						const XML_Char **attr)
 {
-	Book *data = (Book*)userdata;
+	vector<Book*> *data = (vector<Book*>*)userdata;
+	int position = 0; //! Page position in book.
 	char filename[MAXPATHLEN];
-	strcpy(filename,"");
-	u16 position = 0;
-	u8 i;
-
-	app->Log("prog : element %s\n", name);
+	bool current = FALSE;
+	int i;
  
+	char msg[256];
+	sprintf(msg,"info : found <%s>\n",name);
+	app->Log(msg);
+	
 	if (!stricmp(name,"library"))
 	{
 		for(i=0;attr[i];i+=2) {
@@ -142,7 +194,8 @@ void prefs_start_hndl(	void *userdata,
 	{
 		for (i = 0; attr[i]; i+=2) {
 			if (!strcmp(attr[i], "reopen"))
-				app->option.reopen = atoi(attr[i+1]);
+				// For prefs where reopen was a string, reopen will get turned off.
+				app->reopen = atoi(attr[i+1]);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
 					app->bookdir = string(attr[i+1]);
@@ -151,6 +204,9 @@ void prefs_start_hndl(	void *userdata,
 	}
 	else if (!stricmp(name, "book"))
 	{
+		strcpy(filename,"");
+		current = FALSE;
+
 		for (i = 0; attr[i]; i+=2) {
 			if (!strcmp(attr[i], "file"))
 				strcpy(filename, attr[i+1]);
@@ -158,27 +214,34 @@ void prefs_start_hndl(	void *userdata,
 				position = atoi(attr[i+1]);
 			if (!strcmp(attr[i], "current"))
 			{
-				app->bookcurrent = i;
-				app->bookselected = i;
+				// Should warn if multiple books are current...
+				// the last current book will win.
+				if(atoi(attr[i+1])) current = TRUE;
 			}
         }
-		// Find the book index for this library entry,
-		// to know the context for bookmarks.
+		
+		// Find the book index for this library entry
+		// and set context for later bookmarks.
 		for(i = 0; i < app->bookcount; i++)
 		{
-			if(!stricmp(data[i].GetFileName(), filename))
+			const char *bookname = (*data)[i]->GetFileName();
+			if(!stricmp(bookname, filename))
 			{
-				book = i;
+				char msg[128];
+				sprintf(msg,"info : matched extant book '%s'.\n",bookname);
+				app->Log(msg);
 				
-				if (position)
-					data[i].SetPosition(position - 1);
-/*				
-				if (!stricmp(reopenName, filename))
+				book = i;	// bookmark tags will refer to this.
+				if (current)
 				{
-					app->reopen = true;
+					// Set this book as current.
+					app->bookcurrent = i;
 					app->bookselected = i;
 				}
-*/				
+				if (position)
+					// Set current page in this book.
+					(*data)[i]->SetPosition(position - 1);
+
 				break;
 			}
 		}
@@ -203,7 +266,7 @@ void prefs_start_hndl(	void *userdata,
 			if (!strcmp(attr[i],"right")) app->marginright = atoi(attr[i+1]);
 			if (!strcmp(attr[i],"top")) app->margintop = atoi(attr[i+1]);
 			if (!strcmp(attr[i],"bottom")) app->marginbottom = atoi(attr[i+1]);
-		}		
+		}
 	}
 }
 
@@ -531,9 +594,9 @@ void end_hndl(void *data, const char *el)
 			}
 			if (p->pen.y > (PAGE_HEIGHT-app->marginbottom))
 			{
-				if (app->ts->GetScreen() == app->screen1)
+				if (app->ts->GetScreen() == app->screenright)
 				{
-					app->ts->SetScreen(app->screen0);
+					app->ts->SetScreen(app->screenleft);
 					if (!page->buf)
 						page->buf = (u8*)new u8[page->length];
 					strncpy((char*)page->buf,(char *)app->pagebuf,page->length);
@@ -545,7 +608,7 @@ void end_hndl(void *data, const char *el)
 				}
 				else
 				{
-					app->ts->SetScreen(app->screen1);
+					app->ts->SetScreen(app->screenright);
 				}
 				p->pen.x = app->marginleft;
 				p->pen.y = app->margintop + app->ts->GetHeight();

@@ -12,7 +12,7 @@ using namespace std;
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 #define CACHESIZE 256
 #define PIXELSIZE 12
-#define DPI 110 /** Reference: http://www.displaymate.com/psp_ds_shootout.htm **/
+#define DPI 110 //! Reference: http://www.displaymate.com/psp_ds_shootout.htm
 #define TEXT_BOLD_ON 2
 #define TEXT_BOLD_OFF 3
 #define TEXT_ITALIC_ON 4
@@ -94,6 +94,7 @@ public:
 	bool usebgcolor;
 
 	Text();
+	Text(class App *parent) { app = parent; }
 	~Text();
 	int  Init();
 	void InitPen(void);
@@ -119,12 +120,13 @@ public:
 	bool SetFace(u8 style);
 	void SetFontFile(const char *filename, u8 style);
 	void SetScreen(u16 *s);
-
+	
 	void ClearCache();
 	void ClearCache(u8 style);
 	void ClearRect(u16 xl, u16 yl, u16 xh, u16 yh);
 	void ClearScreen();
 	void ClearScreen(u16*, u8, u8, u8);
+	void SwapScreens();
 
 	void PrintChar(u32 ucs);
 	void PrintChar(u32 ucs, u8 style);
@@ -136,4 +138,3 @@ public:
 };
 
 #endif
-

@@ -1,6 +1,8 @@
+#if 0
 #include <App.h>
 #include <dswifi9.h>
 #include <DSGUI/BIPCCodes.h>
+
 
 #define WIFI_UPDATE_FREQ 50
 
@@ -114,3 +116,4 @@ bool App::WifiConnect()
 	return false;
 }
 
+#endif

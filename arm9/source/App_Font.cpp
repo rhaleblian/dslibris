@@ -9,11 +9,7 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
 
-#include "ndsx_brightness.h"
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "App.h"
@@ -116,7 +112,8 @@ void App::HandleEventInFont()
 	} else if (keysDown() & KEY_A) {
 		FontButton();
 	} else if (keysDown() & KEY_TOUCH) {
-		touchPosition touch = touchReadXY();
+		touchPosition touch;
+		touchRead(&touch);
 		touchPosition coord;
 		u8 regionprev[2], regionnext[2];
 		regionprev[0] = 0;
@@ -181,33 +178,29 @@ void App::FontDraw(bool redraw)
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
+	u16* screen = ts->GetScreen();
 
-	u16* screen;
-	if (orientation)
-		screen = screen0;
-	else
-		screen = screen1;
- 
 	ts->SetInvert(false);
 	if (redraw) {
-		ts->ClearScreen(screen,31,31,31);
+		ts->ClearScreen();
 	}
 	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = fontPage * 7; (i < fontTs.size()) && (i < (fontPage + 1) * 7); i++)
 	{
-		fontButtons[i].Draw(screen, i == fontSelected);
+		fontButtons[i].Draw(screenright, i == fontSelected);
 	}
 	buttonprefs.Label("Cancel");
 	buttonprefs.Draw(screen, false);
 
 	if((u8)fontTs.size() > (fontPage + 1) * 7)
-		buttonnext.Draw(screen, false);
+		buttonnext.Draw(screenright, false);
 	if(fontSelected > 7)
-		buttonprev.Draw(screen, false);
+		buttonprev.Draw(screenright, false);
 
 	// restore state.
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
+	ts->SetScreen(screen);
 }
 
 void App::FontNextPage()
@@ -231,9 +224,9 @@ void App::FontPreviousPage()
 void App::FontButton()
 {
 	bool invert = ts->GetInvert();
-	ts->SetScreen(screen1);
+	ts->SetScreen(screenright);
 	ts->SetInvert(false);
-	ts->ClearScreen(screen1,31,31,31);
+	ts->ClearScreen();
 	ts->SetPen(marginleft,PAGE_HEIGHT/2);
 	ts->PrintString("[saving font...]");
 	ts->SetInvert(invert);

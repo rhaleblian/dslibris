@@ -2,8 +2,6 @@
 #include "main.h"
 #include "parse.h"
 #include "App.h"
-#include <tidy.h>
-#include <buffio.h>
 #include <stdio.h>
 #include <errno.h>
 
@@ -75,6 +73,7 @@ void Book::SetPosition(s16 pos)
 
 u8 Book::Index(char *filebuf)
 {
+	//! Parse book for title only. To populate browser.
 	char path[128];
 	if(foldername.length()) {
 		strcpy(path,foldername.c_str());
@@ -106,8 +105,9 @@ u8 Book::Index(char *filebuf)
 
 u8 Book::Parse(char *filebuf)
 {
+	//! Parse full text. Expat handlers do the heavy work.
 	u8 rc = 0;
-	char path[256];
+	char path[MAXPATHLEN];
 	sprintf(path,"%s%s",GetFolderName(),GetFileName());
 	FILE *fp = fopen(path,"r");
 	if (!fp)

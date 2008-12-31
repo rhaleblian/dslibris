@@ -9,11 +9,7 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
 
-#include "ndsx_brightness.h"
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "App.h"
@@ -21,15 +17,13 @@
 #include "Button.h"
 #include "Text.h"
 
-#define MIN(x,y) (x < y ? x : y)
-#define MAX(x,y) (x > y ? x : y)
-
 void App::HandleEventInBrowser()
 {
 	if (keysDown() & KEY_A)
 	{
 		AttemptBookOpen();
 	}
+	
 	else if (keysDown() & KEY_DOWN)
 	{
 		AttemptBookOpen();
@@ -81,14 +75,15 @@ void App::HandleEventInBrowser()
 	{
 		mode = APP_MODE_BOOK;
 		page_draw(&(pages[pagecurrent]));
-		option.reopen = true;
 		prefs->Write();
 	}
 
 	else if (keysDown() & KEY_TOUCH)
 	{
-		touchPosition touch = touchReadXY();
+		touchPosition touch;
 		touchPosition coord;
+
+		touchRead(&touch);
 
 		if(!orientation)
 		{
@@ -120,7 +115,7 @@ void App::HandleEventInBrowser()
 				browser_draw();
 			}
 		} else {
-			for(u8 i=browserstart;
+			for(u8 i=browserstart; 
 				(i<bookcount) &&
 				(i<browserstart+APP_BROWSER_BUTTON_COUNT);
 				i++) {
@@ -190,14 +185,11 @@ void App::browser_draw(void)
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
+ 	u16 *screen = ts->GetScreen();
 
-	u16* screen;
-	if(orientation) screen = screen0;
-	else screen = screen1;
- 
-	ts->SetScreen(screen);
+	ts->SetScreen(screenright);
 	ts->SetInvert(false);
-	ts->ClearScreen(screen,31,31,31);
+	ts->ClearScreen();
 	ts->SetPixelSize(PIXELSIZE);
 	for (int i=browserstart;
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
@@ -216,6 +208,7 @@ void App::browser_draw(void)
 	// restore state.
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
+	ts->SetScreen(screen);
 }
 
 void App::browser_redraw()
@@ -228,19 +221,15 @@ void App::browser_redraw()
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 
-	u16 *screen;
-	if(orientation) screen = screen0;
-	else screen = screen1;
-
-	ts->SetScreen(screen);
+	ts->SetScreen(screenright);
 	ts->SetInvert(false);
 	ts->SetPixelSize(PIXELSIZE);
-	buttons[bookselected]->Draw(screen,true);
+	buttons[bookselected]->Draw(screenright,true);
 	if(bookselected > browserstart)
-		buttons[bookselected-1]->Draw(screen,false);
+		buttons[bookselected-1]->Draw(screenright,false);
 	if(bookselected < bookcount-1 &&
 		(bookselected - browserstart) < APP_BROWSER_BUTTON_COUNT-1)
-		buttons[bookselected+1]->Draw(screen,false);
+		buttons[bookselected+1]->Draw(screenright,false);
 
 	// restore state.
 	ts->SetInvert(invert);
@@ -249,16 +238,18 @@ void App::browser_redraw()
 
 void App::AttemptBookOpen()
 {
+	ts->SetScreen(screenleft);
+	
 	// Just switch if the book is already open/parsed
 	if(bookselected == bookcurrent) {
 		mode = APP_MODE_BOOK;
 		page_draw(&(pages[pagecurrent]));
-		option.reopen = true;
+		reopen = true;
 		prefs->Write();
 	// Parse the selected book.
 	} else if (!OpenBook()) {
 		mode = APP_MODE_BOOK;
-		option.reopen = true;
+		reopen = true;
 		prefs->Write();
 	// Fail...
 	} else
@@ -276,9 +267,9 @@ void App::PrintStatus(const char *msg) {
 	u8 pixelsize = ts->GetPixelSize();
 	
 	ts->SetPixelSize(11);
-	ts->SetScreen(screen0);
+	ts->SetScreen(screenleft);
 	ts->SetInvert(false);
-	ts->ClearRect(0,220,255,255);
+//	ts->ClearRect(20,220,235,240);
 	ts->SetPen(20,STATUSBOX_Y);
 	ts->PrintString(msg);
 

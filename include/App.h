@@ -50,12 +50,13 @@ http://sourceforge.net/projects/ndslibris
 
 
 #include <nds.h>
+#include <fat.h>
 #include <expat.h>
 #include <unistd.h>
 
+#include "Prefs.h"
 #include "Book.h"
 #include "Button.h"
-#include "Prefs.h"
 #include "Text.h"
 
 #include "main.h"
@@ -85,16 +86,13 @@ http://sourceforge.net/projects/ndslibris
 
 class App {
 	private:
-	void InitScreens();
-	void WifiInit();
-	bool WifiConnect();
 	void Fatal(const char *msg);
 
 	public:
 	Text *ts;
-	class Prefs *prefs;
-	u16 *screen0, *screen1, *screenleft, *screenright, *fb;
-	u16 screenwidth, screenheight, pagewidth, pageheight;
+	Prefs myprefs;
+	Prefs *prefs;
+	u16 *screenleft, *screenright, *fb;
 	u8 brightness;
 	u8 mode;
 	string fontdir;
@@ -105,19 +103,16 @@ class App {
 	string bookdir;
 	vector<Book*> books;
 	u8 bookcount;
-	u8 bookselected;
-	s8 bookcurrent;
-	
-	struct {
-		bool reopen; //! reopen book from last session?
-	} option;
-	parsedata_t parsedata;
+	u8 bookselected; //! which book is currently selected in browser? -1=none.
+	s8 bookcurrent; //! which book is currently being read? -1=none.
+	bool reopen; //! reopen book from last session?
+	parsedata_t parsedata; //! user data block passed to expat callbacks.
 	page_t *pages;
 	u8 *pagebuf;
 	u16 pagecount;
 	u16 pagecurrent;
 	vector<u16> pageindices;
-	char *filebuf;
+	char *filebuf,*msg;
 	u8 marginleft, marginright, margintop, marginbottom;
 	u8 linespacing;
 	u8 orientation;
@@ -140,27 +135,18 @@ class App {
 	vector<Text*> fontTs;
 	u8 fontPage;
 
-	//BImage *image0;
-	//BScreen *bscreen0;
-	//BProgressBar *progressbar;
-
-	bool enablelogging;
-	bool enableftp;
-
 	App();
 	~App();
+	int  Run(void);
 	
 	void CycleBrightness();
-	void PrintStatus(const char *msg);
-	void PrintStatus(string msg);
-	void SetProgress(int amount);
-	void UpdateClock();
-
 	void Log(const char*);
 	void Log(std::string);
-	void Log(int x);
-	void Log(const char* format, const char *msg);
-	int  Run(void);
+	void PrintStatus(const char *msg);
+	void PrintStatus(string msg);
+	void RotateScreens();
+	void SetProgress(int amount);
+	void UpdateClock();
 
 	void HandleEventInBrowser();
 	void browser_init(void);
@@ -209,7 +195,10 @@ class App {
 	bool parse_pagefeed(parsedata_t *data, page_t *page);
 	context_t parse_pop(parsedata_t *data);
 	void parse_push(parsedata_t *data, context_t context);
+
+	//BImage *image0;
+	//BScreen *bscreen0;
+	//BProgressBar *progressbar;
 };
 
 #endif
-

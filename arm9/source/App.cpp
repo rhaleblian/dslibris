@@ -1,3 +1,5 @@
+//! Top-level class that handles application initialization and logging.
+//  See main.cpp for entry point.
 
 #include "App.h"
 
@@ -8,26 +10,14 @@
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
-
-#include <fat.h>
-#include <dswifi9.h>
 #include <DSGUI/BGUI.h>
 
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
-
-#include "ndsx_brightness.h"
-#include "types.h"
+#include "version.h"
 #include "main.h"
 #include "parse.h"
 #include "Book.h"
 #include "Button.h"
 #include "Text.h"
-
-#define MIN(x,y) (x < y ? x : y)
-#define MAX(x,y) (x > y ? x : y)
-#define BACKGROUND           (*((bg_attribute *)0x04000008))
-#define BACKGROUND_SUB       (*((bg_attribute *)0x04001008))
 
 App::App()
 {	
@@ -37,20 +27,19 @@ App::App()
 	pagebuf = new u8[PAGEBUFSIZE];
 	pagecount = 0;
 	pagecurrent = 0;
-	pagewidth = PAGE_WIDTH;
-	pageheight = PAGE_HEIGHT;
 
 	fontdir = string(FONTDIR);
 	bookdir = string(BOOKDIR);
 	bookcount = 0;
 	bookselected = 0;
 	bookcurrent = -1;
-	option.reopen = false;
+	reopen = false;
 	mode = APP_MODE_BROWSER;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
+	msg = (char*)malloc(sizeof(char) * 128);
 
-	screenwidth = SCREEN_WIDTH;
-	screenheight = SCREEN_HEIGHT;
+	screenleft = (u16*)BG_BMP_RAM(0);
+	screenright = (u16*)BG_BMP_RAM_SUB(0);
 	marginleft = MARGINLEFT;
 	margintop = MARGINTOP;
 	marginright = MARGINRIGHT;
@@ -61,124 +50,135 @@ App::App()
 	paraindent = 0;
 	brightness = 1;
 
-	enableftp = FALSE;
-	enablelogging = TRUE;
+//	prefs = new Prefs(this);
+	prefs = &myprefs;
+	prefs->app = this;
 
-	prefs = new Prefs(this);
+	ts = new Text();
+	ts->app = this;
 }
 
 App::~App()
 {
 	free(filebuf);
+	free(msg);
 	delete pages;
 	delete prefs;
-}           
+	delete ts;
+}
 
 int App::Run(void)
 {
-	char filebuf[BUFSIZE];
-	char msg[128];
-
-	powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
-	irqInit();
-	irqEnable(IRQ_VBLANK);
-	irqEnable(IRQ_VCOUNT);
-	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
-
-	InitScreens();
-
-	// Get the filesystem going first so we can write a log.
-
-	if (!fatInitDefault()) {
-		Fatal("[filesystem mount failed]");
-		while(1) swiWaitForVBlank();
-	}
-
 	Log("\n");
 	Log("info : dslibris starting up.\n");
 
-	ts = new Text();
-	ts->app = this;
+	// init typesetter.
+
 	ts->SetFontFile(FONTFILEPATH, TEXT_STYLE_NORMAL);
 	ts->SetFontFile(FONTBOLDFILEPATH, TEXT_STYLE_BOLD);
 	ts->SetFontFile(FONTITALICFILEPATH, TEXT_STYLE_ITALIC);
 	ts->SetFontFile(FONTBROWSERFILEPATH, TEXT_STYLE_BROWSER);
 	ts->SetFontFile(FONTSPLASHFILEPATH, TEXT_STYLE_SPLASH);
+	int err = ts->Init();
+   	if (err == 1) {
+		sprintf(msg, "fatal: no FreeType (%d).\n", err);
+		Log(msg);
+	}
+	else if (err == 2)
+	{
+		sprintf(msg, "fatal: font not found (%d).\n",err);
+		Log(msg);
+	}
+	else if (err != 0)
+	{
+		sprintf(msg, "fatal: unknown typesetting error (%d).\n",err);
+		Log(msg);
+	}
+	else Log("info : typesetter started.\n");
+	PrintStatus(VERSION);
 
 	XML_Parser p = XML_ParserCreate(NULL);
 	if (!p)
 	{
-		Log("fatal: parser creation failed.\n");
-		Fatal("fatal: parser creation failed.\n");
+		Log("fatal: no parser.\n");
 	}
+	Log("progr: created parser.\n");
+
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
 
 	// read preferences (to load bookdir)
 
-   	if(!prefs->Read(p))
+   	if (int parseerror = prefs->Read())
 	{
-		Log("warn : could not open preferences.\n");
+		sprintf(msg,"warn : can't read prefs (%d).\n",parseerror);
+		Log(msg);
 	} else 
-		Log("info : read preferences.\n");
+		Log("progr: read prefs.\n");
 	
 	// construct library.
 
-	sprintf(msg,"info : scanning '%s' for books.\n",bookdir.c_str());
-	Log(msg);
-	
 	DIR_ITER *dp = diropen(bookdir.c_str());
 	if (!dp)
 	{
-		Log("fatal: no book directory.\n");
-		Fatal("fatal: no book directory.\n");
-	}
+		sprintf(msg,"fatal: No book directory \'%s\'.\n",
+			bookdir.c_str());
+		Log(msg);
+	} else {
+		sprintf(msg,"progr: scanning '%s'.\n",bookdir.c_str());
+		Log(msg);
 
-	char filename[MAXPATHLEN];
-	while(!dirnext(dp, filename, NULL))
-	{
-		char *c;
-		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
+		char filename[MAXPATHLEN];
+		while(!dirnext(dp, filename, NULL))
 		{
-			Book *book = new Book();
-			books.push_back(book);
-			book->SetFolderName(bookdir.c_str());
+			iprintf(filename);
+			char *c;
+			for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
+			if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
+			{
+				Book *book = new Book();
+				books.push_back(book);
+				book->SetFolderName(bookdir.c_str());
 			
-			book->SetFileName(filename);
+				book->SetFileName(filename);
 			
-			sprintf(msg,"info : indexing book '%s'.\n", book->GetFileName());
-			Log(msg);
+				sprintf(msg,"progr: indexing book '%s'.\n",
+						book->GetFileName());
+				iprintf(msg);
+				Log(msg);
 
-			u8 rc = book->Index(filebuf);
-			if(rc == 255) {
-				sprintf(msg, "fatal: cannot index book '%s'.\n",
-					book->GetFileName());
+				u8 rc = book->Index(filebuf);
+				if(rc == 255) {
+					sprintf(msg, "fatal: cannot index book '%s'.\n",
+						book->GetFileName());
+					Log(msg);
+					Fatal(msg);
+				}
+				else if(rc == 254) {
+					sprintf(msg, "fatal: cannot make book parser.\n");
+					Fatal(msg);
+				}
+				sprintf(msg, "info : book title '%s'.\n",book->GetTitle());
 				Log(msg);
-				Fatal(msg);
+				bookcount++;
 			}
-			else if(rc == 254) {
-				sprintf(msg, "fatal: cannot make book parser.\n");
-				Log(msg);
-				Fatal(msg);
-			}
-			sprintf(msg, "info : book title '%s'.\n",book->GetTitle());
-			Log(msg);
-			bookcount++;
 		}
+		dirclose(dp);
+		sprintf(msg,"progr: %d books indexed.\n",bookcount);
+		Log(msg);
 	}
-	dirclose(dp);
+	sprintf(msg,"info : currentbook = %d.\n",bookcurrent);
+	Log(msg);
 	swiWaitForVBlank();
-
-	Log("progr: books indexed.\n");
-
-	// read preferences.
 	
-   	if(!prefs->Read(p))
+	// Read preferences again, to bind prefs to books.
+	
+   	if(int parseerror = prefs->Read())
 	{
-		Log("warn : could not open preferences.\n");
+		sprintf(msg,"warn : can't read prefs (%d).\n",parseerror);
+		Log(msg);
 	}
-	else Log("info : read preferences.\n");
+	else Log("info : read prefs.\n");
 
 	// Sort bookmarks for each book.
 	for(u8 i = 0; i < bookcount; i++)
@@ -186,45 +186,50 @@ int App::Run(void)
 		books[i]->GetBookmarks()->sort();
 	}
 
-	// init typesetter.
-
-	int err = ts->Init();
-   	if (err) {
-		sprintf(msg, "fatal: starting typesetter failed (%d).\n", err);
-		Log(msg);
-		Fatal(msg);
-	} else Log("info : typesetter started.\n");
-
-	// initialize screens.
-
-	//InitScreens();
-
-	Log("progr: display oriented.\n");
-
-	if(orientation) ts->PrintSplash(screen1);
-	else ts->PrintSplash(screen0);
-
-	Log("progr: splash presented.\n");
-
 	PrefsInit();
 	browser_init();
 
 	Log("progr: browsers populated.\n");
 
+	// If typesetter failed, shop here to show console.
+	if(err) while(1) swiWaitForVBlank();
+	
+	// Bring up the right screen.
+	videoSetModeSub(MODE_5_2D);
+	vramSetBankC(VRAM_C_SUB_BG);
+	int bgSub = bgInitSub(2, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bgSetCenter(bgSub,0,0);
+	bgRotate(bgSub,-8192);
+	bgScroll(bgSub,0,256);
+	bgUpdate(bgSub);
+
+	// Reverse orientation if needed.
+	if(orientation)
+	{
+		RotateScreens();
+		ts->SwapScreens();
+	}
+	
+	ts->SetScreen(screenright);
+	ts->ClearScreen();
 	mode = APP_MODE_BROWSER;
 	browser_draw();
 
 	Log("progr: browser displayed.\n");
 
-	if(option.reopen && !OpenBook())
+	if(reopen && bookcurrent > -1)
 	{
-		Log("info : reopened current book.\n");
-		mode = APP_MODE_BOOK;
+		if(OpenBook())
+			Log("warn : could not reopen current book.\n");
+		else
+		{
+			Log("info : reopened current book.\n");
+			mode = APP_MODE_BOOK;
+		}
 	}
-	else Log("warn : could not reopen current book.\n");
-
+	
 	swiWaitForVBlank();
-
+	
 	// start event loop.
 	
 	keysSetRepeat(60,2);
@@ -260,119 +265,45 @@ void App::CycleBrightness()
 	prefs->Write();
 }
 
-void App::UpdateClock()
+void App::RotateScreens()
 {
-	char tmsg[8];
-	sprintf(tmsg, "%02d:%02d", IPC->time.rtc.hours, IPC->time.rtc.minutes);
-	u8 offset = marginleft;
-	u16 *screen = ts->GetScreen();
-	ts->SetScreen(screen0);
-	ts->ClearRect(offset, 240, offset+30, 255);
-	ts->SetPen(offset,250);
-	ts->PrintString(tmsg);
-	ts->SetScreen(screen);
+	screenright = (u16*)BG_BMP_RAM(0);
+	screenleft = (u16*)BG_BMP_RAM_SUB(0);
+
+	int bgMain = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bgSetCenter(bgMain,0,0);
+	bgRotate(bgMain,8192);
+	bgScroll(bgMain,0,256);
+	bgUpdate(bgMain);
+	//decompress(splashBitmap, BG_GFX, LZ77Vram);
+	
+	int bgSub = bgInitSub(2, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bgSetCenter(bgSub,0,0);
+	bgRotate(bgSub,8192);
+	bgScroll(bgSub,0,256);
+	bgUpdate(bgSub);
 }
 
 void App::Log(const char *msg)
 {
-	if(enablelogging)
-	{
-		FILE *logfile = fopen(LOGFILEPATH,"a");
-		fprintf(logfile,msg);
-		fclose(logfile);
-	}
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,msg);
+	fclose(logfile);
+	iprintf(msg);
 }
 
 void App::Log(std::string msg)
 {
-	if(enablelogging)
-	{
-		FILE *logfile = fopen(LOGFILEPATH,"a");
-		fprintf(logfile,msg.c_str());
-		fclose(logfile);
-	}
-}
-
-void App::Log(int i)
-{
-	if(enablelogging)
-	{
-		FILE *logfile = fopen(LOGFILEPATH,"a");
-		fprintf(logfile,"%d",i);		
-		fclose(logfile);
-	}
-}
-
-void App::Log(const char *format, const char *msg)
-{
-	if(enablelogging)
-	{
-		FILE *logfile = fopen(LOGFILEPATH,"a");
-		fprintf(logfile,format,msg);
-		fclose(logfile);
-	}
-}
-
-void App::InitScreens() {
-//	NDSX_SetBrightness_0();
-//	for(int b=0; b<brightness; b++)
-//		NDSX_SetBrightness_Next();
-
-	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-
-	u16 angle;
-	if(orientation) {
-		angle = 128;
-		BG3_CX = 192 << 8;
-		BG3_CY = 0 << 8;
-		SUB_BG3_CX = 192 << 8;
-		SUB_BG3_CY = 0 << 8;
-		screen1 = (u16*)BG_BMP_RAM_SUB(0);
-		screen0 = (u16*)BG_BMP_RAM(0);
-	}
-	else
-	{
-		angle = 384;
-		BG3_CX = 0 << 8;
-		BG3_CY = 256 << 8;
-		SUB_BG3_CX = 0 << 8;
-		SUB_BG3_CY = 256 << 8;
-		screen0 = (u16*)BG_BMP_RAM_SUB(0);
-		screen1 = (u16*)BG_BMP_RAM(0);
-	}
-
-	s16 s = SIN[angle & 0x1FF] >> 4;
-	s16 c = COS[angle & 0x1FF] >> 4;
-	BG3_XDX = c;
-	BG3_XDY = -s;
-	BG3_YDX = s;
-	BG3_YDY = c;
-	SUB_BG3_XDX = c;
-	SUB_BG3_XDY = -s;
-	SUB_BG3_YDX = s;
-	SUB_BG3_YDY = c;
-
-	screen1 = (u16*)BG_BMP_RAM(0);
-	screen0 = (u16*)BG_BMP_RAM_SUB(0);
+	FILE *logfile = fopen(LOGFILEPATH,"a");
+	fprintf(logfile,msg.c_str());
+	fclose(logfile);
+	iprintf(msg.c_str());
 }
 
 void App::Fatal(const char *msg)
 {
-	//! We never return from this!
-	videoSetMode(0);
-	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);
-	vramSetBankC(VRAM_C_SUB_BG);
-	SUB_BG0_CR = BG_MAP_BASE(31);
-	BG_PALETTE_SUB[255] = RGB15(31,31,31);
-	consoleInitDefault(
-		(u16*)SCREEN_BASE_BLOCK_SUB(31),
-		(u16*)CHAR_BASE_BLOCK_SUB(0),16);
-	iprintf(msg);
+	//! Log last message and spin.
+	Log(msg);
 	while(1) swiWaitForVBlank();
 }
 

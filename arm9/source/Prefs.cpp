@@ -2,16 +2,22 @@
 #include <vector>
 #include "nds.h"
 #include "main.h"
+#include "App.h"
 #include "Prefs.h"
 #include "Book.h"
 
+#define PARSEBUFSIZE 1024*8
+
+Prefs::Prefs() {}
 Prefs::Prefs(App *parent) { app = parent; }
 Prefs::~Prefs() {}
-	
-bool Prefs::Read(XML_Parser p)
+
+//! \return 0: success, 255: file open failure, 254: no bytes read, 253: parse failure.
+int Prefs::Read(XML_Parser p)
 {
+	int err = 0;
 	FILE *fp = fopen(PREFSPATH,"r");
-	if (!fp) return false;
+	if (!fp) return 255;
 
 	XML_ParserReset(p, NULL);
 	XML_SetStartElementHandler(p, prefs_start_hndl);
@@ -19,19 +25,37 @@ bool Prefs::Read(XML_Parser p)
 	XML_SetUserData(p, (void *)&(app->books));
 	while (true)
 	{
-	 	void *buff = XML_GetBuffer(p, 64);
-	 	int bytes_read = fread(buff, sizeof(char), 64, fp);
-		XML_ParseBuffer(p, bytes_read, bytes_read == 0);
+	 	void *buff = XML_GetBuffer(p, PARSEBUFSIZE);
+	 	int bytes_read = fread(buff, sizeof(char), PARSEBUFSIZE, fp);
+		if(bytes_read < 0) { err = 254; break; }
+		enum XML_Status status = 
+			XML_ParseBuffer(p, bytes_read, bytes_read == 0);
+		if(status == XML_STATUS_ERROR) { 
+			app->parse_printerror(p);
+			err = 253;
+			break;
+		}
 		if (bytes_read == 0) break;
 	}
 	fclose(fp);
-	return true;
+	return err;
 }
 
-bool Prefs::Write(void)
+//! \return As per Read(XML_Parser).
+int Prefs::Read()
 {
+	XML_Parser p = XML_ParserCreate(NULL);
+	int err = Read(p);
+	XML_ParserFree(p);
+	return err;
+}
+
+//! \return Error code, 0: success.
+int Prefs::Write(void)
+{
+	int err = 0;
 	FILE* fp = fopen(PREFSPATH,"w");
-	if(!fp) return false;
+	if(!fp) return 255;
 	
 	fprintf(fp, "<dslibris>\n");
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" />\n",
@@ -59,7 +83,7 @@ bool Prefs::Write(void)
 	*/
     fprintf(fp, "\t<books path=\"%s\" reopen=\"%d\">\n",
     		app->bookdir.c_str(),
-    		app->option.reopen);
+    		app->reopen);
     
     for (u8 i = 0; i < app->bookcount; i++) {
         Book* book = app->books[i];
@@ -82,5 +106,5 @@ bool Prefs::Write(void)
 	fprintf(fp, "\n");
 	fclose(fp);
 
-	return true;
+	return err;
 }

@@ -12,8 +12,8 @@
 #define PARASPACING 0
 #define PAGE_HEIGHT SCREEN_WIDTH
 #define PAGE_WIDTH SCREEN_HEIGHT
-#define BUFSIZE 1024*64
-#define PAGEBUFSIZE 2048
+#define BUFSIZE 1024*16		//! For XML parsing temp buffer (bytes).
+#define PAGEBUFSIZE 2048	//! For storing UTF-8 for a page (bytes).
 #define MAXPAGES 2048
 #define SPLASH_LEFT 28
 #define SPLASH_TOP 44
@@ -27,6 +27,10 @@
 #define FONTBROWSERFILEPATH "/font/LiberationSans-Regular.ttf"
 #define FONTSPLASHFILEPATH "/font/LiberationSans-Regular.ttf"
 #define LOGFILEPATH "dslibris.log"
+
+void splash();
+
+// the below may be obsolete.
 
 /** watch out for struct alignment here? **/
 typedef struct book_s {

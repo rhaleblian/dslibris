@@ -1,10 +1,4 @@
 #-------------------------------------------------------------------------------
-# Modify for local site.
-#-------------------------------------------------------------------------------
-export MEDIAROOT	:=	/media/SANDISK
-export MEDIADLDI	:=	r4tf
-
-#-------------------------------------------------------------------------------
 .SUFFIXES:
 #-------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITARM)),)
@@ -15,6 +9,10 @@ include $(DEVKITARM)/ds_rules
 
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
+
+export MEDIAROOT	:=	/Volumes/SANDISK
+export MEDIATYPE	:=	cyclods
+export EMULATOR		:=	desmume
 
 #-------------------------------------------------------------------------------
 # path to tools - this can be deleted if you set the path in windows
@@ -31,7 +29,7 @@ $(TARGET).ds.gba	: $(TARGET).nds
 
 #-------------------------------------------------------------------------------
 $(TARGET).nds		: $(TARGET).arm7 $(TARGET).arm9
-	ndstool -b data/icon.bmp "dslibris;an ebook reader;for the Nintendo DS" -c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
+	ndstool -b data/icon.bmp "dslibris;an ebook reader;for the Nintendo DS" -c $(TARGET).nds -7 $(TARGET).arm7 -9 $(TARGET).arm9
 
 #-------------------------------------------------------------------------------
 $(TARGET).arm7		: arm7/$(TARGET).elf
@@ -51,25 +49,23 @@ clean:
 	$(MAKE) -C arm7 clean
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
 
-# Run target with a vfat image file. the assumed testing method now.
+# run under emulator with an image file.
 test: $(TARGET).nds
-	desmume --cflash=media.img dslibris.nds
+	$(EMULATOR) --cflash=media.img dslibris.nds
 
-# Create a cflash image for use with test and debug rules. Linux only.
-media:
-	dd if=/dev/zero of=media.img bs=1048576 count=32
-	/sbin/mkfs.msdos -F16 media.img
+#create a cflash image for use with desmume.
+image:
+	dd if=/dev/zero of=media.img bs=1048576 count=8
+	/sbin/mkfs.vfat media.img
 		
-# Debug target with insight and desmume under Linux.
+# debug target with insight and desmume under linux
 debug: $(TARGET).nds
-	desmume --cflash=media.img --arm9gdb=20000 $(TARGET).nds &
-	sleep 2
 	arm-eabi-insight arm9/dslibris.arm9.elf &
+	$(EMULATOR) --cflash=media.img --arm9gdb=20000 $(TARGET).nds &
 
 debug7: $(TARGET).nds
-	desmume --cflash=media.img --arm7gdb=20001 $(TARGET).nds &
-	sleep 2
 	arm-eabi-insight arm7/dslibris.arm7.elf &
+	$(EMULATOR) --cflash=media.img --arm7gdb=20001 $(TARGET).nds &
 	
 gdb: $(TARGET).nds
 	desmume-cli --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &
@@ -83,7 +79,7 @@ $(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
 
 dldi: $(TARGET).$(MEDIATYPE).nds
 
-# copy target to mounted microSD symlinked to $(MEDIAROOT)
+# copy target to mounted microSD at $(MEDIAROOT)
 install: $(TARGET).nds
 	cp $(TARGET).nds $(MEDIAROOT)
 	sync
@@ -107,21 +103,17 @@ dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 
 dist: dist/$(TARGET).zip
 
-# transfer a release zip for posting. obsolete?
+# transfer a release zip for posting.
 upload: dist
 	cadaver https://frs.sourceforge.net/r/ra/rayh23/uploads
 
 mount:
 	- mkdir media
-	sudo mount -t vfat -o loop -o uid=rhaleblian media.img media
+	chmod a+w media
+	sudo mount -t vfat -o loop -o rw,uid=$(USER),gid=$(USER) media.img media
 
 umount:
 	sync
 	- sudo umount media
 	- rmdir media
-
-##! For true TF card, not CFLASH image.
-eject:
-	sync
-	- sudo umount $(MEDIAROOT)
 
