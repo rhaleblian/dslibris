@@ -1,39 +1,31 @@
 
 Herein lie the source for dslibris, and supporting libraries.
 
-PREREQUISITES
+== PREREQUISITES ==
 
-Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently it's OS X.
+Fedora, Ubuntu, Arch, OS X, and Windows XP (MSYS) have all been used as build platforms. Currently it's OS X 10.5.6. You need
 
-* devkitPro installed with components:
-	devkitARM (r24)
-	libnds
-	libfat
-	libwifi
-  Set DEVKITPRO and DEVKITARM set in your environment.
-* on Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
-* a media card and a DLDI patcher, but you knew that.
+* devkitPro r24 installed with devkitARM, libnds, libfat, and libwifi.
+* A media card and a DLDI patcher, but you knew that.
 
-BUILDING
+== BUILDING ==
 
-cd ndslibris/trunk  # or wherever you put the SVN trunk
-make
+  cd ndslibris/trunk  # or wherever you put the SVN trunk
+  make
 
 dslibris.nds should show up in your current directory.
  
 Note the libraries in 'external', prebuilt for arm-eabi; make sure you don't have conflicting libs in your path.
 
-INSTALLATION
+== INSTALLATION ==
 
-see INSTALL.txt.
+See INSTALL.txt.
 
-DEBUGGING
+== DEBUGGING ==
 
-gdb/insight-6.6 have been known to work on Ubuntu 8.04 for debugging; however CFLASH FAT support has been up and down. You can use the --cflash option to desmume to create a disk image.
+gdb and insight-6.6 have been known to work on Ubuntu 8.04 for debugging; however CFLASH FAT support has been up and down. See the Makefile for invocation examples. See online forums for means to build an arm-eabi targeted insight for your platform, and on making a FAT CFLASH image (keywords: fat desmume chism).
 
-See online forums for means to build an arm-eabi targeted Insight for your platform, and on making a FAT CFLASH image (keywords: fat desmume chism).
-
-MORE INFO
+== MORE DOCUMENTATION ==
 
 For code documentation:
 
@@ -45,5 +37,5 @@ Also see:
 
 http://sourceforge.net/projects/ndslibris
 
-- ray haleblian
+- rayh23
 

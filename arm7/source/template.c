@@ -28,6 +28,11 @@ distribution.
 #include <nds.h>
 #include <dswifi7.h>
 #include <maxmod7.h>
+#include "ndsx_brightness.h"
+
+#define SET_BRIGHTNESS_NEXT     (0x1211B215) // On Phatty DS: SET_BACKLIGHTS_TOGGLE
+#define PM_DSLITE_REG   (4)
+extern void powerValueHandler(u32 value, void* user_data);
 
 //------------------------------------------------------------------------------
 void VcountHandler() {
@@ -41,6 +46,29 @@ void VblankHandler(void) {
 	Wifi_Update();
 }
 
+void extendedHandler(u32 value, void* user_data)
+{
+	switch (value)
+	{
+/*		case SET_BRIGHTNESS_NEXT:
+			s32 nextlevel = 
+			readPowerManagement(PM_DSLITE_REG) - 64 + 1;
+			if(nextlevel > 3) 
+				nextlevel = 0;
+			writePowerManagement(PM_DSLITE_REG, nextlevel);
+			return;
+		case SET_BRIGHTNESS_0:*/
+		case SET_BRIGHTNESS_NEXT:
+		case SET_BRIGHTNESS_0:
+		case SET_BRIGHTNESS_1:
+		case SET_BRIGHTNESS_2:
+		case SET_BRIGHTNESS_3:
+			NDSX_BrightnessFifo(value);
+			break;
+		default:
+			powerValueHandler(value, user_data);
+	}
+}
 
 //------------------------------------------------------------------------------
 int main() {
@@ -61,8 +89,9 @@ int main() {
 
 	mmInstall(FIFO_MAXMOD);
 
-	installSystemFIFO();
-	
+//	installSystemFIFO();
+	fifoSetValue32Handler(FIFO_PM, extendedHandler, 0);
+
 	irqSet(IRQ_VCOUNT, VcountHandler);
 	irqSet(IRQ_VBLANK, VblankHandler);
 

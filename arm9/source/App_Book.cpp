@@ -48,7 +48,9 @@ void App::HandleEventInBook()
 
 	if (keys & KEY_X)
 	{
-		ts->SetInvert(!ts->GetInvert());
+//		ts->SetInvert(!ts->GetInvert());
+		RotateScreens();
+		orientation = ~orientation;
 		page_draw(&pages[pagecurrent]);
 	}
 
@@ -153,6 +155,8 @@ void App::HandleEventInBook()
 
 u8 App::OpenBook(void)
 {
+	//! Attempt to open book indexed by bookselected.
+	
 	PrintStatus("[opening book...]");
 	swiWaitForVBlank();
 
@@ -165,15 +169,14 @@ u8 App::OpenBook(void)
 	ts->SetScreen(screenleft);
 	const char *filename = books[bookselected]->GetFileName();
 
-	// c will point to the file's extension.
-	const char *c;
+	const char *c; 	// will point to the file's extension.
 	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 	if (books[bookselected]->Parse(filebuf))
 	{
 		PrintStatus("[could not open book]");
 		return 255;
 	}
-
+	PrintStatus("[book opened]");
 	bookcurrent = bookselected;
 	pagecurrent = books[bookselected]->GetPosition();
 	page_draw(&(pages[pagecurrent]));
@@ -183,15 +186,19 @@ u8 App::OpenBook(void)
 
 void App::page_init(page_t *page)
 {
+	//! Intialize a page struct. Call before parsing into a new page.
 	page->length = 0;
 	page->buf = NULL;
 }
 
 u8 App::page_getjustifyspacing(page_t *page, u16 i)
 {
-	/** full justification. get line advance, count spaces,
+	/*! Return interword space required for full justification.
+		Get line advance, count spaces,
 	    and insert more space in spaces to reach margin.
-	    returns amount of space to add per-character. **/
+		BROKEN!
+	    \return Amount of space between each word for the line
+		starting at i. */
 
 	u8 spaces = 0;
 	u8 advance = 0;

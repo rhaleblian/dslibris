@@ -10,9 +10,9 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
 
-export MEDIAROOT	:=	/Volumes/SANDISK
+export MEDIAROOT	:=	/Volumes/SANDISK/
 export MEDIATYPE	:=	cyclods
-export EMULATOR		:=	desmume
+export EMULATOR		:=	desmume-cli
 
 #-------------------------------------------------------------------------------
 # path to tools - this can be deleted if you set the path in windows
@@ -88,6 +88,9 @@ install: $(TARGET).nds
 install-dldi: $(TARGET).$(MEDIATYPE).nds
 	cp $(TARGET).$(MEDIATYPE).nds $(MEDIAROOT)
 	sync
+
+doc: Doxyfile
+	doxygen
 
 # make an archive to release on Sourceforge
 dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt

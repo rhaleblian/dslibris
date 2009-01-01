@@ -1,53 +1,25 @@
+/*
+ Copyright (C) 2007-2009 Ray Haleblian
+ 
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ 
+ To contact the copyright holder: ray@haleblian.com
+ */
+
 #ifndef APP_H
 #define APP_H
-
-/*!
-\mainpage
-
-Welcome to the documentation for dslibris, a book reader for Nintendo DS.
-
-\section Prerequisites
-
-Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently we're on Ubuntu 8.04 and Arch Linux. Have
-  - devkitPro v20 installed, including
-	devkitARM,
-	libnds,
-	libfat,
-	libwifi,
-	and masscat's DS wifi debug stub library.
-  - On Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
-  - Optionally, desmume 0.7.3 or better and Insight, if you want to debug with gdb (see Debugging).
-  - A media card and a DLDI patcher, but you knew that.
-
-Set DEVKITPRO and DEVKITARM in your environment.
-
-\section Building
-
-\code
-cd ndslibris/trunk  # or wherever you put the SVN trunk
-make
-\endcode
-
-dslibris.nds should show up in your current directory.
- 
-Note the libraries in 'external' are required prebuilts for arm-eabi; make sure you don't have conflicting libs in your path.
-
-\section Installation
-
-see INSTALL.txt.
-
-\section Debugging
-
-gdb and insight-6.6 have been known to work for debugging. See online forums for means to build an arm-eabi targeted Insight for your platform.
-
-\section Homepage
-
-http://sourceforge.net/projects/ndslibris
-
-\author ray haleblian
-
-*/
-
 
 #include <nds.h>
 #include <fat.h>
@@ -84,6 +56,11 @@ http://sourceforge.net/projects/ndslibris
 #define PREFS_BUTTON_FONTSIZE 5
 #define PREFS_BUTTON_PARASPACING 6
 
+
+//! \brief Main application.
+//	\detail Top-level singleton class that handles application initialization,
+//  interaction loop, and logging. See main.cpp for entry point.
+
 class App {
 	private:
 	void Fatal(const char *msg);
@@ -93,24 +70,34 @@ class App {
 	Prefs myprefs;
 	Prefs *prefs;
 	u16 *screenleft, *screenright, *fb;
+	int bgMain, bgSub;
+	//! level as per DS Lite.
 	u8 brightness;
+	//! are we in book or browser mode?
 	u8 mode;
 	string fontdir;
 	
 	vector<Button*> buttons;
 	Button buttonprev, buttonnext, buttonprefs;
+	//! index into book vector denoting first book visible on library screen. 
 	u8 browserstart;
 	string bookdir;
 	vector<Book*> books;
 	u8 bookcount;
-	u8 bookselected; //! which book is currently selected in browser? -1=none.
-	s8 bookcurrent; //! which book is currently being read? -1=none.
-	bool reopen; //! reopen book from last session?
-	parsedata_t parsedata; //! user data block passed to expat callbacks.
+	//! which book is currently selected in browser? -1=none.
+	u8 bookselected;
+	//! which book is currently being read? -1=none.
+	s8 bookcurrent;
+	//! reopen book from last session on startup?
+	bool reopen;
+	//! user data block passed to expat callbacks.
+	parsedata_t parsedata;
+	//! pointer to array of page data for current book.
 	page_t *pages;
 	u8 *pagebuf;
 	u16 pagecount;
 	u16 pagecurrent;
+	//! not used yet; will contain pagination indices for caching.
 	vector<u16> pageindices;
 	char *filebuf,*msg;
 	u8 marginleft, marginright, margintop, marginbottom;

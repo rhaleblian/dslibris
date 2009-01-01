@@ -98,7 +98,7 @@ int main(void)
 {
 	defaultExceptionHandler();
 
-	initScreenLeft();
+//	initScreenLeft();
 	
 	consoleDemoInit();
 	iprintf("dslibris 1.3.\n");

@@ -9,16 +9,17 @@ INSTALLATION
 
 	dlditool r4tf.dldi dslibris.nds
 
-2. copy all files and folders in this distribution .zip to the root folder 
-   of your DS media.
+2. Copy all files and folders in this distribution .zip to the root folder 
+   of your DS media. Using a subfolder does not work!
 
-3. put any XHTML you have into the 'book' folder.
+3. Put any XHTML you have into the 'book' folder.
    The filenames should have an .xht or .xhtml extension.
 
-4. run dslibris.nds on the DS.
+4. Run dslibris.nds on the DS.
 
 
 TROUBLESHOOTING
 
 Look for the file DSLIBRIS.LOG on your media root. Send this file to 
-developers when you encounter a problem.
+developers when you encounter a problem. Contact us via the dslibris Help forum on Sourceforge.
+

@@ -1,6 +1,3 @@
-//! Top-level class that handles application initialization and logging.
-//  See main.cpp for entry point.
-
 #include "App.h"
 
 #include <errno.h>
@@ -11,6 +8,7 @@
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <DSGUI/BGUI.h>
+#include "ndsx_brightness.h"
 
 #include "version.h"
 #include "main.h"
@@ -18,6 +16,7 @@
 #include "Book.h"
 #include "Button.h"
 #include "Text.h"
+#include "splash.h"
 
 App::App()
 {	
@@ -40,6 +39,8 @@ App::App()
 
 	screenleft = (u16*)BG_BMP_RAM(0);
 	screenright = (u16*)BG_BMP_RAM_SUB(0);
+	bgMain = NULL;
+	bgSub = NULL;
 	marginleft = MARGINLEFT;
 	margintop = MARGINTOP;
 	marginright = MARGINRIGHT;
@@ -71,9 +72,19 @@ int App::Run(void)
 {
 	Log("\n");
 	Log("info : dslibris starting up.\n");
-
+	
+	//! Bring up left screen.
+	videoSetMode(MODE_5_2D);
+	vramSetBankA(VRAM_A_MAIN_BG);
+	bgMain = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bgSetCenter(bgMain,128,96);
+	bgSetRotate(bgMain,-8192);
+	bgSetScroll(bgMain,96,128);
+	bgUpdate(bgMain);
+	decompress(splashBitmap, BG_GFX, LZ77Vram);
+	
 	// init typesetter.
-
+	
 	ts->SetFontFile(FONTFILEPATH, TEXT_STYLE_NORMAL);
 	ts->SetFontFile(FONTBOLDFILEPATH, TEXT_STYLE_BOLD);
 	ts->SetFontFile(FONTITALICFILEPATH, TEXT_STYLE_ITALIC);
@@ -107,7 +118,7 @@ int App::Run(void)
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	parse_init(&parsedata);
 
-	// read preferences (to load bookdir)
+	// read preferences, pass 1, to load bookdir.
 
    	if (int parseerror = prefs->Read())
 	{
@@ -116,6 +127,24 @@ int App::Run(void)
 	} else 
 		Log("progr: read prefs.\n");
 	
+	// set brightness (lite only).
+
+	switch (brightness)
+	{
+		case 0:
+			fifoSendValue32(FIFO_PM, SET_BRIGHTNESS_0);
+			break;
+		case 1:
+			fifoSendValue32(FIFO_PM, SET_BRIGHTNESS_1);
+			break;
+		case 2:
+			fifoSendValue32(FIFO_PM, SET_BRIGHTNESS_2);
+			break;
+		case 3:
+			fifoSendValue32(FIFO_PM, SET_BRIGHTNESS_3);
+			break;
+	}
+
 	// construct library.
 
 	DIR_ITER *dp = diropen(bookdir.c_str());
@@ -171,7 +200,7 @@ int App::Run(void)
 	Log(msg);
 	swiWaitForVBlank();
 	
-	// Read preferences again, to bind prefs to books.
+	// Read preferences, pass 2, to bind prefs to books.
 	
    	if(int parseerror = prefs->Read())
 	{
@@ -192,29 +221,28 @@ int App::Run(void)
 	Log("progr: browsers populated.\n");
 
 	// If typesetter failed, shop here to show console.
-	if(err) while(1) swiWaitForVBlank();
+//	if(err) while(1) swiWaitForVBlank();
 	
 	// Bring up the right screen.
 	videoSetModeSub(MODE_5_2D);
 	vramSetBankC(VRAM_C_SUB_BG);
-	int bgSub = bgInitSub(2, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-	bgSetCenter(bgSub,0,0);
-	bgRotate(bgSub,-8192);
-	bgScroll(bgSub,0,256);
+	bgSub = bgInitSub(2, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bgSetCenter(bgSub,128,96);
+	bgSetRotate(bgSub,-8192);
+	bgSetScroll(bgSub,96,128);
 	bgUpdate(bgSub);
-
-	// Reverse orientation if needed.
-	if(orientation)
-	{
-		RotateScreens();
-		ts->SwapScreens();
-	}
 	
 	ts->SetScreen(screenright);
 	ts->ClearScreen();
 	mode = APP_MODE_BROWSER;
 	browser_draw();
 
+	// Reverse orientation if needed.
+	if(orientation)
+	{
+		RotateScreens();
+	}
+	
 	Log("progr: browser displayed.\n");
 
 	if(reopen && bookcurrent > -1)
@@ -261,27 +289,33 @@ void App::CycleBrightness()
 {
 	brightness++;
 	brightness = brightness % 4;
-	BGUI::get()->setBacklightBrightness(brightness);
+	fifoSendValue32(FIFO_PM, SET_BRIGHTNESS_NEXT);
 	prefs->Write();
 }
 
 void App::RotateScreens()
 {
-	screenright = (u16*)BG_BMP_RAM(0);
-	screenleft = (u16*)BG_BMP_RAM_SUB(0);
-
-	int bgMain = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-	bgSetCenter(bgMain,0,0);
-	bgRotate(bgMain,8192);
-	bgScroll(bgMain,0,256);
-	bgUpdate(bgMain);
-	//decompress(splashBitmap, BG_GFX, LZ77Vram);
-	
-	int bgSub = bgInitSub(2, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-	bgSetCenter(bgSub,0,0);
-	bgRotate(bgSub,8192);
-	bgScroll(bgSub,0,256);
-	bgUpdate(bgSub);
+	if (orientation == 0)
+	{
+		bgSetRotate(bgMain,8192);
+		bgSetScroll(bgMain,96,128);
+		bgUpdate(bgMain);
+		
+		bgSetRotate(bgSub,8192);
+		bgSetScroll(bgSub,96,128);
+		bgUpdate(bgSub);
+	}
+	else
+	{
+		bgSetRotate(bgMain,-8192);
+		bgSetScroll(bgMain,96,128);
+		bgUpdate(bgMain);
+		
+		bgSetRotate(bgSub,-8192);
+		bgSetScroll(bgSub,96,128);
+		bgUpdate(bgSub);
+	}
+	lcdSwap();
 }
 
 void App::Log(const char *msg)
