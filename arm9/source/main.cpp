@@ -35,7 +35,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 App *app;
 bool linebegan = false;
 // Static vars needed for state in the XML config callback prefs_start_hndl
-//char reopenName[MAXPATHLEN];
 int book = -1; //! Current book context.
 bool parseFontBold = false;
 bool parseFontItalic = false;
@@ -106,10 +105,9 @@ int main(void)
 	if(!fatInitDefault())
 	{
 		iprintf("fatal: no filesystem.\n");
-	//	spin();
+		spin();
 	}
 
-//	strcpy(reopenName,"");
 	app = new App();
 	return app->Run();
 }

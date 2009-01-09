@@ -69,11 +69,11 @@
 #define FONTDIR "/font/"
 #define BOOKDIR "/book/"
 #define PREFSPATH "dslibris.xml"
-#define FONTFILEPATH "/font/LiberationSerif-Regular.ttf"
-#define FONTBOLDFILEPATH "/font/LiberationSerif-Bold.ttf"
-#define FONTITALICFILEPATH "/font/LiberationSerif-Italic.ttf"
-#define FONTBROWSERFILEPATH "/font/LiberationSans-Regular.ttf"
-#define FONTSPLASHFILEPATH "/font/LiberationSans-Regular.ttf"
+#define FONTFILEPATH "/font/font.ttf"
+#define FONTBOLDFILEPATH "/font/font.ttf"
+#define FONTITALICFILEPATH "/font/font.ttf"
+#define FONTBROWSERFILEPATH "/font/font.ttf"
+#define FONTSPLASHFILEPATH "/font/font.ttf"
 #define LOGFILEPATH "dslibris.log"
 
 //! Initial entry point and (possibly obsolete) data structures.
