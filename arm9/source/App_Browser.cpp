@@ -269,7 +269,7 @@ void App::PrintStatus(const char *msg) {
 	ts->SetPixelSize(11);
 	ts->SetScreen(screenleft);
 	ts->SetInvert(false);
-//	ts->ClearRect(20,220,235,240);
+	ts->ClearRect(20,220,235,240);
 	ts->SetPen(20,STATUSBOX_Y);
 	ts->PrintString(msg);
 
