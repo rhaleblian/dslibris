@@ -70,7 +70,7 @@ class App {
 	Prefs myprefs;
 	Prefs *prefs;
 	u16 *screenleft, *screenright, *fb;
-	int bgMain, bgSub;
+	int bgMain, bgSplash, bgSub;
 	//! level as per DS Lite.
 	u8 brightness;
 	//! are we in book or browser mode?

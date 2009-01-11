@@ -59,19 +59,10 @@ void greenblue()
 	}
 }
 
-bool iswhitespace(u8 c)
+void splash()
 {
-	switch (c)
-	{
-		case ' ':
-		case '\t':
-		case '\n':
-			return true;
-			break;
-		default:
-			return false;
-			break;
-	}
+	//! Draw graphic, the left screen must be initialized. 
+	decompress(splashBitmap, BG_GFX, LZ77Vram);
 }
 
 void initScreenLeft()
@@ -84,13 +75,7 @@ void initScreenLeft()
 	bgRotate(bgMain,-8192);
 	bgScroll(bgMain,0,256);
 	bgUpdate(bgMain);
-	decompress(splashBitmap, BG_GFX, LZ77Vram);
-}
-
-void splash()
-{
-	//! Draw graphic, the left screen must be initialized. 
-	decompress(splashBitmap, BG_GFX, LZ77Vram);
+	splash();
 }
 
 int main(void)
@@ -120,6 +105,22 @@ u8 GetParserFace()
 		return TEXT_STYLE_BOLD;
 	else
 		return TEXT_STYLE_NORMAL;
+}
+
+
+bool iswhitespace(u8 c)
+{
+	switch (c)
+	{
+		case ' ':
+		case '\t':
+		case '\n':
+			return true;
+			break;
+		default:
+			return false;
+			break;
+	}
 }
 
 void prefs_start_hndl(	void *userdata,

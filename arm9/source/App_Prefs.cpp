@@ -272,11 +272,14 @@ void App::PrefsButton()
 		} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
 			mode = APP_MODE_PREFS_FONT_ITALIC;
 		}
-		ts->SetScreen(screenright);
+/*		ts->SetScreen(screenright);
 		ts->ClearScreen();
 		ts->SetPen(marginleft,PAGE_HEIGHT/2);
 		ts->PrintString("[loading fonts...]");
+*/
+		PrintStatus("[loading fonts...]");
 		FontInit();
 		FontDraw();
+		PrintStatus("");
 	}
 }

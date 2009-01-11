@@ -256,11 +256,6 @@ void App::AttemptBookOpen()
 		browser_draw();
 }
 
-#define STATUSBOX_X 20
-#define STATUSBOX_Y 220
-#define STATUSBOX_W (PAGE_WIDTH-(STATUSBOX_X*2))
-#define STATUSBOX_H 24
-
 void App::PrintStatus(const char *msg) {
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
@@ -268,9 +263,12 @@ void App::PrintStatus(const char *msg) {
 	
 	ts->SetPixelSize(11);
 	ts->SetScreen(screenleft);
-	ts->SetInvert(false);
-	ts->ClearRect(20,220,235,240);
-	ts->SetPen(20,STATUSBOX_Y);
+	ts->SetInvert(true);
+//	ts->ClearScreen();
+//	int clearalpha = (RGB15(15,15,15) << 8) + RGB15(15,15,15);
+//	memset((void*)screenleft,clearalpha,PAGE_WIDTH*PAGE_HEIGHT*4);
+	ts->ClearRect(0,210,PAGE_WIDTH,PAGE_HEIGHT);
+	ts->SetPen(10,220);
 	ts->PrintString(msg);
 
 	ts->SetPixelSize(pixelsize);

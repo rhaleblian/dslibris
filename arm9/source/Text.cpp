@@ -236,14 +236,12 @@ void Text::ClearScreen()
 
 void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 {
+	// TODO: use bgcolor here.
 	u16 clearcolor;
 	if(invert) clearcolor = RGB15(0,0,0) | BIT(15);
 	else clearcolor = RGB15(31,31,31) | BIT(15);
 	for(u16 y=yl; y<yh; y++) {
-//		for(u16 x=xl; x<xh; x++) {
-			//screen[y*PAGE_HEIGHT+x] = clearcolor;
-//		}
-		dmaCopyHalfWords(3,(void*)&clearcolor,(void*)(screen+y*PAGE_HEIGHT),(xh-xl)*2);
+		dmaCopyHalfWords(3,(void*)&clearcolor,(void*)(screen+y*PAGE_HEIGHT+xl),(xh-xl)*2);
 	}
 }
 
@@ -272,7 +270,7 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 	// to the next character.
 	// returns 0 if encoding could not be translated.
 	// TODO - handle 4 byte encodings.
-
+	// TODO - use iconv() instead, when available.
 	if (utf8[0] < 0x80) { // ASCII
 		*ucs = utf8[0];
 		return 1;

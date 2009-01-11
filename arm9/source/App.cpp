@@ -40,6 +40,7 @@ App::App()
 	screenleft = (u16*)BG_BMP_RAM(0);
 	screenright = (u16*)BG_BMP_RAM_SUB(0);
 	bgMain = NULL;
+	bgSplash = NULL;
 	bgSub = NULL;
 	marginleft = MARGINLEFT;
 	margintop = MARGINTOP;
@@ -77,14 +78,22 @@ int App::Run(void)
 	videoSetMode(MODE_5_2D);
 	vramSetBankA(VRAM_A_MAIN_BG);
 	bgMain = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bgSplash = bgInit(2, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bgSetPriority(bgMain,2);
+	bgSetPriority(bgSplash,1);
 	bgSetCenter(bgMain,128,96);
 	bgSetRotate(bgMain,-8192);
 	bgSetScroll(bgMain,96,128);
 	bgUpdate(bgMain);
-	decompress(splashBitmap, BG_GFX, LZ77Vram);
+	bgSetCenter(bgSplash,128,96);
+	bgSetRotate(bgSplash,-8192);
+	bgSetScroll(bgSplash,96,128);
+	bgUpdate(bgSplash);
+	decompress(splashBitmap, bgGetMapPtr(bgSplash), LZ77Vram);
 	
 	// init typesetter.
 	
+	// TODO move this to Text constructor. SetFontFile() will be the wrong call.
 	ts->SetFontFile(FONTFILEPATH, TEXT_STYLE_NORMAL);
 	ts->SetFontFile(FONTBOLDFILEPATH, TEXT_STYLE_BOLD);
 	ts->SetFontFile(FONTITALICFILEPATH, TEXT_STYLE_ITALIC);
@@ -215,14 +224,14 @@ int App::Run(void)
 		books[i]->GetBookmarks()->sort();
 	}
 
+	// Set up preferences editing screen.
 	PrefsInit();
+	
+	// Set up library browser screen.
 	browser_init();
 
 	Log("progr: browsers populated.\n");
 
-	// If typesetter failed, shop here to show console.
-//	if(err) while(1) swiWaitForVBlank();
-	
 	// Bring up the right screen.
 	videoSetModeSub(MODE_5_2D);
 	vramSetBankC(VRAM_C_SUB_BG);
@@ -247,7 +256,8 @@ int App::Run(void)
 
 	if(reopen && bookcurrent > -1)
 	{
-		if(OpenBook())
+		int openerr = OpenBook();
+		if(openerr)
 			Log("warn : could not reopen current book.\n");
 		else
 		{
