@@ -58,9 +58,10 @@ int Prefs::Write(void)
 	if(!fp) return 255;
 	
 	fprintf(fp, "<dslibris>\n");
-	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" />\n",
+	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
 		app->brightness,
-		app->ts->GetInvert());
+		app->ts->GetInvert(),
+		app->orientation);
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
 			app->margintop, app->marginleft,
 			app->marginbottom, app->marginright);

@@ -63,6 +63,7 @@ void App::HandleEventInBook()
 	{
 		// return to browser.
 		mode = APP_MODE_BROWSER;
+		if(orientation) lcdSwap();
 		ts->PrintSplash(screenleft);
 		reopen = false; // Resume in browser, not in book.
 		prefs->Write();

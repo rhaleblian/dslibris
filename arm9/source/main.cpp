@@ -157,7 +157,7 @@ void prefs_start_hndl(	void *userdata,
 			{
 				app->ts->SetInvert(atoi(attr[i+1]));
 			}
-			else if(!strcmp(attr[i],"clockwise"))
+			else if(!strcmp(attr[i],"flip"))
 			{
 				app->orientation = atoi(attr[i+1]);
 			}

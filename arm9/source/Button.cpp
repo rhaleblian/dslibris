@@ -7,9 +7,9 @@ Button::Button() {
 
 void Button::Init(Text *typesetter) {
 	ts = typesetter;
-	origin.x = 2;
+	origin.x = 0;
 	origin.y = 0;
-	extent.x = 188;
+	extent.x = 192;
 	extent.y = 32;
 	strcpy((char*)text, "");
 }
@@ -54,14 +54,14 @@ void Button::Draw(u16 *fb, bool highlight) {
 	}
 	for (y=ul.y;y<lr.y;y++) {
 		fb[y*SCREEN_WIDTH + ul.x] = bordercolor;
-		fb[y*SCREEN_WIDTH + lr.x] = bordercolor;
+		fb[y*SCREEN_WIDTH + lr.x-1] = bordercolor;
 	}
 
 	bool invert = ts->GetInvert();
 	ts->SetScreen(fb);
 	ts->SetInvert(false);
 	ts->GetPen(&x,&y);
-	ts->SetPen(ul.x+10, ul.y + ts->GetHeight());
+	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
 	ts->PrintString((const char*)text, TEXT_STYLE_BROWSER);
 	ts->usebgcolor = false;

@@ -58,8 +58,9 @@
 
 
 //! \brief Main application.
-//	\detail Top-level singleton class that handles application initialization,
-//  interaction loop, and logging. See main.cpp for entry point.
+//!
+//!	\detail Top-level singleton class that handles application initialization,
+//! interaction loop, drawing everything but text, and logging.
 
 class App {
 	private:

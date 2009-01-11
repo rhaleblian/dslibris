@@ -263,6 +263,7 @@ int App::Run(void)
 		{
 			Log("info : reopened current book.\n");
 			mode = APP_MODE_BOOK;
+			if(orientation) lcdSwap();
 		}
 	}
 	
@@ -305,27 +306,15 @@ void App::CycleBrightness()
 
 void App::RotateScreens()
 {
-	if (orientation == 0)
-	{
-		bgSetRotate(bgMain,8192);
-		bgSetScroll(bgMain,96,128);
-		bgUpdate(bgMain);
-		
-		bgSetRotate(bgSub,8192);
-		bgSetScroll(bgSub,96,128);
-		bgUpdate(bgSub);
-	}
-	else
-	{
-		bgSetRotate(bgMain,-8192);
-		bgSetScroll(bgMain,96,128);
-		bgUpdate(bgMain);
-		
-		bgSetRotate(bgSub,-8192);
-		bgSetScroll(bgSub,96,128);
-		bgUpdate(bgSub);
-	}
-	lcdSwap();
+	bgSetRotate(bgMain,8192);
+	bgSetScroll(bgMain,96,128);
+	bgUpdate(bgMain);
+	bgSetRotate(bgSplash,8192);
+	bgSetScroll(bgSplash,96,128);
+	bgUpdate(bgSplash);	
+	bgSetRotate(bgSub,8192);
+	bgSetScroll(bgSub,96,128);
+	bgUpdate(bgSub);
 }
 
 void App::Log(const char *msg)

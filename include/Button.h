@@ -9,6 +9,8 @@ typedef struct {
 	u16 y;
 } coord_t;
 
+//! A very simple button with a text label.
+
 class Button {
 	coord_t origin;
 	coord_t extent;

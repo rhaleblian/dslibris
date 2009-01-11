@@ -85,6 +85,7 @@ void App::HandleEventInBrowser()
 
 		touchRead(&touch);
 
+		// Transform point according to screen orientation.
 		if(!orientation)
 		{
 			coord.px = 256 - touch.px;
@@ -139,7 +140,7 @@ void App::browser_init(void)
 	{
 		buttons.push_back(new Button());
 		buttons[i]->Init(ts);
-		buttons[i]->Move(2,((i%APP_BROWSER_BUTTON_COUNT+1)*32)-16);
+		buttons[i]->Move(0,(i%APP_BROWSER_BUTTON_COUNT)*32);
 		if (strlen(books[i]->GetTitle()))
 			buttons[i]->Label(books[i]->GetTitle());
 		else
@@ -243,12 +244,14 @@ void App::AttemptBookOpen()
 	// Just switch if the book is already open/parsed
 	if(bookselected == bookcurrent) {
 		mode = APP_MODE_BOOK;
+		if(orientation) lcdSwap();
 		page_draw(&(pages[pagecurrent]));
 		reopen = true;
 		prefs->Write();
 	// Parse the selected book.
 	} else if (!OpenBook()) {
 		mode = APP_MODE_BOOK;
+		if(orientation) lcdSwap();
 		reopen = true;
 		prefs->Write();
 	// Fail...
