@@ -49,6 +49,10 @@ public:
 	}
 };
 
+//! Typesetter singleton that provides all text rendering services.
+
+//! Implemented atop FreeType 2.
+
 class Text {
 	FT_Library library;
 	FT_Error error;

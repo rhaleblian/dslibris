@@ -5,6 +5,10 @@
 #include <string>
 #include <list>
 
+//! Encapsulates metadata for a single book.
+
+//! App maintains n of these to represent the available library.
+
 class Book {
 	std::string filename;
 	std::string foldername;

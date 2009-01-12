@@ -20,11 +20,13 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 
+//! Book-related methods for App class.
+
 void App::HandleEventInBook()
 {
-	u32 keys = keysDownRepeat();
+	uint32 keys = keysDownRepeat();
 
-	if (keys & (KEY_A|KEY_R|KEY_DOWN))
+	if (keys & (KEY_A|key.up|key.down))
 	{
 		if (pagecurrent < pagecount)
 		{
@@ -34,7 +36,7 @@ void App::HandleEventInBook()
 		}
 	}
 
-	else if (keys & (KEY_B|KEY_L|KEY_UP))
+	else if (keys & (KEY_B|key.r|key.up))
 	{
 		if(pagecurrent > 0)
 		{
@@ -48,10 +50,6 @@ void App::HandleEventInBook()
 
 	if (keys & KEY_X)
 	{
-//		ts->SetInvert(!ts->GetInvert());
-		RotateScreens();
-		orientation = ~orientation;
-		page_draw(&pages[pagecurrent]);
 	}
 
 	else if (keys & KEY_Y)
@@ -72,10 +70,10 @@ void App::HandleEventInBook()
 
 	else if (keys & KEY_TOUCH)
 	{
-		// turn page on touch.
+		// Turn page on touch.
 		touchPosition touch;
  		touchRead(&touch);
-		if (touch.py < 96)
+		if ((orientation && touch.py > 95) || (touch.py < 96))
 		{
 			if (pagecurrent > 0) pagecurrent--;
 		}
@@ -110,7 +108,7 @@ void App::HandleEventInBook()
 	
 		page_draw(&pages[pagecurrent]);
 	}
-	else if (keys & (KEY_LEFT | KEY_RIGHT))
+	else if (keys & (key.right | key.right))
 	{
 		// Bookmark Navigation
 		Book* book = books[bookcurrent];
@@ -119,7 +117,7 @@ void App::HandleEventInBook()
 		if (!bookmarks->empty())
 		{
 			//Find the bookmark just after the current page
-			if (keys & KEY_LEFT)
+			if (keys & key.left)
 			{
 				std::list<u16>::iterator i;
 				for (i = bookmarks->begin(); i != bookmarks->end(); i++) {

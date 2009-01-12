@@ -51,7 +51,20 @@ App::App()
 	paraspacing = 1;
 	paraindent = 0;
 	brightness = 1;
-
+	
+	key.down = KEY_DOWN;
+	key.up = KEY_UP;
+	key.left = KEY_LEFT;
+	key.right = KEY_RIGHT;
+	key.start = KEY_START;
+	key.select = KEY_SELECT;
+	key.l = KEY_L;
+	key.r = KEY_R;
+	key.a = KEY_A;
+	key.b = KEY_B;
+	key.x = KEY_X;
+	key.y = KEY_Y;
+	
 //	prefs = new Prefs(this);
 	prefs = &myprefs;
 	prefs->app = this;
@@ -240,17 +253,17 @@ int App::Run(void)
 	bgSetRotate(bgSub,-8192);
 	bgSetScroll(bgSub,96,128);
 	bgUpdate(bgSub);
+
+	// Reverse orientation if needed.
+	if(orientation)
+	{
+		Flip();
+	}
 	
 	ts->SetScreen(screenright);
 	ts->ClearScreen();
 	mode = APP_MODE_BROWSER;
 	browser_draw();
-
-	// Reverse orientation if needed.
-	if(orientation)
-	{
-		RotateScreens();
-	}
 	
 	Log("progr: browser displayed.\n");
 
@@ -304,17 +317,24 @@ void App::CycleBrightness()
 	prefs->Write();
 }
 
-void App::RotateScreens()
+void App::Flip()
 {
 	bgSetRotate(bgMain,8192);
-	bgSetScroll(bgMain,96,128);
+	bgSetScroll(bgMain,95,127);
 	bgUpdate(bgMain);
 	bgSetRotate(bgSplash,8192);
-	bgSetScroll(bgSplash,96,128);
+	bgSetScroll(bgSplash,95,127);
 	bgUpdate(bgSplash);	
 	bgSetRotate(bgSub,8192);
-	bgSetScroll(bgSub,96,128);
+	bgSetScroll(bgSub,95,127);
 	bgUpdate(bgSub);
+	
+	key.down = KEY_UP;
+	key.up = KEY_DOWN;
+	key.left = KEY_RIGHT;
+	key.right = KEY_LEFT;
+	key.l = KEY_R;
+	key.r = KEY_L;
 }
 
 void App::Log(const char *msg)

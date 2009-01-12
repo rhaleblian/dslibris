@@ -24,7 +24,7 @@ void App::HandleEventInBrowser()
 		AttemptBookOpen();
 	}
 	
-	else if (keysDown() & KEY_DOWN)
+	else if (keysDown() & key.down)
 	{
 		AttemptBookOpen();
 	}
@@ -41,7 +41,7 @@ void App::HandleEventInBrowser()
 		PrefsDraw();
 	}
 	
-	else if (keysDown() & (KEY_LEFT | KEY_L))
+	else if (keysDown() & (key.left | key.l))
 	{
 		// next book.
 		if (bookselected < bookcount-1)
@@ -56,7 +56,7 @@ void App::HandleEventInBrowser()
 		}
 	}
 
-	else if (keysDown() & (KEY_RIGHT | KEY_R))
+	else if (keysDown() & (key.right | key.r))
 	{
 		// previous book.
 		if (bookselected > 0)

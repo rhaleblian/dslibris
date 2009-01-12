@@ -147,7 +147,7 @@ void App::HandleEventInPrefs()
 	if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
 		mode = APP_MODE_BROWSER;
 		browser_draw();
-	} else if (prefsSelected > 0 && (keysDown() & (KEY_RIGHT | KEY_R))) {
+	} else if (prefsSelected > 0 && (keysDown() & (key.right | key.r))) {
 		prefsSelected--;
 		PrefsDraw(false);
 	} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (keysDown() & (KEY_LEFT | KEY_L))) {
@@ -205,13 +205,13 @@ void App::HandleEventInPrefs()
 				}
 			}
 		}
-	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & KEY_UP)) {
+	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.up)) {
 		PrefsDecreasePixelSize();
-	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & KEY_DOWN)) {
+	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.down)) {
 		PrefsIncreasePixelSize();
-	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & KEY_UP)) {
+	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.up)) {
 		PrefsDecreaseParaspacing();
-	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & KEY_DOWN)) {
+	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.down)) {
 		PrefsIncreaseParaspacing();
 	}
 }
@@ -272,11 +272,6 @@ void App::PrefsButton()
 		} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
 			mode = APP_MODE_PREFS_FONT_ITALIC;
 		}
-/*		ts->SetScreen(screenright);
-		ts->ClearScreen();
-		ts->SetPen(marginleft,PAGE_HEIGHT/2);
-		ts->PrintString("[loading fonts...]");
-*/
 		PrintStatus("[loading fonts...]");
 		FontInit();
 		FontDraw();

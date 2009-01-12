@@ -78,6 +78,11 @@ class App {
 	u8 mode;
 	string fontdir;
 	
+	//! key functions are remappable to support screen flipping.
+	struct {
+		u16 up,down,left,right,l,r,a,b,x,y,start,select;
+	} key;
+	
 	vector<Button*> buttons;
 	Button buttonprev, buttonnext, buttonprefs;
 	//! index into book vector denoting first book visible on library screen. 
@@ -132,7 +137,7 @@ class App {
 	void Log(std::string);
 	void PrintStatus(const char *msg);
 	void PrintStatus(string msg);
-	void RotateScreens();
+	void Flip();
 	void SetProgress(int amount);
 	void UpdateClock();
 
