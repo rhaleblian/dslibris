@@ -12,7 +12,8 @@ using namespace std;
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 #define CACHESIZE 256
 #define PIXELSIZE 12
-#define DPI 110 //! Reference: http://www.displaymate.com/psp_ds_shootout.htm
+//! Reference: http://www.displaymate.com/psp_ds_shootout.htm
+#define DPI 110
 #define TEXT_BOLD_ON 2
 #define TEXT_BOLD_OFF 3
 #define TEXT_ITALIC_ON 4
@@ -52,11 +53,14 @@ public:
 //! Typesetter singleton that provides all text rendering services.
 
 //! Implemented atop FreeType 2.
+//! Attempts to cache for performance, but the caching is now a bit broken
+//! since font styles were introduced.
 
 class Text {
 	FT_Library library;
 	FT_Error error;
 
+	//! Use the FreeType cache?
 	bool ftc;
 	TextCache cache;
 	TextFaceRec face_id;
@@ -70,7 +74,9 @@ class Text {
 	
 	u16 *screen, *screenleft, *screenright;
 	FT_Vector pen;
+	//! Draw white text on black?
 	bool invert;
+	//! We wish this worked.
 	bool justify;
 	u32 codeprev; // last printed char code
 
@@ -93,7 +99,8 @@ class Text {
 	
 public:
 	App *app;
-	u8 pixelsize;	
+	u8 pixelsize;
+	//! Not used ... really.
 	struct { u8 r; u8 g; u8 b; } bgcolor;
 	bool usebgcolor;
 

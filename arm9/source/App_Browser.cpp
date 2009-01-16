@@ -19,29 +19,31 @@
 
 void App::HandleEventInBrowser()
 {
-	if (keysDown() & KEY_A)
+	uint32 keys = keysDown();
+	
+	if (keys & KEY_A)
 	{
 		AttemptBookOpen();
 	}
 	
-	else if (keysDown() & key.down)
+	else if (keys & key.down)
 	{
 		AttemptBookOpen();
 	}
 	
-	else if (keysDown() & KEY_Y)
+	else if (keys & KEY_Y)
 	{
 		CycleBrightness();
 	}
 	
-	else if (keysDown() & KEY_SELECT)
+	else if (keys & KEY_SELECT)
 	{
 		mode = APP_MODE_PREFS;
 		prefsSelected = 0;
 		PrefsDraw();
 	}
 	
-	else if (keysDown() & (key.left | key.l))
+	else if (keys & (key.left | key.l))
 	{
 		// next book.
 		if (bookselected < bookcount-1)
@@ -56,7 +58,7 @@ void App::HandleEventInBrowser()
 		}
 	}
 
-	else if (keysDown() & (key.right | key.r))
+	else if (keys & (key.right | key.r))
 	{
 		// previous book.
 		if (bookselected > 0)
@@ -78,7 +80,7 @@ void App::HandleEventInBrowser()
 		prefs->Write();
 	}
 
-	else if (keysDown() & KEY_TOUCH)
+	else if (keys & KEY_TOUCH)
 	{
 		touchPosition touch;
 		touchPosition coord;

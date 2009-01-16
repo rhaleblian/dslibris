@@ -26,7 +26,7 @@ void App::HandleEventInBook()
 {
 	uint32 keys = keysDownRepeat();
 
-	if (keys & (KEY_A|key.up|key.down))
+	if (keys & (KEY_A|key.l|key.down))
 	{
 		if (pagecurrent < pagecount)
 		{
@@ -108,7 +108,7 @@ void App::HandleEventInBook()
 	
 		page_draw(&pages[pagecurrent]);
 	}
-	else if (keys & (key.right | key.right))
+	else if (keys & (key.right | key.left))
 	{
 		// Bookmark Navigation
 		Book* book = books[bookcurrent];
