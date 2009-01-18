@@ -98,8 +98,7 @@ dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	- rm -r dist/*
 	cp INSTALL.txt $(TARGET).nds data/$(TARGET).xml dist
 	- mkdir dist/font
-	cp data/font/dslibris*.ttf dist/font
-	cp data/font/verdana*.ttf dist/font
+	cp data/font/*.ttf dist/font
 	- mkdir dist/book	
 	cp data/book/dslibris.xht dist/book
 	(cd dist; zip -r dslibris.zip *)
