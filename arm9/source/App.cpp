@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
+#include <algorithm>   // for std::sort
 #include <DSGUI/BGUI.h>
 #include "ndsx_brightness.h"
 
@@ -17,6 +18,11 @@
 #include "Button.h"
 #include "Text.h"
 #include "splash.h"
+
+// less-than operator to compare books by title
+static bool book_title_lessthan(Book* a, Book* b) {
+    return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
+}
 
 App::App()
 {	
@@ -32,7 +38,7 @@ App::App()
 	bookcount = 0;
 	bookselected = 0;
 	bookcurrent = -1;
-	reopen = false;
+	reopen = true;
 	mode = APP_MODE_BROWSER;
 	filebuf = (char*)malloc(sizeof(char) * BUFSIZE);
 	msg = (char*)malloc(sizeof(char) * 128);
@@ -215,6 +221,7 @@ int App::Run(void)
 			}
 		}
 		dirclose(dp);
+                std::sort(books.begin(),books.end(),&book_title_lessthan);
 		sprintf(msg,"progr: %d books indexed.\n",bookcount);
 		Log(msg);
 	}

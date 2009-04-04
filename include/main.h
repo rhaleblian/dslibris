@@ -91,6 +91,9 @@ typedef struct book_s {
 
 //! Page data allocated as array in instances of a book.
 typedef struct page_s {
+	//! First char index in the cooked book.
+	//! Use this for locating bookmarks.
+	uint32 startchar; 
 	u16 length;
 	u8 *buf;   //! allocated per-page at parse time, to exact length.
 } page_t;

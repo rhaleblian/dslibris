@@ -139,6 +139,12 @@ void prefs_start_hndl(	void *userdata,
 	
 	if (!stricmp(name,"library"))
 	{
+		for(i=0;attr[i];i+=2)
+			if(!stricmp(attr[i],"modtime"))
+			   app->prefs->modtime = atoi(attr[i+1]);
+	}
+	else if (!stricmp(name,"library"))
+	{
 		for(i=0;attr[i];i+=2) {
 			if(!strcmp(attr[i],"folder"))
 				app->bookdir = std::string(attr[i+1]);
@@ -386,14 +392,15 @@ void start_hndl(void *data, const char *el, const char **attr)
 		app->parse_push(pdata,TAG_STRONG);
 		app->pagebuf[page->length] = TEXT_BOLD_ON;
 		page->length++;
-		parseFontBold = true;
+		pdata->pos++;
+		pdata->bold = true;
 	}
 	else if (!stricmp(el,"em") || !stricmp(el, "i")) {
 		page_t *page = &(app->pages[app->pagecurrent]);
 		app->parse_push(pdata,TAG_EM);
 		app->pagebuf[page->length] = TEXT_ITALIC_ON;
 		page->length++;
-		parseFontItalic = true;
+		pdata->italic = true;
 	}
 	else app->parse_push(pdata,TAG_UNKNOWN);
 }  /* End of start_hndl */
@@ -491,16 +498,18 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				{
 					if (app->parse_pagefeed(pdata,page))
 					{
+						pdata->pos += page->length;
 						page++;
 						app->page_init(page);
+						page->startchar = pdata->pos;
 						app->pagecurrent++;
 						app->pagecount++;
 						if (app->pagecount == MAXPAGES)
 							return;
 						
-						if (parseFontItalic)
+						if (pdata->italic)
 							app->pagebuf[page->length++] = TEXT_ITALIC_ON;
-						if (parseFontBold)
+						if (pdata->bold)
 							app->pagebuf[page->length++] = TEXT_BOLD_ON;
 					}
 				}
@@ -588,6 +597,7 @@ void end_hndl(void *data, const char *el)
 			{
 				app->pagebuf[page->length] = '\n';
 				page->length++;
+				p->linebegan = false;
 				p->pen.x = app->marginleft;
 				p->pen.y += app->ts->GetHeight() + app->linespacing;
 			}
@@ -595,41 +605,51 @@ void end_hndl(void *data, const char *el)
 			{
 				if (app->ts->GetScreen() == app->screenright)
 				{
+					// End of right screen; end of page.
 					app->ts->SetScreen(app->screenleft);
 					if (!page->buf)
 						page->buf = (u8*)new u8[page->length];
 					strncpy((char*)page->buf,(char *)app->pagebuf,page->length);
+					p->pos += page->length;
+					
 					page++;
 					app->page_init(page);
+					page->startchar = p->pos;
 					app->pagecurrent++;
 					app->pagecount++;
 					if(app->pagecount == MAXPAGES) return;
 				}
 				else
 				{
+					// End of left screen; same page, next screen.
 					app->ts->SetScreen(app->screenright);
 				}
 				p->pen.x = app->marginleft;
 				p->pen.y = app->margintop + app->ts->GetHeight();
+				p->linebegan = false;
 			}
 		}
 	} else if (!stricmp(el,"body")) {
+		// Save off our last page.
 		if (!page->buf)
 		{
 			page->buf = new u8[page->length];
 			if (!page->buf)
-				app->ts->PrintStatusMessage("error: no memory to store page.\n");
+			{
+				app->PrintStatus("out of memory to store pages.\n");
+				return;
+			}
 		}
 		strncpy((char*)page->buf,(char*)app->pagebuf,page->length);
-		app->parse_pop(p);
+		app->parse_pop(p); //?
 	} else if (!stricmp(el, "strong") || !stricmp(el, "b")) {
 		app->pagebuf[page->length] = TEXT_BOLD_OFF;
 		page->length++;
-		parseFontBold = false;
+		p->bold = false;
 	} else if (!stricmp(el, "em") || !stricmp(el, "i")) {
 		app->pagebuf[page->length] = TEXT_ITALIC_OFF;
 		page->length++;
-		parseFontItalic = false;
+		p->italic = false;
 	}
 
 	app->parse_pop(p);

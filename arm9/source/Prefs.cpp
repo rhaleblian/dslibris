@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <vector>
+#include "sys/stat.h"
+#include "sys/time.h"
 #include "nds.h"
 #include "main.h"
 #include "App.h"
@@ -8,7 +10,9 @@
 
 #define PARSEBUFSIZE 1024*8
 
-Prefs::Prefs() {}
+Prefs::Prefs() {
+	modtime = 0;  // fill this in with gettimeofday()
+}
 Prefs::Prefs(App *parent) { app = parent; }
 Prefs::~Prefs() {}
 
@@ -39,6 +43,16 @@ int Prefs::Read(XML_Parser p)
 	}
 	fclose(fp);
 	return err;
+
+	struct stat st;
+	stat(PREFSPATH,&st);
+	struct timeval time;
+	gettimeofday(&time,NULL);
+	char msg[64];
+	sprintf(msg,"info : file timestamp %ld",st.st_mtime);
+	app->Log(msg);
+	sprintf(msg,"info : current time %ld",time.tv_sec);
+	app->Log(msg);
 }
 
 //! \return As per Read(XML_Parser).
@@ -57,7 +71,7 @@ int Prefs::Write(void)
 	FILE* fp = fopen(PREFSPATH,"w");
 	if(!fp) return 255;
 	
-	fprintf(fp, "<dslibris>\n");
+	fprintf(fp, "<dslibris modtime=\"%d\">\n",modtime);
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
 		app->brightness,
 		app->ts->GetInvert(),
@@ -74,14 +88,6 @@ int Prefs::Write(void)
  	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
 			app->paraindent,
 			app->paraspacing);
-	/* TODO save pagination data with current book to cache it to disk.
-	   store timestamp too in order to invalidate caches.
-	vector<u16> pageindices;
-	for(u16 i=0;i<app->pagecount;i++)
-	{
-		
-	}
-	*/
     fprintf(fp, "\t<books path=\"%s\" reopen=\"%d\">\n",
     		app->bookdir.c_str(),
     		app->reopen);
@@ -94,8 +100,8 @@ int Prefs::Write(void)
 		fprintf(fp,">\n");		
 		std::list<u16>* bookmarks = book->GetBookmarks();
         for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
-            fprintf(fp, "\t\t\t<bookmark page=\"%d\" />\n",
-                    *j + 1);
+            fprintf(fp, "\t\t\t<bookmark page=\"%d\" word=\"%d\" />\n",
+                    *j + 1,0);
         }
 
         fprintf(fp, "\t\t</book>\n");

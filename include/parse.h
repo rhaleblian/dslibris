@@ -25,6 +25,11 @@ typedef struct {
 	Book *book;
 	page_t *page;
 	FT_Vector pen;
+	//! Our parse position in terms of cooked text.
+	uint32 pos;
+	bool linebegan;
+	bool bold;
+	bool italic;
 } parsedata_t;
 
 void default_hndl(void *data, const char *s, int len);

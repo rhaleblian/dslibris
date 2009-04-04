@@ -26,7 +26,7 @@ void App::HandleEventInBook()
 {
 	uint32 keys = keysDownRepeat();
 
-	if (keys & (KEY_A|key.l|key.down))
+	if (keys & (KEY_A|key.r|key.down))
 	{
 		if (pagecurrent < pagecount)
 		{
@@ -36,7 +36,7 @@ void App::HandleEventInBook()
 		}
 	}
 
-	else if (keys & (KEY_B|key.r|key.up))
+	else if (keys & (KEY_B|key.l|key.up))
 	{
 		if(pagecurrent > 0)
 		{
@@ -50,6 +50,8 @@ void App::HandleEventInBook()
 
 	if (keys & KEY_X)
 	{
+                 ts->SetInvert(!ts->GetInvert()); 	 
+	         page_draw(&pages[pagecurrent]);
 	}
 
 	else if (keys & KEY_Y)
@@ -238,10 +240,14 @@ void App::parse_printerror(XML_Parser p)
 void App::parse_init(parsedata_t *data)
 {
 	data->stacksize = 0;
+	data->pos = 0;
 	data->book = NULL;
 	data->page = NULL;
 	data->pen.x = marginleft;
 	data->pen.y = margintop;
+	data->linebegan = false;
+	data->bold = false;
+	data->italic = false;
 }
 
 void App::parse_push(parsedata_t *data, context_t context)
@@ -375,7 +381,6 @@ void App::page_draw(page_t *page)
 			break;
 		}
 	}
-	// TODO: Decide where to display the asterisk and use a more elegant solution
 	if (isBookmark) {
 		if(pagecurrent == 0) 
 			sprintf((char*)msg,"[ %d* >",pagecurrent+1);

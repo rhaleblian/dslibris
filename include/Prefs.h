@@ -6,6 +6,8 @@ class Prefs
 {
 public:
 	class App *app;
+	int modtime;
+
 	Prefs();
 	Prefs(class App *parent);
 	~Prefs();

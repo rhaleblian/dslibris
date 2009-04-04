@@ -1,9 +1,14 @@
-support epub.
+extend pagecount past 2048.
+store modtime for prefs.
+repaginate and rebookmark based on modtime.
 integrate calibre and gutenmark.
-fix page 1 skipping. DONE
 speed up parse by caching pagination.
-doble-buffer and memcpy or dma speed up text redraw in browser.
-restore fakey orientation. IN PROGRESS
+double-buffer or dmacopy to speed up text redraw.
+support epub.
+fix page 1 skipping. DONE
+restore fakey orientation. DONE
 restore brightness control. DONE
 restore invert. DONE
+restore X key. DONE
+restore shoulder sense. DONE
 
