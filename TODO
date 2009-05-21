@@ -1,3 +1,4 @@
+write bookmark as word offset.
 extend pagecount past 2048.
 store modtime for prefs.
 repaginate and rebookmark based on modtime.
