@@ -25,10 +25,10 @@ DATA		:=
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -Wall -O2\
- 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
-			-ffast-math \
-			$(ARCH)
+CFLAGS	:=	-g -Wall \
+		-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
+		-ffast-math \
+		$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions
@@ -40,7 +40,7 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lDSGUI -lexpat -lfreetype -lfat -lnds9
+LIBS	:=	-lexpat -lfreetype -lfatd -lnds9d
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

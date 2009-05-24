@@ -103,11 +103,10 @@ int App::Run(void)
 	bgSetCenter(bgMain,128,96);
 	bgSetRotate(bgMain,-8192);
 	bgSetScroll(bgMain,96,128);
-	bgUpdate(bgMain);
 	bgSetCenter(bgSplash,128,96);
 	bgSetRotate(bgSplash,-8192);
 	bgSetScroll(bgSplash,96,128);
-	bgUpdate(bgSplash);
+	bgUpdate();
 	decompress(splashBitmap, bgGetMapPtr(bgSplash), LZ77Vram);
 	
 	// init typesetter.
@@ -147,7 +146,6 @@ int App::Run(void)
 	parse_init(&parsedata);
 
 	// read preferences, pass 1, to load bookdir.
-
    	if (int parseerror = prefs->Read())
 	{
 		sprintf(msg,"warn : can't read prefs (%d).\n",parseerror);
@@ -259,7 +257,7 @@ int App::Run(void)
 	bgSetCenter(bgSub,128,96);
 	bgSetRotate(bgSub,-8192);
 	bgSetScroll(bgSub,96,128);
-	bgUpdate(bgSub);
+	bgUpdate();
 
 	// Reverse orientation if needed.
 	if(orientation)
@@ -328,13 +326,11 @@ void App::Flip()
 {
 	bgSetRotate(bgMain,8192);
 	bgSetScroll(bgMain,95,127);
-	bgUpdate(bgMain);
 	bgSetRotate(bgSplash,8192);
 	bgSetScroll(bgSplash,95,127);
-	bgUpdate(bgSplash);	
 	bgSetRotate(bgSub,8192);
 	bgSetScroll(bgSub,95,127);
-	bgUpdate(bgSub);
+	bgUpdate();
 	
 	key.down = KEY_UP;
 	key.up = KEY_DOWN;
