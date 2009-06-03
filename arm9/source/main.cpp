@@ -74,7 +74,7 @@ void initScreenLeft()
 	bgSetCenter(bgMain,0,0);
 	bgRotate(bgMain,-8192);
 	bgScroll(bgMain,0,256);
-	bgUpdate();
+	bgUpdate(bgMain);
 	splash();
 }
 
