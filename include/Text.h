@@ -9,6 +9,7 @@
 
 using namespace std;
 
+//! Reference: FreeType2 online documentation
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 #define CACHESIZE 256
 #define PIXELSIZE 12
@@ -72,7 +73,6 @@ class Text {
 	map<u8, FT_Face> faces;
 	map<u8, string> filenames;
 	
-	u16 *screen, *screenleft, *screenright;
 	FT_Vector pen;
 	//! Draw white text on black?
 	bool invert;
@@ -99,17 +99,28 @@ class Text {
 	
 public:
 	App *app;
-	u8 pixelsize;
+	int pixelsize;
 	//! Not used ... really.
 	struct { u8 r; u8 g; u8 b; } bgcolor;
 	bool usebgcolor;
-
+	u16 *screen, *screenleft, *screenright;
+	struct {
+		int left, right, top, bottom;
+	} margin;
+	struct {
+		int width, height;
+	} display;
+	int linespacing;
+	bool linebegan, bold, italic;
+	
 	Text();
 	Text(class App *parent) { app = parent; }
 	~Text();
 	int  Init();
 	void InitPen(void);
-
+	void Begin();
+	void End();
+	
 	u8   GetAdvance(u32 ucs);
 	u8   GetAdvance(u32 ucs, u8 style);
 	u8   GetCharCode(const char* txt, u32* code);
@@ -149,3 +160,4 @@ public:
 };
 
 #endif
+

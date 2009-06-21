@@ -21,87 +21,31 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 #include <nds.h>
-#include <stdio.h>
+#include <fat.h>
 #include <expat.h>
-
+#include "types.h"
 #include "App.h"
 #include "Book.h"
 #include "Button.h"
 #include "Text.h"
 #include "main.h"
 #include "parse.h"
-#include "splash.h"
 
 App *app;
-bool linebegan = false;
-// Static vars needed for state in the XML config callback prefs_start_hndl
-int book = -1; //! Current book context.
-bool parseFontBold = false;
-bool parseFontItalic = false;
 
 /*---------------------------------------------------------------------------*/
 
-void spin()
-{
-	while (1) swiWaitForVBlank();
-}
-
-void greenblue()
-{
-	u16 green = ARGB16(1,0,15,0);
-	u16 blue = ARGB16(1,0,0,15);
-	for(int i=0; i<256; i++)
-	{
-		for(int j=0; j<256; j++) {
-			BG_BMP_RAM(0)[j+i*256] = green;
-			BG_BMP_RAM_SUB(0)[j+i*256] = blue;
-		}
-	}
-}
-
-void splash()
-{
-	//! Draw graphic, the left screen must be initialized. 
-	decompress(splashBitmap, BG_GFX, LZ77Vram);
-}
-
-void initScreenLeft()
-{	
-	//! Bring up left screen.
-	videoSetMode(MODE_5_2D);
-	vramSetBankA(VRAM_A_MAIN_BG);
-	int bgMain = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-	bgSetCenter(bgMain,0,0);
-	bgRotate(bgMain,-8192);
-	bgScroll(bgMain,0,256);
-	bgUpdate(bgMain);
-	splash();
-}
-
 int main(void)
 {
-	defaultExceptionHandler();
-
-//	initScreenLeft();
-	
-	consoleDemoInit();
-	iprintf("dslibris 1.3.\n");
-
-	if(!fatInitDefault())
-	{
-		iprintf("fatal: no filesystem.\n");
-		spin();
-	}
-
 	app = new App();
 	return app->Run();
 }
 
-u8 GetParserFace()
+u8 GetParserFace(parsedata_t *pdata)
 {
-	if (parseFontItalic)
+	if (pdata->italic)
 		return TEXT_STYLE_ITALIC;
-	else if (parseFontBold)
+	else if (pdata->bold)
 		return TEXT_STYLE_BOLD;
 	else
 		return TEXT_STYLE_NORMAL;
@@ -112,30 +56,26 @@ bool iswhitespace(u8 c)
 {
 	switch (c)
 	{
-		case ' ':
-		case '\t':
-		case '\n':
-			return true;
-			break;
-		default:
-			return false;
-			break;
+	case ' ':
+	case '\t':
+	case '\n':
+		return true;
+		break;
+	default:
+		return false;
+		break;
 	}
 }
 
-void prefs_start_hndl(	void *userdata,
+void prefs_start_hndl(	void *data,
 						const XML_Char *name,
 						const XML_Char **attr)
 {
-	vector<Book*> *data = (vector<Book*>*)userdata;
+	parsedata_t* p = (parsedata_t*)data;
 	int position = 0; //! Page position in book.
 	char filename[MAXPATHLEN];
 	bool current = FALSE;
 	int i;
- 
-	char msg[256];
-	sprintf(msg,"info : found <%s>\n",name);
-	app->Log(msg);
 	
 	if (!stricmp(name,"library"))
 	{
@@ -211,7 +151,7 @@ void prefs_start_hndl(	void *userdata,
 	{
 		strcpy(filename,"");
 		current = FALSE;
-
+		position = 0;
 		for (i = 0; attr[i]; i+=2) {
 			if (!strcmp(attr[i], "file"))
 				strcpy(filename, attr[i+1]);
@@ -227,25 +167,28 @@ void prefs_start_hndl(	void *userdata,
 		
 		// Find the book index for this library entry
 		// and set context for later bookmarks.
-		for(i = 0; i < app->bookcount; i++)
+		vector<Book*>::iterator it;
+		for(it = app->books.begin(); it < app->books.end(); it++)
 		{
-			const char *bookname = (*data)[i]->GetFileName();
+			const char *bookname = (*it)->GetFileName();
 			if(!stricmp(bookname, filename))
 			{
+				// bookmark tags will refer to this.
+				p->book = *it;
+				
 				char msg[128];
 				sprintf(msg,"info : matched extant book '%s'.\n",bookname);
 				app->Log(msg);
 				
-				book = i;	// bookmark tags will refer to this.
 				if (current)
 				{
 					// Set this book as current.
-					app->bookcurrent = i;
-					app->bookselected = i;
+					app->bookcurrent = *it;
+					app->bookselected = *it;
 				}
 				if (position)
 					// Set current page in this book.
-					(*data)[i]->SetPosition(position - 1);
+					(*it)->SetPosition(position - 1);
 
 				break;
 			}
@@ -258,26 +201,27 @@ void prefs_start_hndl(	void *userdata,
 				position = atoi(attr[i+1]);
         }
 		
-		if (book >= 0)
+		if (p->book)
 		{
-			app->books[book]->GetBookmarks()->push_back(position - 1);
+			p->book->GetBookmarks()->push_back(position - 1);
 		}
 	}
 	else if (!stricmp(name,"margin"))
 	{
 		for (i=0;attr[i];i+=2)
 		{
-			if (!strcmp(attr[i],"left")) app->marginleft = atoi(attr[i+1]);
-			if (!strcmp(attr[i],"right")) app->marginright = atoi(attr[i+1]);
-			if (!strcmp(attr[i],"top")) app->margintop = atoi(attr[i+1]);
-			if (!strcmp(attr[i],"bottom")) app->marginbottom = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"left")) app->ts->margin.left = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"right")) app->ts->margin.right = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"top")) app->ts->margin.top = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"bottom")) app->ts->margin.bottom = atoi(attr[i+1]);
 		}
 	}
 }
 
 void prefs_end_hndl(void *data, const char *name)
 {
-	if (!stricmp(name,"book")) book = -1;
+	parsedata_t *p = (parsedata_t*)data;
+	if (!stricmp(name,"book")) p->book = NULL;
 }
 
 int unknown_hndl(void *encodingHandlerData,
@@ -289,20 +233,17 @@ int unknown_hndl(void *encodingHandlerData,
 
 void default_hndl(void *data, const XML_Char *s, int len)
 {
-	parsedata_t *p = (parsedata_t *)data;
+#ifdef DEBUG
+	char msg[256];
+	strncpy(msg,(const char*)s, len > 255 ? 255 : len);
+	app->Log("info : ");
+	app->Log(msg);
+	app->Log("\n");
+#endif
+
+	parsedata_t *p = (parsedata_t*)data;
 	if (s[0] == '&')
 	{
-		page_t *page = &(app->pages[app->pagecurrent]);
-
-		/** handle only common iso-8859-1 character codes. */
-		if (!strnicmp(s,"&nbsp;",5))
-		{
-			app->pagebuf[page->length++] = ' ';
-			p->pen.x += app->ts->GetAdvance(' ', GetParserFace());
-			
-			return;
-		}
-
 		/** if it's decimal, convert the UTF-16 to UTF-8. */
 		int code=0;
 		sscanf(s,"&#%d;",&code);
@@ -310,20 +251,56 @@ void default_hndl(void *data, const XML_Char *s, int len)
 		{
 			if (code>=128 && code<=2047)
 			{
-				app->pagebuf[page->length++] = 192 + (code/64);
-				app->pagebuf[page->length++] = 128 + (code%64);
+				p->buf[p->buflen++] = 192 + (code/64);
+				p->buf[p->buflen++] = 128 + (code%64);
 			}
 			else if (code>=2048 && code<=65535)
 			{
-				app->pagebuf[page->length++] = 224 + (code/4096);
-				app->pagebuf[page->length++] = 128 + ((code/64)%64);
-				app->pagebuf[page->length++] = 128 + (code%64);
+				p->buf[p->buflen++] = 224 + (code/4096);
+				p->buf[p->buflen++] = 128 + ((code/64)%64);
+				p->buf[p->buflen++] = 128 + (code%64);
 			}
 			// TODO - support 4-byte codes
 			
-			p->pen.x += app->ts->GetAdvance(code, GetParserFace());
+			p->pen.x += app->ts->GetAdvance(code, GetParserFace(p));
+			return;
+		}
+
+		/** otherwise, handle only common HTML named entities. */
+		if (!strnicmp(s,"&nbsp;",5))
+		{
+			p->buf[p->buflen++] = ' ';
+			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			return;
+		}
+		if (!stricmp(s,"&quot;"))
+		{
+			p->buf[p->buflen++] = '"';
+			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			return;
+		}
+		if (!stricmp(s,"&amp;"))
+		{
+			p->buf[p->buflen++] = '&';
+			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			return;
+		}
+		if (!stricmp(s,"&lt;"))
+		{
+			p->buf[p->buflen++] = '<';
+			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			return;
+		}
+		if (!stricmp(s,"&lt;"))
+		{
+			p->buf[p->buflen++] = '>';
+			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			return;
 		}
 	}
+	
+	// FIXME if we go more than an HTML entity passed in, we've lost he remainder!
+	
 }  /* End default_hndl */
 
 static char title[32];
@@ -367,42 +344,40 @@ void title_end_hndl(void *userdata, const char *el)
 
 void start_hndl(void *data, const char *el, const char **attr)
 {
-	parsedata_t *pdata = (parsedata_t*)data;
-	if (!stricmp(el,"html")) app->parse_push(pdata,TAG_HTML);
-	else if (!stricmp(el,"body")) app->parse_push(pdata,TAG_BODY);
-	else if (!stricmp(el,"div")) app->parse_push(pdata,TAG_DIV);
-	else if (!stricmp(el,"dt")) app->parse_push(pdata,TAG_DT);
-	else if (!stricmp(el,"h1")) app->parse_push(pdata,TAG_H1);
-	else if (!stricmp(el,"h2")) app->parse_push(pdata,TAG_H2);
-	else if (!stricmp(el,"h3")) app->parse_push(pdata,TAG_H3);
-	else if (!stricmp(el,"h4")) app->parse_push(pdata,TAG_H4);
-	else if (!stricmp(el,"h5")) app->parse_push(pdata,TAG_H5);
-	else if (!stricmp(el,"h6")) app->parse_push(pdata,TAG_H6);
-	else if (!stricmp(el,"head")) app->parse_push(pdata,TAG_HEAD);
-	else if (!stricmp(el,"ol")) app->parse_push(pdata,TAG_OL);
-	else if (!stricmp(el,"p")) app->parse_push(pdata,TAG_P);
-	else if (!stricmp(el,"pre")) app->parse_push(pdata,TAG_PRE);
-	else if (!stricmp(el,"script")) app->parse_push(pdata,TAG_SCRIPT);
-	else if (!stricmp(el,"style")) app->parse_push(pdata,TAG_STYLE);
-	else if (!stricmp(el,"title")) app->parse_push(pdata,TAG_TITLE);
-	else if (!stricmp(el,"td")) app->parse_push(pdata,TAG_TD);
-	else if (!stricmp(el,"ul")) app->parse_push(pdata,TAG_UL);
+	parsedata_t *p = (parsedata_t*)data;
+	if (!stricmp(el,"html")) app->parse_push(p,TAG_HTML);
+	else if (!stricmp(el,"body")) app->parse_push(p,TAG_BODY);
+	else if (!stricmp(el,"div")) app->parse_push(p,TAG_DIV);
+	else if (!stricmp(el,"dt")) app->parse_push(p,TAG_DT);
+	else if (!stricmp(el,"h1")) app->parse_push(p,TAG_H1);
+	else if (!stricmp(el,"h2")) app->parse_push(p,TAG_H2);
+	else if (!stricmp(el,"h3")) app->parse_push(p,TAG_H3);
+	else if (!stricmp(el,"h4")) app->parse_push(p,TAG_H4);
+	else if (!stricmp(el,"h5")) app->parse_push(p,TAG_H5);
+	else if (!stricmp(el,"h6")) app->parse_push(p,TAG_H6);
+	else if (!stricmp(el,"head")) app->parse_push(p,TAG_HEAD);
+	else if (!stricmp(el,"ol")) app->parse_push(p,TAG_OL);
+	else if (!stricmp(el,"p")) app->parse_push(p,TAG_P);
+	else if (!stricmp(el,"pre")) app->parse_push(p,TAG_PRE);
+	else if (!stricmp(el,"script")) app->parse_push(p,TAG_SCRIPT);
+	else if (!stricmp(el,"style")) app->parse_push(p,TAG_STYLE);
+	else if (!stricmp(el,"title")) app->parse_push(p,TAG_TITLE);
+	else if (!stricmp(el,"td")) app->parse_push(p,TAG_TD);
+	else if (!stricmp(el,"ul")) app->parse_push(p,TAG_UL);
 	else if (!stricmp(el,"strong") || !stricmp(el, "b")) {
-		page_t *page = &(app->pages[app->pagecurrent]);
-		app->parse_push(pdata,TAG_STRONG);
-		app->pagebuf[page->length] = TEXT_BOLD_ON;
-		page->length++;
-		pdata->pos++;
-		pdata->bold = true;
+		app->parse_push(p,TAG_STRONG);
+		p->buf[p->buflen] = TEXT_BOLD_ON;
+		p->buflen++;
+		p->pos++;
+		p->bold = true;
 	}
 	else if (!stricmp(el,"em") || !stricmp(el, "i")) {
-		page_t *page = &(app->pages[app->pagecurrent]);
-		app->parse_push(pdata,TAG_EM);
-		app->pagebuf[page->length] = TEXT_ITALIC_ON;
-		page->length++;
-		pdata->italic = true;
+		app->parse_push(p,TAG_EM);
+		p->buf[p->buflen] = TEXT_ITALIC_ON;
+		p->buflen++;
+		p->italic = true;
 	}
-	else app->parse_push(pdata,TAG_UNKNOWN);
+	else app->parse_push(p,TAG_UNKNOWN);
 }  /* End of start_hndl */
 
 
@@ -410,19 +385,18 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 {
 	/** reflow text on the fly, into page data structure. **/
 
-	parsedata_t *pdata = (parsedata_t *)data;
-	if (app->parse_in(pdata,TAG_TITLE)) return;	
-	if (app->parse_in(pdata,TAG_SCRIPT)) return;
-	if (app->parse_in(pdata,TAG_STYLE)) return;
-	if (app->pagecount == MAXPAGES) return;
+	parsedata_t *p = (parsedata_t *)data;
+	if (app->parse_in(p,TAG_TITLE)) return;
+	if (app->parse_in(p,TAG_SCRIPT)) return;
+	if (app->parse_in(p,TAG_STYLE)) return;
 
-	page_t *page = &(app->pages[app->pagecurrent]);
-	if (page->length == 0)
+	Text *ts = app->ts;
+	if (p->buflen == 0)
 	{
 		/** starting a new page. **/
-		pdata->pen.x = app->marginleft;
-		pdata->pen.y = app->margintop + app->ts->GetHeight();
-		linebegan = false;
+		p->pen.x = ts->margin.left;
+		p->pen.y = ts->margin.top + ts->GetHeight();
+		p->linebegan = false;
 	}
 
 	u8 advance=0;
@@ -437,49 +411,48 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 		if (iswhitespace(txt[i]))
 		{
-			if(app->parse_in(pdata,TAG_PRE))
+			if(app->parse_in(p,TAG_PRE))
 			{
-				app->pagebuf[page->length++] = txt[i];
+				p->buf[p->buflen++] = txt[i];
 				if(txt[i] == '\n')
 				{
-					pdata->pen.x = app->marginleft;
-					pdata->pen.y += (app->ts->GetHeight() + app->linespacing);
+					p->pen.x = ts->margin.left;
+					p->pen.y += (ts->GetHeight() + ts->linespacing);
 				}
 				else {
-					pdata->pen.x += app->ts->GetAdvance((u16)' ', GetParserFace());
+					p->pen.x += ts->GetAdvance((u16)' ', GetParserFace(p));
 				}
 			}
-			else if(linebegan && page->length
-				&& !iswhitespace(app->pagebuf[page->length-1]))
+			else if(p->linebegan && p->buflen
+				&& !iswhitespace(p->buf[p->buflen-1]))
 			{
-				app->pagebuf[page->length++] = ' ';
-				pdata->pen.x += app->ts->GetAdvance((u16)' ', GetParserFace());	
+				p->buf[p->buflen++] = ' ';
+				p->pen.x += ts->GetAdvance((u16)' ', GetParserFace(p));	
 			}
 			i++;
 		}
 		else
 		{
-			linebegan = true;
+			p->linebegan = true;
 			int j;
 			advance = 0;
 			u8 bytes = 1;
 			for (j=i;(j<txtlen) && (!iswhitespace(txt[j]));j+=bytes)
 			{
-
 				/** set type until the end of the next word.
 				    account for UTF-8 characters when advancing. **/
 				u32 code;
 				if (txt[j] > 127)
-					bytes = app->ts->GetCharCode((char*)&(txt[j]),&code);
+					bytes = ts->GetCharCode((char*)&(txt[j]),&code);
 				else
 				{
 					code = txt[j];
 					bytes = 1;
 				}
 
-				advance += app->ts->GetAdvance(code, GetParserFace());
+				advance += ts->GetAdvance(code, GetParserFace(p));
 					
-				if(advance > PAGE_WIDTH-MARGINRIGHT-MARGINLEFT)
+				if(advance > ts->display.width - ts->margin.right - ts->margin.left)
 				{
 					// here's a line-long word, need to break it now.
 					break;
@@ -488,32 +461,39 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 
 			// reflow - if we overrun the margin, insert a break.
 
-			if ((pdata->pen.x + advance) > (PAGE_WIDTH-app->marginright))
+			if ((p->pen.x + advance) > (ts->display.width - ts->margin.right))
 			{
-				app->pagebuf[page->length++] = '\n';
-				pdata->pen.x = app->marginleft;
-				pdata->pen.y += (app->ts->GetHeight() + app->linespacing);
+				p->buf[p->buflen++] = '\n';
+				p->pen.x = ts->margin.left;
+				p->pen.y += (ts->GetHeight() + ts->linespacing);
 
-				if (pdata->pen.y > (PAGE_HEIGHT-app->marginbottom))
+				if (p->pen.y > (ts->display.height - ts->margin.bottom))
 				{
-					if (app->parse_pagefeed(pdata,page))
+					//if (app->parse_pagefeed(p,page))
+					if(p->screen == 1)
 					{
-						pdata->pos += page->length;
-						page++;
-						app->page_init(page);
-						page->startchar = pdata->pos;
-						app->pagecurrent++;
-						app->pagecount++;
-						if (app->pagecount == MAXPAGES)
-							return;
-						
-						if (pdata->italic)
-							app->pagebuf[page->length++] = TEXT_ITALIC_ON;
-						if (pdata->bold)
-							app->pagebuf[page->length++] = TEXT_BOLD_ON;
+						// put chars into current page.
+						Page *page = p->book->AppendPage();
+						page->SetBuffer(p->buf, p->buflen);
+												
+						// make a new page.
+						p->buflen = 0;
+						if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
+						if (p->bold) p->buf[p->buflen++] = TEXT_BOLD_ON;
+						p->screen = 0;
+						/* if(!(p->pos >> 4))
+						{
+							char msg[16];
+							sprintf(msg,"[%d]",p->pos);
+							app->PrintStatus(msg);
+						} */
 					}
+					else 
+						p->screen = 1;
+					p->pen.x = ts->margin.left;
+					p->pen.y = ts->margin.top + ts->GetHeight();
 				}
-				linebegan = false;
+				p->linebegan = false;
 			}
 
 			/** append this word to the page. to save space,
@@ -523,28 +503,28 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 			{
 				if (iswhitespace(txt[i]))
 				{
-					if (linebegan)
+					if (p->linebegan)
 					{
-						app->pagebuf[page->length] = ' ';
-						page->length++;
+						p->buf[p->buflen] = ' ';
+						p->buflen++;
 					}
 				}
 				else
 				{
-					linebegan = true;
-					app->pagebuf[page->length] = txt[i];
-					page->length++;
+					p->linebegan = true;
+					p->buf[p->buflen] = txt[i];
+					p->buflen++;
 				}
 			}
-			pdata->pen.x += advance;
+			p->pen.x += advance;
 		}
 	}
 }  /* End char_hndl */
 
 void end_hndl(void *data, const char *el)
 {
-	page_t *page = &(app->pages[app->pagecurrent]);
 	parsedata_t *p = (parsedata_t *)data;
+	Text *ts = app->ts;	
 	if (
 	    !stricmp(el,"br")
 	    || !stricmp(el,"div")
@@ -564,24 +544,24 @@ void end_hndl(void *data, const char *el)
 	    || !stricmp(el,"ul")
 	)
 	{
-		if(linebegan) {
-			linebegan = false;
-			app->pagebuf[page->length] = '\n';
-			page->length++;
+		if(p->linebegan) {
+			p->linebegan = false;
+			p->buf[p->buflen] = '\n';
+			p->buflen++;
 			p->pen.x = MARGINLEFT;
-			p->pen.y += app->ts->GetHeight() + app->linespacing;
+			p->pen.y += ts->GetHeight() + ts->linespacing;
 			if (!stricmp(el,"p"))
 			{
 				for(int i=0;i<app->paraspacing;i++)
 				{
-					app->pagebuf[page->length++] = '\n';
+					p->buf[p->buflen++] = '\n';
 					p->pen.x = MARGINLEFT;
-					p->pen.y += app->ts->GetHeight() + app->linespacing;
+					p->pen.y += ts->GetHeight() + ts->linespacing;
 				}
 				for(int i=0;i<app->paraindent;i++)
 				{
-					app->pagebuf[page->length++] = ' ';
-					p->pen.x += app->ts->GetAdvance(' ', GetParserFace());
+					p->buf[p->buflen++] = ' ';
+					p->pen.x += ts->GetAdvance(' ', GetParserFace(p));
 				}
 			}
 			else if (	
@@ -595,66 +575,51 @@ void end_hndl(void *data, const char *el)
 				|| !strcmp(el,"pre")
 			)
 			{
-				app->pagebuf[page->length] = '\n';
-				page->length++;
+				p->buf[p->buflen] = '\n';
+				p->buflen++;
 				p->linebegan = false;
-				p->pen.x = app->marginleft;
-				p->pen.y += app->ts->GetHeight() + app->linespacing;
+				p->pen.x = ts->margin.left;
+				p->pen.y += ts->GetHeight() + ts->linespacing;
 			}
-			if (p->pen.y > (PAGE_HEIGHT-app->marginbottom))
+			if (p->pen.y > (ts->display.height - ts->margin.bottom))
 			{
-				if (app->ts->GetScreen() == app->screenright)
+				if (p->screen == 1)
 				{
 					// End of right screen; end of page.
-					app->ts->SetScreen(app->screenleft);
-					if (!page->buf)
-						page->buf = (u8*)new u8[page->length];
-					strncpy((char*)page->buf,(char *)app->pagebuf,page->length);
-					p->pos += page->length;
-					
-					page++;
-					app->page_init(page);
-					page->startchar = p->pos;
-					app->pagecurrent++;
-					app->pagecount++;
-					if(app->pagecount == MAXPAGES) return;
+					// Copy in buffered char data into a new page.
+					Page *page = p->book->AppendPage();
+					page->SetBuffer(p->buf, p->buflen);
+					p->buflen = 0;
+					if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
+					if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;
+					p->screen = 0;
 				}
 				else
-				{
 					// End of left screen; same page, next screen.
-					app->ts->SetScreen(app->screenright);
-				}
-				p->pen.x = app->marginleft;
-				p->pen.y = app->margintop + app->ts->GetHeight();
+					p->screen = 1;
+				p->pen.x = ts->margin.left;
+				p->pen.y = ts->margin.top + ts->GetHeight();
 				p->linebegan = false;
 			}
 		}
 	} else if (!stricmp(el,"body")) {
 		// Save off our last page.
-		if (!page->buf)
-		{
-			page->buf = new u8[page->length];
-			if (!page->buf)
-			{
-				app->PrintStatus("out of memory to store pages.\n");
-				return;
-			}
-		}
-		strncpy((char*)page->buf,(char*)app->pagebuf,page->length);
-		app->parse_pop(p); //?
+		Page *page = p->book->AppendPage();
+		page->SetBuffer(p->buf,p->buflen);
+		p->buflen = 0;
+		if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
+		if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;
 	} else if (!stricmp(el, "strong") || !stricmp(el, "b")) {
-		app->pagebuf[page->length] = TEXT_BOLD_OFF;
-		page->length++;
+		p->buf[p->buflen] = TEXT_BOLD_OFF;
+		p->buflen++;
 		p->bold = false;
 	} else if (!stricmp(el, "em") || !stricmp(el, "i")) {
-		app->pagebuf[page->length] = TEXT_ITALIC_OFF;
-		page->length++;
+		p->buf[p->buflen] = TEXT_ITALIC_OFF;
+		p->buflen++;
 		p->italic = false;
 	}
 
 	app->parse_pop(p);
-
-
 }  /* End of end_hndl */
 
 void proc_hndl(void *data, const char *target, const char *pidata)

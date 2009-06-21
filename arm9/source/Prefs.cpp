@@ -8,7 +8,7 @@
 #include "Prefs.h"
 #include "Book.h"
 
-#define PARSEBUFSIZE 1024*8
+#define PARSEBUFSIZE 1024*64
 
 Prefs::Prefs() {
 	modtime = 0;  // fill this in with gettimeofday()
@@ -17,16 +17,21 @@ Prefs::Prefs(App *parent) { app = parent; }
 Prefs::~Prefs() {}
 
 //! \return 0: success, 255: file open failure, 254: no bytes read, 253: parse failure.
-int Prefs::Read(XML_Parser p)
+int Prefs::Read()
 {
 	int err = 0;
-	FILE *fp = fopen(PREFSPATH,"r");
-	if (!fp) return 255;
+	parsedata_t pdata;
 
-	XML_ParserReset(p, NULL);
+	FILE *fp = fopen(PREFSPATH,"r");
+	if (!fp) { err = 255; return err; }
+
+	XML_Parser p = XML_ParserCreate(NULL);
+	if(!p) { fclose(fp); err = 254; return err; }
+	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	XML_SetStartElementHandler(p, prefs_start_hndl);
 	XML_SetEndElementHandler(p, prefs_end_hndl);
-	XML_SetUserData(p, (void *)&(app->books));
+	app->parse_init(&pdata);
+	XML_SetUserData(p, (void *)&pdata);
 	while (true)
 	{
 	 	void *buff = XML_GetBuffer(p, PARSEBUFSIZE);
@@ -35,12 +40,13 @@ int Prefs::Read(XML_Parser p)
 		enum XML_Status status = 
 			XML_ParseBuffer(p, bytes_read, bytes_read == 0);
 		if(status == XML_STATUS_ERROR) { 
-			app->parse_printerror(p);
+			app->parse_error(p);
 			err = 253;
 			break;
 		}
 		if (bytes_read == 0) break;
 	}
+	XML_ParserFree(p);
 	fclose(fp);
 	return err;
 
@@ -55,30 +61,21 @@ int Prefs::Read(XML_Parser p)
 	app->Log(msg);
 }
 
-//! \return As per Read(XML_Parser).
-int Prefs::Read()
-{
-	XML_Parser p = XML_ParserCreate(NULL);
-	int err = Read(p);
-	XML_ParserFree(p);
-	return err;
-}
-
 //! \return Error code, 0: success.
-int Prefs::Write(void)
+int Prefs::Write()
 {
 	int err = 0;
 	FILE* fp = fopen(PREFSPATH,"w");
 	if(!fp) return 255;
 	
-	fprintf(fp, "<dslibris modtime=\"%d\">\n",modtime);
+	fprintf(fp, "<dslibris modtime=\"%ld\">\n",modtime);
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
 		app->brightness,
 		app->ts->GetInvert(),
 		app->orientation);
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
-			app->margintop, app->marginleft,
-			app->marginbottom, app->marginright);
+			app->ts->margin.top, app->ts->margin.left,
+			app->ts->margin.bottom, app->ts->margin.right);
  	fprintf(fp, "\t<font path=\"%s\" size=\"%d\" normal=\"%s\" bold=\"%s\" italic=\"%s\" />\n",
  		app->fontdir.c_str(),
 		app->ts->GetPixelSize(),
@@ -88,6 +85,11 @@ int Prefs::Write(void)
  	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
 			app->paraindent,
 			app->paraspacing);
+	/* TODO save pagination data with current book to cache it to disk.
+	   store timestamp too in order to invalidate caches.
+	vector<u16> pageindices;
+	for(u16 i=0;i<app->pagecount;i++) {}
+	*/
     fprintf(fp, "\t<books path=\"%s\" reopen=\"%d\">\n",
     		app->bookdir.c_str(),
     		app->reopen);
@@ -96,8 +98,8 @@ int Prefs::Write(void)
         Book* book = app->books[i];
         fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\"",
                 book->GetFileName(), book->GetPosition() + 1);
-		if(app->bookcurrent == i) fprintf(fp," current=\"1\"");
-		fprintf(fp,">\n");		
+		if(app->bookcurrent == app->books[i]) fprintf(fp," current=\"1\"");
+		fprintf(fp,">\n");
 		std::list<u16>* bookmarks = book->GetBookmarks();
         for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
             fprintf(fp, "\t\t\t<bookmark page=\"%d\" word=\"%d\" />\n",

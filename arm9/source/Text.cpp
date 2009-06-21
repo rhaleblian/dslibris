@@ -2,11 +2,25 @@
 #include <fat.h>
 #include "Text.h"
 #include "App.h"
+#include "splash.h"
 #include "main.h"
 #include "version.h"
 
+// TODO move this to an image service class
+
+int getSize(uint8 *source, uint16 *dest, uint32 arg) {
+       return *(uint32*)source;
+}
+uint8 readByte(uint8 *source) { return *source; }
+
+void drawstack(u16 *screen) {
+       TDecompressionStream decomp = {getSize, NULL, readByte};
+       swiDecompressLZSSVram((void*)splashBitmap, screen, 0, &decomp);
+}
+
 Text::Text()
 {
+	bold = false;
 	bgcolor.r = 31;
 	bgcolor.g = 31;
 	bgcolor.b = 15;
@@ -15,18 +29,26 @@ Text::Text()
 	filenames[TEXT_STYLE_NORMAL] = FONTFILEPATH;
 	ftc = false;
 	invert = false;
+	italic = false;
 	justify = false;
+	linebegan = false;
+	linespacing = 0;
 	pixelsize = PIXELSIZE;
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
+	margin.left = MARGINLEFT;
+	margin.right = MARGINRIGHT;
+	margin.top = MARGINTOP;
+	margin.bottom = MARGINBOTTOM;
+	display.height = PAGE_HEIGHT;
+	display.width = PAGE_WIDTH;
 }
 
 Text::~Text()
 {
 	ClearCache();
-	
-	   
+		   
 	for(map<FT_Face, Cache*>::iterator iter = textCache.begin();
 		iter != textCache.end(); iter++) {
 		delete iter->second;
@@ -117,6 +139,15 @@ int Text::Init()
 	if(ftc) return InitWithCacheManager();
 	else return InitDefault();
 }
+
+void Text::Begin()
+{
+	bold = false;
+	italic = false;
+	linebegan = false;
+}
+
+void Text::End() {}
 
 int Text::CacheGlyph(u32 ucs)
 {
@@ -236,12 +267,16 @@ void Text::ClearScreen()
 
 void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 {
-	// TODO: use bgcolor here.
 	u16 clearcolor;
 	if(invert) clearcolor = RGB15(0,0,0) | BIT(15);
 	else clearcolor = RGB15(31,31,31) | BIT(15);
+	//uint word = (clearcolor << 16) | clearcolor;
 	for(u16 y=yl; y<yh; y++) {
-		dmaCopyHalfWords(3,(void*)&clearcolor,(void*)(screen+y*PAGE_HEIGHT+xl),(xh-xl)*2);
+//		memcpy((void*)screen[y*display.height+xl],(void*)word,xh-xl/2);
+		for(u16 x=xl; x<xh; x++) {
+			// FIXME: crashes on hw
+			screen[y*display.height+x] = clearcolor;
+		}
 	}
 }
 
@@ -265,12 +300,12 @@ u8 Text::GetStringWidth(const char *txt, FT_Face face)
 
 
 u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
-	//! given a UTF-8 encoding, fill in the Unicode/UCS code point.
+	// given a UTF-8 encoding, fill in the Unicode/UCS code point.
 	// returns the bytelength of the encoding, for advancing
 	// to the next character.
 	// returns 0 if encoding could not be translated.
 	// TODO - handle 4 byte encodings.
-	// TODO - use iconv() instead, when available.
+
 	if (utf8[0] < 0x80) { // ASCII
 		*ucs = utf8[0];
 		return 1;
@@ -385,8 +420,8 @@ u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 }
 
 void Text::InitPen(void) {
-	pen.x = app->marginleft;
-	pen.y = app->margintop + GetHeight();
+	pen.x = margin.left;
+	pen.y = margin.top + GetHeight();
 }
 
 void Text::PrintChar(u32 ucs)
@@ -474,13 +509,13 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 					r = (bgcolor.r * alpha);
 					g = (bgcolor.g * alpha);
 					b = (bgcolor.b * alpha);
-					screen[sy*SCREEN_WIDTH+sx]
+					screen[sy*display.height+sx]
 						= RGB15(r/256,g/256,b/256) | BIT(15);
 				} else {
 					u8 l;
 					if (invert) l = a >> 3;
 					else l = (255-a) >> 3;
-					screen[sy*SCREEN_WIDTH+sx] = RGB15(l,l,l) | BIT(15);
+					screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
 				}
 			}
 		}
@@ -490,14 +525,14 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 }
 
 bool Text::PrintNewLine(void) {
-	pen.x = app->marginleft;
+	pen.x = margin.left;
 	int height = GetHeight();
-	int y = pen.y + height + app->linespacing;
-	if (y > (PAGE_HEIGHT - app->marginbottom)) {
+	int y = pen.y + height + linespacing;
+	if (y > (display.height - margin.bottom)) {
 		if (screen == screenleft)
 		{
 			screen = screenright;
-			pen.y = app->margintop + height;
+			pen.y = margin.top + height;
 			return true;
 		}
 		else
@@ -505,7 +540,7 @@ bool Text::PrintNewLine(void) {
 	}
 	else
 	{
-		pen.y += height + app->linespacing;
+		pen.y += height + linespacing;
 		return true;
 	}
 }
@@ -538,11 +573,19 @@ void Text::PrintString(const char *s, FT_Face face) {
 void Text::PrintStatusMessage(const char *msg)
 {
 	u16 x,y;
-	u16 *s = screen;
 	GetPen(&x,&y);
+	u16 *s = screen;
+	int ps = GetPixelSize();
+	bool invert = GetInvert();
+	
 	screen = screenleft;
-	SetPen(10,10);
+	SetInvert(false);
+	SetPixelSize(8);
+	SetPen(10,16);
 	PrintString(msg);
+
+	SetInvert(invert);
+	SetPixelSize(ps);
 	screen = s;
 	SetPen(x,y);
 }
@@ -555,29 +598,20 @@ void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 
 void Text::PrintSplash(u16 *screen)
 {
-//	bool invert = GetInvert();
-//	u8 size = GetPixelSize();
-//	u16 *s = GetScreen();
-
-//	ClearScreen(screen,31,31,31);
-//	SetInvert(false);
-//	SetScreen(screen);
-/*	SetPen(20,40);
-	SetPixelSize(30);
-	PrintString("dslibris", TEXT_STYLE_SPLASH);
-	SetPixelSize(11);
-	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
-	PrintString("an ebook reader", TEXT_STYLE_BROWSER);
-	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
-	PrintString("for Nintendo DS", TEXT_STYLE_BROWSER);
-	SetPen(SPLASH_LEFT,GetPenY()+GetHeight());
-	PrintString(VERSION, TEXT_STYLE_BROWSER);
-*/
-	splash();
-	app->PrintStatus(VERSION);
-//	SetPixelSize(size);
-//	SetInvert(invert);
-//	SetScreen(s);
+	u8 size = GetPixelSize();
+	u16* s = GetScreen();
+	
+	SetScreen(screen);
+	drawstack(screen);
+	char msg[16];
+	sprintf(msg,"%s",VERSION);
+	PrintStatusMessage(msg);
+	
+	SetPixelSize(size);
+	SetInvert(invert);
+	SetScreen(s);
+	
+	swiWaitForVBlank();
 }
 
 void Text::SetFontFile(const char *filename, u8 style)
@@ -605,9 +639,3 @@ FT_Face Text::GetFace(u8 style)
 		return faces[TEXT_STYLE_NORMAL];
 }
 
-void Text::SwapScreens()
-{
-	u16 *tmp = screenleft;
-	screenleft = screenright;
-	screenright = tmp;
-}

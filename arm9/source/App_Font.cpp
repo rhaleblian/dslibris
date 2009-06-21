@@ -9,7 +9,11 @@
 #include <expat.h>
 
 #include <fat.h>
+#include <nds/registers_alt.h>
+#include <nds/reload.h>
 
+#include "ndsx_brightness.h"
+#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "App.h"
@@ -112,8 +116,7 @@ void App::HandleEventInFont()
 	} else if (keysDown() & KEY_A) {
 		FontButton();
 	} else if (keysDown() & KEY_TOUCH) {
-		touchPosition touch;
-		touchRead(&touch);
+		touchPosition touch = touchReadXY();
 		touchPosition coord;
 		u8 regionprev[2], regionnext[2];
 		regionprev[0] = 0;
@@ -187,15 +190,15 @@ void App::FontDraw(bool redraw)
 	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = fontPage * 7; (i < fontTs.size()) && (i < (fontPage + 1) * 7); i++)
 	{
-		fontButtons[i].Draw(screenright, i == fontSelected);
+		fontButtons[i].Draw(ts->screenright, i == fontSelected);
 	}
 	buttonprefs.Label("Cancel");
 	buttonprefs.Draw(screen, false);
 
 	if((u8)fontTs.size() > (fontPage + 1) * 7)
-		buttonnext.Draw(screenright, false);
+		buttonnext.Draw(ts->screenright, false);
 	if(fontSelected > 7)
-		buttonprev.Draw(screenright, false);
+		buttonprev.Draw(ts->screenright, false);
 
 	// restore state.
 	ts->SetInvert(invert);
@@ -224,10 +227,10 @@ void App::FontPreviousPage()
 void App::FontButton()
 {
 	bool invert = ts->GetInvert();
-	ts->SetScreen(screenright);
+	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->ClearScreen();
-	ts->SetPen(marginleft,PAGE_HEIGHT/2);
+	ts->SetPen(ts->margin.left,PAGE_HEIGHT/2);
 	ts->PrintString("[saving font...]");
 	ts->SetInvert(invert);
 
@@ -239,7 +242,7 @@ void App::FontButton()
 		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(), TEXT_STYLE_ITALIC);
 	
 	ts->Init();
-	bookcurrent = -1; //Force repagination
+	bookcurrent = NULL; //Force repagination
 	FontDeinit();
 	mode = APP_MODE_PREFS;
 	PrefsRefreshButtonFont();

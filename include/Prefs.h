@@ -1,17 +1,16 @@
 #ifndef _PREFS_H
 #define _PREFS_H
 #include "expat.h"
+#include "App.h"
 
 class Prefs
 {
 public:
-	class App *app;
-	int modtime;
-
+	App *app;
+	long modtime;
 	Prefs();
-	Prefs(class App *parent);
+	Prefs(App *parent);
 	~Prefs();
-	int Read(XML_Parser p);
 	int Read();
 	int Write();
 };

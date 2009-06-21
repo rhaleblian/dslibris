@@ -15,39 +15,11 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  
- To contact the copyright holder: ray@haleblian.com
+ To contact the copyright holder: rayh23@sourceforge.net
  */
 
 #ifndef _main_h_
 #define _main_h_
-
-/*!
- \mainpage
- 
- Welcome to the documentation for dslibris, a book reader for Nintendo DS.
- 
- For notes on prerequisites, building and debugging,
- see <a href="../../README.txt">README.txt</a> in the distribution. 
- 
- For notes on installation, see
- <a href="../../INSTALL.txt">INSTALL.txt</a> in the distribution. 
- 
- The project homepage is 
- <a href="http://sourceforge.net/projects/ndslibris">
- http://sourceforge.net/projects/ndslibris</a> .
- 
- Thanks to the developers of devkitPro, DSGUI, FreeType, and in the homebrew
- community for the components lovingly borrowed in order to make this project
- work.
- 
- This software is licensed under the GPL;
- all rights and responsibilities relating to use, reuse or distribution
- of this software follow the license.
- This software does not, nor is intended to, violate or circumvent
- any product or content copyright, licensing, or rules of use.
- Respect the copyright of any content you consider using
- with this or any other software. Enjoy!
- */
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -60,8 +32,8 @@
 #define PARASPACING 0
 #define PAGE_HEIGHT SCREEN_WIDTH
 #define PAGE_WIDTH SCREEN_HEIGHT
-#define BUFSIZE 1024*16		//! For XML parsing temp buffer (bytes).
-#define PAGEBUFSIZE 2048	//! For storing UTF-8 for a page (bytes).
+#define BUFSIZE 1024*64
+#define PAGEBUFSIZE 2048
 #define MAXPAGES 2048
 #define SPLASH_LEFT 28
 #define SPLASH_TOP 44
@@ -75,12 +47,8 @@
 #define FONTBROWSERFILEPATH "/font/LiberationSans-Regular.ttf"
 #define FONTSPLASHFILEPATH "/font/LiberationSans-Regular.ttf"
 #define LOGFILEPATH "dslibris.log"
-
-//! Initial entry point and (possibly obsolete) data structures.
-
-void splash();
-
-//! Book (obsolete?)
+#if 0
+/** watch out for struct alignment here? **/
 typedef struct book_s {
 	char *filename;
 	char *title;
@@ -88,22 +56,16 @@ typedef struct book_s {
 	s16 position;
 } book_t;
 
-
-//! Page data allocated as array in instances of a book.
 typedef struct page_s {
-	//! First char index in the cooked book.
-	//! Use this for locating bookmarks.
-	uint32 startchar; 
 	u16 length;
-	u8 *buf;   //! allocated per-page at parse time, to exact length.
+	u8 *buf;   /** allocated per-page at parse time, to exact length. **/
 } page_t;
 
-//! Data passed to expat callbacks when parsing preferences.
 typedef struct {
 	char filename[32];
 	u16 position;
 } prefsdata_t;
 
 void page_init(page_t *page);
-
+#endif
 #endif

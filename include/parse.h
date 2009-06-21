@@ -19,17 +19,21 @@ typedef enum {
 	TAG_UL,TAG_UNKNOWN
 } context_t;
 
+//! Parse state data structure, passed to all expat callbacks via (void*)data.
 typedef struct {
 	context_t stack[16];
 	u8 stacksize;
 	Book *book;
-	page_t *page;
+	int screen;
 	FT_Vector pen;
-	//! Our parse position in terms of cooked text.
-	uint32 pos;
+	u8 buf[PAGEBUFSIZE];
+	int buflen;
+	//! Our total parse position in terms of cooked text.
+	int pos;
 	bool linebegan;
 	bool bold;
 	bool italic;
+	int status;
 } parsedata_t;
 
 void default_hndl(void *data, const char *s, int len);
@@ -51,6 +55,6 @@ bool iswhitespace(u8 c);
 
 void parse_init(parsedata_t *data);
 void parse_printerror(XML_Parser p);
-bool parse_pagefeed(parsedata_t *data, page_t *page);
+//bool parse_pagefeed(parsedata_t *data, page_t *page);
 
 #endif

@@ -24,12 +24,12 @@ export PATH		:=	$(DEVKITARM)/bin:$(PATH)
 #-------------------------------------------------------------------------------
 # main targets
 #-------------------------------------------------------------------------------
-all			: $(TARGET).ds.gba
+all: $(TARGET).ds.gba
 $(TARGET).ds.gba	: $(TARGET).nds
 
 #-------------------------------------------------------------------------------
 $(TARGET).nds		: $(TARGET).arm7 $(TARGET).arm9
-	ndstool -b data/icon.bmp "dslibris;an ebook reader;for the Nintendo DS" -c $(TARGET).nds -7 $(TARGET).arm7 -9 $(TARGET).arm9
+	ndstool -b data/icon.bmp "dslibris;an ebook reader;for the Nintendo DS" -c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
 
 #-------------------------------------------------------------------------------
 $(TARGET).arm7		: arm7/$(TARGET).elf
@@ -70,7 +70,7 @@ debug7: $(TARGET).nds
 gdb: $(TARGET).nds
 	desmume-cli --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &
 	sleep 4
-	$(DEVKITARM)/bin/arm-eabi-gdb -x gdb.commands arm9/dslibris.arm9.elf
+	arm-eabi-gdb -x gdb.commands arm9/dslibris.arm9.elf
 
 # make DLDI patched target
 $(TARGET).$(MEDIATYPE).nds: $(TARGET).nds

@@ -9,13 +9,20 @@
 #include <expat.h>
 
 #include <fat.h>
+#include <nds/registers_alt.h>
+#include <nds/reload.h>
 
+#include "ndsx_brightness.h"
+#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "App.h"
 #include "Book.h"
 #include "Button.h"
 #include "Text.h"
+
+#define MIN(x,y) (x < y ? x : y)
+#define MAX(x,y) (x > y ? x : y)
 
 void App::HandleEventInBrowser()
 {
@@ -34,6 +41,7 @@ void App::HandleEventInBrowser()
 	else if (keys & KEY_Y)
 	{
 		CycleBrightness();
+		prefs->Write();
 	}
 	
 	else if (keys & KEY_SELECT)
@@ -46,10 +54,12 @@ void App::HandleEventInBrowser()
 	else if (keys & (key.left | key.l))
 	{
 		// next book.
-		if (bookselected < bookcount-1)
+		int b = GetBookIndex(bookselected);
+		if (b < bookcount-1)
 		{
-			bookselected++;
-			if (bookselected >= browserstart+APP_BROWSER_BUTTON_COUNT) {
+			b++;
+			bookselected = books[b];
+			if (b >= browserstart+APP_BROWSER_BUTTON_COUNT) {
 				browser_nextpage();
 				browser_draw();
 			} else {
@@ -61,10 +71,12 @@ void App::HandleEventInBrowser()
 	else if (keys & (key.right | key.r))
 	{
 		// previous book.
-		if (bookselected > 0)
+		int b = GetBookIndex(bookselected);
+		if (b > 0)
 		{
-			bookselected--;
-			if(bookselected < browserstart) {
+			b--;
+			bookselected = books[b];
+			if(b < browserstart) {
 				browser_prevpage();
 				browser_draw();
 			} else {
@@ -73,19 +85,24 @@ void App::HandleEventInBrowser()
 		}
 	}
 
-	else if (bookcurrent >= 0 && (keysDown() & (KEY_START | KEY_B)))
+	else if (keys & (KEY_START | KEY_B))
 	{
-		mode = APP_MODE_BOOK;
-		page_draw(&(pages[pagecurrent]));
-		prefs->Write();
+#if 0
+		// Only back up into the last book if it
+		// wasn't closed while trying to open another one.
+		if(bookcurrent && bookcurrent->GetPage())
+		{
+			bookcurrent->GetPage()->Draw(ts);
+			mode = APP_MODE_BOOK;
+			prefs->Write();
+		}
+#endif
 	}
 
 	else if (keys & KEY_TOUCH)
 	{
-		touchPosition touch;
+		touchPosition touch = touchReadXY();
 		touchPosition coord;
-
-		touchRead(&touch);
 
 		// Transform point according to screen orientation.
 		if(!orientation)
@@ -124,7 +141,7 @@ void App::HandleEventInBrowser()
 				i++) {
 				if (buttons[i]->EnclosesPoint(coord.py, coord.px))
 				{
-					bookselected = i;
+					bookselected = books[i];
 					browser_draw();
 					swiWaitForVBlank();
 					AttemptBookOpen();
@@ -161,7 +178,7 @@ void App::browser_init(void)
 	buttonprefs.Resize(60,16);
 	buttonprefs.Label("prefs");
 
-	browserstart = (bookselected / APP_BROWSER_BUTTON_COUNT)
+	browserstart = (GetBookIndex(bookselected) / APP_BROWSER_BUTTON_COUNT)
 		* APP_BROWSER_BUTTON_COUNT;
 }
 
@@ -170,7 +187,7 @@ void App::browser_nextpage()
 	if(browserstart+APP_BROWSER_BUTTON_COUNT < bookcount)
 	{ 
 		browserstart += APP_BROWSER_BUTTON_COUNT;
-		bookselected = browserstart;
+		bookselected = books[browserstart];
 	}
 }
 
@@ -179,7 +196,7 @@ void App::browser_prevpage()
 	if(browserstart-APP_BROWSER_BUTTON_COUNT >= 0)
 	{	
 		browserstart -= APP_BROWSER_BUTTON_COUNT;
-		bookselected = browserstart+APP_BROWSER_BUTTON_COUNT-1;
+		bookselected = books[browserstart+APP_BROWSER_BUTTON_COUNT-1];
 	}
 }
 
@@ -190,7 +207,7 @@ void App::browser_draw(void)
 	u8 size = ts->GetPixelSize();
  	u16 *screen = ts->GetScreen();
 
-	ts->SetScreen(screenright);
+	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->ClearScreen();
 	ts->SetPixelSize(PIXELSIZE);
@@ -198,15 +215,15 @@ void App::browser_draw(void)
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 		i++)
 	{
-		buttons[i]->Draw(screen,i==bookselected);
+		buttons[i]->Draw(ts->screenright,books[i]==bookselected);
 	}
 	
 	if(browserstart >= APP_BROWSER_BUTTON_COUNT)
-		buttonprev.Draw(screen,false);
+		buttonprev.Draw(ts->screenright,false);
 	if(bookcount >= browserstart+APP_BROWSER_BUTTON_COUNT)
-		buttonnext.Draw(screen,false);
+		buttonnext.Draw(ts->screenright,false);
 
-	buttonprefs.Draw(screen,false);
+	buttonprefs.Draw(ts->screenright,false);
 
 	// restore state.
 	ts->SetInvert(invert);
@@ -224,15 +241,16 @@ void App::browser_redraw()
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 
-	ts->SetScreen(screenright);
+	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->SetPixelSize(PIXELSIZE);
-	buttons[bookselected]->Draw(screenright,true);
-	if(bookselected > browserstart)
-		buttons[bookselected-1]->Draw(screenright,false);
-	if(bookselected < bookcount-1 &&
-		(bookselected - browserstart) < APP_BROWSER_BUTTON_COUNT-1)
-		buttons[bookselected+1]->Draw(screenright,false);
+	int b = GetBookIndex(bookselected);
+	buttons[b]->Draw(ts->screenright,true);
+	if(b > browserstart)
+		buttons[b-1]->Draw(ts->screenright,false);
+	if(b < bookcount-1 &&
+		(b - browserstart) < APP_BROWSER_BUTTON_COUNT-1)
+		buttons[b+1]->Draw(ts->screenright,false);
 
 	// restore state.
 	ts->SetInvert(invert);
@@ -241,43 +259,9 @@ void App::browser_redraw()
 
 void App::AttemptBookOpen()
 {
-	ts->SetScreen(screenleft);
-	
-	// Just switch if the book is already open/parsed
-	if(bookselected == bookcurrent) {
+	if (!OpenBook()) {
 		mode = APP_MODE_BOOK;
-		if(orientation) lcdSwap();
-		page_draw(&(pages[pagecurrent]));
 		reopen = true;
-		prefs->Write();
-	// Parse the selected book.
-	} else if (!OpenBook()) {
-		mode = APP_MODE_BOOK;
-		if(orientation) lcdSwap();
-		reopen = true;
-		prefs->Write();
-	// Fail...
 	} else
 		browser_draw();
 }
-
-void App::PrintStatus(const char *msg) {
-	bool invert = ts->GetInvert();
-	u16* screen = ts->GetScreen();
-	u8 pixelsize = ts->GetPixelSize();
-	
-	ts->SetPixelSize(11);
-	ts->SetScreen(screenleft);
-	ts->SetInvert(true);
-//	ts->ClearScreen();
-//	int clearalpha = (RGB15(15,15,15) << 8) + RGB15(15,15,15);
-//	memset((void*)screenleft,clearalpha,PAGE_WIDTH*PAGE_HEIGHT*4);
-	ts->ClearRect(0,210,PAGE_WIDTH,PAGE_HEIGHT);
-	ts->SetPen(10,220);
-	ts->PrintString(msg);
-
-	ts->SetPixelSize(pixelsize);
-	ts->SetScreen(screen);
-	ts->SetInvert(invert);
-}
-

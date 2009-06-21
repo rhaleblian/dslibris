@@ -9,7 +9,11 @@
 #include <expat.h>
 
 #include <fat.h>
+#include <nds/registers_alt.h>
+#include <nds/reload.h>
 
+#include "ndsx_brightness.h"
+#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "App.h"
@@ -62,36 +66,48 @@ void App::PrefsInit()
 
 void App::PrefsRefreshButtonBooks()
 {
+	char msg[128];
+	strcpy(msg, "");
 	sprintf((char*)msg, "Book Folder\n    %s", bookdir.c_str());
 	prefsButtonBooks.Label(msg);
 }
 
 void App::PrefsRefreshButtonFonts()
 {
+	char msg[128];
+	strcpy(msg, "");
 	sprintf((char*)msg, "Font Folder\n    %s", fontdir.c_str());
 	prefsButtonFonts.Label(msg);
 }
 
 void App::PrefsRefreshButtonFont()
 {
+	char msg[128];
+	strcpy(msg, "");
 	sprintf((char*)msg, "Change Font\n    %s", ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
 	prefsButtonFont.Label(msg);
 }
 
 void App::PrefsRefreshButtonFontBold()
 {
+	char msg[128];
+	strcpy(msg, "");
 	sprintf((char*)msg, "Change Bold Font\n    %s", ts->GetFontFile(TEXT_STYLE_BOLD).c_str());
 	prefsButtonFontBold.Label(msg);
 }
 
 void App::PrefsRefreshButtonFontItalic()
 {
+	char msg[128];
+	strcpy(msg, "");
 	sprintf((char*)msg, "Change Italic Font\n    %s", ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
 	prefsButtonFontItalic.Label(msg);
 }
 
 void App::PrefsRefreshButtonFontSize()
 {
+	char msg[30];
+	strcpy(msg, "");
 	if (ts->GetPixelSize() == 1)
 		sprintf((char*)msg, "Change Font Size\n    [ %d >", ts->GetPixelSize());
 	else if (ts->GetPixelSize() == 255)
@@ -103,6 +119,8 @@ void App::PrefsRefreshButtonFontSize()
 
 void App::PrefsRefreshButtonParaspacing()
 {
+	char msg[38];
+	strcpy(msg, "");
 	if (paraspacing == 0)
 		sprintf((char*)msg, "Change Paragraph Spacing\n    [ %d >", paraspacing);
 	else if (paraspacing == 255)
@@ -124,17 +142,17 @@ void App::PrefsDraw(bool redraw)
 	u8 size = ts->GetPixelSize();
 	u16* screen = ts->GetScreen();
 
-	ts->SetScreen(screenright);
+	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	if (redraw) ts->ClearScreen();
 	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
 	{
-		prefsButtons[i]->Draw(screen, i == prefsSelected);
+		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
 	}
 	
 	buttonprefs.Label("return");
-	buttonprefs.Draw(screen, false);
+	buttonprefs.Draw(ts->screenright, false);
 
 	// restore state.
 	ts->SetInvert(invert);
@@ -144,6 +162,8 @@ void App::PrefsDraw(bool redraw)
 
 void App::HandleEventInPrefs()
 {
+	int keys = keysDown();
+	
 	if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
 		mode = APP_MODE_BROWSER;
 		browser_draw();
@@ -155,9 +175,11 @@ void App::HandleEventInPrefs()
 		PrefsDraw(false);
 	} else if (keysDown() & KEY_A) {
 		PrefsButton();
+	} else if (keys & KEY_Y) {
+		CycleBrightness();
+		prefs->Write();
 	} else if (keysDown() & KEY_TOUCH) {
-		touchPosition touch;
-		touchRead(&touch);
+		touchPosition touch = touchReadXY();
 		touchPosition coord;
 		u8 regionprev[2];
 		regionprev[0] = 0;
@@ -222,7 +244,7 @@ void App::PrefsIncreasePixelSize()
 		ts->pixelsize++;
 		PrefsRefreshButtonFontSize();
 		PrefsDraw();
-		bookcurrent = -1;
+		bookcurrent = NULL;
 		prefs->Write();
 	}
 }
@@ -233,7 +255,7 @@ void App::PrefsDecreasePixelSize()
 		ts->pixelsize--;
 		PrefsRefreshButtonFontSize();
 		PrefsDraw();
-		bookcurrent = -1;
+		bookcurrent = NULL;
 		prefs->Write();
 	}
 }
@@ -244,7 +266,7 @@ void App::PrefsIncreaseParaspacing()
 		paraspacing++;
 		PrefsRefreshButtonParaspacing();
 		PrefsDraw();
-		bookcurrent = -1;
+		bookcurrent = NULL;
 		prefs->Write();
 	}
 }
@@ -255,7 +277,7 @@ void App::PrefsDecreaseParaspacing()
 		paraspacing--;
 		PrefsRefreshButtonParaspacing();
 		PrefsDraw();
-		bookcurrent = -1;
+		bookcurrent = NULL;
 		prefs->Write();
 	}
 }

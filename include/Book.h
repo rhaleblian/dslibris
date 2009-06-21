@@ -1,12 +1,13 @@
 #ifndef BOOK_H
 #define BOOK_H
 
+#include "Page.h"
 #include <nds.h>
 #include <string>
 #include <list>
+#include <vector>
 
 //! Encapsulates metadata for a single book.
-
 //! App maintains n of these to represent the available library.
 
 class Book {
@@ -14,25 +15,35 @@ class Book {
 	std::string foldername;
 	std::string title;
 	std::string author;
-	u16 position;
+	int position; //! Index of current page.
     std::list<u16> bookmarks;
-
+	std::vector<class Page*> pages;
 public:
 	Book();
+	~Book();
     std::list<u16>* GetBookmarks(void);
 	const char* GetFileName(void);
 	const char* GetFolderName(void);
-	u16  GetPosition(void);
+	Page* GetPage();
+	Page* GetPage(int i);
+	u16  GetPageCount();
+	int  GetPosition(void);
 	const char* GetTitle();
-	u8   Index(char *filebuf);	
-	void IndexHTML(char *filebuf);	
-	u8   Parse(char *filebuf);
-	int  ParseHTML(char *filebuf);
 	void SetFileName(const char *filename);
 	void SetFolderName(const char *foldername);	
-	void SetFolderName(std::string &foldername);	
-	void SetPosition(s16 pos);
+	void SetFolderName(std::string &foldername);
+	void SetPage(u16 index);
+	void SetPosition(int pos);
 	void SetTitle(const char *title);
+	Page* AppendPage();
+	Page* AdvancePage();
+	Page* RetreatPage();
+	void Close();
+	u8   Index();
+	void IndexHTML();
+	u8   Open();
+	u8   Parse(bool fulltext);
+	int  ParseHTML();
 };
 
 #endif

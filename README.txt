@@ -1,41 +1,41 @@
 
 Herein lie the source for dslibris, and supporting libraries.
 
-== PREREQUISITES ==
+PREREQUISITES
 
-Fedora, Ubuntu, Arch, OS X, and Windows XP (MSYS) have all been used as build platforms. Currently it's OS X 10.5.6. You need
+Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently we use Ubuntu 8.04 and Arch Linux. Have:
 
-* devkitPro r24 installed with devkitARM, libnds, libfat, and libwifi.
-* A media card and a DLDI patcher, but you knew that.
+* devkitPro (circa r20) installed with components:
+	devkitARM
+	libnds
+	libfat
+	libwifi
+	masscat's DS wifi debug stub library
+  Set DEVKITPRO and DEVKITARM in your environment.
+* on Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
+* optionally, desmume 0.7.3 or later if you want to debug with gdb.
+* a media card and a DLDI patcher, but you knew that.
 
-== BUILDING ==
+BUILDING
 
-  cd ndslibris/trunk  # or wherever you put the SVN trunk
-  make
+cd ndslibris/trunk  # or wherever you put the SVN trunk
+make
 
 dslibris.nds should show up in your current directory.
  
-Note the libraries in 'external', prebuilt for arm-eabi; make sure you don't have conflicting libs in your path.
+Note the support libraries in 'lib', prebuilt for arm-eabi; make sure you don't have conflicting libs in your path.
 
-== INSTALLATION ==
+INSTALLATION
 
-See INSTALL.txt.
+see INSTALL.txt.
 
-== DEBUGGING ==
+DEBUGGING
 
-gdb and insight-6.6 have been known to work on Ubuntu 8.04 for debugging; however CFLASH FAT support has been up and down. See the Makefile for invocation examples. See online forums for means to build an arm-eabi targeted insight for your platform, and on making a FAT CFLASH image (keywords: fat desmume chism).
+arm-eabi-gdb and insight-6.8 and desmume-0.7.2 have been known to work for debugging. See online forums for means to build an arm-eabi targeted Insight for your platform.
 
-== MORE DOCUMENTATION ==
-
-For code documentation:
-
-	cd $where_you_put_source
-	doxygen	
-	firefox doc/html/index.html
-
-Also see:
+MORE INFO
 
 http://sourceforge.net/projects/ndslibris
 
-- rayh23
+- ray haleblian
 
