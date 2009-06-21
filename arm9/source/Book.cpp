@@ -2,8 +2,6 @@
 #include "main.h"
 #include "parse.h"
 #include "App.h"
-#include <tidy.h>
-#include <buffio.h>
 #include <stdio.h>
 #include <errno.h>
 
