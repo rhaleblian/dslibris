@@ -216,6 +216,14 @@ void prefs_start_hndl(	void *data,
 			if (!strcmp(attr[i],"bottom")) app->ts->margin.bottom = atoi(attr[i+1]);
 		}
 	}
+	else if (!strcmp(name,"option"))
+	{
+		for (i=0;attr[i];i+=2)
+		{
+			if (!strcmp(attr[i],"swapshoulder")) 
+				p->prefs->swapshoulder = atoi(attr[i+1]);
+		}
+	}
 }
 
 void prefs_end_hndl(void *data, const char *name)

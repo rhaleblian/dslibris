@@ -250,6 +250,12 @@ int App::Run(void)
 	console = false;
 	InitScreens();
 	if(orientation) lcdSwap();
+	if (prefs->swapshoulder)
+	{
+		int tmp = key.l;
+		key.l = key.r;
+		key.r = tmp;
+	}
 
 //	BImage *topImg = new BImage(256, 192, (u8*)BG_BMP_RAM(0));	
 //	BScreen* topScreen = new BScreen(topImg);

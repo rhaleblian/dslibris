@@ -24,6 +24,7 @@ typedef struct {
 	context_t stack[16];
 	u8 stacksize;
 	Book *book;
+	class Prefs *prefs;
 	int screen;
 	FT_Vector pen;
 	u8 buf[PAGEBUFSIZE];
@@ -55,6 +56,5 @@ bool iswhitespace(u8 c);
 
 void parse_init(parsedata_t *data);
 void parse_printerror(XML_Parser p);
-//bool parse_pagefeed(parsedata_t *data, page_t *page);
 
 #endif

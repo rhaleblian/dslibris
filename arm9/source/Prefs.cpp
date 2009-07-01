@@ -12,8 +12,9 @@
 
 Prefs::Prefs() {
 	modtime = 0;  // fill this in with gettimeofday()
+	swapshoulder = FALSE;
 }
-Prefs::Prefs(App *parent) { app = parent; }
+Prefs::Prefs(App *parent) { Prefs::Prefs(); app = parent; }
 Prefs::~Prefs() {}
 
 //! \return 0: success, 255: file open failure, 254: no bytes read, 253: parse failure.
@@ -21,7 +22,9 @@ int Prefs::Read()
 {
 	int err = 0;
 	parsedata_t pdata;
-
+	app->parse_init(&pdata);
+	pdata.prefs = this;
+		
 	FILE *fp = fopen(PREFSPATH,"r");
 	if (!fp) { err = 255; return err; }
 
@@ -30,7 +33,6 @@ int Prefs::Read()
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	XML_SetStartElementHandler(p, prefs_start_hndl);
 	XML_SetEndElementHandler(p, prefs_end_hndl);
-	app->parse_init(&pdata);
 	XML_SetUserData(p, (void *)&pdata);
 	while (true)
 	{
@@ -69,6 +71,8 @@ int Prefs::Write()
 	if(!fp) return 255;
 	
 	fprintf(fp, "<dslibris modtime=\"%ld\">\n",modtime);
+	if(swapshoulder)
+		fprintf(fp, "<option swapshoulder=\"%d\">\n",swapshoulder);		
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
 		app->brightness,
 		app->ts->GetInvert(),

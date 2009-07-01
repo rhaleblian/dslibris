@@ -10,7 +10,7 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
 
-export MEDIAROOT	:=	/Volumes/SANDISK/
+export MEDIAROOT	:=	/media/SANDISK/
 export MEDIATYPE	:=	cyclods
 export EMULATOR		:=	desmume-cli
 

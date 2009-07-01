@@ -225,6 +225,7 @@ void App::parse_init(parsedata_t *data)
 	data->stacksize = 0;
 	data->pos = 0;
 	data->book = NULL;
+	data->prefs = NULL;
 	data->screen = 0;
 	data->pen.x = ts->margin.left;
 	data->pen.y = ts->margin.top;
