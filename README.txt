@@ -3,17 +3,14 @@ Herein lie the source for dslibris, and supporting libraries.
 
 PREREQUISITES
 
-Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently we use Ubuntu 8.04 and Arch Linux. Have:
+Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently I use Ubuntu 9.04. Have:
 
-* devkitPro (circa r20) installed with components:
-	devkitARM
-	libnds
-	libfat
-	libwifi
-	masscat's DS wifi debug stub library
-  Set DEVKITPRO and DEVKITARM in your environment.
+* devkitPro from late October 2007, including:
+	devkitARM-23b
+	libnds-20071023
+	libfat-nds-20070127
+	dswifi-0.3.3b
 * on Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
-* optionally, desmume 0.7.3 or later if you want to debug with gdb.
 * a media card and a DLDI patcher, but you knew that.
 
 BUILDING
