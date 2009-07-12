@@ -113,15 +113,23 @@ int App::Run(void)
 	Log("----\nprogr: App starting up.\n");
 	console = true;
 
-	// Start up typesetter.
-	// FIXME can this be cleaner?
-	
-	ts->SetFontFile(FONTFILEPATH, TEXT_STYLE_NORMAL);
-	ts->SetFontFile(FONTBOLDFILEPATH, TEXT_STYLE_BOLD);
-	ts->SetFontFile(FONTITALICFILEPATH, TEXT_STYLE_ITALIC);
-	ts->SetFontFile(FONTBROWSERFILEPATH, TEXT_STYLE_BROWSER);
-	ts->SetFontFile(FONTSPLASHFILEPATH, TEXT_STYLE_SPLASH);
-	int err = ts->Init();
+	// Read preferences, pass 1,
+	// to get the book folder and preferred fonts.
+
+   	if (int err = prefs->Read())
+	{
+		sprintf(msg,"warn : can't read prefs (%d).\n",err);
+		Log(msg);
+		if(err == 255) {
+			Log("info : writing new prefs.\n");
+			prefs->Write();
+		}
+	} else
+		Log("progr: read prefs, bookdir is '%s'.\n",bookdir.c_str());
+
+    // Start up typesetter.
+
+   	int err = ts->Init();
 	switch(err)
 	{
 		case 0:
@@ -138,19 +146,6 @@ int App::Run(void)
 	}
 	Log(msg);
 	if(err) while(1) swiWaitForVBlank();
-	
-	// Read preferences, pass 1, to look up bookdir.
-	
-   	if (int err = prefs->Read())
-	{
-		sprintf(msg,"warn : can't read prefs (%d).\n",err);
-		Log(msg);
-		if(err == 255) {
-			Log("info : writing new prefs.\n");
-			prefs->Write();
-		} 
-	} else 
-		Log("progr: read prefs, bookdir is '%s'.\n",bookdir.c_str());
 	
 	SetBrightness(brightness);
 	

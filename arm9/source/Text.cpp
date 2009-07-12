@@ -27,6 +27,10 @@ Text::Text()
 	usebgcolor = false;
 	codeprev = 0;
 	filenames[TEXT_STYLE_NORMAL] = FONTFILEPATH;
+	filenames[TEXT_STYLE_BOLD] = FONTBOLDFILEPATH;
+	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILEPATH;
+	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILEPATH;
+	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILEPATH;
 	ftc = false;
 	invert = false;
 	italic = false;
@@ -43,6 +47,9 @@ Text::Text()
 	margin.bottom = MARGINBOTTOM;
 	display.height = PAGE_HEIGHT;
 	display.width = PAGE_WIDTH;
+
+	stats_hits = 0;
+	stats_misses = 0;
 }
 
 Text::~Text()
@@ -225,9 +232,12 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 
 	map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
 	
-	if (iter != textCache[face]->cacheMap.end())
+	if (iter != textCache[face]->cacheMap.end()) {
+		//stats_hits++;
 		return iter->second;
+	}
 	
+	//stats_misses++;
 	int i = CacheGlyph(ucs, face);
 	if (i > -1)
 		return textCache[face]->cacheMap[ucs];
@@ -568,6 +578,14 @@ void Text::PrintString(const char *s, FT_Face face) {
 			clast = c;
 		}
 	}
+}
+
+void Text::PrintStats() {
+	char msg[128];
+	sprintf(msg, "info: %d cache hits.\n", stats_hits);
+	app->Log(msg);
+	sprintf(msg, "info: %d cache misses.\n", stats_misses);
+	app->Log(msg);
 }
 
 void Text::PrintStatusMessage(const char *msg)

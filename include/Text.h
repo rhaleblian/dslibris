@@ -51,10 +51,42 @@ public:
 	}
 };
 
+#if 0
+class Face {
+	Cache cache;
+	FT_Face ft_face;
+	Face() {
+		ft_face = NULL;
+		cache = new Cache();
+	}
+	Face(FT_Library library, std::string path, int index) {
+		FT_New_Face( library, path.c_str(), index, &ft_face );
+		cache = new Cache();
+	}
+	~Face() {
+		if(face) FT_Done_Face(face);
+		delete cache;
+	}
+};
+
+// Maps a style ID to a face.
+// Multiple styles might use the same face.
+class Style {
+	u8 id;
+	Face *face;
+
+	Style(Face *f) {
+		style = TEXT_STYLE_NORMAL;
+		face = f;
+	}
+};
+#endif
+
 //! Typesetter singleton that provides all text rendering services.
 
 //! Implemented atop FreeType 2.
-//! Attempts to cache for performance, but the caching is now a bit broken
+//! Attempts to cache for performance,
+//! but the caching is now a bit broken
 //! since font styles were introduced.
 
 class Text {
@@ -72,7 +104,9 @@ class Text {
 	map<FT_Face, Cache*> textCache;
 	map<u8, FT_Face> faces;
 	map<u8, string> filenames;
-	
+//	vector<Face> faces;
+//	map<u8, Face*> styles;
+
 	FT_Vector pen;
 	//! Draw white text on black?
 	bool invert;
@@ -113,6 +147,10 @@ public:
 	int linespacing;
 	bool linebegan, bold, italic;
 	
+	// keeps stats to check efficiency of caching.
+	int stats_hits;
+	int stats_misses;
+
 	Text();
 	Text(class App *parent) { app = parent; }
 	~Text();
@@ -153,6 +191,7 @@ public:
 	void PrintChar(u32 ucs);
 	void PrintChar(u32 ucs, u8 style);
 	bool PrintNewLine(void);
+	void PrintStats();
 	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
 	void PrintString(const char *string, u8 style);

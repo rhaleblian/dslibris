@@ -205,7 +205,7 @@ u8 App::OpenBook(void)
 	}
 	bookcurrent->GetPage()->Draw(ts);
 	prefs->Write();
-
+	ts->PrintStats();
 	return 0;
 }
 
