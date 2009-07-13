@@ -86,8 +86,12 @@ void App::FontInit()
 	for (u8 i = 0; i < fontTs.size(); i++) {
 		Text* ts = fontTs[i];
 		fontButtons[i].Init(ts);
-		fontButtons[i].Move(2, ((i % 7) + 1) * 32 - 16);
-		fontButtons[i].Label(ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
+		fontButtons[i].Move(2, (i % 7) * 32);
+		std::string name;
+		if(ts->GetFontName(name))
+			fontButtons[i].Label(name.c_str());
+		else
+			fontButtons[i].Label(ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
 	}
 }
 
@@ -240,7 +244,7 @@ void App::FontButton()
 		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(),TEXT_STYLE_BOLD);
 	else if (mode == APP_MODE_PREFS_FONT_ITALIC)
 		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(), TEXT_STYLE_ITALIC);
-	
+
 	ts->Init();
 	bookcurrent = NULL; //Force repagination
 	FontDeinit();

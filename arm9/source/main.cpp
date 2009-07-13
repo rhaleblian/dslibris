@@ -357,7 +357,13 @@ void start_hndl(void *data, const char *el, const char **attr)
 	else if (!stricmp(el,"body")) app->parse_push(p,TAG_BODY);
 	else if (!stricmp(el,"div")) app->parse_push(p,TAG_DIV);
 	else if (!stricmp(el,"dt")) app->parse_push(p,TAG_DT);
-	else if (!stricmp(el,"h1")) app->parse_push(p,TAG_H1);
+	else if (!stricmp(el,"h1")) {
+		app->parse_push(p,TAG_H1);
+		p->buf[p->buflen] = TEXT_BOLD_ON;
+		p->buflen++;
+		p->pos++;
+		p->bold = true;
+	}
 	else if (!stricmp(el,"h2")) app->parse_push(p,TAG_H2);
 	else if (!stricmp(el,"h3")) app->parse_push(p,TAG_H3);
 	else if (!stricmp(el,"h4")) app->parse_push(p,TAG_H4);
@@ -572,9 +578,17 @@ void end_hndl(void *data, const char *el)
 					p->pen.x += ts->GetAdvance(' ', GetParserFace(p));
 				}
 			}
-			else if (	
-				   !strcmp(el,"h1")
-				|| !strcmp(el,"h2")
+			else if(!strcmp(el,"h1")) {
+				p->buf[p->buflen] = '\n';
+				p->buflen++;
+				p->linebegan = false;
+				p->pen.x = ts->margin.left;
+				p->pen.y += ts->GetHeight() + ts->linespacing;
+				p->buf[p->buflen] = TEXT_BOLD_OFF;
+				p->buflen++;
+				p->bold = false;
+			} else if (
+				   !strcmp(el,"h2")
 				|| !strcmp(el,"h3")
 				|| !strcmp(el,"h4")
 				|| !strcmp(el,"h5")

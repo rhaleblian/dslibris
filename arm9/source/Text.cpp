@@ -429,6 +429,16 @@ u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 	return (glyph->advance).x;
 }
 
+bool Text::GetFontName(std::string &s) {
+	const char *name = FT_Get_Postscript_Name(GetFace(TEXT_STYLE_NORMAL));
+	if(!name)
+		return false;
+	else {
+		s = name;
+		return true;
+	}
+}
+
 void Text::InitPen(void) {
 	pen.x = margin.left;
 	pen.y = margin.top + GetHeight();

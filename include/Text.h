@@ -164,6 +164,7 @@ public:
 	u8   GetCharCode(const char* txt, u32* code);
 	FT_Face GetFace(u8 style);
 	string GetFontFile(u8 style);
+	bool GetFontName(std::string &s);
 	u8   GetHeight(void);
 	bool GetInvert();
 	void GetPen(u16 *x, u16 *y);

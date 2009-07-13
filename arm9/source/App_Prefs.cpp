@@ -27,37 +27,37 @@
 void App::PrefsInit()
 {	
 	prefsButtonBooks.Init(ts);
-	prefsButtonBooks.Move(2, (PREFS_BUTTON_BOOKS + 1) * 32 - 16);
+	prefsButtonBooks.Move(2, PREFS_BUTTON_BOOKS * 32);
 	PrefsRefreshButtonBooks();
 	prefsButtons[PREFS_BUTTON_BOOKS] = &prefsButtonBooks;
 	
 	prefsButtonFonts.Init(ts);
-	prefsButtonFonts.Move(2, (PREFS_BUTTON_FONTS + 1) * 32 - 16);
+	prefsButtonFonts.Move(2, PREFS_BUTTON_FONTS * 32);
 	PrefsRefreshButtonFonts();
 	prefsButtons[PREFS_BUTTON_FONTS] = &prefsButtonFonts;
 	
 	prefsButtonFont.Init(ts);
-	prefsButtonFont.Move(2, (PREFS_BUTTON_FONT + 1) * 32 - 16);
+	prefsButtonFont.Move(2, PREFS_BUTTON_FONT * 32);
 	PrefsRefreshButtonFont();
 	prefsButtons[PREFS_BUTTON_FONT] = &prefsButtonFont;
 	
 	prefsButtonFontBold.Init(ts);
-	prefsButtonFontBold.Move(2, (PREFS_BUTTON_FONT_BOLD + 1) * 32 - 16);
+	prefsButtonFontBold.Move(2, PREFS_BUTTON_FONT_BOLD * 32);
 	PrefsRefreshButtonFontBold();
 	prefsButtons[PREFS_BUTTON_FONT_BOLD] = &prefsButtonFontBold;
 		
 	prefsButtonFontItalic.Init(ts);
-	prefsButtonFontItalic.Move(2, (PREFS_BUTTON_FONT_ITALIC + 1) * 32 - 16);
+	prefsButtonFontItalic.Move(2, PREFS_BUTTON_FONT_ITALIC * 32);
 	PrefsRefreshButtonFontItalic();
 	prefsButtons[PREFS_BUTTON_FONT_ITALIC] = &prefsButtonFontItalic;
 	
 	prefsButtonFontSize.Init(ts);
-	prefsButtonFontSize.Move(2, (PREFS_BUTTON_FONTSIZE + 1) * 32 - 16);
+	prefsButtonFontSize.Move(2, PREFS_BUTTON_FONTSIZE * 32);
 	PrefsRefreshButtonFontSize();
 	prefsButtons[PREFS_BUTTON_FONTSIZE] = &prefsButtonFontSize;
 	
 	prefsButtonParaspacing.Init(ts);
-	prefsButtonParaspacing.Move(2, (PREFS_BUTTON_PARASPACING + 1) * 32 - 16);
+	prefsButtonParaspacing.Move(2, PREFS_BUTTON_PARASPACING * 32);
 	PrefsRefreshButtonParaspacing();
 	prefsButtons[PREFS_BUTTON_PARASPACING] = &prefsButtonParaspacing;
 	
@@ -295,6 +295,8 @@ void App::PrefsButton()
 			mode = APP_MODE_PREFS_FONT_ITALIC;
 		}
 		PrintStatus("[loading fonts...]");
+		ts->SetScreen(ts->screenright);
+		ts->ClearScreen();
 		FontInit();
 		FontDraw();
 		PrintStatus("");
