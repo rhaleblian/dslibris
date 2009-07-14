@@ -98,14 +98,12 @@ http://sourceforge.net/projects/ndslibris
 #define APP_MODE_PREFS_FONT_ITALIC 5
 #define APP_URL "http://sourceforge.net/projects/ndslibris"
 
-#define PREFS_BUTTON_COUNT 7
-#define PREFS_BUTTON_BOOKS 0
-#define PREFS_BUTTON_FONTS 1
+#define PREFS_BUTTON_COUNT 5
 #define PREFS_BUTTON_FONT 2
 #define PREFS_BUTTON_FONT_ITALIC 3
 #define PREFS_BUTTON_FONT_BOLD 4
-#define PREFS_BUTTON_FONTSIZE 5
-#define PREFS_BUTTON_PARASPACING 6
+#define PREFS_BUTTON_FONTSIZE 1
+#define PREFS_BUTTON_PARASPACING 0
 
 
 //! \brief Main application.
@@ -219,8 +217,6 @@ class App {
 	void PrefsDecreasePixelSize();
 	void PrefsIncreaseParaspacing();
 	void PrefsDecreaseParaspacing();
-	void PrefsRefreshButtonBooks();
-	void PrefsRefreshButtonFonts();
 	void PrefsRefreshButtonFont();
 	void PrefsRefreshButtonFontBold();
 	void PrefsRefreshButtonFontItalic();

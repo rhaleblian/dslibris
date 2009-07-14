@@ -540,7 +540,7 @@ void end_hndl(void *data, const char *el)
 	parsedata_t *p = (parsedata_t *)data;
 	Text *ts = app->ts;	
 	if (
-	    !stricmp(el,"br")
+	       !stricmp(el,"br")
 	    || !stricmp(el,"div")
 	    || !stricmp(el,"dt")
 	    || !stricmp(el,"h1")
@@ -555,10 +555,9 @@ void end_hndl(void *data, const char *el)
 	    || !stricmp(el,"pre")
 	    || !stricmp(el,"ol")
 	    || !stricmp(el,"td")
-	    || !stricmp(el,"ul")
-	)
+	    || !stricmp(el,"ul"))
 	{
-		if(p->linebegan) {
+		if(p->linebegan || !strcmp(el,"br")) {
 			p->linebegan = false;
 			p->buf[p->buflen] = '\n';
 			p->buflen++;

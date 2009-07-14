@@ -26,16 +26,6 @@
 
 void App::PrefsInit()
 {	
-	prefsButtonBooks.Init(ts);
-	prefsButtonBooks.Move(2, PREFS_BUTTON_BOOKS * 32);
-	PrefsRefreshButtonBooks();
-	prefsButtons[PREFS_BUTTON_BOOKS] = &prefsButtonBooks;
-	
-	prefsButtonFonts.Init(ts);
-	prefsButtonFonts.Move(2, PREFS_BUTTON_FONTS * 32);
-	PrefsRefreshButtonFonts();
-	prefsButtons[PREFS_BUTTON_FONTS] = &prefsButtonFonts;
-	
 	prefsButtonFont.Init(ts);
 	prefsButtonFont.Move(2, PREFS_BUTTON_FONT * 32);
 	PrefsRefreshButtonFont();
@@ -64,27 +54,11 @@ void App::PrefsInit()
 	prefsSelected = 0;
 }
 
-void App::PrefsRefreshButtonBooks()
-{
-	char msg[128];
-	strcpy(msg, "");
-	sprintf((char*)msg, "Book Folder\n    %s", bookdir.c_str());
-	prefsButtonBooks.Label(msg);
-}
-
-void App::PrefsRefreshButtonFonts()
-{
-	char msg[128];
-	strcpy(msg, "");
-	sprintf((char*)msg, "Font Folder\n    %s", fontdir.c_str());
-	prefsButtonFonts.Label(msg);
-}
-
 void App::PrefsRefreshButtonFont()
 {
 	char msg[128];
 	strcpy(msg, "");
-	sprintf((char*)msg, "Change Font\n    %s", ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
+	sprintf((char*)msg, "Regular Font:\n %s", ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
 	prefsButtonFont.Label(msg);
 }
 
@@ -92,7 +66,7 @@ void App::PrefsRefreshButtonFontBold()
 {
 	char msg[128];
 	strcpy(msg, "");
-	sprintf((char*)msg, "Change Bold Font\n    %s", ts->GetFontFile(TEXT_STYLE_BOLD).c_str());
+	sprintf((char*)msg, "Bold Font:\n %s", ts->GetFontFile(TEXT_STYLE_BOLD).c_str());
 	prefsButtonFontBold.Label(msg);
 }
 
@@ -100,7 +74,7 @@ void App::PrefsRefreshButtonFontItalic()
 {
 	char msg[128];
 	strcpy(msg, "");
-	sprintf((char*)msg, "Change Italic Font\n    %s", ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
+	sprintf((char*)msg, "Italic Font:\n %s", ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
 	prefsButtonFontItalic.Label(msg);
 }
 
@@ -109,11 +83,11 @@ void App::PrefsRefreshButtonFontSize()
 	char msg[30];
 	strcpy(msg, "");
 	if (ts->GetPixelSize() == 1)
-		sprintf((char*)msg, "Change Font Size\n    [ %d >", ts->GetPixelSize());
+		sprintf((char*)msg, "Font Size:\n    [ %d >", ts->GetPixelSize());
 	else if (ts->GetPixelSize() == 255)
-		sprintf((char*)msg, "Change Font Size\n    < %d ]", ts->GetPixelSize());
+		sprintf((char*)msg, "Font Size:\n    < %d ]", ts->GetPixelSize());
 	else
-		sprintf((char*)msg, "Change Font Size\n    < %d >", ts->GetPixelSize());
+		sprintf((char*)msg, "Font Size:\n    < %d >", ts->GetPixelSize());
 	prefsButtonFontSize.Label(msg);
 }
 
@@ -122,11 +96,11 @@ void App::PrefsRefreshButtonParaspacing()
 	char msg[38];
 	strcpy(msg, "");
 	if (paraspacing == 0)
-		sprintf((char*)msg, "Change Paragraph Spacing\n    [ %d >", paraspacing);
+		sprintf((char*)msg, "Paragraph Spacing:\n    [ %d >", paraspacing);
 	else if (paraspacing == 255)
-		sprintf((char*)msg, "Change Paragraph Spacing\n    < %d ]", paraspacing);
+		sprintf((char*)msg, "Paragraph Spacing:\n    < %d ]", paraspacing);
 	else
-		sprintf((char*)msg, "Change Paragraph Spacing\n    < %d >", paraspacing);
+		sprintf((char*)msg, "Paragraph Spacing:\n    < %d >", paraspacing);
 	prefsButtonParaspacing.Label(msg);
 }
 
@@ -284,21 +258,17 @@ void App::PrefsDecreaseParaspacing()
 
 void App::PrefsButton()
 {
-	if (prefsSelected != PREFS_BUTTON_BOOKS)
-	{ 
-		if(prefsSelected == PREFS_BUTTON_FONTS) {
-		} else if (prefsSelected == PREFS_BUTTON_FONT) {
-			mode = APP_MODE_PREFS_FONT;
-		} else if (prefsSelected == PREFS_BUTTON_FONT_BOLD) {
-			mode = APP_MODE_PREFS_FONT_BOLD;
-		} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
-			mode = APP_MODE_PREFS_FONT_ITALIC;
-		}
-		PrintStatus("[loading fonts...]");
-		ts->SetScreen(ts->screenright);
-		ts->ClearScreen();
-		FontInit();
-		FontDraw();
-		PrintStatus("");
+	if (prefsSelected == PREFS_BUTTON_FONT) {
+		mode = APP_MODE_PREFS_FONT;
+	} else if (prefsSelected == PREFS_BUTTON_FONT_BOLD) {
+		mode = APP_MODE_PREFS_FONT_BOLD;
+	} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
+		mode = APP_MODE_PREFS_FONT_ITALIC;
 	}
+	PrintStatus("[loading fonts...]");
+	ts->SetScreen(ts->screenright);
+	ts->ClearScreen();
+	FontInit();
+	FontDraw();
+	PrintStatus("");
 }
