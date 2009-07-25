@@ -3,6 +3,6 @@
 	<margin top="10" left="12" bottom="16" right="12" />
 	<font path="/font/" size="12" normal="/font/LiberationSerif-Regular.ttf" bold="/font/LiberationSerif-Bold.ttf" italic="/font/LiberationSerif-Italic.ttf" />
 	<paragraph indent="0" spacing="1" />
-	<books path="/book/" reopen="0">
+	<books path="/book/" reopen="1">
 	</books>
 </dslibris>

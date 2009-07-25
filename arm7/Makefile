@@ -25,7 +25,7 @@ INCLUDES	:=	../include build
 #-----------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -O2 -Wformat=2 -Wall -Winline \
+CFLAGS	:=	-O2 -Wformat=2 -Wall -Winline \
 		-mcpu=arm7tdmi -mtune=arm7tdmi \
 		-fomit-frame-pointer -ffast-math \
 		$(ARCH) $(INCLUDE) -DARM7 -DWIFI
