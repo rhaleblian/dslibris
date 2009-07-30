@@ -347,6 +347,7 @@ void title_end_hndl(void *userdata, const char *el)
 {
 	parsedata_t *data = (parsedata_t*)userdata;
 	if(!stricmp(el,"title")) data->book->SetTitle(title);
+	if(!stricmp(el,"head")) data->status = 1; // done.
 	app->parse_pop(data);	
 }
 

@@ -164,10 +164,9 @@ class App {
 	Button* prefsButtons[PREFS_BUTTON_COUNT];
 	u8 prefsSelected;
 	
-	u8 fontSelected;
-	Button* fontButtons;
-	vector<Text*> fontTs;
-	u8 fontPage;
+	unsigned int fontSelected;
+	unsigned int fontPage;
+	vector<Button*>fontButtons;
 
 	BImage *image0;
 	BScreen *bscreen0;

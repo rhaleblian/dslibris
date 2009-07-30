@@ -115,9 +115,11 @@ void App::PrefsDraw(bool redraw)
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 	u16* screen = ts->GetScreen();
-
+	int style = ts->GetStyle();
+	
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
+	ts->SetStyle(TEXT_STYLE_BROWSER);
 	if (redraw) ts->ClearScreen();
 	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
@@ -129,6 +131,7 @@ void App::PrefsDraw(bool redraw)
 	buttonprefs.Draw(ts->screenright, false);
 
 	// restore state.
+	ts->SetStyle(style);
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
 	ts->SetScreen(screen);

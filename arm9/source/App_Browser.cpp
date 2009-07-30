@@ -206,10 +206,12 @@ void App::browser_draw(void)
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
  	u16 *screen = ts->GetScreen();
-
+	int style = ts->GetStyle();
+	
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->ClearScreen();
+	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(PIXELSIZE);
 	for (int i=browserstart;
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
@@ -229,6 +231,7 @@ void App::browser_draw(void)
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
+	ts->SetStyle(style);
 }
 
 void App::browser_redraw()
@@ -240,10 +243,12 @@ void App::browser_redraw()
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
-
+	int style = ts->GetStyle();
+	
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->SetPixelSize(PIXELSIZE);
+	ts->SetStyle(TEXT_STYLE_BROWSER);
 	int b = GetBookIndex(bookselected);
 	buttons[b]->Draw(ts->screenright,true);
 	if(b > browserstart)
@@ -255,6 +260,7 @@ void App::browser_redraw()
 	// restore state.
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
+	ts->SetStyle(style);
 }
 
 void App::AttemptBookOpen()

@@ -29,6 +29,11 @@ CFLAGS	:=	-O2 -Wformat=2 -Wall -Winline \
 		-mcpu=arm7tdmi -mtune=arm7tdmi \
 		-fomit-frame-pointer -ffast-math \
 		$(ARCH) $(INCLUDE) -DARM7 -DWIFI
+
+ifeq ($(debug),1)
+CFLAGS += -g
+endif
+
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)

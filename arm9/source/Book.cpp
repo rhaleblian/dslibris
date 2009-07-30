@@ -189,6 +189,7 @@ u8 Book::Parse(bool fulltext)
 			rc = 254;
 			break;
 		}
+		if (parsedata.status) break; // non-fulltext parsing signals it is done.
 		if (bytes_read == 0) break;
 	}
 

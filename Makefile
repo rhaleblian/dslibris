@@ -55,7 +55,7 @@ test: $(TARGET).nds
 
 #create a cflash image for use with desmume.
 image:
-	dd if=/dev/zero of=media.img bs=1048576 count=8
+	dd if=/dev/zero of=media.img bs=1048576 count=32
 	/sbin/mkfs.vfat media.img
 		
 # debug target with insight and desmume under linux
@@ -118,4 +118,8 @@ umount:
 	sync
 	- sudo umount media
 	- rmdir media
+
+eject:
+	sync
+	- umount $(MEDIAROOT)
 

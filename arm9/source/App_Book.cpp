@@ -190,7 +190,6 @@ u8 App::OpenBook(void)
 	const char *c; 	// will point to the file's extension.
 	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 	
-	ts->ClearCache();
 	if(bookcurrent) bookcurrent->Close();
 	if (bookselected->Open())
 	{

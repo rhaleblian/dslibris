@@ -12,6 +12,9 @@
 #include <nds/registers_alt.h>
 #include <nds/reload.h>
 
+#include <string>
+#include <vector>
+
 #include "ndsx_brightness.h"
 #include "types.h"
 #include "main.h"
@@ -23,6 +26,8 @@
 
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
+#define BPP 7  // buttons per page
+#define BUTTONHEIGHT 32
 
 void App::FontInit()
 {
@@ -36,6 +41,7 @@ void App::FontInit()
 	
 	fontPage = 0;
 	fontSelected = 0;
+	fontButtons.clear();
 	
 	char filename[MAXPATHLEN];
 	struct stat st;
@@ -47,52 +53,16 @@ void App::FontInit()
 
 		char *c;
 		for (c=filename; c != filename + strlen(filename) && *c != '.'; c++);
-		if (!stricmp(".ttf",c))
+		if (!stricmp(".ttf",c) || !stricmp(".otf",c) || !stricmp(".ttc",c))
 		{
-			Text* newTs = new Text();
-			newTs->app = this;
-			
-			char newFilename[MAXPATHLEN];
-			strcpy(newFilename, fontdir.c_str());
-			strcat(newFilename, filename);
-			newTs->SetFontFile(newFilename, 0);
-			
-			const char* fontfile = NULL;
-			
-			if (mode == APP_MODE_PREFS_FONT)
-				fontfile = ts->GetFontFile(TEXT_STYLE_NORMAL).c_str();
-			else if (mode == APP_MODE_PREFS_FONT_BOLD)
-				fontfile = ts->GetFontFile(TEXT_STYLE_BOLD).c_str();
-			else if (mode == APP_MODE_PREFS_FONT_ITALIC)
-				fontfile = ts->GetFontFile(TEXT_STYLE_ITALIC).c_str();
-			
-			if (!stricmp(newFilename, fontfile)) {
-				fontSelected = fontTs.size();
-				fontPage = fontSelected / 7;
-			}
-				
-			if (newTs->Init()) {
-				delete newTs;
-			} else {
-				newTs->SetPixelSize(PIXELSIZE);
-				fontTs.push_back(newTs);
-			}
+			Button *b = new Button();
+			b->Init(ts);
+			b->Move(2, (fontButtons.size() % BPP) * 32);
+			b->Label(filename);
+ 			fontButtons.push_back(b);
 		}
 	}
 	dirclose(dp);
-
-	fontButtons = new Button[fontTs.size()];
-	
-	for (u8 i = 0; i < fontTs.size(); i++) {
-		Text* ts = fontTs[i];
-		fontButtons[i].Init(ts);
-		fontButtons[i].Move(2, (i % 7) * 32);
-		std::string name;
-		if(ts->GetFontName(name))
-			fontButtons[i].Label(name.c_str());
-		else
-			fontButtons[i].Label(ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
-	}
 }
 
 void App::HandleEventInFont()
@@ -109,8 +79,8 @@ void App::HandleEventInFont()
 			fontSelected--;
 			FontDraw(false);
 		}
-	} else if (fontSelected < fontTs.size() - 1 && (keysDown() & (KEY_LEFT | KEY_L))) {
-		if (fontSelected == fontPage * 7 + 6) {
+	} else if (fontSelected < (fontButtons.size() - 1) && (keysDown() & (KEY_LEFT | KEY_L))) {
+		if (fontSelected == fontPage * BPP + (BPP-1)) {
 			FontNextPage();
 			FontDraw();
 		} else {
@@ -120,6 +90,7 @@ void App::HandleEventInFont()
 	} else if (keysDown() & KEY_A) {
 		FontButton();
 	} else if (keysDown() & KEY_TOUCH) {
+		Log("info : font screen touched\n");
 		touchPosition touch = touchReadXY();
 		touchPosition coord;
 		u8 regionprev[2], regionnext[2];
@@ -148,7 +119,8 @@ void App::HandleEventInFont()
 			FontDeinit();
 			PrefsDraw();
 		} else {
-			for(u8 i = fontPage * 7; (i < fontTs.size()) && (i < (fontPage + 1) * 7); i++) {
+			for(u8 i = fontPage * 7; (i < fontButtons.size()) && (i < (fontPage + 1) * BPP); i++) {
+				Log("info : checking button\n");
 				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
 				{
 					if (i != fontSelected) {
@@ -166,13 +138,10 @@ void App::HandleEventInFont()
 
 void App::FontDeinit()
 {
-	delete[] fontButtons;
-	
-	for (u8 i = 0; i < fontTs.size(); i++) {
-		delete fontTs[i];
+	for (u8 i = 0; i < fontButtons.size(); i++) {
+		if(fontButtons[i]) delete fontButtons[i];
 	}
-	
-	fontTs.clear();
+	fontButtons.clear();
 }
 
 void App::FontDraw()
@@ -184,38 +153,37 @@ void App::FontDraw(bool redraw)
 {
 	// save state.
 	bool invert = ts->GetInvert();
-	u8 size = ts->GetPixelSize();
 	u16* screen = ts->GetScreen();
-
+	int style = ts->GetStyle();
+	
 	ts->SetInvert(false);
+	ts->SetStyle(TEXT_STYLE_BROWSER);
 	if (redraw) {
 		ts->ClearScreen();
 	}
-	ts->SetPixelSize(PIXELSIZE);
-	for (u8 i = fontPage * 7; (i < fontTs.size()) && (i < (fontPage + 1) * 7); i++)
+	for (u8 i = fontPage * 7; (i < fontButtons.size()) && (i < (fontPage + 1) * BPP); i++)
 	{
-		fontButtons[i].Draw(ts->screenright, i == fontSelected);
+		fontButtons[i]->Draw(ts->screenright, i == fontSelected);
 	}
 	buttonprefs.Label("Cancel");
 	buttonprefs.Draw(screen, false);
-
-	if((u8)fontTs.size() > (fontPage + 1) * 7)
+	if(fontButtons.size() > (fontPage + 1) * BPP)
 		buttonnext.Draw(ts->screenright, false);
-	if(fontSelected > 7)
+	if(fontSelected > BPP)
 		buttonprev.Draw(ts->screenright, false);
 
 	// restore state.
+	ts->SetStyle(style);
 	ts->SetInvert(invert);
-	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
 }
 
 void App::FontNextPage()
 {
-	if((fontPage + 1) * 7 < (u8)fontTs.size())
+	if((fontPage + 1) * BPP < fontButtons.size())
 	{
 		fontPage += 1;
-		fontSelected = fontPage * 7;
+		fontSelected = fontPage * BPP;
 	}
 }
 
@@ -224,13 +192,15 @@ void App::FontPreviousPage()
 	if(fontPage > 0)
 	{
 		fontPage--;
-		fontSelected = fontPage * 7 + 6;
+		fontSelected = fontPage * BPP + (BPP-1);
 	}
 }
 
 void App::FontButton()
 {
+	Log("progr: assigning font..\n");
 	bool invert = ts->GetInvert();
+
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->ClearScreen();
@@ -238,12 +208,14 @@ void App::FontButton()
 	ts->PrintString("[saving font...]");
 	ts->SetInvert(invert);
 
+	std::string path = fontdir;
+	path.append(fontButtons[fontSelected]->GetLabel());
 	if (mode == APP_MODE_PREFS_FONT)
-		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(), TEXT_STYLE_NORMAL);
+		ts->SetFontFile(path.c_str(), TEXT_STYLE_NORMAL);
 	else if (mode == APP_MODE_PREFS_FONT_BOLD)
-		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(),TEXT_STYLE_BOLD);
+		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLD);
 	else if (mode == APP_MODE_PREFS_FONT_ITALIC)
-		ts->SetFontFile(fontTs[fontSelected]->GetFontFile(TEXT_STYLE_NORMAL).c_str(), TEXT_STYLE_ITALIC);
+		ts->SetFontFile(path.c_str(), TEXT_STYLE_ITALIC);
 
 	ts->Init();
 	bookcurrent = NULL; //Force repagination
@@ -252,4 +224,6 @@ void App::FontButton()
 	PrefsRefreshButtonFont();
 	PrefsDraw();
 	prefs->Write();
+
+	ts->SetInvert(invert);
 }

@@ -14,8 +14,12 @@ void Button::Init(Text *typesetter) {
 	strcpy((char*)text, "");
 }
 
+char* Button::GetLabel() {
+	return text;
+}
+
 void Button::Label(const char *labeltext) {
-	strncpy((char*)text,(char*)labeltext,MAXPATHLEN);
+	strncpy(text,labeltext,MAXPATHLEN);
 }
 
 void Button::Move(u16 x, u16 y) {

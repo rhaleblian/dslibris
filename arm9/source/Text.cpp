@@ -41,6 +41,7 @@ Text::Text()
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
+	style = TEXT_STYLE_NORMAL;
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
 	margin.top = MARGINTOP;
@@ -50,6 +51,9 @@ Text::Text()
 
 	stats_hits = 0;
 	stats_misses = 0;
+	hit = false;
+	
+	initialized = false;
 }
 
 Text::~Text()
@@ -100,7 +104,7 @@ int Text::InitWithCacheManager(void) {
 	imagetype.height = pixelsize;
 	imagetype.width = pixelsize;
 	ftc = true;
-
+	initialized = true;
 	return 0;
 }
 
@@ -138,6 +142,7 @@ int Text::InitDefault(void) {
 	ClearCache();
 	InitPen();
 	ftc = false;
+	initialized = true;
 	return 0;
 }
 
@@ -152,6 +157,9 @@ void Text::Begin()
 	bold = false;
 	italic = false;
 	linebegan = false;
+	stats_hits = 0;
+	stats_misses = 0;
+	hit = false;
 }
 
 void Text::End() {}
@@ -233,11 +241,13 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 	map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
 	
 	if (iter != textCache[face]->cacheMap.end()) {
-		//stats_hits++;
+		stats_hits++;
+		hit = true;
 		return iter->second;
 	}
 	
-	//stats_misses++;
+	stats_misses++;
+	hit = false;
 	int i = CacheGlyph(ucs, face);
 	if (i > -1)
 		return textCache[face]->cacheMap[ucs];
@@ -336,7 +346,7 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 }
 
 u8 Text::GetHeight() {
-	return (GetFace(TEXT_STYLE_NORMAL)->size->metrics.height >> 6);
+	return (GetFace(style)->size->metrics.height >> 6);
 }
 
 void Text::GetPen(u16 *x, u16 *y) {
@@ -429,6 +439,14 @@ u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 	return (glyph->advance).x;
 }
 
+int Text::GetStringAdvance(const char *s) {
+	int advance = 0;
+	for(unsigned int i=0;i<strlen(s);i++) {
+		advance += GetAdvance(s[i]);
+	}
+	return advance;
+}
+
 bool Text::GetFontName(std::string &s) {
 	const char *name = FT_Get_Postscript_Name(GetFace(TEXT_STYLE_NORMAL));
 	if(!name)
@@ -446,11 +464,11 @@ void Text::InitPen(void) {
 
 void Text::PrintChar(u32 ucs)
 {
-	PrintChar(ucs, TEXT_STYLE_NORMAL);
+	PrintChar(ucs, GetFace(style));
 }
 
-void Text::PrintChar(u32 ucs, u8 style) {
-	PrintChar(ucs, GetFace(style));
+void Text::PrintChar(u32 ucs, u8 astyle) {
+	PrintChar(ucs, GetFace(astyle));
 }
 
 void Text::PrintChar(u32 ucs, FT_Face face) {
@@ -535,7 +553,12 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 					u8 l;
 					if (invert) l = a >> 3;
 					else l = (255-a) >> 3;
-					screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
+#ifdef DEBUG_CACHE
+					if(!hit) 
+						screen[sy*display.height+sx] = RGB15(l,0,0) | BIT(15);
+					else
+#endif
+						screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
 				}
 			}
 		}
@@ -644,7 +667,9 @@ void Text::PrintSplash(u16 *screen)
 
 void Text::SetFontFile(const char *filename, u8 style)
 {
+	if(!stricmp(filenames[style].c_str(),filename)) return;
 	filenames[style] = filename;
+	if(initialized) ClearCache(style);
 }
 
 string Text::GetFontFile(u8 style)
@@ -652,10 +677,10 @@ string Text::GetFontFile(u8 style)
 	return filenames[style];
 }
 
-bool Text::SetFace(u8 style)
+bool Text::SetFace(u8 astyle)
 {
-	// ha!
-	return false;
+	style = astyle;
+	return true;
 }
 
 FT_Face Text::GetFace(u8 style)
@@ -666,4 +691,3 @@ FT_Face Text::GetFace(u8 style)
 	else
 		return faces[TEXT_STYLE_NORMAL];
 }
-

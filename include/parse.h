@@ -35,6 +35,7 @@ typedef struct {
 	bool bold;
 	bool italic;
 	int status;
+	int totalbytes;
 } parsedata_t;
 
 void default_hndl(void *data, const char *s, int len);

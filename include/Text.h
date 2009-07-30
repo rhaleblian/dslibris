@@ -74,10 +74,17 @@ class Face {
 class Style {
 	u8 id;
 	Face *face;
+	int pixelsize;
 
-	Style(Face *f) {
-		style = TEXT_STYLE_NORMAL;
-		face = f;
+	Style() {
+		id = TEXT_STYLE_NORMAL;
+		face = NULL;
+		pixelsize = PIXELSIZE;
+	}
+
+	Style(int type) {
+		Style::Style();
+		id = type;
 	}
 };
 #endif
@@ -106,6 +113,7 @@ class Text {
 	map<u8, string> filenames;
 //	vector<Face> faces;
 //	map<u8, Face*> styles;
+	int style;
 
 	FT_Vector pen;
 	//! Draw white text on black?
@@ -113,7 +121,9 @@ class Text {
 	//! We wish this worked.
 	bool justify;
 	u32 codeprev; // last printed char code
-
+	bool hit; // was the last glyph lookup a cache hit?
+	bool initialized; // Init() has run?
+	
 	int CacheGlyph(u32 ucs);
 	int CacheGlyph(u32 ucs, u8 style);
 	int CacheGlyph(u32 ucs, FT_Face face);
@@ -173,7 +183,9 @@ public:
 	u8   GetPenY();
 	u8   GetPixelSize();
 	u16* GetScreen();
+	int  GetStringAdvance(const char *txt);
 	u8   GetStringWidth(const char *txt, u8 style);
+	inline int GetStyle() { return style; }
 
 	void SetInvert(bool invert);
 	void SetPen(u16 x, u16 y);
@@ -181,6 +193,7 @@ public:
 	bool SetFace(u8 style);
 	void SetFontFile(const char *filename, u8 style);
 	void SetScreen(u16 *s);
+	inline void SetStyle(int astyle) { style = astyle; }
 	
 	void ClearCache();
 	void ClearCache(u8 style);

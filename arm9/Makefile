@@ -25,8 +25,13 @@ DATA		:=	../data
 #-----------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s 
 
-CFLAGS	:=	-O2 -Wall -fomit-frame-pointer \
+CFLAGS	:=	-Wall -fomit-frame-pointer \
 		-ffast-math $(ARCH) $(INCLUDE) -DARM9
+ifeq ($(debug),1)
+	CFLAGS += -g
+else
+	CFLAGS += -O2
+endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 

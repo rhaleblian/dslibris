@@ -123,8 +123,9 @@ void Page::DrawNumber(Text *ts)
 {
 	//! Draw page number
 	char msg[128];
-	u8 px = ts->GetPixelSize();
-	ts->SetPixelSize(10);
+	// FIXME Setting pixelsize destroys glyph caching. use FTC instead.
+//	u8 px = ts->GetPixelSize();
+//	ts->SetPixelSize(10);
 	
 	// Find out if the page is bookmarked or not
 	bool isBookmark = false;
@@ -158,12 +159,22 @@ void Page::DrawNumber(Text *ts)
 		else
 			sprintf((char*)msg,"< %d >",pagecurrent+1);
 	}
+
+	// Position page number in horizontal proportion
+	// to our current progress in the book.
+	int stringwidth = ts->GetStringAdvance(msg);
+	int region = ts->display.width - ts->margin.left - ts->margin.right - stringwidth;
+	int location;
+	if(pagecount == 1)
+		location = (ts->display.width/2) - (stringwidth/2);
+	else
+		location = ts->margin.left
+			+ (int)((float)region * (float)pagecurrent / (float)(pagecount-1));
+	//location = ts->display.width - stringwidth;
+
 	ts->SetScreen(ts->screenright);
-	u8 offset = (u8)((ts->display.width-ts->margin.left
-					  -ts->margin.right-(ts->GetAdvance(40)*7))
-					 * (pagecurrent / (float)(pagecount)));
-	ts->SetPen(ts->margin.left+offset,250);
+	ts->SetPen((u8)location,250);
 	ts->PrintString(msg);
 
-	ts->SetPixelSize(px);
+//	ts->SetPixelSize(px);
 }

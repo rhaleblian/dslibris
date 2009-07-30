@@ -14,12 +14,13 @@ typedef struct {
 class Button {
 	coord_t origin;
 	coord_t extent;
-	u8 text[MAXPATHLEN];
+	char text[MAXPATHLEN];
 	Text *ts;
 
  public:
 	Button();
 	Button(Text *typesetter);
+	char* GetLabel();
 	void Init(Text *typesetter);
 	void Label(const char *text);
 	void Draw(u16 *fb, bool highlight);
