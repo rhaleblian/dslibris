@@ -1,6 +1,7 @@
 #include "Book.h"
 #include "main.h"
 #include "parse.h"
+#include "epub.h"
 #include "App.h"
 #include <stdio.h>
 #include <errno.h>
@@ -17,6 +18,7 @@ Book::Book()
 	author.clear();
 	pages.clear();
 	position = 0;
+	format = FORMAT_UNDEF;
 }
 
 Book::~Book()
@@ -117,10 +119,23 @@ Page* Book::RetreatPage()
 }
 
 u8 Book::Open() {
-	int err = Parse(true);
-	if (err) return err;
-	if(position > (int)pages.size()) position = pages.size()-1;
-	return 0;
+	int err = 0;
+	if(format == FORMAT_XHTML)
+	{
+		err = Parse(true);
+	}
+	else if(format == FORMAT_EPUB)
+	{
+		app->PrintStatus("opening EPUB...\n");
+		std::string path;
+		path.append(GetFolderName());
+		path.append(GetFileName());
+		err = epub(this,path);
+	} else
+		err = 255;
+	if(!err)
+		if(position > (int)pages.size()) position = pages.size()-1;
+	return (u8)err;
 }
 
 u8 Book::Index()
@@ -152,7 +167,7 @@ u8 Book::Parse(bool fulltext)
 	}
 	
 	parsedata_t parsedata;
-	app->parse_init(&parsedata);	
+	app->parse_init(&parsedata);
 	parsedata.book = this;
 	
 	XML_Parser p = XML_ParserCreate(NULL);

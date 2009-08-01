@@ -7,6 +7,8 @@
 #include <list>
 #include <vector>
 
+typedef enum {FORMAT_UNDEF, FORMAT_XHTML, FORMAT_EPUB} format_t;
+
 //! Encapsulates metadata for a single book.
 //! App maintains n of these to represent the available library.
 
@@ -21,6 +23,7 @@ class Book {
 public:
 	Book();
 	~Book();
+	format_t format;
     std::list<u16>* GetBookmarks(void);
 	const char* GetFileName(void);
 	const char* GetFolderName(void);

@@ -37,6 +37,29 @@ App *app;
 
 int main(void)
 {
+	defaultExceptionHandler();
+	
+	// ARM7 initialization.
+	
+	powerON(POWER_ALL);
+	//powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
+	irqInit();
+	irqEnable(IRQ_VBLANK);
+	//irqEnable(IRQ_VCOUNT);
+	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
+	
+	// Get a console going.
+	
+	videoSetMode(0);
+	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);
+	vramSetBankC(VRAM_C_SUB_BG);
+	SUB_BG0_CR = BG_MAP_BASE(31);
+	BG_PALETTE_SUB[255] = RGB15(15,31,15);
+	consoleInitDefault(
+		(u16*)SCREEN_BASE_BLOCK_SUB(31),
+		(u16*)CHAR_BASE_BLOCK_SUB(0),16);
+	iprintf("$ dslibris\n");
+			
 	app = new App();
 	return app->Run();
 }
@@ -647,3 +670,20 @@ void end_hndl(void *data, const char *el)
 void proc_hndl(void *data, const char *target, const char *pidata)
 {
 }  /* End proc_hndl */
+
+void parse_init(parsedata_t *data)
+{
+	data->stacksize = 0;
+	data->pos = 0;
+	data->book = NULL;
+	data->prefs = NULL;
+	data->screen = 0;
+	data->pen.x = 0;
+	data->pen.y = 0;
+	data->linebegan = false;
+	data->bold = false;
+	data->italic = false;
+	strcpy((char*)data->buf,"");
+	data->buflen = 0;
+	data->status = 0;
+}

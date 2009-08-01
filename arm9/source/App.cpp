@@ -77,29 +77,7 @@ App::~App()
 int App::Run(void)
 {
 	char msg[128];
-	defaultExceptionHandler();
-	
-	// ARM7 initialization.
-	
-	powerON(POWER_ALL);
-//	powerSET(POWER_LCD|POWER_2D_A|POWER_2D_B);
-	irqInit();
-	irqEnable(IRQ_VBLANK);
-	//irqEnable(IRQ_VCOUNT);
-	REG_IPC_FIFO_CR = IPC_FIFO_ENABLE | IPC_FIFO_SEND_CLEAR;
-	
-	// Get a console going.
-	
 	SetBrightness(0);	
-	videoSetMode(0);
-	videoSetModeSub(MODE_0_2D | DISPLAY_BG0_ACTIVE);
-	vramSetBankC(VRAM_C_SUB_BG);
-	SUB_BG0_CR = BG_MAP_BASE(31);
-	BG_PALETTE_SUB[255] = RGB15(15,31,15);
-	consoleInitDefault(
-		(u16*)SCREEN_BASE_BLOCK_SUB(31),
-		(u16*)CHAR_BASE_BLOCK_SUB(0),16);
-	iprintf("$ dslibris\n");
 	
 	// Start up FAT on this media.
 	
@@ -177,6 +155,7 @@ int App::Run(void)
 			Book *book = new Book();
 			book->SetFolderName(bookdir.c_str());
 			book->SetFileName(filename);
+			book->format = FORMAT_XHTML;
 			books.push_back(book);
 			bookcount++;
 			
@@ -194,6 +173,16 @@ int App::Run(void)
 					book->GetTitle());
 			}
 			Log(msg);
+		}
+		else if (!stricmp(".epub",c))
+		{
+			Book *book = new Book();
+			book->SetFolderName(bookdir.c_str());
+			book->SetFileName(filename);
+			book->SetTitle(filename);
+			book->format = FORMAT_EPUB;
+			books.push_back(book);
+			bookcount++;
 		}
 	}
 	dirclose(dp);

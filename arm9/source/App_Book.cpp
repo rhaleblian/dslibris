@@ -183,7 +183,7 @@ u8 App::OpenBook(void)
 	//! Attempt to open book indicated by bookselected.
 
 	if(!bookselected) return 254;	
-	PrintStatus("[opening book...]");
+	PrintStatus("opening book...");
 	swiWaitForVBlank();
 
 	const char *filename = bookselected->GetFileName();
@@ -191,17 +191,20 @@ u8 App::OpenBook(void)
 	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 	
 	if(bookcurrent) bookcurrent->Close();
-	if (bookselected->Open())
+	if (int err = bookselected->Open())
 	{
-		PrintStatus("[could not open book]");
+		char msg[64];
+		sprintf(msg, "could not open book (%d)",err);
+		PrintStatus(msg);
 		return 255;
 	}
-	PrintStatus("[book opened]");
+	PrintStatus("book opened");
 	bookcurrent = bookselected;
 	if(mode == APP_MODE_BROWSER) {
 		if(orientation) lcdSwap();
 		mode = APP_MODE_BOOK;
 	}
+	bookcurrent->SetPosition(0);
 	bookcurrent->GetPage()->Draw(ts);
 	prefs->Write();
 	ts->PrintStats();
