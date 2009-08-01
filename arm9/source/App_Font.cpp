@@ -222,6 +222,8 @@ void App::FontButton()
 	FontDeinit();
 	mode = APP_MODE_PREFS;
 	PrefsRefreshButtonFont();
+	PrefsRefreshButtonFontBold();
+	PrefsRefreshButtonFontItalic();
 	PrefsDraw();
 	prefs->Write();
 
