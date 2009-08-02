@@ -1,31 +1,23 @@
+#include "epub.h"
 #include <nds.h>
 #include <string.h>
 #include <stdio.h>
 #include <iostream>
-#include <string>
 #include <vector>
 #include "parse.h"
 #include "expat.h"
 #include "zlib.h"
 #include "unzip.h"
-#include "Book.h"
 #include "log.h"
-
-typedef enum { PARSE_CONTAINER, PARSE_ROOTFILE, PARSE_CONTENT } epub_parse_t;
-typedef struct {
-	epub_parse_t type;
-	std::string ctx;
-	std::string rootfile;
-	std::vector<std::string*> manifest;
-	Book *book;
-} epub_data_t;
-
 
 void epub_data_init(epub_data_t *d)
 {
 	d->type = PARSE_CONTAINER;
-	d->ctx = "";
+	d->ctx.clear();
 	d->rootfile = "";
+	d->title = "";
+	d->creator = "";
+	d->metadataonly = false;
 	d->book = NULL;
 }
 
@@ -35,6 +27,7 @@ void epub_data_delete(epub_data_t *d)
 	for(it=d->manifest.begin(); it!=d->manifest.end();it++)
 		delete (*it);
 	d->manifest.clear();
+	while(d->ctx.back()) d->ctx.pop_back();
 }
 
 void epub_container_start(void *data, const char *el, const char **attr)
@@ -46,18 +39,39 @@ void epub_container_start(void *data, const char *el, const char **attr)
 				d->rootfile = attr[i+1];
 }
 
-
-void epub_rootfile_start(void *data, const char *el, const char **attr)
-{
+void epub_rootfile_start(void *data, const char *el, const char **attr) {
 	epub_data_t *d = (epub_data_t*)data;
-	if(!stricmp(el,"manifest"))
-		d->ctx = "manifest";
-	else if(!stricmp(el,"item") && d->ctx == "manifest")
+	d->ctx.push_back(new std::string(el));
+	std::string *ctx = d->ctx.back();
+
+	if(ctx && *ctx == "item")
 		for(int i=0;attr[i];i+=2)
 			if(!stricmp(attr[i],"href"))
 				d->manifest.push_back(new std::string(attr[i+1]));
 }
 
+void epub_rootfile_end(void *data, const char *el) {
+   	epub_data_t *d = (epub_data_t*)data;
+	d->ctx.pop_back();
+}
+
+void epub_rootfile_char(void *data, const XML_Char *txt, int len) {
+   	epub_data_t *d = (epub_data_t*)data;
+	std::string *ctx = d->ctx.back();
+
+	if(ctx && *ctx == "dc:title") {
+	  XML_Char *buf = new XML_Char[len+1];
+	  strncpy(buf,txt,len);
+	  d->title = buf;
+	  delete buf;
+	}
+	else if(ctx && *ctx == "dc:creator") {
+	  XML_Char *buf = new XML_Char[len+1];
+	  strncpy(buf,txt,len);
+	  d->creator = buf;
+	  delete buf;
+	}
+}
 
 int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 {
@@ -71,7 +85,8 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 	}
 	else if(epd->type == PARSE_ROOTFILE) {
 		XML_SetUserData(p, epd);
-		XML_SetElementHandler(p, epub_rootfile_start, NULL);
+		XML_SetElementHandler(p, epub_rootfile_start, epub_rootfile_end);
+		XML_SetCharacterDataHandler(p, epub_rootfile_char);
 	}
 	else {
 		parse_init(&pd);
@@ -101,8 +116,9 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 	return(rc);
 }
 
-
-int epub(Book *book, std::string name)
+//! Parse EPUB file. Set metadataonly to true if you
+//! only want the title and author.
+int epub(Book *book, std::string name, bool metadataonly)
 {
 	int rc = 0;
 	static epub_data_t parsedata;
@@ -139,8 +155,17 @@ int epub(Book *book, std::string name)
 		rc = unzCloseCurrentFile(uf);
 	}
 
+	// Stop here if only metadata is required.
+	if(metadataonly) {
+	  if(parsedata.title.length())
+	    book->SetTitle(parsedata.title.c_str());
+	  unzClose(uf);
+	  epub_data_delete(&parsedata);
+	  return rc;
+	}
+
 	// Read all the XHTML listed, in sequence.
-	parsedata.ctx = "";
+	parsedata.ctx.clear();
 	parsedata.book = book;
 	parsedata.type = PARSE_CONTENT;
 	vector<std::string*>::iterator it;

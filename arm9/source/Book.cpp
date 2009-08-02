@@ -122,6 +122,7 @@ u8 Book::Open() {
 	int err = 0;
 	if(format == FORMAT_XHTML)
 	{
+	  app->PrintStatus("opening XHTML...\n");
 		err = Parse(true);
 	}
 	else if(format == FORMAT_EPUB)
@@ -130,7 +131,7 @@ u8 Book::Open() {
 		std::string path;
 		path.append(GetFolderName());
 		path.append(GetFileName());
-		err = epub(this,path);
+		err = epub(this,path,false);
 	} else
 		err = 255;
 	if(!err)
@@ -140,7 +141,14 @@ u8 Book::Open() {
 
 u8 Book::Index()
 {
-	return Parse(false);
+	if(format == FORMAT_EPUB)
+	{
+		std::string path;
+		path.append(GetFolderName());
+		path.append(GetFileName());
+		int err = epub(this,path,true);
+		return err;
+	} else return Parse(false);
 }
 
 u8 Book::Parse(bool fulltext)
@@ -216,10 +224,5 @@ u8 Book::Parse(bool fulltext)
 
 void Book::Close()
 {
-	vector<Page*>::iterator it;
-	for (it = pages.begin(); it != pages.end(); it++)
-	{
-		if(*it) delete *it;
-	}
 	pages.erase(pages.begin(), pages.end());
 }

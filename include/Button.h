@@ -3,6 +3,7 @@
 
 #include "Text.h"
 #include <unistd.h>
+#include <string>
 
 typedef struct {
 	u16 x;
@@ -14,15 +15,16 @@ typedef struct {
 class Button {
 	coord_t origin;
 	coord_t extent;
-	char text[MAXPATHLEN];
+	std::string text;
 	Text *ts;
 
  public:
 	Button();
 	Button(Text *typesetter);
-	char* GetLabel();
+	inline const char* GetLabel() { return text.c_str(); };
 	void Init(Text *typesetter);
 	void Label(const char *text);
+	void SetLabel(std::string &s);
 	void Draw(u16 *fb, bool highlight);
 	void Move(u16 x, u16 y);
 	void Resize(u16 x, u16 y);

@@ -183,6 +183,7 @@ int App::Run(void)
 			book->format = FORMAT_EPUB;
 			books.push_back(book);
 			bookcount++;
+			book->Index();
 		}
 	}
 	dirclose(dp);

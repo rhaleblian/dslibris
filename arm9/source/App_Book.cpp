@@ -204,7 +204,8 @@ u8 App::OpenBook(void)
 		if(orientation) lcdSwap();
 		mode = APP_MODE_BOOK;
 	}
-	bookcurrent->SetPosition(0);
+	if(bookcurrent->GetPosition() >= bookcurrent->GetPageCount())
+		bookcurrent->SetPosition(0);
 	bookcurrent->GetPage()->Draw(ts);
 	prefs->Write();
 	ts->PrintStats();

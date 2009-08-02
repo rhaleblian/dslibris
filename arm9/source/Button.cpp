@@ -11,15 +11,17 @@ void Button::Init(Text *typesetter) {
 	origin.y = 0;
 	extent.x = 192;
 	extent.y = 32;
-	strcpy((char*)text, "");
+	text = "";
 }
 
-char* Button::GetLabel() {
-	return text;
+void Button::Label(const char *s) {
+	std::string str = s;	
+	SetLabel(str);
 }
 
-void Button::Label(const char *labeltext) {
-	strncpy(text,labeltext,MAXPATHLEN);
+void Button::SetLabel(std::string &s) {
+	text = s.substr(0,26);
+	if(s.length() > 27) text.append("...");
 }
 
 void Button::Move(u16 x, u16 y) {
@@ -67,11 +69,12 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->GetPen(&x,&y);
 	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
-	ts->PrintString((const char*)text, TEXT_STYLE_BROWSER);
+	ts->PrintString((const char*)text.c_str(), TEXT_STYLE_BROWSER);
 	ts->usebgcolor = false;
 	ts->SetPen(x,y);
 	ts->SetInvert(invert);
 }
+
 bool Button::EnclosesPoint(u16 x, u16 y)
 {
 	if (x > origin.x && 
