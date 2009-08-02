@@ -60,16 +60,26 @@ void epub_rootfile_char(void *data, const XML_Char *txt, int len) {
 	std::string *ctx = d->ctx.back();
 
 	if(ctx && *ctx == "dc:title") {
-	  XML_Char *buf = new XML_Char[len+1];
-	  strncpy(buf,txt,len);
-	  d->title = buf;
-	  delete buf;
+		XML_Char *buf = new XML_Char[len+1];
+		strncpy(buf,txt,len);
+		std::string s = buf;
+		// eyeballed with the current browser font
+		// to avoid overruning buttonwidth.
+		// FIXME buttons should format their own 
+		d->title = s.substr(0,26);
+		if(s.length() > 26) d->title.append("...");
+	  	delete buf;
 	}
 	else if(ctx && *ctx == "dc:creator") {
-	  XML_Char *buf = new XML_Char[len+1];
-	  strncpy(buf,txt,len);
-	  d->creator = buf;
-	  delete buf;
+		XML_Char *buf = new XML_Char[len+1];
+		strncpy(buf,txt,len);
+		std::string s = buf;
+		// eyeballed with the current browser font
+		// to avoid overruning buttonwidth.
+		// FIXME buttons should format their own 
+		d->creator = s.substr(0,26);
+		if(s.length() > 26) d->creator.append("...");
+	  	delete buf;
 	}
 }
 

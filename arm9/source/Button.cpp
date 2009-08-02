@@ -20,8 +20,7 @@ void Button::Label(const char *s) {
 }
 
 void Button::SetLabel(std::string &s) {
-	text = s.substr(0,26);
-	if(s.length() > 27) text.append("...");
+	text = s;
 }
 
 void Button::Move(u16 x, u16 y) {
