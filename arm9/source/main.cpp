@@ -438,7 +438,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 	}
 
 	u8 advance=0;
-	int i=0;
+	int i=0, j=0;
 	while (i<txtlen)
 	{
 		if (txt[i] == '\r')
@@ -472,7 +472,6 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 		else
 		{
 			p->linebegan = true;
-			int j;
 			advance = 0;
 			u8 bytes = 1;
 			for (j=i;(j<txtlen) && (!iswhitespace(txt[j]));j+=bytes)
@@ -496,66 +495,63 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 					break;
 				}
 			}
+		}
 
-			// reflow - if we overrun the margin, insert a break.
+		if ((p->pen.x + advance) > (ts->display.width - ts->margin.right))
+		{
+			// we overran the margin, insert a break.
+			p->buf[p->buflen++] = '\n';
+			p->pen.x = ts->margin.left;
+			p->pen.y += (ts->GetHeight() + ts->linespacing);
+			p->linebegan = false;
+		}
 
-			if ((p->pen.x + advance) > (ts->display.width - ts->margin.right))
+		if (p->pen.y > (ts->display.height - ts->margin.bottom))
+		{
+			// reached bottom of screen.
+			if(p->screen == 1)
 			{
-				p->buf[p->buflen++] = '\n';
-				p->pen.x = ts->margin.left;
-				p->pen.y += (ts->GetHeight() + ts->linespacing);
-
-				if (p->pen.y > (ts->display.height - ts->margin.bottom))
-				{
-					//if (app->parse_pagefeed(p,page))
-					if(p->screen == 1)
-					{
-						// put chars into current page.
-						Page *page = p->book->AppendPage();
-						page->SetBuffer(p->buf, p->buflen);
-												
-						// make a new page.
-						p->buflen = 0;
-						if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
-						if (p->bold) p->buf[p->buflen++] = TEXT_BOLD_ON;
-						p->screen = 0;
-						/* if(!(p->pos >> 4))
-						{
-							char msg[16];
-							sprintf(msg,"[%d]",p->pos);
-							app->PrintStatus(msg);
-						} */
-					}
-					else 
-						p->screen = 1;
-					p->pen.x = ts->margin.left;
-					p->pen.y = ts->margin.top + ts->GetHeight();
-				}
-				p->linebegan = false;
+				// page full.
+				// put chars into current page.
+				Page *page = p->book->AppendPage();
+				page->SetBuffer(p->buf, p->buflen);
+										
+				// make a new page.
+				p->buflen = 0;
+				if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
+				if (p->bold) p->buf[p->buflen++] = TEXT_BOLD_ON;
+				p->screen = 0;
 			}
+			else 
+				// move to right screen.
+				p->screen = 1;
 
-			/** append this word to the page. to save space,
-			chars will stay UTF-8 until they are rendered. **/
+			p->pen.x = ts->margin.left;
+			p->pen.y = ts->margin.top + ts->GetHeight();
+		}
 
-			for (;i<j;i++)
+		/** append this word to the page.
+			chars stay UTF-8 until they are rendered. **/
+
+		for (;i<j;i++)
+		{
+			if (iswhitespace(txt[i]))
 			{
-				if (iswhitespace(txt[i]))
+				if (p->linebegan)
 				{
-					if (p->linebegan)
-					{
-						p->buf[p->buflen] = ' ';
-						p->buflen++;
-					}
-				}
-				else
-				{
-					p->linebegan = true;
-					p->buf[p->buflen] = txt[i];
+					p->buf[p->buflen] = ' ';
 					p->buflen++;
 				}
 			}
-			p->pen.x += advance;
+			else
+			{
+				p->linebegan = true;
+				p->buf[p->buflen] = txt[i];
+				p->buflen++;
+			}
 		}
+		p->pen.x += advance;
+		advance = 0;
 	}
 }  /* End char_hndl */
 
