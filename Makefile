@@ -54,7 +54,7 @@ test: $(TARGET).nds
 	$(EMULATOR) --cflash=media.img dslibris.nds
 
 #create a cflash image for use with desmume.
-image:
+image: media.img
 	dd if=/dev/zero of=media.img bs=1048576 count=32
 	/sbin/mkfs.vfat media.img
 		
