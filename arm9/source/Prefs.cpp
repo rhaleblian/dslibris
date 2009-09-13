@@ -72,7 +72,7 @@ int Prefs::Write()
 	
 	fprintf(fp, "<dslibris modtime=\"%ld\">\n",modtime);
 	if(swapshoulder)
-		fprintf(fp, "<option swapshoulder=\"%d\">\n",swapshoulder);		
+		fprintf(fp, "<option swapshoulder=\"%d\" />\n",swapshoulder);		
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
 		app->brightness,
 		app->ts->GetInvert(),
