@@ -1,4 +1,3 @@
-support epub.
 integrate calibre and gutenmark.
 write bookmark as word offset.
 store modtime for prefs.
@@ -6,6 +5,7 @@ repaginate and rebookmark based on modtime.
 double-buffer or dmacopy to speed up text redraw.
 speed up parse by caching pagination.
 
+support epub. DONE
 extend pagecount past 2048. DONE
 fix page 1 skipping. DONE
 restore fakey orientation. DONE
