@@ -24,9 +24,10 @@ void epub_data_init(epub_data_t *d)
 void epub_data_delete(epub_data_t *d)
 {
 	std::vector<std::string*>::iterator it;
-	for(it=d->manifest.begin(); it!=d->manifest.end();it++)
-		delete (*it);
+//	for(it=d->manifest.begin(); it!=d->manifest.end();it++)
+//		delete (*it);
 	d->manifest.clear();
+	d->spine.clear();
 	while(d->ctx.back()) d->ctx.pop_back();
 }
 
@@ -41,13 +42,31 @@ void epub_container_start(void *data, const char *el, const char **attr)
 
 void epub_rootfile_start(void *data, const char *el, const char **attr) {
 	epub_data_t *d = (epub_data_t*)data;
-	d->ctx.push_back(new std::string(el));
+	std::string *elem = new std::string(el);
 	std::string *ctx = d->ctx.back();
 
-	if(ctx && *ctx == "item")
-		for(int i=0;attr[i];i+=2)
+	if(*ctx == "manifest" && *elem == "item") {
+		epub_item *item = new epub_item;
+		d->manifest.push_back(item);
+		for(int i=0;attr[i];i+=2) {
+			if(!stricmp(attr[i],"id"))
+				item->id = attr[i+1];
 			if(!stricmp(attr[i],"href"))
-				d->manifest.push_back(new std::string(attr[i+1]));
+				item->href = attr[i+1];
+		}
+	}
+
+	if(*ctx == "spine" && *elem == "itemref")
+	{
+		epub_itemref *itemref = new epub_itemref;
+		d->spine.push_back(itemref);
+		for(int i=0;attr[i];i+=2) {
+			if(!stricmp(attr[i],"idref"))
+				itemref->idref = attr[i+1];
+		}
+	}
+		
+	d->ctx.push_back(elem);
 }
 
 void epub_rootfile_end(void *data, const char *el) {
@@ -175,12 +194,39 @@ int epub(Book *book, std::string name, bool metadataonly)
 	  return rc;
 	}
 
-	// Read all the XHTML listed, in sequence.
+	// Read the XHTML in the manifest, ordering by spine if needed.
 	parsedata.ctx.clear();
 	parsedata.book = book;
 	parsedata.type = PARSE_CONTENT;
+	vector<std::string*> href;
+	if(parsedata.spine.size())
+	{
+		// Use spine for reading order.
+		// Sort by dumb linear search.
+		vector<epub_itemref*>::iterator itemref;
+		for(itemref=parsedata.spine.begin();
+			itemref!=parsedata.spine.end();
+			itemref++) {
+			vector<epub_item*>::iterator item;
+			for(item=parsedata.manifest.begin();
+				item!=parsedata.manifest.end();
+				item++) {
+				if((*item)->id == (*itemref)->idref)
+					href.push_back(new std::string((*item)->href));
+			}
+		}
+	}
+	else
+	{
+		vector<epub_item*>::iterator item;
+		for(item=parsedata.manifest.begin();
+			item!=parsedata.manifest.end();
+			item++)
+			href.push_back(new std::string((*item)->href));
+	}
+			
 	vector<std::string*>::iterator it;
-	for(it=parsedata.manifest.begin();it!=parsedata.manifest.end();it++)
+	for(it=href.begin();it!=href.end();it++)
 	{
 		size_t pos = (*it)->find_last_of('.');
 		if (pos < (*it)->length())
