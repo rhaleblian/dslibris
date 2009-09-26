@@ -36,3 +36,10 @@ http://sourceforge.net/projects/ndslibris
 
 - ray haleblian
 
+rhaleblian = Ray Haleblian <rayh23@sourceforge.net>
+rayh23 = Ray Haleblian <ray23@sourceforge.net>
+sstangl = Sean Stangl <sstangl@sourceforge.net>
+ken_vh = Ken Van Hoeylandt <ken_vh@sourceforge.net>
+aerial = Aaron Lindsay <aerial@sourceforge.net>
+keishava = Keishava Arata <keishava@sourceforge.net>
+
