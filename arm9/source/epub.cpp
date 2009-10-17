@@ -47,7 +47,6 @@ void epub_rootfile_start(void *data, const char *el, const char **attr) {
 	if(ctx && *ctx == "manifest" && elem == "item") {
 		epub_item *item = new epub_item;
 		d->manifest.push_back(item);
-		Log("1.6\n");
 		for(int i=0;attr[i];i+=2) {
 			if(!stricmp(attr[i],"id"))
 				item->id = attr[i+1];
@@ -124,9 +123,9 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 			break;
 		}
 		len_total += len;
-		sprintf(msg,"progr: %d bytes.\n",len); Log(msg);
+		sprintf(msg,"progr: %d byte chunk\n",len); Log(msg);
 	} while (len);
-	sprintf(msg,"info : read %d bytes.\n",len_total); Log(msg);
+	sprintf(msg,"info : read %d bytes total\n",len_total); Log(msg);
 	XML_ParserFree(p);
 	delete filebuf;
 	return(rc);
@@ -192,6 +191,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 	vector<std::string*> href;
 	if(parsedata.spine.size()) {
 		// Use spine for reading order.
+		Log("progr: ordering by spine\n");
 		vector<epub_itemref*>::iterator itemref;
 		for(itemref=parsedata.spine.begin();
 			itemref!=parsedata.spine.end();
@@ -200,8 +200,10 @@ int epub(Book *book, std::string name, bool metadataonly)
 			for(item=parsedata.manifest.begin();
 				item!=parsedata.manifest.end();
 				item++) {
-				if((*item)->id == (*itemref)->idref)
-					href.push_back(new std::string((*item)->href));
+				if((*item)->id == (*itemref)->idref) {
+					std::string *h = new std::string((*item)->href);
+					href.push_back(h);
+				}
 			}
 		}
 	}
@@ -222,19 +224,16 @@ int epub(Book *book, std::string name, bool metadataonly)
 		if (pos < (*it)->length())
 		{
 			std::string ext = (*it)->substr(pos);
-			if(ext.find("htm") < ext.length())
+			std::string path = folder;
+			if(path.length()) path += "/";
+			path += (*it)->c_str();
+		    Log("info : content "); Log(path); Log("\n");
+			rc = unzLocateFile(uf,path.c_str(),0);
+			if(rc == UNZ_OK)
 			{
-				std::string path = folder;
-				if(path.length()) path += "/";
-				path += (*it)->c_str();
-			    Log("info : content "); Log(path); Log("\n");
-				rc = unzLocateFile(uf,path.c_str(),0);
-				if(rc == UNZ_OK)
-				{
-					rc = unzOpenCurrentFile(uf);
-					epub_parse_currentfile(uf, &parsedata);
-					rc = unzCloseCurrentFile(uf);
-				}
+				rc = unzOpenCurrentFile(uf);
+				epub_parse_currentfile(uf, &parsedata);
+				rc = unzCloseCurrentFile(uf);
 			}
 		}
 	}
