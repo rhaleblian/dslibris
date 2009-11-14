@@ -37,6 +37,7 @@ Page::~Page()
 
 u8 Page::SetBuffer(u8 *src, u16 len)
 {
+	//! Write to offscreen buffer. NYI
 	if(buf) delete buf;
 	buf = new u8[len];
 	strncpy((char*)buf, (char*)src, len);
@@ -54,6 +55,7 @@ void Page::Draw()
 
 void Page::Draw(Text *ts)
 {
+	//! Write directly to video memory, for both screens.
 	ts->SetScreen(ts->screenleft);
 	ts->ClearScreen();
 	ts->SetScreen(ts->screenright);
@@ -121,11 +123,8 @@ void Page::Draw(Text *ts)
 
 void Page::DrawNumber(Text *ts)
 {
-	//! Draw page number
+	//! Draw page number on current screen.
 	char msg[128];
-	// FIXME: Setting pixelsize destroys glyph caching. use FTC instead.
-//	u8 px = ts->GetPixelSize();
-//	ts->SetPixelSize(10);
 	
 	// Find out if the page is bookmarked or not
 	bool isBookmark = false;
@@ -170,11 +169,8 @@ void Page::DrawNumber(Text *ts)
 	else
 		location = ts->margin.left
 			+ (int)((float)region * (float)pagecurrent / (float)(pagecount-1));
-	//location = ts->display.width - stringwidth;
 
 	ts->SetScreen(ts->screenright);
 	ts->SetPen((u8)location,250);
 	ts->PrintString(msg);
-
-//	ts->SetPixelSize(px);
 }
