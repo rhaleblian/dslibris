@@ -31,8 +31,8 @@ class Page {
 
  public:
 	u8 *buf;       //! UTF-8 chars, allocated per-page at parse time, to exact length.
-	u16 length;    //! Length of buf.
-	u16 startchar; //! In a book-long char buffer, where would i begin? 
+	int length;    //! Length of buf.
+	int start;     //! In a book-long char buffer, where would i begin? 
 	int end;       //! Ditto, for end char.
 	Page(Book *b);
 	Page(Book *b, Text *t);

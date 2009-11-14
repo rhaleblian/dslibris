@@ -17,20 +17,25 @@ class Book {
 	std::string foldername;
 	std::string title;
 	std::string author;
-	int position; //! Index of current page.
-    std::list<u16> bookmarks;
+	int position;
+	std::list<u16> bookmarks;
 	std::vector<class Page*> pages;
 public:
 	Book();
 	~Book();
 	format_t format;
-    std::list<u16>* GetBookmarks(void);
+	std::list<u16>* GetBookmarks(void);
+	int  GetNextBookmark(void);
+	int  GetPreviousBookmark(void);
+	int  GetNextBookmarkedPage(void);
+	int  GetPreviousBookmarkedPage(void);
 	const char* GetFileName(void);
 	const char* GetFolderName(void);
 	Page* GetPage();
 	Page* GetPage(int i);
 	u16  GetPageCount();
 	int  GetPosition(void);
+	int  GetPosition(int offset);
 	const char* GetTitle();
 	void SetFileName(const char *filename);
 	void SetFolderName(const char *foldername);	

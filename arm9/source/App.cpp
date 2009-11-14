@@ -84,7 +84,7 @@ int App::Run(void)
 	if(!fatInitDefault())
 	{
 		iprintf("fatal: no filesystem.\n");
-		iprintf("DLDI patch?\n");
+		iprintf("info : DLDI patch?\n");
 		while(true) swiWaitForVBlank();
 	} else iprintf("progr: filesystem mounted.\n");
 
@@ -105,7 +105,7 @@ int App::Run(void)
 	} else
 		Log("progr: read prefs, bookdir is '%s'.\n",bookdir.c_str());
 
-    // Start up typesetter.
+	// Start up typesetter.
 
    	int err = ts->Init();
 	switch(err)
@@ -399,6 +399,8 @@ void App::Log(const char *format, const char *msg)
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,format,msg);
 	fclose(logfile);
+
+	//fprintf(stderr, "%s\n", msg);
 }
 
 void App::InitScreens() {

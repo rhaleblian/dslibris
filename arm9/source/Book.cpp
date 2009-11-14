@@ -53,6 +53,32 @@ std::list<u16>* Book::GetBookmarks()
 {
     return &bookmarks;
 }
+
+int Book::GetNextBookmark()
+{
+  return -1337;
+}
+
+int Book::GetPreviousBookmark()
+{
+  return -1337;
+}
+
+int GotoNextBookmarkedPage()
+{
+  return -1337;
+}
+
+int GotoPreviousBookmarkedPage()
+{
+  return -1337;
+}
+
+int Book::GetPosition(int offset)
+{
+  //! For the character offset, get the page.
+  return -1337;
+}
 	
 Page* Book::GetPage()
 {

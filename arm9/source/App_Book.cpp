@@ -104,7 +104,7 @@ void App::HandleEventInBook()
 
 	else if (keys & KEY_SELECT)
 	{
-		// Toggle Bookmark
+		// Toggle bookmark.
 		std::list<u16>* bookmarks = bookcurrent->GetBookmarks();
 	
 		bool found = false;
@@ -127,7 +127,7 @@ void App::HandleEventInBook()
 	}
 	else if (keys & (key.right | key.left))
 	{
-		// Bookmark Navigation
+		// Navigate bookmarks.
 		std::list<u16>* bookmarks = bookcurrent->GetBookmarks();
 	
 		if (!bookmarks->empty())

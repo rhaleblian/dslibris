@@ -27,7 +27,7 @@ Page::Page(Book *b)
 	book = b;
 	buf = NULL;
 	length = 0;
-	startchar = 0;
+	start = 0;
 }
 
 Page::~Page()
@@ -123,7 +123,7 @@ void Page::DrawNumber(Text *ts)
 {
 	//! Draw page number
 	char msg[128];
-	// FIXME Setting pixelsize destroys glyph caching. use FTC instead.
+	// FIXME: Setting pixelsize destroys glyph caching. use FTC instead.
 //	u8 px = ts->GetPixelSize();
 //	ts->SetPixelSize(10);
 	

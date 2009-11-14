@@ -222,7 +222,7 @@ void prefs_start_hndl(	void *data,
 		for (i = 0; attr[i]; i+=2) {
 			if (!strcmp(attr[i], "page"))
 				position = atoi(attr[i+1]);
-        }
+		}
 		
 		if (p->book)
 		{
@@ -515,7 +515,10 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				// put chars into current page.
 				Page *page = p->book->AppendPage();
 				page->SetBuffer(p->buf, p->buflen);
-										
+				page->start = p->pos;
+				p->pos += p->buflen;
+				page->end = p->pos;
+
 				// make a new page.
 				p->buflen = 0;
 				if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;

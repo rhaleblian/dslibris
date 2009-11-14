@@ -47,25 +47,5 @@
 #define FONTBROWSERFILEPATH "/font/LiberationSans-Regular.ttf"
 #define FONTSPLASHFILEPATH "/font/LiberationSans-Regular.ttf"
 #define LOGFILEPATH "dslibris.log"
-#if 0
-/** watch out for struct alignment here? **/
-typedef struct book_s {
-	char *filename;
-	char *title;
-	char *author;
-	s16 position;
-} book_t;
 
-typedef struct page_s {
-	u16 length;
-	u8 *buf;   /** allocated per-page at parse time, to exact length. **/
-} page_t;
-
-typedef struct {
-	char filename[32];
-	u16 position;
-} prefsdata_t;
-
-void page_init(page_t *page);
-#endif
 #endif
