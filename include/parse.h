@@ -5,6 +5,9 @@
 #include "main.h"
 #include "Book.h"
 
+//! Symbols for known XHTML tags.
+
+//! Not all tags here necessary affect rendering.
 typedef enum {
 	TAG_ANCHOR,
 	TAG_BR,TAG_BODY,
@@ -19,7 +22,10 @@ typedef enum {
 	TAG_UL,TAG_UNKNOWN
 } context_t;
 
-//! Parse state data structure, passed to all expat callbacks via (void*)data.
+//! Expat parsing state.
+
+//! This data structure is made available
+//! to all expat callbacks via (void*)data.
 typedef struct {
 	context_t stack[16];
 	u8 stacksize;
@@ -37,6 +43,8 @@ typedef struct {
 	int status;
 	int totalbytes;
 } parsedata_t;
+
+//! Expat callbacks for parsing XHTML.
 
 void default_hndl(void *data, const char *s, int len);
 void start_hndl(void *data, const char *el, const char **attr);

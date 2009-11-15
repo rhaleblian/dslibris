@@ -37,6 +37,9 @@ App *app;
 
 int main(void)
 {
+	//! Main entry point.
+	//! Do some initialization, create an App, and enter its run loop.
+	
 	defaultExceptionHandler();
 	
 	// ARM7 initialization.
@@ -64,17 +67,6 @@ int main(void)
 	return app->Run();
 }
 
-u8 GetParserFace(parsedata_t *pdata)
-{
-	if (pdata->italic)
-		return TEXT_STYLE_ITALIC;
-	else if (pdata->bold)
-		return TEXT_STYLE_BOLD;
-	else
-		return TEXT_STYLE_NORMAL;
-}
-
-
 bool iswhitespace(u8 c)
 {
 	switch (c)
@@ -88,6 +80,33 @@ bool iswhitespace(u8 c)
 		return false;
 		break;
 	}
+}
+
+void parse_init(parsedata_t *data)
+{
+	data->stacksize = 0;
+	data->pos = 0;
+	data->book = NULL;
+	data->prefs = NULL;
+	data->screen = 0;
+	data->pen.x = 0;
+	data->pen.y = 0;
+	data->linebegan = false;
+	data->bold = false;
+	data->italic = false;
+	strcpy((char*)data->buf,"");
+	data->buflen = 0;
+	data->status = 0;
+}
+
+u8 GetParserFace(parsedata_t *pdata)
+{
+	if (pdata->italic)
+		return TEXT_STYLE_ITALIC;
+	else if (pdata->bold)
+		return TEXT_STYLE_BOLD;
+	else
+		return TEXT_STYLE_NORMAL;
 }
 
 void prefs_start_hndl(	void *data,
@@ -256,11 +275,11 @@ void prefs_end_hndl(void *data, const char *name)
 	if (!stricmp(name,"book")) p->book = NULL;
 }
 
+//! If called, uhoh.
 int unknown_hndl(void *encodingHandlerData,
                  const XML_Char *name,
                  XML_Encoding *info)
 {
-	//! If called, uhoh.
 	return(XML_STATUS_ERROR);
 }
 
@@ -384,6 +403,7 @@ void title_end_hndl(void *userdata, const char *el)
 	app->parse_pop(data);	
 }
 
+
 void start_hndl(void *data, const char *el, const char **attr)
 {
 	//! Expat callback, when starting an element.
@@ -428,7 +448,6 @@ void start_hndl(void *data, const char *el, const char **attr)
 	}
 	else app->parse_push(p,TAG_UNKNOWN);
 }  /* End of start_hndl */
-
 
 void char_hndl(void *data, const XML_Char *txt, int txtlen)
 {
@@ -680,20 +699,3 @@ void end_hndl(void *data, const char *el)
 void proc_hndl(void *data, const char *target, const char *pidata)
 {
 }  /* End proc_hndl */
-
-void parse_init(parsedata_t *data)
-{
-	data->stacksize = 0;
-	data->pos = 0;
-	data->book = NULL;
-	data->prefs = NULL;
-	data->screen = 0;
-	data->pen.x = 0;
-	data->pen.y = 0;
-	data->linebegan = false;
-	data->bold = false;
-	data->italic = false;
-	strcpy((char*)data->buf,"");
-	data->buflen = 0;
-	data->status = 0;
-}

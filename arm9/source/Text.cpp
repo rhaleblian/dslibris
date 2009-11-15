@@ -59,7 +59,7 @@ Text::Text()
 Text::~Text()
 {
 	ClearCache();
-		   
+	
 	for(map<FT_Face, Cache*>::iterator iter = textCache.begin();
 		iter != textCache.end(); iter++) {
 		delete iter->second;
