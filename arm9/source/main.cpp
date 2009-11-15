@@ -699,3 +699,14 @@ void end_hndl(void *data, const char *el)
 void proc_hndl(void *data, const char *target, const char *pidata)
 {
 }  /* End proc_hndl */
+
+int getSize(uint8 *source, uint16 *dest, uint32 arg) {
+       return *(uint32*)source;
+}
+
+uint8 readByte(uint8 *source) { return *source; }
+
+void drawstack(u16 *screen) {
+       TDecompressionStream decomp = {getSize, NULL, readByte};
+       swiDecompressLZSSVram((void*)splashBitmap, screen, 0, &decomp);
+}

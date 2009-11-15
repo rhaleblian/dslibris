@@ -23,6 +23,8 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <nds.h>
+#include "splash.h"
 
 #define MARGINLEFT 12
 #define MARGINRIGHT 12
@@ -47,5 +49,10 @@
 #define FONTBROWSERFILEPATH "/font/LiberationSans-Regular.ttf"
 #define FONTSPLASHFILEPATH "/font/LiberationSans-Regular.ttf"
 #define LOGFILEPATH "dslibris.log"
+
+//! For drawing splash screen.
+int getSize(uint8 *source, uint16 *dest, uint32 arg);
+uint8 readByte(uint8 *source);
+void drawstack(u16 *screen);
 
 #endif
