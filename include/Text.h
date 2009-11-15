@@ -39,11 +39,19 @@ typedef struct TextCache_ {
 	FTC_SBitCache sbit;
 } TextCache;
 
+
+//! Homemade glyph cache.
+
+//! Fetches from FreeType can be expensive,
+//! so keep advance and gylphs handy,
+//! keyed by UCS codepoint.
+
 class Cache {
 public:
-	// associates each glyph cache index (value)
-	// with its Unicode code point (key).
+	//! Associates each glyph cache index (value)
+	//! with its Unicode code point (key).
 	map<u16, FT_GlyphSlot> cacheMap;
+	//! ??
 	u16 cachenext;
 	
 	Cache() {
@@ -69,8 +77,11 @@ class Face {
 	}
 };
 
-// Maps a style ID to a face.
-// Multiple styles might use the same face.
+
+//! A map of a style ID to a Face.
+
+//! Multiple styles might use the same Face.
+
 class Style {
 	u8 id;
 	Face *face;
@@ -113,16 +124,22 @@ class Text {
 	map<u8, string> filenames;
 //	vector<Face> faces;
 //	map<u8, Face*> styles;
+	//! Current style, as TEXT_FONT_STYLE.
 	int style;
-
+	
+	//! Current draw position (in pixels?).
 	FT_Vector pen;
 	//! Draw white text on black?
 	bool invert;
 	//! We wish this worked.
 	bool justify;
-	u32 codeprev; // last printed char code
-	bool hit; // was the last glyph lookup a cache hit?
-	bool initialized; // Init() has run?
+	
+	//! Last printed char code.
+	u32 codeprev;
+	//! Was the last glyph lookup a cache hit?
+	bool hit;
+	//! Has Init() run?
+	bool initialized;
 	
 	int CacheGlyph(u32 ucs);
 	int CacheGlyph(u32 ucs, u8 style);

@@ -25,7 +25,7 @@ DOXYFILE_ENCODING      = UTF-8
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = 
+PROJECT_NAME           = dslibris
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
@@ -273,12 +273,12 @@ EXTRACT_ALL            = NO
 # If the EXTRACT_PRIVATE tag is set to YES all private members of a class 
 # will be included in the documentation.
 
-EXTRACT_PRIVATE        = NO
+EXTRACT_PRIVATE        = YES
 
 # If the EXTRACT_STATIC tag is set to YES all static members of a file 
 # will be included in the documentation.
 
-EXTRACT_STATIC         = NO
+EXTRACT_STATIC         = YES
 
 # If the EXTRACT_LOCAL_CLASSES tag is set to YES classes (and structs) 
 # defined locally in source files will be included in the documentation. 
@@ -536,13 +536,13 @@ FILE_PATTERNS          =
 # should be searched for input files as well. Possible values are YES and NO. 
 # If left blank NO is used.
 
-RECURSIVE              = NO
+RECURSIVE              = YES
 
 # The EXCLUDE tag can be used to specify files and/or directories that should 
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = include/B*
+EXCLUDE                = include/DSGUI include/tidy
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 
@@ -626,7 +626,7 @@ FILTER_SOURCE_FILES    = NO
 # Note: To get rid of all source code in the generated output, make sure also 
 # VERBATIM_HEADERS is set to NO.
 
-SOURCE_BROWSER         = NO
+SOURCE_BROWSER         = YES
 
 # Setting the INLINE_SOURCES tag to YES will include the body 
 # of functions and classes directly in the documentation.
@@ -994,7 +994,7 @@ MAN_LINKS              = NO
 # generate an XML file that captures the structure of 
 # the code including all documentation.
 
-GENERATE_XML           = NO
+GENERATE_XML           = YES
 
 # The XML_OUTPUT tag is used to specify where the XML pages will be put. 
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be 

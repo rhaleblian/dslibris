@@ -85,6 +85,8 @@ TextFaceRequester(    FTC_FaceID   face_id,
 }
 
 int Text::InitWithCacheManager(void) {
+	//! Use FreeType's cache manager. borken!
+	
 	int error = FT_Init_FreeType(&library);
 	if(error) return error;
 
@@ -109,6 +111,8 @@ int Text::InitWithCacheManager(void) {
 }
 
 int Text::InitDefault(void) {
+	//! Use our own cheesey glyph cache.
+	
 	if (FT_Init_FreeType(&library))
 		return 1;
 	
@@ -176,14 +180,17 @@ int Text::CacheGlyph(u32 ucs, u8 style)
 
 int Text::CacheGlyph(u32 ucs, FT_Face face)
 {
-	// Cache glyph at ucs if there's space.
-	// Does not check if this is a duplicate entry.
+	//! Cache glyph at ucs if there's space.
+
+	//! Does not check if this is a duplicate entry;
+	//! The caller should have checked first.
 
 	if(textCache[face]->cacheMap.size() == CACHESIZE) return -1;
 
 	FT_Load_Char(face, ucs,
 		FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
 	FT_GlyphSlot src = face->glyph;
+	// TODO - why?
 	//FT_GlyphSlot dst = &textCache[face]->glyphs[textCache[face]->cachenext];
 	FT_GlyphSlot dst = new FT_GlyphSlotRec;
 	int x = src->bitmap.rows;
@@ -204,6 +211,10 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 
 FT_UInt Text::GetGlyphIndex(u32 ucs)
 {
+	//! Given a UCS codepoint, return where it is in the charmap.
+	
+	//! Only has effect when FT cache mode is enabled,
+	//! and FT cache mode is borken.
 	if(!ftc) return ucs;
 	return FTC_CMapCache_Lookup(cache.cmap,(FTC_FaceID)&face_id,
 		charmap_index,ucs);
@@ -211,6 +222,9 @@ FT_UInt Text::GetGlyphIndex(u32 ucs)
 
 int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit)
 {
+	//! Given a UCS code, fills sbit with a bitmap.
+	
+	//! Returns nonzero on error.
 	imagetype.flags = FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL;
 	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
 		GetGlyphIndex(ucs),sbit,NULL);
@@ -307,6 +321,7 @@ u8 Text::GetStringWidth(const char *txt, u8 style)
 
 u8 Text::GetStringWidth(const char *txt, FT_Face face)
 {
+	//! Return total advance in pixels.
 	u8 width = 0;
 	const char *c;
 	for(c = txt; c != NULL; c++)
@@ -320,10 +335,10 @@ u8 Text::GetStringWidth(const char *txt, FT_Face face)
 
 
 u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
-	// given a UTF-8 encoding, fill in the Unicode/UCS code point.
-	// returns the bytelength of the encoding, for advancing
-	// to the next character.
-	// returns 0 if encoding could not be translated.
+	//! Given a UTF-8 encoding, fill in the Unicode/UCS code point.
+	//! Return the bytelength of the encoding, for advancing
+	//! to the next character; 0 if encoding could not be translated.
+	
 	// TODO - handle 4 byte encodings.
 
 	if (utf8[0] < 0x80) { // ASCII
@@ -423,6 +438,9 @@ u8 Text::GetAdvance(u32 ucs, u8 style) {
 }
 
 u8 Text::GetAdvance(u32 ucs, FT_Face face) {
+	//! Return glyph advance in pixels.
+	//! All other flavours of GetAdvance() call this one.
+	
 	if(!ftc)
 		// Caches this glyph if possible.
 		return GetGlyph(ucs, FT_LOAD_DEFAULT, face)->advance.x >> 6;
@@ -568,6 +586,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 }
 
 bool Text::PrintNewLine(void) {
+	//! Render a newline at the current position.
 	pen.x = margin.left;
 	int height = GetHeight();
 	int y = pen.y + height + linespacing;
@@ -589,15 +608,17 @@ bool Text::PrintNewLine(void) {
 }
 
 void Text::PrintString(const char *s) {
+	//! Render a character string starting at the pen position.
 	PrintString(s, TEXT_STYLE_BROWSER);
 }
 
 void Text::PrintString(const char *s, u8 style) {
+	//! Render a character string starting at the pen position.
 	PrintString(s, GetFace(style));
 }
 
 void Text::PrintString(const char *s, FT_Face face) {
-	// draw a character string starting at the pen position.
+	//! Render a character string starting at the pen position.
 	u32 clast = 0;
 	u8 i=0;
 	while(i<strlen((char*)s)) {
@@ -614,6 +635,7 @@ void Text::PrintString(const char *s, FT_Face face) {
 }
 
 void Text::PrintStats() {
+	//! Tell log how well we're caching.
 	char msg[128];
 	sprintf(msg, "info: %d cache hits.\n", stats_hits);
 	app->Log(msg);
@@ -623,6 +645,7 @@ void Text::PrintStats() {
 
 void Text::PrintStatusMessage(const char *msg)
 {
+	//! Render a one-liner message on the left screen.
 	u16 x,y;
 	GetPen(&x,&y);
 	u16 *s = screen;

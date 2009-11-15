@@ -9,16 +9,18 @@
 
 typedef enum {FORMAT_UNDEF, FORMAT_XHTML, FORMAT_EPUB} format_t;
 
-//! Encapsulates metadata for a single book.
-//! App maintains n of these to represent the available library.
+//! Encapsulates metadata and Page vector for a single book.
+
+//! Bookmarks are in here too.
+//! App maintains a vector of Book to represent the available library.
 
 class Book {
 	std::string filename;
 	std::string foldername;
 	std::string title;
 	std::string author;
-	int position;
-	std::list<u16> bookmarks;
+	int position;  //! as page index.
+	std::list<u16> bookmarks;  //! as page indices.
 	std::vector<class Page*> pages;
 public:
 	Book();

@@ -56,22 +56,28 @@ std::list<u16>* Book::GetBookmarks()
 
 int Book::GetNextBookmark()
 {
-  return -1337;
-}
-
-int Book::GetPreviousBookmark()
-{
-  return -1337;
+	//! nyi
+	return -1337;
 }
 
 int GotoNextBookmarkedPage()
 {
-  return -1337;
+	//! nyi
+	return -1337;
+
+}
+
+int Book::GetPreviousBookmark()
+{
+	//! Return previous page index,
+	//! relative to current one.
+	//! nyi
+	return -1337;
 }
 
 int GotoPreviousBookmarkedPage()
 {
-  return -1337;
+	return -1337;
 }
 
 int Book::GetPosition(int offset)
@@ -239,7 +245,7 @@ u8 Book::Parse(bool fulltext)
 			break;
 		}
 		if (parsedata.status) break; // non-fulltext parsing signals it is done.
-		if (bytes_read == 0) break;
+		if (bytes_read == 0) break; // assume our buffer ran out.
 	}
 
 	XML_ParserFree(p);

@@ -251,6 +251,7 @@ void prefs_start_hndl(	void *data,
 
 void prefs_end_hndl(void *data, const char *name)
 {
+	//! Exit element callback for the prefs file.
 	parsedata_t *p = (parsedata_t*)data;
 	if (!stricmp(name,"book")) p->book = NULL;
 }
@@ -259,11 +260,13 @@ int unknown_hndl(void *encodingHandlerData,
                  const XML_Char *name,
                  XML_Encoding *info)
 {
+	//! If called, uhoh.
 	return(XML_STATUS_ERROR);
 }
 
 void default_hndl(void *data, const XML_Char *s, int len)
 {
+	//! Fallback callback.
 #ifdef DEBUG
 	char msg[256];
 	strncpy(msg,(const char*)s, len > 255 ? 255 : len);
@@ -338,6 +341,9 @@ static char title[32];
 
 void title_start_hndl(void *userdata, const char *el, const char **attr)
 {
+	//! Expat callback, when entering an element.
+	//! For finding book title only.
+
 	if(!stricmp(el,"title"))
 	{
 		app->parse_push((parsedata_t *)userdata,TAG_TITLE);
@@ -347,6 +353,8 @@ void title_start_hndl(void *userdata, const char *el, const char **attr)
 
 void title_char_hndl(void *userdata, const char *txt, int txtlen)
 {
+	//! Expat callback, when in char data for element.
+	//! For finding book title only.
 	if(strlen(title) > 27) return;
 	if (!app->parse_in((parsedata_t*)userdata,TAG_TITLE)) return;
 
@@ -368,6 +376,8 @@ void title_char_hndl(void *userdata, const char *txt, int txtlen)
 
 void title_end_hndl(void *userdata, const char *el)
 {
+	//! Expat callback, when exiting an element.
+	//! For finding book title only.
 	parsedata_t *data = (parsedata_t*)userdata;
 	if(!stricmp(el,"title")) data->book->SetTitle(title);
 	if(!stricmp(el,"head")) data->status = 1; // done.
@@ -376,6 +386,7 @@ void title_end_hndl(void *userdata, const char *el)
 
 void start_hndl(void *data, const char *el, const char **attr)
 {
+	//! Expat callback, when starting an element.
 	parsedata_t *p = (parsedata_t*)data;
 	if (!stricmp(el,"html")) app->parse_push(p,TAG_HTML);
 	else if (!stricmp(el,"body")) app->parse_push(p,TAG_BODY);
@@ -421,7 +432,7 @@ void start_hndl(void *data, const char *el, const char **attr)
 
 void char_hndl(void *data, const XML_Char *txt, int txtlen)
 {
-	/** reflow text on the fly, into page data structure. **/
+	//! reflow text on the fly, into page data structure.
 
 	parsedata_t *p = (parsedata_t *)data;
 	if (app->parse_in(p,TAG_TITLE)) return;
