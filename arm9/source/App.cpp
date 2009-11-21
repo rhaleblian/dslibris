@@ -149,7 +149,10 @@ int App::Run(void)
 		sprintf(msg,"info : file: %s\n", filename);
 		Log(msg);
 		char *c;
-		for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
+		// FIXME use std::string method
+		for (c=filename+strlen(filename)-1;
+		     c!=filename && *c!='.';
+		     c--);
 		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
 		{
 			Book *book = new Book();
