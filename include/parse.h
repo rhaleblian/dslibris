@@ -2,8 +2,9 @@
 #define _parse_h
 
 #include <expat.h>
-#include "main.h"
 #include "Book.h"
+
+#define PAGEBUFSIZE 2048
 
 //! Symbols for known XHTML tags.
 
@@ -27,7 +28,7 @@ typedef enum {
 //! This data structure is made available
 //! to all expat callbacks via (void*)data.
 typedef struct {
-	context_t stack[16];
+	context_t stack[32];
 	u8 stacksize;
 	Book *book;
 	class Prefs *prefs;

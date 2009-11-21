@@ -23,7 +23,8 @@ DATA		:=	../data
 #-----------------------------------------------------------------------
 # options for code generation
 #-----------------------------------------------------------------------
-ARCH	:=	-mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s 
+#ARCH	:=	-mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s 
+ARCH	:=	-mthumb -mthumb-interwork -mcpu=arm9tdmi -mtune=arm9tdmi 
 
 CFLAGS	:=	-Wall -fomit-frame-pointer \
 		-ffast-math $(ARCH) $(INCLUDE) -DARM9

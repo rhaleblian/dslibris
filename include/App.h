@@ -50,7 +50,7 @@ make
 
 dslibris.nds should show up in your current directory.
  
-Note the libraries in 'external' are required prebuilts for arm-eabi; make sure you don't have conflicting libs in your path.
+Note the libraries in 'lib' are required prebuilts for arm-eabi; make sure you don't have conflicting libs in your path.
 
 \section Installation
 
@@ -88,7 +88,7 @@ http://sourceforge.net/projects/ndslibris
 #include <vector>
 #include <list>
 
-#define APP_BROWSER_BUTTON_COUNT 6
+#define APP_BROWSER_BUTTON_COUNT 7
 #define APP_LOGFILE "dslibris.log"
 #define APP_MODE_BOOK 0
 #define APP_MODE_BROWSER 1

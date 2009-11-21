@@ -480,4 +480,3 @@ void App::PrintStatus(const char *msg) {
 	ts->SetScreen(screen);
 	ts->SetInvert(invert);
 }
-

@@ -23,13 +23,12 @@ INCLUDES	:=	../include build
 #-----------------------------------------------------------------------
 # options for code generation
 #-----------------------------------------------------------------------
-ARCH	:=	-mthumb -mthumb-interwork
-
+ARCH	:=	-mthumb -mthumb-interwork \
+		-mcpu=arm7tdmi -mtune=arm7tdmi
+		
 CFLAGS	:=	-O2 -Wformat=2 -Wall -Winline \
-		-mcpu=arm7tdmi -mtune=arm7tdmi \
 		-fomit-frame-pointer -ffast-math \
 		$(ARCH) $(INCLUDE) -DARM7 -DWIFI
-
 ifeq ($(debug),1)
 CFLAGS += -g
 endif

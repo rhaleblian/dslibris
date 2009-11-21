@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include "main.h"
 #include "parse.h"
 #include "expat.h"
 #include "zlib.h"
@@ -66,7 +67,8 @@ void epub_rootfile_start(void *data, const char *el, const char **attr) {
 	std::string elem = el;
 	std::string *ctx = d->ctx.back();
 
-	if(ctx && *ctx == "manifest" && elem == "item") {
+	if(ctx && (*ctx == "manifest" || *ctx == "opf:manifest")
+	&& (elem == "item" || elem == "opf:item") ) {
 		epub_item *item = new epub_item;
 		d->manifest.push_back(item);
 		for(int i=0;attr[i];i+=2) {
@@ -77,7 +79,9 @@ void epub_rootfile_start(void *data, const char *el, const char **attr) {
 		}
 	}
 
-	if(ctx && *ctx == "spine" && elem == "itemref")
+	if(ctx && 
+		(*ctx == "spine" || *ctx == "opf:spine")
+		&& (elem == "itemref" || elem == "opf:itemref") )
 	{
 		epub_itemref *itemref = new epub_itemref;
 		d->spine.push_back(itemref);
@@ -233,15 +237,16 @@ int epub(Book *book, std::string name, bool metadataonly)
 		}
 	}
 	else {
+		Log("progr: ordering by manifest\n");
 		vector<epub_item*>::iterator item;
 		for(item=parsedata.manifest.begin();
 			item!=parsedata.manifest.end();
 			item++)
 			href.push_back(new std::string((*item)->href));
 	}
-
+	
 	Log("progr: catenating sections\n");
-			
+	
 	vector<std::string*>::iterator it;
 	for(it=href.begin();it!=href.end();it++)
 	{
@@ -252,7 +257,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 			std::string path = folder;
 			if(path.length()) path += "/";
 			path += (*it)->c_str();
-		    Log("info : content "); Log(path); Log("\n");
+			Log("info : content "); Log(path); Log("\n");
 			rc = unzLocateFile(uf,path.c_str(),0);
 			if(rc == UNZ_OK)
 			{

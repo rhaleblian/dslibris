@@ -92,6 +92,9 @@ install-dldi: $(TARGET).$(MEDIATYPE).nds
 doc: Doxyfile
 	doxygen
 
+browse: doc
+	firefox doc/html/index.html
+
 # make an archive to release on Sourceforge
 dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	- mkdir dist

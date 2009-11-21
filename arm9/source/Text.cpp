@@ -220,7 +220,7 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 
 FT_UInt Text::GetGlyphIndex(u32 ucs)
 {
-	//! Given a UCS codepoint, return where it is in the charmap.
+	//! Given a UCS codepoint, return where it is in the charmap, by index.
 	
 	//! Only has effect when FT cache mode is enabled,
 	//! and FT cache mode is borken.
