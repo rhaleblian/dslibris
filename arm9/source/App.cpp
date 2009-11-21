@@ -399,8 +399,6 @@ void App::Log(const char *format, const char *msg)
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,format,msg);
 	fclose(logfile);
-
-	//fprintf(stderr, "%s\n", msg);
 }
 
 void App::InitScreens() {

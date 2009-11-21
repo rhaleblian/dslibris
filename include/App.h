@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2007-2009 Ray Haleblian
+ Copyright (C) 2007-2009 Ray Haleblian (ray23@sourceforge.net)
  
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -141,9 +141,9 @@ class App {
 	string bookdir;  //! Search here for XHTML.
 	vector<Book*> books;
 	u8 bookcount;
-	//! which book is currently selected in browser? -1=none.
+	//! which book is currently selected in browser?
 	Book* bookselected;
-	//! which book is currently being read? -1=none.
+	//! which book is currently being read?
 	Book* bookcurrent;
 	//! reopen book from last session on startup?
 	bool reopen;

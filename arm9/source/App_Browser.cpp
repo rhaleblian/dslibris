@@ -267,7 +267,6 @@ void App::AttemptBookOpen()
 {
 	if (!OpenBook()) {
 		mode = APP_MODE_BOOK;
-		reopen = true;
 	} else
 		browser_draw();
 }

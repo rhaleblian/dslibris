@@ -12,7 +12,7 @@ export TOPDIR		:=	$(CURDIR)
 
 export MEDIAROOT	:=	/media/SANDISK/
 export MEDIATYPE	:=	cyclods
-export EMULATOR		:=	desmume-cli
+export EMULATOR		:=	desmume
 
 #-------------------------------------------------------------------------------
 # path to tools - this can be deleted if you set the path in windows

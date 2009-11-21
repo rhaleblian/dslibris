@@ -31,6 +31,7 @@ void App::HandleEventInBook()
 
 	if (keys & (KEY_A|key.r|key.down))
 	{
+		// page forward.
 		if (pagecurrent < pagecount-1)
 		{
 			pagecurrent++;
@@ -41,6 +42,7 @@ void App::HandleEventInBook()
 
 	else if (keys & (KEY_B|key.l|key.up))
 	{
+		// page back.
 		if(pagecurrent > 0)
 		{
 			pagecurrent--;
@@ -53,12 +55,14 @@ void App::HandleEventInBook()
 
 	if (keys & KEY_X)
 	{
+		// toggle inverted text.
 		ts->SetInvert(!ts->GetInvert()); 	 
 		bookcurrent->GetPage()->Draw(ts);
 	}
 
 	else if (keys & KEY_Y)
 	{
+		// go to next level in brightness. 
 		CycleBrightness();
 		prefs->Write();
 	}
@@ -67,13 +71,13 @@ void App::HandleEventInBook()
 	{
 		// return to browser.
 		bookcurrent->Close();
+		bookcurrent = NULL;
 		if(mode == APP_MODE_BOOK)
 		{
 			if(orientation) lcdSwap();
 			mode = APP_MODE_BROWSER;
 		}
 		ts->PrintSplash(ts->screenleft);
-		reopen = false; // Resume in browser, not in book.		
 		prefs->Write();
 		browser_draw();
 	}

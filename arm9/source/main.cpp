@@ -2,7 +2,7 @@
 
 dslibris - an ebook reader for the Nintendo DS.
 
- Copyright (C) 2007-2008 Ray Haleblian
+ Copyright (C) 2007-2008 Ray Haleblian (ray23@sourceforge.net)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -286,6 +286,8 @@ int unknown_hndl(void *encodingHandlerData,
 void default_hndl(void *data, const XML_Char *s, int len)
 {
 	//! Fallback callback.
+	//return;
+	
 #ifdef DEBUG
 	char msg[256];
 	strncpy(msg,(const char*)s, len > 255 ? 255 : len);
