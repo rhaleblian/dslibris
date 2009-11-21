@@ -66,9 +66,10 @@ void epub_rootfile_start(void *data, const char *el, const char **attr) {
 	epub_data_t *d = (epub_data_t*)data;
 	std::string elem = el;
 	std::string *ctx = d->ctx.back();
-
-	if(ctx && (*ctx == "manifest" || *ctx == "opf:manifest")
-	&& (elem == "item" || elem == "opf:item") ) {
+	if (!ctx) return;
+	
+	if(	(*ctx == "manifest" || *ctx == "opf:manifest")
+	&& 	(elem == "item" || elem == "opf:item") ) {
 		epub_item *item = new epub_item;
 		d->manifest.push_back(item);
 		for(int i=0;attr[i];i+=2) {
@@ -79,9 +80,8 @@ void epub_rootfile_start(void *data, const char *el, const char **attr) {
 		}
 	}
 
-	if(ctx && 
-		(*ctx == "spine" || *ctx == "opf:spine")
-		&& (elem == "itemref" || elem == "opf:itemref") )
+	else if (	(*ctx == "spine" || *ctx == "opf:spine")
+	&& 	(elem == "itemref" || elem == "opf:itemref") )
 	{
 		epub_itemref *itemref = new epub_itemref;
 		d->spine.push_back(itemref);
@@ -91,6 +91,14 @@ void epub_rootfile_start(void *data, const char *el, const char **attr) {
 		}
 	}
 
+	else if ( elem == "dc:title" ) {
+		d->title.clear();
+	}
+	
+	else if ( elem == "dc:creator" ) {
+		d->creator.clear();
+	}
+	
 	d->ctx.push_back(new std::string(elem));
 }
 
@@ -102,13 +110,12 @@ void epub_rootfile_end(void *data, const char *el) {
 void epub_rootfile_char(void *data, const XML_Char *txt, int len) {
    	epub_data_t *d = (epub_data_t*)data;
 	std::string *ctx = d->ctx.back();
-
-	if(ctx && *ctx == "dc:title") {
-		d->title.clear();
+	if (!ctx) return;
+	
+	if ( *ctx == "dc:title" ) {
 		d->title.append((char*)txt,len);
 	}
-	else if(ctx && *ctx == "dc:creator") {
-		d->creator.clear();
+	else if ( *ctx == "dc:creator" ) {
 		d->creator.append((char*)txt,len);
 	}
 }

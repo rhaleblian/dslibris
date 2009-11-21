@@ -216,15 +216,6 @@ int App::Run(void)
 		books[i]->GetBookmarks()->sort();
 	}
 
-	vector<Book*>::iterator it;
-	for(it=books.begin(); it<books.end(); it++)
-	{
-		Log("info : title '%s'\n",(*it)->GetTitle());
-		sprintf(msg, "info : position %d\n",
-			(*it)->GetPosition());
-		Log(msg);
-	}
-	
 	// Set up preferences editing screen.
 	PrefsInit();
 	
