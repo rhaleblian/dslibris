@@ -197,8 +197,11 @@ int epub(Book *book, std::string name, bool metadataonly)
 	// Stop here if only metadata is required.
 	if(metadataonly) {
 		Log("progr: metadata only\n");
-		if(parsedata.title.length())
+		if(parsedata.title.length()) {
 			book->SetTitle(parsedata.title.c_str());
+			if(parsedata.creator.length())
+				book->SetAuthor(parsedata.creator);
+		}
 		unzClose(uf);
 		epub_data_delete(&parsedata);
 		return rc;

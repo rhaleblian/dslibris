@@ -26,6 +26,7 @@ public:
 	Book();
 	~Book();
 	format_t format;
+	inline std::string* GetAuthor() { return &author; }
 	std::list<u16>* GetBookmarks(void);
 	int  GetNextBookmark(void);
 	int  GetPreviousBookmark(void);
@@ -39,6 +40,7 @@ public:
 	int  GetPosition(void);
 	int  GetPosition(int offset);
 	const char* GetTitle();
+	void SetAuthor(std::string &s);
 	void SetFileName(const char *filename);
 	void SetFolderName(const char *foldername);	
 	void SetFolderName(std::string &foldername);

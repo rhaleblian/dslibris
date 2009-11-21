@@ -16,6 +16,8 @@ class Button {
 	coord_t origin;
 	coord_t extent;
 	std::string text;
+	//! intended for the author name.
+	std::string text2;
 	Text *ts;
 
  public:
@@ -25,6 +27,8 @@ class Button {
 	void Init(Text *typesetter);
 	void Label(const char *text);
 	void SetLabel(std::string &s);
+	//! label on next line, used for author in the library screen.
+	void SetLabel2(std::string s);
 	void Draw(u16 *fb, bool highlight);
 	void Move(u16 x, u16 y);
 	void Resize(u16 x, u16 y);

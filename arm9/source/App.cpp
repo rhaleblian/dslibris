@@ -148,6 +148,7 @@ int App::Run(void)
 	{
 		sprintf(msg,"info : file: %s\n", filename);
 		Log(msg);
+		if(*filename == '.') continue;
 		char *c;
 		// FIXME use std::string method
 		for (c=filename+strlen(filename)-1;

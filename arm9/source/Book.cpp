@@ -44,6 +44,12 @@ void Book::SetTitle(const char *name)
 	title = name;
 }
 
+void Book::SetAuthor(std::string &name)
+{
+	author.clear();
+	author = name;
+}
+
 void Book::SetFolderName(std::string &name)
 {
 	foldername = name;

@@ -157,6 +157,7 @@ void App::browser_init(void)
 	u8 i;
 	for (i=0;i<bookcount;i++)
 	{
+		Book *book = books[i];
 		buttons.push_back(new Button());
 		buttons[i]->Init(ts);
 		buttons[i]->Move(0,(i%APP_BROWSER_BUTTON_COUNT)*32);
@@ -164,6 +165,8 @@ void App::browser_init(void)
 			buttons[i]->Label(books[i]->GetTitle());
 		else
 			buttons[i]->Label(books[i]->GetFileName());
+		if (book->GetAuthor())
+			buttons[i]->SetLabel2(*(book->GetAuthor()));
 	}
 	buttonprev.Init(ts);
 	buttonprev.Move(2,240);

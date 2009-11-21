@@ -34,6 +34,7 @@ void Button::Init(Text *typesetter) {
 	extent.x = 192;
 	extent.y = 32;
 	text = "";
+	text2 = "";
 }
 
 void Button::Label(const char *s) {
@@ -43,6 +44,10 @@ void Button::Label(const char *s) {
 
 void Button::SetLabel(std::string &s) {
 	text = s;
+}
+
+void Button::SetLabel2(std::string s) {
+	text2 = s;
 }
 
 void Button::Move(u16 x, u16 y) {
@@ -88,13 +93,21 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->SetScreen(fb);
 	ts->SetInvert(false);
 	ts->GetPen(&x,&y);
+
 	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
+	// FIXME request a string fitting into the bounding box instead.
 	if(text.length() > 30)
 		ts->PrintString((const char*)text.substr(0,30).append("...").c_str(),
 			TEXT_STYLE_BROWSER);	
 	else
 		ts->PrintString((const char*)text.c_str(), TEXT_STYLE_BROWSER);
+
+	if (text2.length()) {
+		ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
+		ts->PrintString((const char *)text2.c_str(), TEXT_STYLE_BROWSER);
+	}
+
 	ts->usebgcolor = false;
 	ts->SetPen(x,y);
 	ts->SetInvert(invert);
