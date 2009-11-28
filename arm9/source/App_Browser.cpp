@@ -181,8 +181,13 @@ void App::browser_init(void)
 	buttonprefs.Resize(60,16);
 	buttonprefs.Label("prefs");
 
+	if (!bookselected) {
+		browserstart = 0;
+		bookselected = books[0];
+	} else {
 	browserstart = (GetBookIndex(bookselected) / APP_BROWSER_BUTTON_COUNT)
 		* APP_BROWSER_BUTTON_COUNT;
+	}
 }
 
 void App::browser_nextpage()
@@ -225,7 +230,7 @@ void App::browser_draw(void)
 	
 	if(browserstart >= APP_BROWSER_BUTTON_COUNT)
 		buttonprev.Draw(ts->screenright,false);
-	if(bookcount >= browserstart+APP_BROWSER_BUTTON_COUNT)
+	if(bookcount > browserstart+APP_BROWSER_BUTTON_COUNT)
 		buttonnext.Draw(ts->screenright,false);
 
 	buttonprefs.Draw(ts->screenright,false);

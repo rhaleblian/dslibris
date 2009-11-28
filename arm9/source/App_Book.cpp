@@ -173,13 +173,14 @@ void App::HandleEventInBook()
 
 int App::GetBookIndex(Book *b)
 {
+	if (!b) return -1;
 	vector<Book*>::iterator it;
-	int i=-1;
-	for(i=0,it=books.begin(); it<books.end();it++,i++)
+	int i=0;
+	for(it=books.begin(); it<books.end();it++,i++)
 	{
 		if(*it == b) return i;
 	}
-	return i;
+	return -1;
 }
 
 u8 App::OpenBook(void)
