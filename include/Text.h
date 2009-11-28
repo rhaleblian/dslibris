@@ -126,7 +126,9 @@ class Text {
 //	map<u8, Face*> styles;
 	//! Current style, as TEXT_FONT_STYLE.
 	int style;
-	
+	//! Current face.
+	FT_Face face;
+
 	//! Current draw position (in pixels?).
 	FT_Vector pen;
 	//! Draw white text on black?
@@ -189,7 +191,8 @@ public:
 	u8   GetAdvance(u32 ucs);
 	u8   GetAdvance(u32 ucs, u8 style);
 	u8   GetCharCode(const char* txt, u32* code);
-	FT_Face GetFace(u8 style);
+	FT_Face GetFace() { return face; }
+	FT_Face GetFace(u8 style) { return faces[style]; }
 	string GetFontFile(u8 style);
 	bool GetFontName(std::string &s);
 	u8   GetHeight(void);
@@ -210,7 +213,7 @@ public:
 	bool SetFace(u8 style);
 	void SetFontFile(const char *filename, u8 style);
 	void SetScreen(u16 *s);
-	inline void SetStyle(int astyle) { style = astyle; }
+	inline void SetStyle(int astyle) { style = astyle; face = faces[style]; }
 	
 	void ClearCache();
 	void ClearCache(u8 style);

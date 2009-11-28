@@ -35,6 +35,7 @@ Text::Text()
 	bgcolor.b = 15;
 	usebgcolor = false;
 	codeprev = 0;
+	face = NULL;
 	filenames[TEXT_STYLE_NORMAL] = FONTFILEPATH;
 	filenames[TEXT_STYLE_BOLD] = FONTBOLDFILEPATH;
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILEPATH;
@@ -127,7 +128,6 @@ int Text::InitDefault(void) {
 	
 	map<u8, string>::iterator iter;   
 	for (iter = filenames.begin(); iter != filenames.end(); iter++) {
-		FT_Face face;
 		
 		if (FT_New_Face(library, iter->second.c_str(), 0, &face)) {
 			// Failed; attempt to use the NORMAL style
@@ -342,7 +342,6 @@ u8 Text::GetStringWidth(const char *txt, FT_Face face)
 	return width;
 }
 
-
 u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 	//! Given a UTF-8 encoding, fill in the Unicode/UCS code point.
 	//! Return the bytelength of the encoding, for advancing
@@ -439,11 +438,11 @@ void Text::SetScreen(u16 *inscreen)
 }
 
 u8 Text::GetAdvance(u32 ucs) {
-	return GetAdvance(ucs, TEXT_STYLE_NORMAL);
+	return GetAdvance(ucs, GetFace(style));
 }
 
-u8 Text::GetAdvance(u32 ucs, u8 style) {
-	return GetAdvance(ucs, GetFace(style));
+u8 Text::GetAdvance(u32 ucs, u8 astyle) {
+	return GetAdvance(ucs, GetFace(astyle));
 }
 
 u8 Text::GetAdvance(u32 ucs, FT_Face face) {
@@ -712,14 +711,20 @@ string Text::GetFontFile(u8 style)
 bool Text::SetFace(u8 astyle)
 {
 	style = astyle;
+	face = faces[style];
 	return true;
 }
 
+/*
 FT_Face Text::GetFace(u8 style)
 {
+	return face;
+
 	map<u8, FT_Face>::iterator iter = faces.find(style);
 	if (iter != faces.end())
 		return iter->second;
 	else
 		return faces[TEXT_STYLE_NORMAL];
 }
+*/
+

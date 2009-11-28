@@ -97,6 +97,7 @@ void parse_init(parsedata_t *data)
 	strcpy((char*)data->buf,"");
 	data->buflen = 0;
 	data->status = 0;
+	data->pagecount = 0;
 }
 
 u8 GetParserFace(parsedata_t *pdata)
@@ -181,7 +182,8 @@ void prefs_start_hndl(	void *data,
 	{
 		for (i = 0; attr[i]; i+=2) {
 			if (!strcmp(attr[i], "reopen"))
-				// For prefs where reopen was a string, reopen will get turned off.
+				// For prefs where reopen was a string,
+				// reopen will get turned off.
 				app->reopen = atoi(attr[i+1]);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
@@ -286,7 +288,6 @@ int unknown_hndl(void *encodingHandlerData,
 void default_hndl(void *data, const XML_Char *s, int len)
 {
 	//! Fallback callback.
-	//return;
 	
 #ifdef DEBUG
 	char msg[256];
@@ -296,6 +297,7 @@ void default_hndl(void *data, const XML_Char *s, int len)
 	app->Log("\n");
 #endif
 
+	int advancespace = app->ts->GetAdvance(' ');
 	parsedata_t *p = (parsedata_t*)data;
 	if (s[0] == '&')
 	{
@@ -317,7 +319,7 @@ void default_hndl(void *data, const XML_Char *s, int len)
 			}
 			// TODO - support 4-byte codes
 			
-			p->pen.x += app->ts->GetAdvance(code, GetParserFace(p));
+			p->pen.x += app->ts->GetAdvance(code);
 			return;
 		}
 
@@ -325,38 +327,35 @@ void default_hndl(void *data, const XML_Char *s, int len)
 		if (!strnicmp(s,"&nbsp;",5))
 		{
 			p->buf[p->buflen++] = ' ';
-			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			p->pen.x += advancespace;
 			return;
 		}
 		if (!stricmp(s,"&quot;"))
 		{
 			p->buf[p->buflen++] = '"';
-			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			p->pen.x += advancespace;
 			return;
 		}
 		if (!stricmp(s,"&amp;"))
 		{
 			p->buf[p->buflen++] = '&';
-			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			p->pen.x += advancespace;
 			return;
 		}
 		if (!stricmp(s,"&lt;"))
 		{
 			p->buf[p->buflen++] = '<';
-			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			p->pen.x += advancespace;
 			return;
 		}
 		if (!stricmp(s,"&lt;"))
 		{
 			p->buf[p->buflen++] = '>';
-			p->pen.x += app->ts->GetAdvance(' ', GetParserFace(p));
+			p->pen.x += advancespace;
 			return;
 		}
 	}
-	
-	// FIXME if we go more than an HTML entity passed in, we've lost he remainder!
-	
-}  /* End default_hndl */
+}
 
 static char title[32];
 
@@ -405,6 +404,7 @@ void title_end_hndl(void *userdata, const char *el)
 	app->parse_pop(data);	
 }
 
+// Expat callbacks for parsing full text follow. //
 
 void start_hndl(void *data, const char *el, const char **attr)
 {
@@ -449,23 +449,28 @@ void start_hndl(void *data, const char *el, const char **attr)
 		p->italic = true;
 	}
 	else app->parse_push(p,TAG_UNKNOWN);
-}  /* End of start_hndl */
+}
 
 void char_hndl(void *data, const XML_Char *txt, int txtlen)
 {
 	//! reflow text on the fly, into page data structure.
-
+	
 	parsedata_t *p = (parsedata_t *)data;
+	//if (p->pagecount > 3) return;
 	if (app->parse_in(p,TAG_TITLE)) return;
 	if (app->parse_in(p,TAG_SCRIPT)) return;
 	if (app->parse_in(p,TAG_STYLE)) return;
 
 	Text *ts = app->ts;
+	int lineheight = ts->GetHeight();
+	int linespacing = ts->linespacing;
+	int spaceadvance = ts->GetAdvance((u16)' ');
+
 	if (p->buflen == 0)
 	{
 		/** starting a new page. **/
 		p->pen.x = ts->margin.left;
-		p->pen.y = ts->margin.top + ts->GetHeight();
+		p->pen.y = ts->margin.top + lineheight;
 		p->linebegan = false;
 	}
 
@@ -487,17 +492,17 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				if(txt[i] == '\n')
 				{
 					p->pen.x = ts->margin.left;
-					p->pen.y += (ts->GetHeight() + ts->linespacing);
+					p->pen.y += (lineheight + linespacing);
 				}
 				else {
-					p->pen.x += ts->GetAdvance((u16)' ', GetParserFace(p));
+					p->pen.x += spaceadvance;
 				}
 			}
 			else if(p->linebegan && p->buflen
 				&& !iswhitespace(p->buf[p->buflen-1]))
 			{
 				p->buf[p->buflen++] = ' ';
-				p->pen.x += ts->GetAdvance((u16)' ', GetParserFace(p));	
+				p->pen.x += spaceadvance;				
 			}
 			i++;
 		}
@@ -510,17 +515,14 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 			{
 				/** set type until the end of the next word.
 				    account for UTF-8 characters when advancing. **/
-				u32 code;
-				if (txt[j] > 127)
+				u32 code = txt[j];
+				bytes = 1;
+				if (code >> 7) {
+					// FIXME the performance bottleneck					
 					bytes = ts->GetCharCode((char*)&(txt[j]),&code);
-				else
-				{
-					code = txt[j];
-					bytes = 1;
 				}
 
-				advance += ts->GetAdvance(code, GetParserFace(p));
-					
+				advance += ts->GetAdvance(code);
 				if(advance > ts->display.width - ts->margin.right - ts->margin.left)
 				{
 					// here's a line-long word, need to break it now.
@@ -534,7 +536,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 			// we overran the margin, insert a break.
 			p->buf[p->buflen++] = '\n';
 			p->pen.x = ts->margin.left;
-			p->pen.y += (ts->GetHeight() + ts->linespacing);
+			p->pen.y += (lineheight + linespacing);
 			p->linebegan = false;
 		}
 
@@ -550,6 +552,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				page->start = p->pos;
 				p->pos += p->buflen;
 				page->end = p->pos;
+				p->pagecount++;
 
 				// make a new page.
 				p->buflen = 0;
@@ -562,7 +565,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 				p->screen = 1;
 
 			p->pen.x = ts->margin.left;
-			p->pen.y = ts->margin.top + ts->GetHeight();
+			p->pen.y = ts->margin.top + lineheight;
 		}
 
 		/** append this word to the page.
@@ -629,7 +632,7 @@ void end_hndl(void *data, const char *el)
 				for(int i=0;i<app->paraindent;i++)
 				{
 					p->buf[p->buflen++] = ' ';
-					p->pen.x += ts->GetAdvance(' ', GetParserFace(p));
+					p->pen.x += ts->GetAdvance(' ');
 				}
 			}
 			else if(!strcmp(el,"h1")) {
@@ -696,11 +699,12 @@ void end_hndl(void *data, const char *el)
 	}
 
 	app->parse_pop(p);
-}  /* End of end_hndl */
+}
 
 void proc_hndl(void *data, const char *target, const char *pidata)
 {
-}  /* End proc_hndl */
+	app->Log("called proc_hndl().\n");
+}
 
 int getSize(uint8 *source, uint16 *dest, uint32 arg) {
        return *(uint32*)source;

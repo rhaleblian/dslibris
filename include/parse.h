@@ -43,6 +43,7 @@ typedef struct {
 	bool italic;
 	int status;
 	int totalbytes;
+	int pagecount;
 } parsedata_t;
 
 //! Expat callbacks for parsing XHTML.
