@@ -55,7 +55,7 @@ test: $(TARGET).nds
 
 #create a cflash image for use with desmume.
 image: media.img
-	dd if=/dev/zero of=media.img bs=1048576 count=32
+	dd if=/dev/zero of=media.img bs=1048576 count=64
 	/sbin/mkfs.vfat media.img
 		
 # debug target with insight and desmume under linux
