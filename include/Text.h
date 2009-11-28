@@ -5,13 +5,14 @@
 #include <map>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+//#include FT_ADVANCES_H
 #include FT_CACHE_H
 
 using namespace std;
 
 //! Reference: FreeType2 online documentation
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
-#define CACHESIZE 256
+#define CACHESIZE 512
 #define PIXELSIZE 12
 //! Reference: http://www.displaymate.com/psp_ds_shootout.htm
 #define DPI 110

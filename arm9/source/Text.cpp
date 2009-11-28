@@ -233,7 +233,7 @@ int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit)
 {
 	//! Given a UCS code, fills sbit with a bitmap.
 	
-	//! Returns nonzero on error.
+	//! Returns nonzero on error.Glyth
 	imagetype.flags = FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL;
 	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
 		GetGlyphIndex(ucs),sbit,NULL);
@@ -243,7 +243,7 @@ int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit)
 
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags)
 {
-	return GetGlyph(ucs, flags, TEXT_STYLE_NORMAL);
+	return GetGlyph(ucs, flags, face);
 }
 
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, u8 style)
@@ -448,12 +448,17 @@ u8 Text::GetAdvance(u32 ucs, u8 astyle) {
 u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 	//! Return glyph advance in pixels.
 	//! All other flavours of GetAdvance() call this one.
+
+//	FT_Fixed padvance;
+//	error = FT_Get_Advance(face, GetGlyphIndex(ucs), NULL, &padvance);
+//	return padvance >> 6;
 	
 	if(!ftc)
 		// Caches this glyph if possible.
 		return GetGlyph(ucs, FT_LOAD_DEFAULT, face)->advance.x >> 6;
 
 	imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;
+
 #if 0
 	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
 		GetGlyphIndex(ucs),&sbit,NULL);
