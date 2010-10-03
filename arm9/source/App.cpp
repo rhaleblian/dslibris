@@ -3,15 +3,13 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <algorithm>   // for std::sort
 #include <fat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
+#include <nds/bios.h>
 
 #include "ndsx_brightness.h"
 #include "types.h"
@@ -226,7 +224,6 @@ int App::Run(void)
 	Log("progr: browsers populated.\n");
 
 	// Bring up displays.
-	
 	console = false;
 	InitScreens();
 	if(orientation) lcdSwap();
@@ -272,17 +269,28 @@ int App::Run(void)
 	{
 		scanKeys();
 
-		if(mode == APP_MODE_BROWSER)
-			HandleEventInBrowser();
-		else if (mode == APP_MODE_BOOK)
-			HandleEventInBook();
-		else if (mode == APP_MODE_PREFS)
-			HandleEventInPrefs();
-		else if (mode == APP_MODE_PREFS_FONT 
-			|| mode == APP_MODE_PREFS_FONT_BOLD
-			|| mode == APP_MODE_PREFS_FONT_ITALIC)
-			HandleEventInFont();
+		key.downrepeat = keysDownRepeat();
 
+		if (key.downrepeat)
+		{
+			switch (mode){
+					case APP_MODE_BROWSER:
+						HandleEventInBrowser();
+						break;
+					case APP_MODE_BOOK:
+						HandleEventInBook();
+						//UpdateClock();
+						break;
+					case APP_MODE_PREFS:
+						HandleEventInPrefs();
+						break;
+					case APP_MODE_PREFS_FONT:
+					case APP_MODE_PREFS_FONT_BOLD:
+					case APP_MODE_PREFS_FONT_ITALIC:
+						HandleEventInFont();
+						break;
+			}
+		}
 		swiWaitForVBlank();
 	}
 
@@ -292,30 +300,27 @@ int App::Run(void)
 void App::SetBrightness(int b)
 {
 	if(b<0) brightness = 0;
-	else if(b>3) brightness = 3;
-	else brightness = b;
-	if(brightness == 1) NDSX_SetBrightness_1();
-	else if(brightness == 2) NDSX_SetBrightness_2();
-	else if(brightness == 3) NDSX_SetBrightness_3();
-	else if(brightness == 0) NDSX_SetBrightness_0();
+	brightness = b%4;
+	fifoSendValue32(BACKLIGHT_FIFO,brightness);
 }
 
 void App::CycleBrightness()
 {
-	brightness++;
-	brightness = brightness % 4;
-//	BGUI::get()->switchBacklight(true,true);
-//	BGUI::get()->setBacklightBrightness(brightness);
+	++brightness%=4;
 	SetBrightness(brightness);
 }
 
 void App::UpdateClock()
 {
+	if (mode != APP_MODE_BOOK)
+		return;
 	u16 *screen = ts->GetScreen();
+	time_t unixTime = time(NULL);
+	struct tm* timeStruct = gmtime((const time_t *)&unixTime);
 
 	char tmsg[8];
 	ts->SetScreen(ts->screenleft);
-	sprintf(tmsg, "%02d:%02d", IPC->time.rtc.hours, IPC->time.rtc.minutes);
+	sprintf(tmsg, "%02d:%02d",timeStruct->tm_hour,timeStruct->tm_min );
 	u8 offset = ts->margin.left;
 	ts->ClearRect(offset, 240, offset+30, 255);
 	ts->SetPen(offset,250);
@@ -326,13 +331,15 @@ void App::UpdateClock()
 
 void App::SetOrientation(bool flip)
 {
-   	u16 angle;
+	s16 s;
+	s16 c;
 	if(flip) {
-		angle = 128;
-		BG3_CX = 192 << 8;
-		BG3_CY = 0 << 8;
-		SUB_BG3_CX = 192 << 8;
-		SUB_BG3_CY = 0 << 8;
+		s = 1 << 8;
+		c = 0;
+		REG_BG3X = 192 << 8;
+		REG_BG3Y = 0 << 8;
+		REG_BG3X_SUB = 192 << 8;
+		REG_BG3Y_SUB = 0 << 8;
 		ts->screenleft = (u16*)BG_BMP_RAM_SUB(0);
 		ts->screenright = (u16*)BG_BMP_RAM(0);
 		orientation = true;
@@ -345,11 +352,12 @@ void App::SetOrientation(bool flip)
 	}
 	else
 	{
-		angle = 384;
-		BG3_CX = 0 << 8;
-		BG3_CY = 256 << 8;
-		SUB_BG3_CX = 0 << 8;
-		SUB_BG3_CY = 256 << 8;
+		s = -1 << 8;
+		c = 0;
+		REG_BG3X = 0 << 8;
+		REG_BG3Y = 256 << 8;
+		REG_BG3X_SUB = 0 << 8;
+		REG_BG3Y_SUB = 256 << 8;
 		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
 		ts->screenleft = (u16*)BG_BMP_RAM(0);
 		orientation = false;
@@ -360,17 +368,14 @@ void App::SetOrientation(bool flip)
 		key.l = KEY_L;
 		key.r = KEY_R;
 	}
-	
-	s16 s = SIN[angle & 0x1FF] >> 4;
-	s16 c = COS[angle & 0x1FF] >> 4;
-	BG3_XDX = c;
-	BG3_XDY = -s;
-	BG3_YDX = s;
-	BG3_YDY = c;
-	SUB_BG3_XDX = c;
-	SUB_BG3_XDY = -s;
-	SUB_BG3_YDX = s;
-	SUB_BG3_YDY = c;
+	REG_BG3PA = c;
+	REG_BG3PB = -s;
+	REG_BG3PC = s;
+	REG_BG3PD = c;
+	REG_BG3PA_SUB = c;
+	REG_BG3PB_SUB = -s;
+	REG_BG3PC_SUB = s;
+	REG_BG3PD_SUB = c;
 }
 
 void App::Log(const char *msg)
@@ -401,50 +406,17 @@ void App::InitScreens() {
 //	for(int b=0; b<brightness; b++)
 //		NDSX_SetBrightness_Next();
 
-	BACKGROUND.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-	videoSetMode(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	BACKGROUND_SUB.control[3] = BG_BMP16_256x256 | BG_BMP_BASE(0);
-	videoSetModeSub(MODE_5_2D | DISPLAY_BG3_ACTIVE);
-	vramSetBankC(VRAM_C_SUB_BG_0x06200000);
-	ts->SetScreen(ts->screenleft);
-	ts->ClearScreen();
+	videoSetMode(MODE_5_2D);
+	vramSetBankA(VRAM_A_MAIN_BG);
+	bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	videoSetModeSub(MODE_5_2D);
+	vramSetBankC(VRAM_C_SUB_BG);
+	bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
 	ts->SetScreen(ts->screenright);
 	ts->ClearScreen();
+	ts->SetScreen(ts->screenleft);
+	ts->ClearScreen();
 	SetOrientation(orientation);
-#if 0
-	u16 angle;
-	if(orientation) {
-		angle = 128;
-		BG3_CX = 192 << 8;
-		BG3_CY = 0 << 8;
-		SUB_BG3_CX = 192 << 8;
-		SUB_BG3_CY = 0 << 8;
-		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenleft = (u16*)BG_BMP_RAM(0);
-	}
-	else
-	{
-		angle = 384;
-		BG3_CX = 0 << 8;
-		BG3_CY = 256 << 8;
-		SUB_BG3_CX = 0 << 8;
-		SUB_BG3_CY = 256 << 8;
-		ts->screenleft = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenright = (u16*)BG_BMP_RAM(0);
-	}
-
-	s16 s = SIN[angle & 0x1FF] >> 4;
-	s16 c = COS[angle & 0x1FF] >> 4;
-	BG3_XDX = c;
-	BG3_XDY = -s;
-	BG3_YDX = s;
-	BG3_YDY = c;
-	SUB_BG3_XDX = c;
-	SUB_BG3_XDY = -s;
-	SUB_BG3_YDX = s;
-	SUB_BG3_YDY = c;
-#endif
 }
 
 void App::Fatal(const char *msg)

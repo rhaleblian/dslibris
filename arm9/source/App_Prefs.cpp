@@ -9,10 +9,8 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
+#include <nds/bios.h>
 
-#include "ndsx_brightness.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
@@ -156,7 +154,8 @@ void App::HandleEventInPrefs()
 		CycleBrightness();
 		prefs->Write();
 	} else if (keysDown() & KEY_TOUCH) {
-		touchPosition touch = touchReadXY();
+		touchPosition touch;
+		touchRead(&touch);
 		touchPosition coord;
 		u8 regionprev[2];
 		regionprev[0] = 0;

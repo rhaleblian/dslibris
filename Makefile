@@ -10,12 +10,17 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
 
-export MEDIAROOT	:=	/media/SANDISK/
-export MEDIATYPE	:=	cyclods
-export EMULATOR		:=	desmume
+# Mount point for cflash image.
+MEDIAROOT			:=	/media/SANDISK/
+# MEDIATYPE should match a DLDI driver name.
+MEDIATYPE			:=	cyclods
+# Location of desmume.
+EMULATOR			:=	../desmume/trunk/src/cli/desmume-cli
+# Filename of cflash image.
+CFLASH_IMAGE		:=	cflash.dmg
 
 #-------------------------------------------------------------------------------
-# path to tools - this can be deleted if you set the path in windows
+# path to tools
 #-------------------------------------------------------------------------------
 export PATH		:=	$(DEVKITARM)/bin:$(PATH)
 
@@ -51,26 +56,29 @@ clean:
 
 # run under emulator with an image file.
 test: $(TARGET).nds
-	$(EMULATOR) --cflash=media.img dslibris.nds
+	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) $(TARGET).nds
 
 #create a cflash image for use with desmume.
-image: media.img
-	dd if=/dev/zero of=media.img bs=1048576 count=64
-	/sbin/mkfs.vfat media.img
-		
+cflash.img:
+	dd if=/dev/zero of=cflash.img bs=1048576 count=64
+	/sbin/mkfs.vfat cflash.img
+
+cflash.dmg:
+	hdiutil create -megabytes 64 -fs MS-DOS -volname cflash cflash.dmg
+
 # debug target with insight and desmume under linux
 debug: $(TARGET).nds
-	arm-eabi-insight arm9/dslibris.arm9.elf &
-	$(EMULATOR) --cflash=media.img --arm9gdb=20000 $(TARGET).nds &
+	arm-eabi-insight arm9/$(TARGET).arm9.elf &
+	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
 
 debug7: $(TARGET).nds
-	arm-eabi-insight arm7/dslibris.arm7.elf &
-	$(EMULATOR) --cflash=media.img --arm7gdb=20001 $(TARGET).nds &
-	
+	arm-eabi-insight arm7/$(TARGET).arm7.elf &
+	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm7gdb=20001 $(TARGET).nds &
+
 gdb: $(TARGET).nds
-	desmume-cli --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &
+	$(EMULATOR) --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &
 	sleep 4
-	arm-eabi-gdb -x gdb.commands arm9/dslibris.arm9.elf
+	arm-eabi-gdb -x gdb.commands arm9/$(TARGET).arm9.elf
 
 # make DLDI patched target
 $(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
@@ -107,10 +115,6 @@ dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	(cd dist; zip -r dslibris.zip *)
 
 dist: dist/$(TARGET).zip
-
-# transfer a release zip for posting.
-upload: dist
-	cadaver https://frs.sourceforge.net/r/ra/rayh23/uploads
 
 mount:
 	- mkdir media

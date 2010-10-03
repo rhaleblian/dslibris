@@ -5,7 +5,7 @@
 
 class Prefs
 {
-	public:
+public:
 	App *app;
 	long modtime;
 	Prefs();
@@ -14,6 +14,8 @@ class Prefs
 	int Read();
 	int Write();
 	bool swapshoulder;
+private:
+	void Init();
 };
 
 #endif

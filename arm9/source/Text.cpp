@@ -667,7 +667,7 @@ void Text::PrintStatusMessage(const char *msg)
 	
 	screen = screenleft;
 	SetInvert(false);
-	SetPixelSize(8);
+	SetPixelSize(10);
 	SetPen(10,16);
 	PrintString(msg);
 

@@ -72,10 +72,6 @@ http://sourceforge.net/projects/ndslibris
 #include <nds.h>
 #include <expat.h>
 #include <unistd.h>
-#include <DSGUI/BGUI.h>
-#include <DSGUI/BImage.h>
-#include <DSGUI/BScreen.h>
-#include <DSGUI/BProgressBar.h>
 
 #include "Book.h"
 #include "Button.h"
@@ -132,6 +128,7 @@ class App {
 	//! key functions are remappable to support screen flipping.
 	struct {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
+		uint32 downrepeat;
 	} key;
 	
 	vector<Button*> buttons;
@@ -168,9 +165,9 @@ class App {
 	unsigned int fontPage;
 	vector<Button*>fontButtons;
 
-	BImage *image0;
-	BScreen *bscreen0;
-	BProgressBar *progressbar;
+	//BImage *image0;
+	//BScreen *bscreen0;
+	//BProgressBar *progressbar;
 
 	App();
 	~App();

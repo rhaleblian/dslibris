@@ -9,13 +9,11 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
+#include <nds/bios.h>
 
 #include <string>
 #include <vector>
 
-#include "ndsx_brightness.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
@@ -91,7 +89,8 @@ void App::HandleEventInFont()
 		FontButton();
 	} else if (keysDown() & KEY_TOUCH) {
 		Log("info : font screen touched\n");
-		touchPosition touch = touchReadXY();
+		touchPosition touch;
+		touchRead(&touch);
 		touchPosition coord;
 		u8 regionprev[2], regionnext[2];
 		regionprev[0] = 0;

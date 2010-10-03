@@ -9,10 +9,9 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <nds/registers_alt.h>
-#include <nds/reload.h>
+#include <nds/bios.h>
 
-#include "ndsx_brightness.h"
+//#include "ndsx_brightness.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
@@ -28,12 +27,7 @@ void App::HandleEventInBrowser()
 {
 	uint32 keys = keysDown();
 	
-	if (keys & KEY_A)
-	{
-		AttemptBookOpen();
-	}
-	
-	else if (keys & key.down)
+	if (keys & (KEY_A | key.down))
 	{
 		AttemptBookOpen();
 	}
@@ -99,9 +93,10 @@ void App::HandleEventInBrowser()
 #endif
 	}
 
-	else if (keys & KEY_TOUCH)
+	else if (keysHeld() & KEY_TOUCH)
 	{
-		touchPosition touch = touchReadXY();
+		touchPosition touch;
+		touchRead(&touch);
 		touchPosition coord;
 
 		// Transform point according to screen orientation.
@@ -275,6 +270,7 @@ void App::AttemptBookOpen()
 {
 	if (!OpenBook()) {
 		mode = APP_MODE_BOOK;
+		//UpdateClock();
 	} else
 		browser_draw();
 }
