@@ -336,9 +336,9 @@ void App::SetOrientation(bool flip)
 	if(flip) {
 		s = 1 << 8;
 		c = 0;
-		REG_BG3X = 192 << 8;
+		REG_BG3X = 191 << 8;
 		REG_BG3Y = 0 << 8;
-		REG_BG3X_SUB = 192 << 8;
+		REG_BG3X_SUB = 191 << 8;
 		REG_BG3Y_SUB = 0 << 8;
 		ts->screenleft = (u16*)BG_BMP_RAM_SUB(0);
 		ts->screenright = (u16*)BG_BMP_RAM(0);
@@ -355,9 +355,9 @@ void App::SetOrientation(bool flip)
 		s = -1 << 8;
 		c = 0;
 		REG_BG3X = 0 << 8;
-		REG_BG3Y = 256 << 8;
+		REG_BG3Y = 255 << 8;
 		REG_BG3X_SUB = 0 << 8;
-		REG_BG3Y_SUB = 256 << 8;
+		REG_BG3Y_SUB = 255 << 8;
 		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
 		ts->screenleft = (u16*)BG_BMP_RAM(0);
 		orientation = false;
