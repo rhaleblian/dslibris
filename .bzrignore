@@ -1,5 +1,6 @@
 dslibris.nds
 cflash.*
+*/build
 *.arm9
 *.arm7
 *.elf
