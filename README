@@ -3,7 +3,7 @@ Herein lie the source for dslibris, and supporting libraries.
 
 PREREQUISITES
 
-Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently I use OS X 1.06. Have:
+Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently I use OS X 10.6. Have:
 
 * devkitPro r31, as per the Windows installer.
 * on Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
