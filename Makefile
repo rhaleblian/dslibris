@@ -2,27 +2,38 @@
 .SUFFIXES:
 #-------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Set DEVKITARM in your environment.")
+	$(error "Set DEVKITARM in your environment.")
 endif
 
 include $(DEVKITARM)/ds_rules
 
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
+export PATH			:=	$(DEVKITARM)/bin:$(PATH)
 
-# Mount point for cflash image.
-MEDIAROOT			:=	/media/SANDISK/
+# Mount point for media.
+MEDIAROOT			:=	/Volumes/NDS/
 # MEDIATYPE should match a DLDI driver name.
-MEDIATYPE			:=	cyclods
+MEDIATYPE			:=	mpcf
+
+#-------------------------------------------------------------------------------
+# Device emulation.
+#-------------------------------------------------------------------------------
 # Location of desmume.
-EMULATOR			:=	../desmume/trunk/src/cli/desmume-cli
-# Filename of cflash image.
-CFLASH_IMAGE		:=	cflash.dmg
+EMULATOR			:=	desmume-cli
+# Compact flash image file for emulation.
+CFLASH_IMAGE		:=	cflash.img
+# Path to access mounted emulation image.
+CFLASH_MOUNTPOINT	:=	./cflash
 
 #-------------------------------------------------------------------------------
 # path to tools
 #-------------------------------------------------------------------------------
-export PATH		:=	$(DEVKITARM)/bin:$(PATH)
+
+#-------------------------------------------------------------------------------
+# Platform overrides.
+#-------------------------------------------------------------------------------
+include Makefile.$(shell uname)
 
 .PHONY: $(TARGET).arm7 $(TARGET).arm9
 
@@ -34,7 +45,9 @@ $(TARGET).ds.gba	: $(TARGET).nds
 
 #-------------------------------------------------------------------------------
 $(TARGET).nds		: $(TARGET).arm7 $(TARGET).arm9
-	ndstool -b data/icon.bmp "dslibris;an ebook reader;for the Nintendo DS" -c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
+	ndstool -b data/icon.bmp \
+	"dslibris;an ebook reader;for the Nintendo DS" \
+	-c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
 
 #-------------------------------------------------------------------------------
 $(TARGET).arm7		: arm7/$(TARGET).elf
@@ -54,19 +67,21 @@ clean:
 	$(MAKE) -C arm7 clean
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
 
-# run under emulator with an image file.
+# Run under emulator with an image file.
+# Use a post-0.9.6 desmume that DLDI-autopatches.
 test: $(TARGET).nds
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) $(TARGET).nds
 
-#create a cflash image for use with desmume.
+# Create a cflash image for use with desmume.
 cflash.img:
-	dd if=/dev/zero of=cflash.img bs=1048576 count=64
-	/sbin/mkfs.vfat cflash.img
+	dd if=/dev/zero of=$(CFLASH_IMAGE) bs=1048576 count=64
+	/sbin/mkfs.vfat $(CFLASH_IMAGE)
 
+# Ditto, for OS X.
 cflash.dmg:
-	hdiutil create -megabytes 64 -fs MS-DOS -volname cflash cflash.dmg
+	hdiutil create -megabytes 64 -fs MS-DOS -volname cflash $(CFLASH_IMAGE)
 
-# debug target with insight and desmume under linux
+# Debug target with insight and desmume under linux
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/$(TARGET).arm9.elf &
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
@@ -76,14 +91,14 @@ debug7: $(TARGET).nds
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm7gdb=20001 $(TARGET).nds &
 
 gdb: $(TARGET).nds
-	$(EMULATOR) --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &
+	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
 	sleep 4
-	arm-eabi-gdb -x gdb.commands arm9/$(TARGET).arm9.elf
+	arm-eabi-gdb -x data/gdb.commands arm9/$(TARGET).arm9.elf
 
 # make DLDI patched target
 $(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
 	cp dslibris.nds dslibris.$(MEDIATYPE).nds
-	dlditool $(MEDIATYPE).dldi dslibris.$(MEDIATYPE).nds
+	dlditool data/dldi/$(MEDIATYPE).dldi dslibris.$(MEDIATYPE).nds
 
 dldi: $(TARGET).$(MEDIATYPE).nds
 
@@ -112,19 +127,20 @@ dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	cp data/font/*.ttf dist/font
 	- mkdir dist/book	
 	cp data/book/dslibris.xht dist/book
-	(cd dist; zip -r dslibris.zip *)
+	(cd dist; zip -r $(TARGET).zip *)
 
 dist: dist/$(TARGET).zip
 
+# Mount CFLASH_IMAGE as CFLASH_MOUNTPOINT (Linux).
 mount:
-	- mkdir media
-	chmod a+w media
-	sudo mount -t vfat -o loop -o rw,uid=$(USER),gid=$(USER) media.img media
+	- mkdir $(CFLASH_MOUNTPOINT)
+	chmod a+w $(CFLASH_MOUNTPOINT)
+	sudo mount -t vfat -o loop -o rw,uid=$(USER),gid=$(USER) $(CFLASH_IMAGE) $(CFLASH_MOUNTPOINT)
 
 umount:
 	sync
-	- sudo umount media
-	- rmdir media
+	- sudo umount $(CFLASH_MOUNTPOINT)
+	- rmdir $(CFLASH_MOUNTPOINT)
 
 eject:
 	sync

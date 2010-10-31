@@ -1,0 +1,4 @@
+# Platform-specifics for OS X.
+MEDIAROOT := /Volumes/NDS/
+CFLASH_IMAGE := cflash.dmg
+CFLASH_MOUNTPOINT := ./cflash

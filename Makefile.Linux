@@ -1,0 +1,2 @@
+MEDIA_ROOT := /media/NDS
+CFLASH_IMAGE := cflash.img
