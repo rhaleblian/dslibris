@@ -1,7 +1,8 @@
-dslibris.nds
+.DS_Store
+build
 cflash.*
-*/build
+dslibris.nds
 *.arm9
 *.arm7
 *.elf
-.DS_Store
+*.xcodeproj
