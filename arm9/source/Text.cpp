@@ -41,13 +41,13 @@ Text::Text()
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILEPATH;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILEPATH;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILEPATH;
-	ftc = true;
+	imagetype.height = PIXELSIZE;
+	imagetype.width = PIXELSIZE;
 	invert = false;
 	italic = false;
 	justify = false;
 	linebegan = false;
 	linespacing = 0;
-	pixelsize = PIXELSIZE;
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
@@ -68,19 +68,6 @@ Text::Text()
 
 Text::~Text()
 {
-	ClearCache();
-	
-	for(map<FT_Face, Cache*>::iterator iter = textCache.begin();
-		iter != textCache.end(); iter++) {
-		delete iter->second;
-	}
-
-	textCache.clear();
-	
-	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
-		FT_Done_Face(iter->second);
-	}
-	
 	FT_Done_FreeType(library);
 }
 
@@ -90,141 +77,34 @@ TextFaceRequester(    FTC_FaceID   face_id,
                       FT_Pointer   request_data,
                       FT_Face     *aface )
 {
-	TextFace face = (TextFace) face_id;   // simple typecase
+	//! Callback for FT's cache subsystem.
+	
+	TextFace face = (TextFace) face_id;
 	return FT_New_Face( library, face->file_path, face->face_index, aface );
 }
 
-int Text::InitWithCacheManager(void) {
-	//! Use FreeType's cache manager. borken!
+int Text::Init(void) {
 	
-	int error = FT_Init_FreeType(&library);
+	error = FT_Init_FreeType(&library);
 	if(error) return error;
 
+	// Use FreeType's cache manager.
 	FTC_Manager_New(library,0,0,0,
 		&TextFaceRequester,NULL,&cache.manager);
 	FTC_ImageCache_New(cache.manager,&cache.image);
 	FTC_SBitCache_New(cache.manager,&cache.sbit);
 	FTC_CMapCache_New(cache.manager,&cache.cmap);
 
-	face_id.file_path = filenames[TEXT_STYLE_NORMAL].c_str();
-	face_id.face_index = 0;
-	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_NORMAL]);
-	if(error) return error;
-	FT_Select_Charmap(GetFace(TEXT_STYLE_NORMAL), FT_ENCODING_UNICODE);
-	charmap_index = FT_Get_Charmap_Index(GetFace(TEXT_STYLE_NORMAL)->charmap);
-	imagetype.face_id = (FTC_FaceID)&face_id;
-	imagetype.height = pixelsize;
-	imagetype.width = pixelsize;
-	ftc = true;
+	SetFace(TEXT_STYLE_NORMAL);
+
 	initialized = true;
-	return 0;
-}
-
-int Text::InitDefault(void) {
-	//! Use our own cheesey glyph cache.
-	
-	if (FT_Init_FreeType(&library))
-		return 1;
-	
-	map<u8, string>::iterator iter;   
-	for (iter = filenames.begin(); iter != filenames.end(); iter++) {
-		
-		if (FT_New_Face(library, iter->second.c_str(), 0, &face)) {
-			// Failed; attempt to use the NORMAL style
-			map<u8, FT_Face>::iterator find = faces.find(TEXT_STYLE_NORMAL);
-			
-			if (find == faces.end())
-				return 2;
-			else
-				face = find->second;
-		}
-		
-		char msg[MAXPATHLEN];
-		strcpy(msg, "");
-		sprintf(msg,"info : font '%s'\n", iter->second.c_str());
-		app->Log(msg);
-		
-		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-		FT_Set_Pixel_Sizes(face, 0, pixelsize);
-		
-		textCache.insert(make_pair(face, new Cache()));
-		faces[iter->first] = face;
-	}
-	
-	screen = screenleft;
-	ClearCache();
-	InitPen();
-	ftc = false;
-	initialized = true;
-	return 0;
-}
-
-int Text::Init()
-{
-	if(ftc) return InitWithCacheManager();
-	else return InitDefault();
-}
-
-void Text::Begin()
-{
-	bold = false;
-	italic = false;
-	linebegan = false;
-	stats_hits = 0;
-	stats_misses = 0;
-	hit = false;
-}
-
-void Text::End() {}
-
-int Text::CacheGlyph(u32 ucs)
-{
-	return CacheGlyph(ucs, TEXT_STYLE_NORMAL);
-}
-
-int Text::CacheGlyph(u32 ucs, u8 style)
-{
-	return CacheGlyph(ucs, GetFace(style));
-}
-
-int Text::CacheGlyph(u32 ucs, FT_Face face)
-{
-	//! Cache glyph at ucs if there's space.
-
-	//! Does not check if this is a duplicate entry;
-	//! The caller should have checked first.
-
-	if(textCache[face]->cacheMap.size() == CACHESIZE) return -1;
-
-	FT_Load_Char(face, ucs,
-		FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
-	FT_GlyphSlot src = face->glyph;
-	// TODO - why?
-	//FT_GlyphSlot dst = &textCache[face]->glyphs[textCache[face]->cachenext];
-	FT_GlyphSlot dst = new FT_GlyphSlotRec;
-	int x = src->bitmap.rows;
-	int y = src->bitmap.width;
-	dst->bitmap.buffer = new unsigned char[x*y];
-	memcpy(dst->bitmap.buffer, src->bitmap.buffer, x*y);
-	dst->bitmap.rows = src->bitmap.rows;
-	dst->bitmap.width = src->bitmap.width;
-	dst->bitmap_top = src->bitmap_top;
-	dst->bitmap_left = src->bitmap_left;
-	dst->advance = src->advance;
-	//textCache[face]->cache_ucs[textCache[face]->cachenext] = ucs;
-	textCache[face]->cacheMap.insert(make_pair(ucs, dst));
-	//textCache[face]->cachenext++;
-	//return textCache[face]->cachenext-1;
-	return ucs;
+	return error;
 }
 
 FT_UInt Text::GetGlyphIndex(u32 ucs)
 {
 	//! Given a UCS codepoint, return where it is in the charmap, by index.
-	
-	//! Only has effect when FT cache mode is enabled,
-	//! and FT cache mode is borken.
-	if(!ftc) return ucs;
+
 	return FTC_CMapCache_Lookup(cache.cmap,(FTC_FaceID)&face_id,
 		charmap_index,ucs);
 }
@@ -233,73 +113,11 @@ int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit)
 {
 	//! Given a UCS code, fills sbit with a bitmap.
 	
-	//! Returns nonzero on error.Glyth
+	//! Returns nonzero on error.
 	imagetype.flags = FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL;
 	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
 		GetGlyphIndex(ucs),sbit,NULL);
-	if(error) return error;
-	return 0;
-}
-
-FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags)
-{
-	return GetGlyph(ucs, flags, face);
-}
-
-FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, u8 style)
-{
-	return GetGlyph(ucs, flags, GetFace(style));
-}
-
-FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
-{
-	if(ftc) return NULL;
-
-#if 0
-	for(int i=0;i<textCache[face]->cachenext;i++)
-		if(textCache[face]->cache_ucs[i] == ucs)
-			return &textCache[face]->glyphs[i];
-#endif	
-
-	map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
-	
-	if (iter != textCache[face]->cacheMap.end()) {
-		stats_hits++;
-		hit = true;
-		return iter->second;
-	}
-	
-	stats_misses++;
-	hit = false;
-	int i = CacheGlyph(ucs, face);
-	if (i > -1)
-		return textCache[face]->cacheMap[ucs];
-
-	FT_Load_Char(face, ucs, flags);
-	return face->glyph;
-}
-
-void Text::ClearCache()
-{
-	 for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
-		 ClearCache(iter->second);
-	 }
-}
-
-void Text::ClearCache(u8 style)
-{
-	ClearCache(GetFace(style));
-}
-
-void Text::ClearCache(FT_Face face)
-{
-	//textCache[face]->cachenext = 0;
-	map<u16, FT_GlyphSlot>::iterator iter;   
-	for(iter = textCache[face]->cacheMap.begin(); iter != textCache[face]->cacheMap.end(); iter++) {
-		delete iter->second;
-	}
-
-	textCache[face]->cacheMap.clear();
+	return error;
 }
 
 void Text::ClearScreen()
@@ -344,6 +162,7 @@ u8 Text::GetStringWidth(const char *txt, FT_Face face)
 
 u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 	//! Given a UTF-8 encoding, fill in the Unicode/UCS code point.
+
 	//! Return the bytelength of the encoding, for advancing
 	//! to the next character; 0 if encoding could not be translated.
 	
@@ -369,7 +188,18 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 }
 
 u8 Text::GetHeight() {
-	return (GetFace(style)->size->metrics.height >> 6);
+	if (GetFace()->size)
+		return GetFace()->size->metrics.height >> 6;
+	
+	FTC_Scaler scaler = new FTC_ScalerRec();
+	scaler->face_id = imagetype.face_id;
+	scaler->width = imagetype.width;
+	scaler->height = imagetype.height;
+	scaler->pixel = true;
+	FT_Size size;
+	FTC_Manager_LookupSize(cache.manager, scaler, &size);
+	delete scaler;
+	return (size->metrics.height >> 6);
 }
 
 void Text::GetPen(u16 *x, u16 *y) {
@@ -403,33 +233,14 @@ u8 Text::GetPenY() {
 	return pen.y;
 }
 
-u8 Text::GetPixelSize()
+void Text::SetPixelSize(int size)
 {
-	return pixelsize;
+	imagetype.height = imagetype.width = size;
 }
 
 u16* Text::GetScreen()
 {
 	return screen;
-}
-
-void Text::SetPixelSize(u8 size)
-{
-	if(ftc) {
-		imagetype.height = size;
-		imagetype.width = size;
-		pixelsize = size;
-		return;
-	}
-
-	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
-		if (!size)
-			FT_Set_Pixel_Sizes(iter->second, 0, PIXELSIZE);
-		else
-			FT_Set_Pixel_Sizes(iter->second, 0, size);
-	}
-	
-	ClearCache();
 }
 
 void Text::SetScreen(u16 *inscreen)
@@ -446,33 +257,21 @@ u8 Text::GetAdvance(u32 ucs, u8 astyle) {
 }
 
 u8 Text::GetAdvance(u32 ucs, FT_Face face) {
-	//! Return glyph advance in pixels.
+	//! Return glyph advance, in pixels.
+	
 	//! All other flavours of GetAdvance() call this one.
 
-//	FT_Fixed padvance;
-//	error = FT_Get_Advance(face, GetGlyphIndex(ucs), NULL, &padvance);
-//	return padvance >> 6;
-	
-	if(!ftc)
-		// Caches this glyph if possible.
-		return GetGlyph(ucs, FT_LOAD_DEFAULT, face)->advance.x >> 6;
-
-	imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;
-
 	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
-		GetGlyphIndex(ucs),&sbit,NULL);
+								 GetGlyphIndex(ucs),&sbit,NULL);
 	if (!error) return sbit->xadvance;
-	else app->Log("error in sbit cache lookup");
-	
+
 	FT_Glyph glyph;
+	imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;	
 	FTC_ImageType type = &imagetype;
 	error = FTC_ImageCache_Lookup(cache.image,type,GetGlyphIndex(ucs),&glyph,NULL);
-	if(error) {
-		app->Log("error in image cache lookup");
-		return 0;
-	}
+	if(!error) return (glyph->advance).x;
 
-	return (glyph->advance).x;
+	return error;
 }
 
 int Text::GetStringAdvance(const char *s) {
@@ -508,8 +307,8 @@ void Text::PrintChar(u32 ucs, u8 astyle) {
 }
 
 void Text::PrintChar(u32 ucs, FT_Face face) {
-	// Draw a character for the given UCS codepoint,
-	// into the current screen buffer at the current pen position.
+	//! Draw a character for the given UCS codepoint
+	//! into the current screen buffer at the current pen position.
 
 	u16 bx, by, width, height = 0;
 	FT_Byte *buffer = NULL;
@@ -517,56 +316,13 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 
 	// get metrics and glyph pointer.
 
-	if(ftc)
-	{
-		// use the FT cache.
-		error = GetGlyphBitmap(ucs,&sbit);
-		buffer = sbit->buffer;
-		bx = sbit->left;
-		by = sbit->top;
-		height = sbit->height;
-		width = sbit->width;
-		advance = sbit->xadvance;
-	}
-	else
-	{
-		// Consult the cache for glyph data and cache it on a miss
-		// if space is available.
-		FT_GlyphSlot glyph = GetGlyph(ucs, 
-			FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL, face);
-		FT_Bitmap bitmap = glyph->bitmap;
-		bx = glyph->bitmap_left;
-		by = glyph->bitmap_top;
-		width = bitmap.width;
-		height = bitmap.rows;
-		advance = glyph->advance.x >> 6;
-		buffer = bitmap.buffer;
-	}
-
-	// kern.
-#ifdef EXPERIMENTAL_KERNING
-	if(codeprev) {
-		FT_Vector k;
-		error = FT_Get_Kerning(face,codeprev,ucs,FT_KERNING_UNSCALED,&k);
-		if(error) {
-			app->Log("warn : kerning lookup error ");
-			app->Log((char *)&codeprev);
-			app->Log("->");
-			app->Log((char *)&ucs);
-			app->Log("\n");
-		}
-		else if (k.x)
-		{
-			app->Log("info : kern ");
-			app->Log((int)k.x);
-			app->Log(" ");
-			app->Log((char *)&codeprev);
-			app->Log((char *)&ucs);
-			app->Log("\n");
-			pen.x += k.x >> 6;
-		}
-	}
-#endif
+	error = GetGlyphBitmap(ucs,&sbit);
+	buffer = sbit->buffer;
+	bx = sbit->left;
+	by = sbit->top;
+	height = sbit->height;
+	width = sbit->width;
+	advance = sbit->xadvance;
 
 	// render to framebuffer.
 
@@ -589,12 +345,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 					u8 l;
 					if (invert) l = a >> 3;
 					else l = (255-a) >> 3;
-#ifdef DEBUG_CACHE
-					if(!hit) 
-						screen[sy*display.height+sx] = RGB15(l,0,0) | BIT(15);
-					else
-#endif
-						screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
+					screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
 				}
 			}
 		}
@@ -710,7 +461,6 @@ void Text::SetFontFile(const char *filename, u8 style)
 {
 	if(!stricmp(filenames[style].c_str(),filename)) return;
 	filenames[style] = filename;
-	if(initialized) ClearCache(style);
 }
 
 string Text::GetFontFile(u8 style)
@@ -718,23 +468,20 @@ string Text::GetFontFile(u8 style)
 	return filenames[style];
 }
 
-bool Text::SetFace(u8 astyle)
+int Text::SetFace(u8 astyle)
 {
-	style = astyle;
-	face = faces[style];
-	return true;
+	face_id.file_path = filenames[astyle].c_str();
+	face_id.face_index = 0;
+	error =	FTC_Manager_LookupFace(cache.manager,
+								   (FTC_FaceID)&face_id,
+								   &faces[astyle]);
+	if(!error) {
+		FT_Select_Charmap(GetFace(astyle), FT_ENCODING_UNICODE);
+		charmap_index = FT_Get_Charmap_Index(GetFace(astyle)->charmap);
+		imagetype.face_id = (FTC_FaceID)&face_id;	
+		style = astyle;
+		face = faces[style];
+	}
+	
+	return error;
 }
-
-/*
-FT_Face Text::GetFace(u8 style)
-{
-	return face;
-
-	map<u8, FT_Face>::iterator iter = faces.find(style);
-	if (iter != faces.end())
-		return iter->second;
-	else
-		return faces[TEXT_STYLE_NORMAL];
-}
-*/
-

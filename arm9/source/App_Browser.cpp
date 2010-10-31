@@ -214,7 +214,7 @@ void App::browser_draw(void)
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->ClearScreen();
-	ts->SetStyle(TEXT_STYLE_BROWSER);
+	ts->SetFace(TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(PIXELSIZE);
 	for (int i=browserstart;
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
@@ -234,7 +234,7 @@ void App::browser_draw(void)
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
-	ts->SetStyle(style);
+	ts->SetFace(style);
 }
 
 void App::browser_redraw()

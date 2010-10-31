@@ -216,8 +216,10 @@ void App::HandleEventInPrefs()
 
 void App::PrefsIncreasePixelSize()
 {
-	if (ts->pixelsize < 255) {
-		ts->pixelsize++;
+	int ps = ts->GetPixelSize();
+	if (ps < 255) {
+		ps++;
+		ts->SetPixelSize(ps);
 		PrefsRefreshButtonFontSize();
 		PrefsDraw();
 		bookcurrent = NULL;
@@ -227,8 +229,10 @@ void App::PrefsIncreasePixelSize()
 
 void App::PrefsDecreasePixelSize()
 {
-	if (ts->pixelsize > 1) {
-		ts->pixelsize--;
+	int ps = ts->GetPixelSize();
+	if (ps > 1) {
+		ps--;
+		ts->SetPixelSize(ps);
 		PrefsRefreshButtonFontSize();
 		PrefsDraw();
 		bookcurrent = NULL;

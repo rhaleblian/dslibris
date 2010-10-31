@@ -143,7 +143,7 @@ void prefs_start_hndl(	void *data,
 		for(i=0;attr[i];i+=2)
 		{
 			if(!strcmp(attr[i],"size"))
-				app->ts->pixelsize = atoi(attr[i+1]);
+				app->ts->SetPixelSize(atoi(attr[i+1]));
 			else if(!strcmp(attr[i],"normal"))
 				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_NORMAL);
 			else if(!strcmp(attr[i],"bold"))
