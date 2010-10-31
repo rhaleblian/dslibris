@@ -9,10 +9,12 @@ include $(DEVKITARM)/ds_rules
 
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
+
+#-------------------------------------------------------------------------------
+# path to tools
+#-------------------------------------------------------------------------------
 export PATH			:=	$(DEVKITARM)/bin:$(PATH)
 
-# Mount point for media.
-MEDIAROOT			:=	/Volumes/NDS/
 # MEDIATYPE should match a DLDI driver name.
 MEDIATYPE			:=	mpcf
 
@@ -25,15 +27,6 @@ EMULATOR			:=	desmume-cli
 CFLASH_IMAGE		:=	cflash.img
 # Path to access mounted emulation image.
 CFLASH_MOUNTPOINT	:=	./cflash
-
-#-------------------------------------------------------------------------------
-# path to tools
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# Platform overrides.
-#-------------------------------------------------------------------------------
-include Makefile.$(shell uname)
 
 .PHONY: $(TARGET).arm7 $(TARGET).arm9
 
@@ -67,19 +60,15 @@ clean:
 	$(MAKE) -C arm7 clean
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
 
+#-------------------------------------------------------------------------------
+# Platform specifics.
+#-------------------------------------------------------------------------------
+include Makefile.$(shell uname)
+
 # Run under emulator with an image file.
 # Use a post-0.9.6 desmume that DLDI-autopatches.
 test: $(TARGET).nds
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) $(TARGET).nds
-
-# Create a cflash image for use with desmume.
-cflash.img:
-	dd if=/dev/zero of=$(CFLASH_IMAGE) bs=1048576 count=64
-	/sbin/mkfs.vfat $(CFLASH_IMAGE)
-
-# Ditto, for OS X.
-cflash.dmg:
-	hdiutil create -megabytes 64 -fs MS-DOS -volname cflash $(CFLASH_IMAGE)
 
 # Debug target with insight and desmume under linux
 debug: $(TARGET).nds
@@ -130,19 +119,4 @@ dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	(cd dist; zip -r $(TARGET).zip *)
 
 dist: dist/$(TARGET).zip
-
-# Mount CFLASH_IMAGE as CFLASH_MOUNTPOINT (Linux).
-mount:
-	- mkdir $(CFLASH_MOUNTPOINT)
-	chmod a+w $(CFLASH_MOUNTPOINT)
-	sudo mount -t vfat -o loop -o rw,uid=$(USER),gid=$(USER) $(CFLASH_IMAGE) $(CFLASH_MOUNTPOINT)
-
-umount:
-	sync
-	- sudo umount $(CFLASH_MOUNTPOINT)
-	- rmdir $(CFLASH_MOUNTPOINT)
-
-eject:
-	sync
-	- umount $(MEDIAROOT)
 

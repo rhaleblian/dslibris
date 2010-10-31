@@ -1,4 +1,19 @@
 # Platform-specifics for OS X.
 MEDIAROOT := /Volumes/NDS/
 CFLASH_IMAGE := cflash.dmg
-CFLASH_MOUNTPOINT := ./cflash
+CFLASH_MOUNTPOINT := /Volumes/CFLASH
+
+
+# Create a cflash image for use with emulator.
+$(CFLASH_IMAGE):
+	hdiutil create -megabytes 64 -fs MS-DOS -volname cflash $(CFLASH_IMAGE)
+
+mount:
+	open $(CFLASH_IMAGE)
+	
+umount:
+	hdiutil unmount $(CFLASH_IMAGE)
+		
+eject:
+	sync
+	- umount $(MEDIAROOT)

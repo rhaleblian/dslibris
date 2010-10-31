@@ -1,2 +1,23 @@
 MEDIA_ROOT := /media/NDS
 CFLASH_IMAGE := cflash.img
+CFLASH_MOUNTPOINT := ./cflash
+
+# Create a cflash image for use with desmume.
+$(CFLASH_IMAGE):
+	dd if=/dev/zero of=$(CFLASH_IMAGE) bs=1048576 count=64
+	/sbin/mkfs.vfat $(CFLASH_IMAGE)
+
+# Mount CFLASH_IMAGE as CFLASH_MOUNTPOINT (Linux).
+mount:
+	- mkdir $(CFLASH_MOUNTPOINT)
+	chmod a+w $(CFLASH_MOUNTPOINT)
+	sudo mount -t vfat -o loop -o rw,uid=$(USER),gid=$(USER) $(CFLASH_IMAGE) $(CFLASH_MOUNTPOINT)
+
+umount:
+	sync
+	- sudo umount $(CFLASH_MOUNTPOINT)
+	- rmdir $(CFLASH_MOUNTPOINT)
+
+eject:
+	sync
+	- umount $(MEDIAROOT)
