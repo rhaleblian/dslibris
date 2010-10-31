@@ -4,4 +4,4 @@ cflash.*
 *.arm9
 *.arm7
 *.elf
-
+.DS_Store

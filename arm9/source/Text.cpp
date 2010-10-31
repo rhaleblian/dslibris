@@ -41,7 +41,7 @@ Text::Text()
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILEPATH;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILEPATH;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILEPATH;
-	ftc = false;
+	ftc = true;
 	invert = false;
 	italic = false;
 	justify = false;
@@ -459,14 +459,19 @@ u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 
 	imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;
 
-#if 0
 	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
 		GetGlyphIndex(ucs),&sbit,NULL);
-	return sbit->xadvance;
-#endif
+	if (!error) return sbit->xadvance;
+	else app->Log("error in sbit cache lookup");
+	
 	FT_Glyph glyph;
 	FTC_ImageType type = &imagetype;
 	error = FTC_ImageCache_Lookup(cache.image,type,GetGlyphIndex(ucs),&glyph,NULL);
+	if(error) {
+		app->Log("error in image cache lookup");
+		return 0;
+	}
+
 	return (glyph->advance).x;
 }
 
