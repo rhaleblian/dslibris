@@ -35,11 +35,13 @@ Text::Text()
 	bgcolor.b = 15;
 	usebgcolor = false;
 	codeprev = 0;
+	error = 0;
 	face = NULL;
 	filenames[TEXT_STYLE_NORMAL] = FONTFILEPATH;
 	filenames[TEXT_STYLE_BOLD] = FONTBOLDFILEPATH;
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILEPATH;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILEPATH;
+	filenames[TEXT_STYLE_BROWSER_BOLD] = FONTBROWSERBOLDFILEPATH;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILEPATH;
 	imagetype.height = PIXELSIZE;
 	imagetype.width = PIXELSIZE;
@@ -83,10 +85,9 @@ TextFaceRequester(    FTC_FaceID   face_id,
 	return FT_New_Face( library, face->file_path, face->face_index, aface );
 }
 
-int Text::Init(void) {
+int Text::Init() {
 	
 	error = FT_Init_FreeType(&library);
-	if(error) return error;
 
 	// Use FreeType's cache manager.
 	FTC_Manager_New(library,0,0,0,
@@ -95,10 +96,12 @@ int Text::Init(void) {
 	FTC_SBitCache_New(cache.manager,&cache.sbit);
 	FTC_CMapCache_New(cache.manager,&cache.cmap);
 
+	// Load a default font.
+	SetPixelSize(PIXELSIZE);
 	SetFace(TEXT_STYLE_NORMAL);
 
 	initialized = true;
-	return error;
+	return 0;
 }
 
 FT_UInt Text::GetGlyphIndex(u32 ucs)
@@ -117,6 +120,18 @@ int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit)
 	imagetype.flags = FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL;
 	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
 		GetGlyphIndex(ucs),sbit,NULL);
+	return error;
+}
+
+FT_Error Text::GetGlyph(u32 ucs, FT_Glyph *glyph)
+{
+	imagetype.flags = FT_LOAD_DEFAULT;	
+	FTC_ImageType type = &imagetype;
+	error = FTC_ImageCache_Lookup(cache.image,
+								  type,
+								  GetGlyphIndex(ucs),
+								  glyph,
+								  NULL);
 	return error;
 }
 
@@ -261,9 +276,9 @@ u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 	
 	//! All other flavours of GetAdvance() call this one.
 
-	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
-								 GetGlyphIndex(ucs),&sbit,NULL);
-	if (!error) return sbit->xadvance;
+//	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
+//								 GetGlyphIndex(ucs),&sbit,NULL);
+//	if (!error) return sbit->xadvance;
 
 	FT_Glyph glyph;
 	imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;	
@@ -315,15 +330,30 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	FT_UInt advance = 0;
 
 	// get metrics and glyph pointer.
-
-	error = GetGlyphBitmap(ucs,&sbit);
-	buffer = sbit->buffer;
-	bx = sbit->left;
-	by = sbit->top;
-	height = sbit->height;
-	width = sbit->width;
-	advance = sbit->xadvance;
-
+	
+	FT_Glyph glyph;
+	error = GetGlyph(ucs, &glyph);
+	if (glyph->format == FT_GLYPH_FORMAT_BITMAP)
+	{
+		FT_BitmapGlyph bmg = (FT_BitmapGlyph)glyph;
+		buffer = bmg->bitmap.buffer;
+		bx = bmg->left;
+		by = bmg->top;
+		height = bmg->bitmap.rows;
+		width = bmg->bitmap.width;
+		advance = glyph->advance.x;
+	}
+	else
+	{
+		error = GetGlyphBitmap(ucs,&sbit);
+		buffer = sbit->buffer;
+		bx = sbit->left;
+		by = sbit->top;
+		height = sbit->height;
+		width = sbit->width;
+		advance = sbit->xadvance;
+	}
+	
 	// render to framebuffer.
 
 	u16 gx, gy;
@@ -475,13 +505,20 @@ int Text::SetFace(u8 astyle)
 	error =	FTC_Manager_LookupFace(cache.manager,
 								   (FTC_FaceID)&face_id,
 								   &faces[astyle]);
-	if(!error) {
-		FT_Select_Charmap(GetFace(astyle), FT_ENCODING_UNICODE);
-		charmap_index = FT_Get_Charmap_Index(GetFace(astyle)->charmap);
-		imagetype.face_id = (FTC_FaceID)&face_id;	
-		style = astyle;
-		face = faces[style];
+	if (error) {
+		app->Log("error looking up face.");
+		return error;
 	}
+	
+	error = FT_Select_Charmap(GetFace(astyle), FT_ENCODING_UNICODE);
+	if (error)
+		app->Log("no unicode encoding.");
+
+	charmap_index = FT_Get_Charmap_Index(GetFace(astyle)->charmap);
+
+	imagetype.face_id = (FTC_FaceID)&face_id;	
+	style = astyle;
+	face = faces[style];
 	
 	return error;
 }

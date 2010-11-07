@@ -13,7 +13,7 @@ using namespace std;
 //! Reference: FreeType2 online documentation
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 #define CACHESIZE 512
-#define PIXELSIZE 12
+#define PIXELSIZE 11
 //! Reference: http://www.displaymate.com/psp_ds_shootout.htm
 #define DPI 110
 #define TEXT_BOLD_ON 2
@@ -24,7 +24,8 @@ using namespace std;
 #define TEXT_STYLE_BOLD (u8)1
 #define TEXT_STYLE_ITALIC (u8)2
 #define TEXT_STYLE_BROWSER (u8)3
-#define TEXT_STYLE_SPLASH (u8)4
+#define TEXT_STYLE_BROWSER_BOLD (u8)4
+#define TEXT_STYLE_SPLASH (u8)5
 
 class App;
 
@@ -142,9 +143,10 @@ class Text {
 	int CacheGlyph(u32 ucs, FT_Face face);
 	int InitDefault();
 	int InitWithCacheManager();
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
+	//FT_GlyphSlot GetGlyph(u32 ucs, int flags);
+	//FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
+	//FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
+	FT_Error GetGlyph(u32 ucs, FT_Glyph *glyph);
 	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit);
 	FT_UInt GetGlyphIndex(u32 ucs);
 
@@ -204,7 +206,7 @@ public:
 	void SetPixelSize(int size);
 	void SetPen(u16 x, u16 y);
 	void SetScreen(u16 *s);
-	inline void SetStyle(int astyle) { style = astyle; face = faces[style]; }
+	inline void SetStyle(int astyle) { SetFace(astyle); }
 	
 	void ClearCache();
 	void ClearCache(u8 style);

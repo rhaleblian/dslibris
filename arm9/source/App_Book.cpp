@@ -210,6 +210,7 @@ u8 App::OpenBook(void)
 	if(mode == APP_MODE_BROWSER) {
 		if(orientation) lcdSwap();
 		mode = APP_MODE_BOOK;
+		ts->SetFace(TEXT_STYLE_NORMAL);
 	}
 	if(bookcurrent->GetPosition() >= bookcurrent->GetPageCount())
 		bookcurrent->SetPosition(0);
