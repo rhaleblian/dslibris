@@ -1,24 +1,24 @@
-/* 
-
-dslibris - an ebook reader for the Nintendo DS.
-
- Copyright (C) 2007-2010 Ray Haleblian (ray23@sourceforge.net)
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-
-*/
+#
+#
+# dslibris - an ebook reader for the Nintendo DS.
+#
+#  Copyright (C) 2007-2010 Ray Haleblian (ray23@sourceforge.net)
+#
+#This program is free software; you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation; either version 2 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
+#
 
 #-------------------------------------------------------------------------------
 .SUFFIXES:
@@ -109,14 +109,14 @@ $(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
 
 dldi: $(TARGET).$(MEDIATYPE).nds
 
-# copy target to mounted microSD at $(MEDIAROOT)
+# copy target to mounted microSD at $(MEDIA_MOUNTPOINT)
 install: $(TARGET).nds
-	cp $(TARGET).nds $(MEDIAROOT)
+	cp $(TARGET).nds $(MEDIA_MOUNTPOINT)
 	sync
 
 # installation including DLDI patching.
 install-dldi: $(TARGET).$(MEDIATYPE).nds
-	cp $(TARGET).$(MEDIATYPE).nds $(MEDIAROOT)
+	cp $(TARGET).$(MEDIATYPE).nds $(MEDIA_MOUNTPOINT)/$(TARGET).nds
 	sync
 
 doc: Doxyfile
