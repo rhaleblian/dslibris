@@ -3,7 +3,8 @@ Herein lie the source for dslibris, and supporting libraries.
 
 PREREQUISITES
 
-Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently I use Ubuntu 9.04. Have:
+Fedora, Ubuntu, Arch Linux, OS X, and Windows XP have all been used as build
+platforms. Have:
 
 * devkitPro from late October 2007, including:
 	devkitARM-23b
@@ -35,11 +36,4 @@ MORE INFO
 http://sourceforge.net/projects/ndslibris
 
 - ray haleblian
-
-rhaleblian = Ray Haleblian <rayh23@sourceforge.net>
-rayh23 = Ray Haleblian <ray23@sourceforge.net>
-sstangl = Sean Stangl <sstangl@sourceforge.net>
-ken_vh = Ken Van Hoeylandt <ken_vh@sourceforge.net>
-aerial = Aaron Lindsay <aerial@sourceforge.net>
-keishava = Keishava Arata <keishava@sourceforge.net>
 
