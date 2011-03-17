@@ -50,12 +50,14 @@ public:
 	Page* AppendPage();
 	Page* AdvancePage();
 	Page* RetreatPage();
+	void Cache();
 	void Close();
 	u8   Index();
 	void IndexHTML();
 	u8   Open();
 	u8   Parse(bool fulltext);
 	int  ParseHTML();
+	void Restore();
 };
 
 #endif

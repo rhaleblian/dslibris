@@ -37,7 +37,10 @@ class Page {
 	Page(Book *b);
 	Page(Book *b, Text *t);
 	~Page();
-	u8 SetBuffer(u8 *src, u16 len); //! Copy src to buf for len bytes.
+	u8*  GetBuffer() { return buf; }
+	int  GetLength() { return length; }
+	u8   SetBuffer(u8 *src, u16 len); //! Copy src to buf for len bytes.
+	void Cache(FILE *fp);
 //	void Draw();
 	void Draw(Text *ts);
 };

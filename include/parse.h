@@ -35,6 +35,7 @@ typedef struct {
 	int screen;
 	FT_Vector pen;
 	u8 buf[PAGEBUFSIZE];
+	FILE *cachefile;
 	int buflen;
 	//! Our total parse position in terms of cooked text.
 	int pos;

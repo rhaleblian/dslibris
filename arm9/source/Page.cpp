@@ -45,6 +45,12 @@ u8 Page::SetBuffer(u8 *src, u16 len)
 	return 0;
 }
 
+void Page::Cache(FILE *fp)
+{
+	if(!buf) return;
+	fwrite((const char*)buf, 1, strlen((char*)buf), fp);
+}
+
 #if 0
 void Page::Draw()
 {

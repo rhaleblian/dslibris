@@ -243,6 +243,7 @@ void App::parse_init(parsedata_t *data)
 	data->bold = false;
 	data->italic = false;
 	strcpy((char*)data->buf,"");
+	data->cachefile = NULL;
 	data->buflen = 0;
 	data->status = 0;
 }
