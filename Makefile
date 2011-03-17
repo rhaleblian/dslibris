@@ -1,8 +1,30 @@
+#
+#
+# dslibris - an ebook reader for the Nintendo DS.
+#
+#  Copyright (C) 2007-2010 Ray Haleblian (ray23@sourceforge.net)
+#
+#This program is free software; you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation; either version 2 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
+#
+
 #-------------------------------------------------------------------------------
 .SUFFIXES:
 #-------------------------------------------------------------------------------
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Set DEVKITARM in your environment.")
+	$(error "Set DEVKITARM in your environment.")
 endif
 
 include $(DEVKITARM)/ds_rules
@@ -10,19 +32,19 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
 
-# Mount point for cflash image.
-MEDIAROOT			:=	/media/SANDISK/
-# MEDIATYPE should match a DLDI driver name.
-MEDIATYPE			:=	cyclods
-# Location of desmume.
-EMULATOR			:=	../desmume/trunk/src/cli/desmume-cli
-# Filename of cflash image.
-CFLASH_IMAGE		:=	cflash.dmg
-
 #-------------------------------------------------------------------------------
 # path to tools
 #-------------------------------------------------------------------------------
-export PATH		:=	$(DEVKITARM)/bin:$(PATH)
+export PATH			:=	$(DEVKITARM)/bin:$(PATH)
+
+# MEDIATYPE should match a DLDI driver name.
+MEDIATYPE			:=	mpcf
+
+#-------------------------------------------------------------------------------
+# Device emulation.
+#-------------------------------------------------------------------------------
+# Location of desmume.
+EMULATOR			:=	desmume-cli
 
 .PHONY: $(TARGET).arm7 $(TARGET).arm9
 
@@ -34,7 +56,9 @@ $(TARGET).ds.gba	: $(TARGET).nds
 
 #-------------------------------------------------------------------------------
 $(TARGET).nds		: $(TARGET).arm7 $(TARGET).arm9
-	ndstool -b data/icon.bmp "dslibris;an ebook reader;for the Nintendo DS" -c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
+	ndstool -b data/icon.bmp \
+	"dslibris;an ebook reader;for the Nintendo DS" \
+	-c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
 
 #-------------------------------------------------------------------------------
 $(TARGET).arm7		: arm7/$(TARGET).elf
@@ -54,19 +78,17 @@ clean:
 	$(MAKE) -C arm7 clean
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
 
-# run under emulator with an image file.
+#-------------------------------------------------------------------------------
+# Platform specifics.
+#-------------------------------------------------------------------------------
+include Makefile.$(shell uname)
+
+# Run under emulator with an image file.
+# Use a post-0.9.6 desmume that DLDI-autopatches.
 test: $(TARGET).nds
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) $(TARGET).nds
 
-#create a cflash image for use with desmume.
-cflash.img:
-	dd if=/dev/zero of=cflash.img bs=1048576 count=64
-	/sbin/mkfs.vfat cflash.img
-
-cflash.dmg:
-	hdiutil create -megabytes 64 -fs MS-DOS -volname cflash cflash.dmg
-
-# debug target with insight and desmume under linux
+# Debug target with insight and desmume under linux
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/$(TARGET).arm9.elf &
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
@@ -76,25 +98,25 @@ debug7: $(TARGET).nds
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm7gdb=20001 $(TARGET).nds &
 
 gdb: $(TARGET).nds
-	$(EMULATOR) --arm9gdb=20000 --arm7gdb=20001 $(TARGET).nds &
+	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
 	sleep 4
-	arm-eabi-gdb -x gdb.commands arm9/$(TARGET).arm9.elf
+	arm-eabi-gdb -x data/gdb.commands arm9/$(TARGET).arm9.elf
 
 # make DLDI patched target
 $(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
 	cp dslibris.nds dslibris.$(MEDIATYPE).nds
-	dlditool $(MEDIATYPE).dldi dslibris.$(MEDIATYPE).nds
+	dlditool data/dldi/$(MEDIATYPE).dldi dslibris.$(MEDIATYPE).nds
 
 dldi: $(TARGET).$(MEDIATYPE).nds
 
-# copy target to mounted microSD at $(MEDIAROOT)
+# copy target to mounted microSD at $(MEDIA_MOUNTPOINT)
 install: $(TARGET).nds
-	cp $(TARGET).nds $(MEDIAROOT)
+	cp $(TARGET).nds $(MEDIA_MOUNTPOINT)
 	sync
 
 # installation including DLDI patching.
 install-dldi: $(TARGET).$(MEDIATYPE).nds
-	cp $(TARGET).$(MEDIATYPE).nds $(MEDIAROOT)
+	cp $(TARGET).$(MEDIATYPE).nds $(MEDIA_MOUNTPOINT)/$(TARGET).nds
 	sync
 
 doc: Doxyfile
@@ -112,21 +134,7 @@ dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	cp data/font/*.ttf dist/font
 	- mkdir dist/book	
 	cp data/book/dslibris.xht dist/book
-	(cd dist; zip -r dslibris.zip *)
+	(cd dist; zip -r $(TARGET).zip *)
 
 dist: dist/$(TARGET).zip
-
-mount:
-	- mkdir media
-	chmod a+w media
-	sudo mount -t vfat -o loop -o rw,uid=$(USER),gid=$(USER) media.img media
-
-umount:
-	sync
-	- sudo umount media
-	- rmdir media
-
-eject:
-	sync
-	- umount $(MEDIAROOT)
 
