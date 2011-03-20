@@ -654,7 +654,8 @@ void end_hndl(void *data, const char *el)
 					// Copy in buffered char data into a new page.
 					Page *page = p->book->AppendPage();
 					page->SetBuffer(p->buf, p->buflen);
-					WriteBufferToCache(p);
+					if (app->cache)
+						WriteBufferToCache(p);
 					p->buflen = 0;
 					if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
 					if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;
@@ -672,7 +673,8 @@ void end_hndl(void *data, const char *el)
 		// Save off our last page.
 		Page *page = p->book->AppendPage();
 		page->SetBuffer(p->buf,p->buflen);
-		WriteBufferToCache(p);
+		if (app->cache)
+			WriteBufferToCache(p);
 		p->buflen = 0;
 		if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
 		if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;

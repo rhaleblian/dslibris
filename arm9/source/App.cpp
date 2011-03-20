@@ -36,6 +36,7 @@ App::App()
 	mode = APP_MODE_BROWSER;
 	browserstart = 0;
 
+	cache = false;
 	console = false;
 	orientation = false;
 	paraspacing = 1;
