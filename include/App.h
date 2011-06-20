@@ -72,6 +72,10 @@ http://sourceforge.net/projects/ndslibris
 #include <nds.h>
 #include <expat.h>
 #include <unistd.h>
+#include <DSGUI/BGUI.h>
+#include <DSGUI/BImage.h>
+#include <DSGUI/BScreen.h>
+#include <DSGUI/BProgressBar.h>
 
 #include "Book.h"
 #include "Button.h"
@@ -115,24 +119,28 @@ class App {
 	void WifiInit();
 	bool WifiConnect();
 	void Fatal(const char *msg);
+	bool swap, screen;
+	u16 *fb[2];      //! pointers to offscreen buffers.
 
 	public:
-	Text *ts;
+	Text *ts;        //! pointer to Text singleton.
 	Prefs myprefs;   //?
 	Prefs *prefs;    //?
 	u8 brightness;   //! 4 levels for the Lite.
 	u8 mode; 	     //! Are we in book or browser mode?
 	string fontdir;  //! Default location to search for TTFs.
 	bool console;    //! Can we print to console at the moment?
-	
+	u16 palette[256];
+
 	//! key functions are remappable to support screen flipping.
 	struct {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
-		uint32 downrepeat;
 	} key;
 	
 	vector<Button*> buttons;
-	Button buttonprev, buttonnext, buttonprefs; //! Buttons on browser bottom.
+	Button buttonprev,
+		buttonnext,
+		buttonprefs; //! Buttons on browser bottom.
 	//! index into book vector denoting first book visible on library screen. 
 	u8 browserstart; 
 	string bookdir;  //! Search here for XHTML.
@@ -144,8 +152,6 @@ class App {
 	Book* bookcurrent;
 	//! reopen book from last session on startup?
 	bool reopen;
-	//! Write baked text to cache?
-	bool cache;
 	//! user data block passed to expat callbacks.
 	parsedata_t parsedata;
 	//! not used yet; will contain pagination indices for caching.
@@ -167,9 +173,9 @@ class App {
 	unsigned int fontPage;
 	vector<Button*>fontButtons;
 
-	//BImage *image0;
-	//BScreen *bscreen0;
-	//BProgressBar *progressbar;
+	BImage *image0;
+	BScreen *bscreen0;
+	BProgressBar *progressbar;
 
 	App();
 	~App();
@@ -190,6 +196,10 @@ class App {
 	context_t parse_pop(parsedata_t *data);
 	void parse_error(XML_ParserStruct *ps);
 	void parse_push(parsedata_t *data, context_t context);
+	u16* GetBuffer();
+	void SwapBuffers();
+	bool GetScreen();
+	void SetScreen(bool);
 
 	//! in App_Browser.cpp
 	void HandleEventInBrowser();

@@ -45,12 +45,6 @@ u8 Page::SetBuffer(u8 *src, u16 len)
 	return 0;
 }
 
-void Page::Cache(FILE *fp)
-{
-	if(!buf) return;
-	fwrite((const char*)buf, 1, strlen((char*)buf), fp);
-}
-
 #if 0
 void Page::Draw()
 {
@@ -62,11 +56,11 @@ void Page::Draw()
 void Page::Draw(Text *ts)
 {
 	//! Write directly to video memory, for both screens.
-	ts->SetScreen(ts->screenleft);
+	ts->SetScreen(1);
 	ts->ClearScreen();
-	ts->SetScreen(ts->screenright);
+	ts->SetScreen(0);
 	ts->ClearScreen();
-	ts->SetScreen(ts->screenleft);
+	ts->SetScreen(1);
 	ts->InitPen();
 	ts->linebegan = false;
 	ts->italic = false;
@@ -84,8 +78,8 @@ void Page::Draw(Text *ts)
 			if (ts->GetPenY() + ts->GetHeight() + ts->linespacing 
 				> ts->display.height - ts->margin.bottom)
 			{
-				if(ts->GetScreen() == ts->screenleft) {
-					ts->SetScreen(ts->screenright);
+				if(ts->GetScreen()) {
+					ts->SetScreen(0);
 					ts->InitPen();
 					ts->linebegan = false;
 				}
@@ -176,7 +170,7 @@ void Page::DrawNumber(Text *ts)
 		location = ts->margin.left
 			+ (int)((float)region * (float)pagecurrent / (float)(pagecount-1));
 
-	ts->SetScreen(ts->screenright);
+	ts->SetScreen(0);
 	ts->SetPen((u8)location,250);
 	ts->PrintString(msg);
 }

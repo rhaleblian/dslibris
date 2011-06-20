@@ -79,7 +79,8 @@ void Button::Draw(u16 *fb, bool highlight) {
 		}
 	}
 
-	u16 bordercolor = RGB15(22,22,22) | BIT(15);
+	//u16 bordercolor = RGB15(22,22,22) | BIT(15);
+	u8 bordercolor = 0;
 	for (x=ul.x;x<lr.x;x++) {
 		fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
 		fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
@@ -90,7 +91,6 @@ void Button::Draw(u16 *fb, bool highlight) {
 	}
 
 	bool invert = ts->GetInvert();
-	ts->SetScreen(fb);
 	ts->SetInvert(false);
 	ts->GetPen(&x,&y);
 

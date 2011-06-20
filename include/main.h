@@ -40,13 +40,13 @@
 
 #define FONTDIR "/font/"
 #define BOOKDIR "/book/"
-#define PREFSPATH "/dslibris.xml"
+#define PREFSPATH "dslibris.xml"
 #define FONTFILEPATH "/font/LiberationSerif-Regular.ttf"
 #define FONTBOLDFILEPATH "/font/LiberationSerif-Bold.ttf"
 #define FONTITALICFILEPATH "/font/LiberationSerif-Italic.ttf"
 #define FONTBROWSERFILEPATH "/font/LiberationSans-Regular.ttf"
 #define FONTSPLASHFILEPATH "/font/LiberationSans-Regular.ttf"
-#define LOGFILEPATH "/dslibris.log"
+#define LOGFILEPATH "dslibris.log"
 
 //! For drawing splash screen.
 int getSize(uint8 *source, uint16 *dest, uint32 arg);

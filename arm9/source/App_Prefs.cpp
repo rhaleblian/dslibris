@@ -9,8 +9,10 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <nds/bios.h>
+#include <nds/registers_alt.h>
+#include <nds/reload.h>
 
+#include "ndsx_brightness.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
@@ -112,27 +114,27 @@ void App::PrefsDraw(bool redraw)
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
-	u16* screen = ts->GetScreen();
+	bool iscreen = GetScreen();
 	int style = ts->GetStyle();
 	
-	ts->SetScreen(ts->screenright);
+	SetScreen(0);
 	ts->SetInvert(false);
 	ts->SetStyle(TEXT_STYLE_BROWSER);
 	if (redraw) ts->ClearScreen();
 	ts->SetPixelSize(PIXELSIZE);
 	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
 	{
-		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
+		prefsButtons[i]->Draw(GetBuffer(), i == prefsSelected);
 	}
 	
 	buttonprefs.Label("return");
-	buttonprefs.Draw(ts->screenright, false);
+	buttonprefs.Draw(GetBuffer(), false);
 
 	// restore state.
 	ts->SetStyle(style);
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
-	ts->SetScreen(screen);
+	SetScreen(iscreen);
 }
 
 void App::HandleEventInPrefs()
@@ -154,8 +156,7 @@ void App::HandleEventInPrefs()
 		CycleBrightness();
 		prefs->Write();
 	} else if (keysDown() & KEY_TOUCH) {
-		touchPosition touch;
-		touchRead(&touch);
+		touchPosition touch = touchReadXY();
 		touchPosition coord;
 		u8 regionprev[2];
 		regionprev[0] = 0;
@@ -268,7 +269,7 @@ void App::PrefsButton()
 		mode = APP_MODE_PREFS_FONT_ITALIC;
 	}
 	PrintStatus("[loading fonts...]");
-	ts->SetScreen(ts->screenright);
+	SetScreen(1);
 	ts->ClearScreen();
 	FontInit();
 	FontDraw();

@@ -167,7 +167,6 @@ public:
 	//! Not used ... really.
 	struct { u8 r; u8 g; u8 b; } bgcolor;
 	bool usebgcolor;
-	u16 *screen, *screenleft, *screenright;
 	struct {
 		int left, right, top, bottom;
 	} margin;
@@ -213,7 +212,7 @@ public:
 	void SetPixelSize(u8 size);
 	bool SetFace(u8 style);
 	void SetFontFile(const char *filename, u8 style);
-	void SetScreen(u16 *s);
+	void SetScreen(bool s);
 	inline void SetStyle(int astyle) { style = astyle; face = faces[style]; }
 	
 	void ClearCache();

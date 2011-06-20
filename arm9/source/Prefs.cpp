@@ -11,9 +11,10 @@
 #define PARSEBUFSIZE 1024*64
 
 Prefs::Prefs() {
-	Init();
+	modtime = 0;  // fill this in with gettimeofday()
+	swapshoulder = FALSE;
 }
-Prefs::Prefs(App *parent) { Init(); app = parent; }
+Prefs::Prefs(App *parent) { Prefs::Prefs(); app = parent; }
 Prefs::~Prefs() {}
 
 //! \return 0: success, 255: file open failure, 254: no bytes read, 253: parse failure.
@@ -119,9 +120,4 @@ int Prefs::Write()
 	fclose(fp);
 
 	return err;
-}
-
-void Prefs::Init(){
-	modtime = 0;  // fill this in with gettimeofday()
-	swapshoulder = FALSE;
 }

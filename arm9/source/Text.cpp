@@ -48,9 +48,6 @@ Text::Text()
 	linebegan = false;
 	linespacing = 0;
 	pixelsize = PIXELSIZE;
-	screenleft = (u16*)BG_BMP_RAM_SUB(0);
-	screenright = (u16*)BG_BMP_RAM(0);
-	screen = screenleft;
 	style = TEXT_STYLE_NORMAL;
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
@@ -151,7 +148,6 @@ int Text::InitDefault(void) {
 		faces[iter->first] = face;
 	}
 	
-	screen = screenleft;
 	ClearCache();
 	InitPen();
 	ftc = false;
@@ -304,12 +300,15 @@ void Text::ClearCache(FT_Face face)
 
 void Text::ClearScreen()
 {
+	u16 *screen = app->GetBuffer();
 	if(invert) memset((void*)screen,0,PAGE_WIDTH*PAGE_HEIGHT*4);
 	else memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
+	app->SwapBuffers();
 }
 
 void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 {
+	u16 *screen = app->GetBuffer();
 	u16 clearcolor;
 	if(invert) clearcolor = RGB15(0,0,0) | BIT(15);
 	else clearcolor = RGB15(31,31,31) | BIT(15);
@@ -321,6 +320,7 @@ void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 			screen[y*display.height+x] = clearcolor;
 		}
 	}
+	app->SwapBuffers();
 }
 
 u8 Text::GetStringWidth(const char *txt, u8 style)
@@ -410,7 +410,7 @@ u8 Text::GetPixelSize()
 
 u16* Text::GetScreen()
 {
-	return screen;
+	return app->GetBuffer();
 }
 
 void Text::SetPixelSize(u8 size)
@@ -432,9 +432,9 @@ void Text::SetPixelSize(u8 size)
 	ClearCache();
 }
 
-void Text::SetScreen(u16 *inscreen)
+void Text::SetScreen(bool i)
 {
-	screen = inscreen;
+	app->SetScreen(i);
 }
 
 u8 Text::GetAdvance(u32 ucs) {
@@ -564,7 +564,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 #endif
 
 	// render to framebuffer.
-
+	u16 *screen = app->GetBuffer();
 	u16 gx, gy;
 	for (gy=0; gy<height; gy++) {
 		for (gx=0; gx<width; gx++) {
@@ -579,17 +579,22 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 					g = (bgcolor.g * alpha);
 					b = (bgcolor.b * alpha);
 					screen[sy*display.height+sx]
-						= RGB15(r/256,g/256,b/256) | BIT(15);
+					//	= RGB15(r/256,g/256,b/256) | BIT(15);
+						= a;
 				} else {
 					u8 l;
 					if (invert) l = a >> 3;
 					else l = (255-a) >> 3;
 #ifdef DEBUG_CACHE
 					if(!hit) 
-						screen[sy*display.height+sx] = RGB15(l,0,0) | BIT(15);
+						screen[sy*display.height+sx]
+							//= RGB15(l,0,0) | BIT(15);
+							= a;
 					else
 #endif
-						screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
+						screen[sy*display.height+sx]
+							//= RGB15(l,l,l) | BIT(15);
+							= a;
 				}
 			}
 		}
@@ -604,9 +609,9 @@ bool Text::PrintNewLine(void) {
 	int height = GetHeight();
 	int y = pen.y + height + linespacing;
 	if (y > (display.height - margin.bottom)) {
-		if (screen == screenleft)
+		if (app->GetScreen())
 		{
-			screen = screenright;
+			app->SetScreen(0);
 			pen.y = margin.top + height;
 			return true;
 		}
@@ -661,42 +666,46 @@ void Text::PrintStatusMessage(const char *msg)
 	//! Render a one-liner message on the left screen.
 	u16 x,y;
 	GetPen(&x,&y);
-	u16 *s = screen;
+	bool s = app->GetScreen();
 	int ps = GetPixelSize();
 	bool invert = GetInvert();
 	
-	screen = screenleft;
+	app->SetScreen(1);
 	SetInvert(false);
-	SetPixelSize(10);
+	SetPixelSize(8);
 	SetPen(10,16);
 	PrintString(msg);
 
 	SetInvert(invert);
 	SetPixelSize(ps);
-	screen = s;
+	app->SetScreen(s);
 	SetPen(x,y);
 }
 
 void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 {
+	u16 *fb = app->GetBuffer();
 	for (int i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++)
-		screen[i] = RGB15(r,g,b) | BIT(15);
+		//fb[i] = RGB15(r,g,b) | BIT(15);
+		fb[i] = 255;
+	app->SwapBuffers();
 }
 
 void Text::PrintSplash(u16 *screen)
 {
 	u8 size = GetPixelSize();
-	u16* s = GetScreen();
+	bool s = app->GetScreen();
 	
-	SetScreen(screen);
-	drawstack(screen);
+	app->SetScreen(1);
+	drawstack(app->GetBuffer());
 	char msg[16];
 	sprintf(msg,"%s",VERSION);
 	PrintStatusMessage(msg);
 	
+	app->SwapBuffers();
 	SetPixelSize(size);
 	SetInvert(invert);
-	SetScreen(s);
+	app->SetScreen(s);
 	
 	swiWaitForVBlank();
 }

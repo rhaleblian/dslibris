@@ -9,9 +9,10 @@
 #include <expat.h>
 
 #include <fat.h>
-#include <nds/bios.h>
+#include <nds/registers_alt.h>
+#include <nds/reload.h>
 
-//#include "ndsx_brightness.h"
+#include "ndsx_brightness.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
@@ -27,7 +28,12 @@ void App::HandleEventInBrowser()
 {
 	uint32 keys = keysDown();
 	
-	if (keys & (KEY_A | key.down))
+	if (keys & KEY_A)
+	{
+		AttemptBookOpen();
+	}
+	
+	else if (keys & key.down)
 	{
 		AttemptBookOpen();
 	}
@@ -57,7 +63,8 @@ void App::HandleEventInBrowser()
 				browser_nextpage();
 				browser_draw();
 			} else {
-				browser_redraw();
+				//browser_redraw();
+				browser_draw();
 			}
 		}
 	}
@@ -74,8 +81,9 @@ void App::HandleEventInBrowser()
 				browser_prevpage();
 				browser_draw();
 			} else {
-				browser_redraw();
-			}	
+				//browser_redraw();
+				browser_draw();
+			}
 		}
 	}
 
@@ -93,10 +101,9 @@ void App::HandleEventInBrowser()
 #endif
 	}
 
-	else if (keysHeld() & KEY_TOUCH)
+	else if (keys & KEY_TOUCH)
 	{
-		touchPosition touch;
-		touchRead(&touch);
+		touchPosition touch = touchReadXY();
 		touchPosition coord;
 
 		// Transform point according to screen orientation.
@@ -208,10 +215,11 @@ void App::browser_draw(void)
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
- 	u16 *screen = ts->GetScreen();
+ 	bool s = GetScreen();
 	int style = ts->GetStyle();
 	
-	ts->SetScreen(ts->screenright);
+	//SetScreen(1);
+	ts->InitPen();
 	ts->SetInvert(false);
 	ts->ClearScreen();
 	ts->SetStyle(TEXT_STYLE_BROWSER);
@@ -220,20 +228,22 @@ void App::browser_draw(void)
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 		i++)
 	{
-		buttons[i]->Draw(ts->screenright,books[i]==bookselected);
+		buttons[i]->Draw(GetBuffer(),books[i]==bookselected);
 	}
 	
 	if(browserstart >= APP_BROWSER_BUTTON_COUNT)
-		buttonprev.Draw(ts->screenright,false);
+		buttonprev.Draw(GetBuffer(),false);
 	if(bookcount > browserstart+APP_BROWSER_BUTTON_COUNT)
-		buttonnext.Draw(ts->screenright,false);
+		buttonnext.Draw(GetBuffer(),false);
 
-	buttonprefs.Draw(ts->screenright,false);
+	buttonprefs.Draw(GetBuffer(),false);
+
+	SwapBuffers();
 
 	// restore state.
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
-	ts->SetScreen(screen);
+	SetScreen(s);
 	ts->SetStyle(style);
 }
 
@@ -248,17 +258,20 @@ void App::browser_redraw()
 	u8 size = ts->GetPixelSize();
 	int style = ts->GetStyle();
 	
-	ts->SetScreen(ts->screenright);
+	SetScreen(1);
+	ts->InitPen();
 	ts->SetInvert(false);
 	ts->SetPixelSize(PIXELSIZE);
 	ts->SetStyle(TEXT_STYLE_BROWSER);
 	int b = GetBookIndex(bookselected);
-	buttons[b]->Draw(ts->screenright,true);
+	buttons[b]->Draw(GetBuffer(),true);
 	if(b > browserstart)
-		buttons[b-1]->Draw(ts->screenright,false);
+		buttons[b-1]->Draw(GetBuffer(),false);
 	if(b < bookcount-1 &&
 		(b - browserstart) < APP_BROWSER_BUTTON_COUNT-1)
-		buttons[b+1]->Draw(ts->screenright,false);
+		buttons[b+1]->Draw(GetBuffer(),false);
+
+	SwapBuffers();
 
 	// restore state.
 	ts->SetInvert(invert);
@@ -270,7 +283,6 @@ void App::AttemptBookOpen()
 {
 	if (!OpenBook()) {
 		mode = APP_MODE_BOOK;
-		//UpdateClock();
 	} else
 		browser_draw();
 }
