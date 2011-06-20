@@ -61,6 +61,8 @@ void Button::Resize(u16 x, u16 y) {
 }
 
 void Button::Draw(u16 *fb, bool highlight) {
+	//! Draw button, including borders and text.
+	
 	coord_t ul, lr;
 	ul.x = origin.x;
 	ul.y = origin.y;

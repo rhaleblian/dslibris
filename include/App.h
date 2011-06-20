@@ -144,8 +144,6 @@ class App {
 	Book* bookcurrent;
 	//! reopen book from last session on startup?
 	bool reopen;
-	//! Write baked text to cache?
-	bool cache;
 	//! user data block passed to expat callbacks.
 	parsedata_t parsedata;
 	//! not used yet; will contain pagination indices for caching.
