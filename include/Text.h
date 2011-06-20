@@ -13,7 +13,7 @@ using namespace std;
 //! Reference: FreeType2 online documentation
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 #define CACHESIZE 512
-#define PIXELSIZE 12
+#define PIXELSIZE 11
 //! Reference: http://www.displaymate.com/psp_ds_shootout.htm
 #define DPI 110
 #define TEXT_BOLD_ON 2
@@ -24,7 +24,8 @@ using namespace std;
 #define TEXT_STYLE_BOLD (u8)1
 #define TEXT_STYLE_ITALIC (u8)2
 #define TEXT_STYLE_BROWSER (u8)3
-#define TEXT_STYLE_SPLASH (u8)4
+#define TEXT_STYLE_BROWSER_BOLD (u8)4
+#define TEXT_STYLE_SPLASH (u8)5
 
 class App;
 
@@ -104,16 +105,11 @@ class Style {
 //! Typesetter singleton that provides all text rendering services.
 
 //! Implemented atop FreeType 2.
-//! Attempts to cache for performance,
-//! but the caching is now a bit broken
-//! since font styles were introduced.
 
 class Text {
 	FT_Library library;
 	FT_Error error;
 
-	//! Use the FreeType cache?
-	bool ftc;
 	TextCache cache;
 	TextFaceRec face_id;
 	FTC_SBit sbit;
@@ -123,14 +119,12 @@ class Text {
 	map<FT_Face, Cache*> textCache;
 	map<u8, FT_Face> faces;
 	map<u8, string> filenames;
-//	vector<Face> faces;
-//	map<u8, Face*> styles;
 	//! Current style, as TEXT_FONT_STYLE.
 	int style;
 	//! Current face.
 	FT_Face face;
 
-	//! Current draw position (in pixels?).
+	//! Current drawing position, in pixels.
 	FT_Vector pen;
 	//! Draw white text on black?
 	bool invert;
@@ -149,9 +143,10 @@ class Text {
 	int CacheGlyph(u32 ucs, FT_Face face);
 	int InitDefault();
 	int InitWithCacheManager();
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
+	//FT_GlyphSlot GetGlyph(u32 ucs, int flags);
+	//FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
+	//FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
+	FT_Error GetGlyph(u32 ucs, FT_Glyph *glyph);
 	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit);
 	FT_UInt GetGlyphIndex(u32 ucs);
 
@@ -163,7 +158,6 @@ class Text {
 	
 public:
 	App *app;
-	int pixelsize;
 	//! Not used ... really.
 	struct { u8 r; u8 g; u8 b; } bgcolor;
 	bool usebgcolor;
@@ -186,8 +180,6 @@ public:
 	~Text();
 	int  Init();
 	void InitPen(void);
-	void Begin();
-	void End();
 	
 	u8   GetAdvance(u32 ucs);
 	u8   GetAdvance(u32 ucs, u8 style);
@@ -202,19 +194,19 @@ public:
 	void GetPen(u16 &x, u16 &y);
 	u8   GetPenX();
 	u8   GetPenY();
-	u8   GetPixelSize();
+	inline int GetPixelSize() { return imagetype.height; }
 	u16* GetScreen();
 	int  GetStringAdvance(const char *txt);
 	u8   GetStringWidth(const char *txt, u8 style);
 	inline int GetStyle() { return style; }
 
-	void SetInvert(bool invert);
-	void SetPen(u16 x, u16 y);
-	void SetPixelSize(u8 size);
-	bool SetFace(u8 style);
+	int SetFace(u8 style);
 	void SetFontFile(const char *filename, u8 style);
+	void SetInvert(bool invert);
+	void SetPixelSize(int size);
+	void SetPen(u16 x, u16 y);
 	void SetScreen(u16 *s);
-	inline void SetStyle(int astyle) { style = astyle; face = faces[style]; }
+	inline void SetStyle(int astyle) { SetFace(astyle); }
 	
 	void ClearCache();
 	void ClearCache(u8 style);

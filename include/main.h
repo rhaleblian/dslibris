@@ -44,7 +44,8 @@
 #define FONTFILEPATH "/font/LiberationSerif-Regular.ttf"
 #define FONTBOLDFILEPATH "/font/LiberationSerif-Bold.ttf"
 #define FONTITALICFILEPATH "/font/LiberationSerif-Italic.ttf"
-#define FONTBROWSERFILEPATH "/font/LiberationSans-Regular.ttf"
+#define FONTBROWSERFILEPATH "/font/DejaVuSans.ttf"
+#define FONTBROWSERBOLDFILEPATH "/font/DejaVuSans-Bold.ttf"
 #define FONTSPLASHFILEPATH "/font/LiberationSans-Regular.ttf"
 #define LOGFILEPATH "/dslibris.log"
 

@@ -36,7 +36,6 @@ App::App()
 	mode = APP_MODE_BROWSER;
 	browserstart = 0;
 
-	cache = false;
 	console = false;
 	orientation = false;
 	paraspacing = 1;
@@ -106,20 +105,14 @@ int App::Run(void)
 
 	// Start up typesetter.
 
-   	int err = ts->Init();
+   	FT_Error err = ts->Init();
 	switch(err)
 	{
 		case 0:
 		sprintf(msg, "progr: typesetter started.\n");
 		break;
-		case 1:
-		sprintf(msg, "fatal: no FreeType (%d).\n", err);
-		break;
-		case 2:
-		sprintf(msg, "fatal: font not found (%d).\n",err);
-		break;
 		default:
-		sprintf(msg, "fatal: unknown typesetting error (%d).\n",err);
+		sprintf(msg, "fatal: typesetter (%d).\n",err);
 	}
 	Log(msg);
 	if(err) while(1) swiWaitForVBlank();
