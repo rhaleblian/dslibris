@@ -1,4 +1,3 @@
-# assumes desmume is sitting next to dslibris.
-cd ../desmume
+cd ../../desmume
 ./configure --prefix=/opt --enable-gdb-stub --enable-debug --target=arm-eabi
 
