@@ -1,3 +1,2 @@
-cd ../desmume
-./configure --prefix=/opt --enable-gdb-stub --enable-debug --target=arm-eabi
+./configure --prefix=/opt --enable-gdb-stub --enable-debug
 
