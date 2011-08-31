@@ -1,3 +1,24 @@
+/* 
+
+dslibris - an ebook reader for the Nintendo DS.
+
+ Copyright (C) 2007-2011 Ray Haleblian (ray23@sourceforge.net)
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+*/
 
 #include "App.h"
 
@@ -7,6 +28,7 @@
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <algorithm>   // for std::sort
 #include <fat.h>
 #include <nds/bios.h>
@@ -85,7 +107,8 @@ int App::Run(void)
 		iprintf("fatal: no filesystem.\n");
 		iprintf("info : DLDI patch?\n");
 		while(true) swiWaitForVBlank();
-	} else iprintf("progr: filesystem mounted.\n");
+	}
+	iprintf("progr: filesystem mounted.\n");
 
 	Log("----\nprogr: App starting up.\n");
 	console = true;
@@ -97,12 +120,13 @@ int App::Run(void)
 	{
 		sprintf(msg,"warn : can't read prefs (%d).\n",err);
 		Log(msg);
-		if(err == 255) {
+		if(err == 255)
+		{
 			Log("info : writing new prefs.\n");
 			prefs->Write();
 		}
-	} else
-		Log("progr: read prefs, bookdir is '%s'.\n",bookdir.c_str());
+	}
+	else Log("progr: read prefs, bookdir is '%s'.\n",bookdir.c_str());
 
 	// Start up typesetter.
 
@@ -131,20 +155,23 @@ int App::Run(void)
 	sprintf(msg,"info : scanning '%s' for books.\n",bookdir.c_str());
 	Log(msg);
 	
-	DIR_ITER *dp = diropen(bookdir.c_str());
+	DIR *dp = opendir(bookdir.c_str());
 	if (!dp)
 	{
 		sprintf(msg,"fatal: No book directory \'%s\'.\n",
 			bookdir.c_str());
 		Log(msg);
-	} else {
+	}
+	else
+	{
 		sprintf(msg,"progr: scanning '%s'.\n",bookdir.c_str());
 		Log(msg);
 	}
 	
-	char filename[MAXPATHLEN];
-	while(!dirnext(dp, filename, NULL))
+	struct dirent *ent;
+	while ((ent = readdir(dp)))
 	{
+		char *filename = ent->d_name;
 		sprintf(msg,"info : file: %s\n", filename);
 		Log(msg);
 		if(*filename == '.') continue;
@@ -189,7 +216,7 @@ int App::Run(void)
 			book->Index();
 		}
 	}
-	dirclose(dp);
+	closedir(dp);
 	sprintf(msg,"progr: %d books indexed.\n",bookcount);
 	Log(msg);
 
@@ -235,10 +262,6 @@ int App::Run(void)
 		key.r = tmp;
 	}
 
-//	BImage *topImg = new BImage(256, 192, (u8*)BG_BMP_RAM(0));	
-//	BScreen* topScreen = new BScreen(topImg);
-//	BGUI::get()->addScreen(topScreen);
-	
 	mode = APP_MODE_BROWSER;
 	ts->PrintSplash(ts->screenleft);
 	browser_draw();
@@ -334,7 +357,8 @@ void App::SetOrientation(bool flip)
 {
 	s16 s;
 	s16 c;
-	if(flip) {
+	if(flip)
+	{
 		s = 1 << 8;
 		c = 0;
 		REG_BG3X = 191 << 8;
@@ -402,11 +426,8 @@ void App::Log(const char *format, const char *msg)
 	fclose(logfile);
 }
 
-void App::InitScreens() {
-//	NDSX_SetBrightness_0();
-//	for(int b=0; b<brightness; b++)
-//		NDSX_SetBrightness_Next();
-
+void App::InitScreens()
+{
 	videoSetMode(MODE_5_2D);
 	vramSetBankA(VRAM_A_MAIN_BG);
 	bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
@@ -427,7 +448,8 @@ void App::Fatal(const char *msg)
 }
 
 
-void App::PrintStatus(const char *msg) {
+void App::PrintStatus(const char *msg)
+{
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
 	u8 pixelsize = ts->GetPixelSize();

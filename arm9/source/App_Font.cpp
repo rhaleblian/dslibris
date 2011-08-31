@@ -29,7 +29,7 @@
 
 void App::FontInit()
 {
-	DIR_ITER *dp = diropen(fontdir.c_str());
+	DIR *dp = opendir(fontdir.c_str());
 	if (!dp)
 	{
 		Log("fatal: no font directory.\n");
@@ -41,14 +41,13 @@ void App::FontInit()
 	fontSelected = 0;
 	fontButtons.clear();
 	
-	char filename[MAXPATHLEN];
-	struct stat st;
-	while(!dirnext(dp, filename, &st))
+	struct dirent *ent;
+	while ((ent = readdir(dp)))
 	{	
 		// Don't try folders
-		if (st.st_mode & S_IFDIR)
+		if (ent->d_type == DT_DIR)
 			continue;
-
+		char *filename = ent->d_name;
 		char *c;
 		for (c=filename; c != filename + strlen(filename) && *c != '.'; c++);
 		if (!stricmp(".ttf",c) || !stricmp(".otf",c) || !stricmp(".ttc",c))
@@ -60,7 +59,7 @@ void App::FontInit()
  			fontButtons.push_back(b);
 		}
 	}
-	dirclose(dp);
+	closedir(dp);
 }
 
 void App::HandleEventInFont()

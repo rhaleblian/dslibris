@@ -46,7 +46,8 @@ MEDIATYPE			:=	mpcf
 # Location of desmume.
 EMULATOR			:=	desmume-cli
 
-.PHONY: $(TARGET).arm7 $(TARGET).arm9
+.PHONY: $(TARGET).arm7 $(TARGET).arm9 \
+	browse debug debug7 dist dldi doc install install-dldi gdb
 
 #-------------------------------------------------------------------------------
 # main targets
@@ -84,11 +85,12 @@ clean:
 include Makefile.$(shell uname)
 
 # Run under emulator with an image file.
-# Use a post-0.9.6 desmume that DLDI-autopatches.
+# Use desmume 0.9.7+ with DLDI-autopatch.
 test: $(TARGET).nds
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) $(TARGET).nds
 
-# Debug target with insight and desmume under linux
+# Debug under emulation and arm-eabi-insight 6.8.1. Linux only.
+# First, build with 'DEBUG=1 make'
 debug: $(TARGET).nds
 	arm-eabi-insight arm9/$(TARGET).arm9.elf &
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
@@ -97,24 +99,25 @@ debug7: $(TARGET).nds
 	arm-eabi-insight arm7/$(TARGET).arm7.elf &
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm7gdb=20001 $(TARGET).nds &
 
+# Debug under emulation and arm-eabi-gdb.
 gdb: $(TARGET).nds
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
 	sleep 4
 	arm-eabi-gdb -x data/gdb.commands arm9/$(TARGET).arm9.elf
 
-# make DLDI patched target
+# Make DLDI patched target.
 $(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
 	cp dslibris.nds dslibris.$(MEDIATYPE).nds
 	dlditool data/dldi/$(MEDIATYPE).dldi dslibris.$(MEDIATYPE).nds
 
 dldi: $(TARGET).$(MEDIATYPE).nds
 
-# copy target to mounted microSD at $(MEDIA_MOUNTPOINT)
+# Copy target to mounted microSD at $(MEDIA_MOUNTPOINT)
 install: $(TARGET).nds
 	cp $(TARGET).nds $(MEDIA_MOUNTPOINT)
 	sync
 
-# installation including DLDI patching.
+# Installation as above, including DLDI patching.
 install-dldi: $(TARGET).$(MEDIATYPE).nds
 	cp $(TARGET).$(MEDIATYPE).nds $(MEDIA_MOUNTPOINT)/$(TARGET).nds
 	sync
@@ -125,7 +128,7 @@ doc: Doxyfile
 browse: doc
 	firefox doc/html/index.html
 
-# make an archive to release on Sourceforge
+# Make an archive to release on Sourceforge.
 dist/$(TARGET).zip: $(TARGET).nds INSTALL.txt
 	- mkdir dist
 	- rm -r dist/*
