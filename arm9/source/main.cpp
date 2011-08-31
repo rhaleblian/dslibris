@@ -88,14 +88,6 @@ u8 GetParserFace(parsedata_t *pdata)
 		return TEXT_STYLE_NORMAL;
 }
 
-void WriteBufferToCache(parsedata_t *pdata)
-{
-	// Only cache if we are laying out text.
-	//	if (pdata->cachefile && pdata->status) {
-	//		fwrite(pdata->buf, 1, pdata->buflen, pdata->cachefile);
-	//}
-}
-
 void prefs_start_hndl(	void *data,
 						const XML_Char *name,
 						const XML_Char **attr)
@@ -151,7 +143,7 @@ void prefs_start_hndl(	void *data,
 		for(i=0;attr[i];i+=2)
 		{
 			if(!strcmp(attr[i],"size"))
-				app->ts->pixelsize = atoi(attr[i+1]);
+				app->ts->SetPixelSize(atoi(attr[i+1]));
 			else if(!strcmp(attr[i],"normal"))
 				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_NORMAL);
 			else if(!strcmp(attr[i],"bold"))
@@ -654,8 +646,6 @@ void end_hndl(void *data, const char *el)
 					// Copy in buffered char data into a new page.
 					Page *page = p->book->AppendPage();
 					page->SetBuffer(p->buf, p->buflen);
-					if (app->cache)
-						WriteBufferToCache(p);
 					p->buflen = 0;
 					if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
 					if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;
@@ -673,8 +663,6 @@ void end_hndl(void *data, const char *el)
 		// Save off our last page.
 		Page *page = p->book->AppendPage();
 		page->SetBuffer(p->buf,p->buflen);
-		if (app->cache)
-			WriteBufferToCache(p);
 		p->buflen = 0;
 		if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
 		if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;

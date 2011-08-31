@@ -28,7 +28,7 @@ ARCH	:=	-mthumb -mthumb-interwork -mcpu=arm9tdmi -mtune=arm9tdmi
 
 CFLAGS	:=	-Wall -fomit-frame-pointer \
 		-ffast-math $(ARCH) $(INCLUDE) -DARM9
-ifeq ($(DEBUG),1)
+ifeq ($(debug),1)
 	CFLAGS += -g
 else
 	CFLAGS += -O2

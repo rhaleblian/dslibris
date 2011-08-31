@@ -206,16 +206,16 @@ void App::browser_prevpage()
 void App::browser_draw(void)
 {
 	// save state.
-	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
- 	u16 *screen = ts->GetScreen();
 	int style = ts->GetStyle();
+ 	u16 *screen = ts->GetScreen();
+	bool invert = ts->GetInvert();
 	
+	//ts->SetPixelSize(PIXELSIZE);
+	//ts->SetFace(TEXT_STYLE_BROWSER);
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->ClearScreen();
-	ts->SetStyle(TEXT_STYLE_BROWSER);
-	ts->SetPixelSize(PIXELSIZE);
 	for (int i=browserstart;
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 		i++)
@@ -232,26 +232,28 @@ void App::browser_draw(void)
 
 	// restore state.
 	ts->SetInvert(invert);
-	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
-	ts->SetStyle(style);
+	ts->SetFace(style);
+	ts->SetPixelSize(size);
 }
 
 void App::browser_redraw()
 {
 	//! Redraw all buttons visible in the browser.
-	// only call this when incrementing or decrementing the
-	// selected book; otherwise use browser_draw().
+	
+	//! Only call this when incrementing or decrementing the
+	//! selected book; otherwise use browser_draw().
 
 	// save state.
-	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 	int style = ts->GetStyle();
+ 	u16 *screen = ts->GetScreen();
+	bool invert = ts->GetInvert();
 	
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
-	ts->SetPixelSize(PIXELSIZE);
-	ts->SetStyle(TEXT_STYLE_BROWSER);
+	//ts->SetPixelSize(PIXELSIZE);
+	//ts->SetFace(TEXT_STYLE_BROWSER);
 	int b = GetBookIndex(bookselected);
 	buttons[b]->Draw(ts->screenright,true);
 	if(b > browserstart)
@@ -262,8 +264,9 @@ void App::browser_redraw()
 
 	// restore state.
 	ts->SetInvert(invert);
+	ts->SetScreen(screen);
+	ts->SetFace(style);
 	ts->SetPixelSize(size);
-	ts->SetStyle(style);
 }
 
 void App::AttemptBookOpen()

@@ -12,8 +12,8 @@ INSTALLATION
 2. Copy all files and folders in this distribution .zip to the root folder 
    of your DS media. Using a subfolder does not work!
 
-3. Put any EPUB you have into the 'book' folder.
-   The filenames should have an .epub extension.
+3. Put any XHTML you have into the 'book' folder.
+   The filenames should have an .xht or .xhtml extension.
 
 4. Run dslibris.nds on the DS.
 

@@ -156,49 +156,24 @@ Page* Book::RetreatPage()
 	return GetPage();
 }
 
-void Book::Cache()
-{
-	FILE *fp = fopen("/cache.dat", "w");
-	if (!fp) return;
-
-	int buflen = 0;
-	int pagecount = GetPageCount();
-	fprintf(fp, "%d\n", pagecount);
-	for(int i=0; i<pagecount; i++)	{
-		buflen += GetPage(i)->GetLength();
-		fprintf(fp, "%d\n", buflen);
-		GetPage(i)->Cache(fp);
-	}
-	fclose(fp);
-}
-
 u8 Book::Open() {
 	int err = 0;
-
-	//	if( access( fname.c_str(), F_OK ) != -1 ) {
-	FILE *fp = fopen("/cache.dat", "r");
-	if (fp && app->cache) {
-		// Restore from cache.
-		fclose(fp);
-		Restore();
-	} else {
-		if(format == FORMAT_XHTML) {
-			app->PrintStatus("opening XHTML...\n");
-				err = Parse(true);
-		}
-		else if(format == FORMAT_EPUB) {
-			app->PrintStatus("opening EPUB...\n");
-			std::string path;
-			path.append(GetFolderName());
-			path.append(GetFileName());
-			err = epub(this,path,false);
-		} else
-			err = 255;
-		if (app->cache) Cache();
+	if(format == FORMAT_XHTML)
+	{
+	  app->PrintStatus("opening XHTML...\n");
+		err = Parse(true);
 	}
+	else if(format == FORMAT_EPUB)
+	{
+		app->PrintStatus("opening EPUB...\n");
+		std::string path;
+		path.append(GetFolderName());
+		path.append(GetFileName());
+		err = epub(this,path,false);
+	} else
+		err = 255;
 	if(!err)
 		if(position > (int)pages.size()) position = pages.size()-1;
-
 	return (u8)err;
 }
 
@@ -239,7 +214,6 @@ u8 Book::Parse(bool fulltext)
 	
 	parsedata_t parsedata;
 	app->parse_init(&parsedata);
-	parsedata.cachefile = fopen("/cache.dat", "w");
 	parsedata.book = this;
 	
 	XML_Parser p = XML_ParserCreate(NULL);
@@ -283,24 +257,7 @@ u8 Book::Parse(bool fulltext)
 	XML_ParserFree(p);
 	fclose(fp);
 	free(filebuf);
-
 	return(rc);
-}
-
-void Book::Restore()
-{
-	FILE *fp = fopen("/cache.dat", "r");
-	if( !fp ) return;
-
-	int len, pagecount;
-	u8 buf[BUFSIZE];
-
-	fscanf(fp, "%d\n", &pagecount);
-	for (int i=0; i<pagecount-1; i++) {
-		fscanf(fp, "%d\n", &len);
-		fread(buf, sizeof(char), len, fp);
-		GetPage(i)->SetBuffer(buf, len);
-	}
 }
 
 void Book::Close()
