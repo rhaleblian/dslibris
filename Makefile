@@ -47,7 +47,7 @@ MEDIATYPE			:=	mpcf
 EMULATOR			:=	desmume-cli
 
 .PHONY: $(TARGET).arm7 $(TARGET).arm9 \
-	browse debug debug7 dist dldi doc install install-dldi gdb
+	browse debug debug7 debug9 dist dldi doc install install-dldi gdb
 
 #-------------------------------------------------------------------------------
 # main targets
@@ -91,13 +91,15 @@ test: $(TARGET).nds
 
 # Debug under emulation and arm-eabi-insight 6.8.1. Linux only.
 # First, build with 'DEBUG=1 make'
-debug: $(TARGET).nds
+debug9: $(TARGET).nds
 	arm-eabi-insight arm9/$(TARGET).arm9.elf &
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
 
 debug7: $(TARGET).nds
 	arm-eabi-insight arm7/$(TARGET).arm7.elf &
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm7gdb=20001 $(TARGET).nds &
+
+debug:	debug9
 
 # Debug under emulation and arm-eabi-gdb.
 gdb: $(TARGET).nds
