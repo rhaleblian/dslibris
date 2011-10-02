@@ -26,11 +26,13 @@ INCLUDES	:=	../include build
 ARCH	:=	-mthumb -mthumb-interwork \
 		-mcpu=arm7tdmi -mtune=arm7tdmi
 		
-CFLAGS	:=	-O2 -Wformat=2 -Wall -Winline \
+CFLAGS	:=	-Wformat=2 -Wall -Winline \
 		-fomit-frame-pointer -ffast-math \
 		$(ARCH) $(INCLUDE) -DARM7 -DWIFI
 ifeq ($(debug),1)
 CFLAGS += -g
+else
+CFLAGS += -O2
 endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
