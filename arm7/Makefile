@@ -32,7 +32,7 @@ CFLAGS	:=	-Wformat=2 -Wall -Winline \
 ifeq ($(debug),1)
 CFLAGS += -g
 else
-CFLAGS += -O2
+CFLAGS += -O3
 endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
