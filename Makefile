@@ -103,7 +103,8 @@ debug:	debug9
 
 # Debug under emulation and arm-eabi-gdb.
 gdb: $(TARGET).nds
-	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
+	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) \
+	 --arm9gdb=20000 $(TARGET).nds &
 	sleep 4
 	arm-eabi-gdb -x data/gdb.commands arm9/$(TARGET).arm9.elf
 

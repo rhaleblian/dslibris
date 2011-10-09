@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "parse.h"
 
 App *app;
+char msg[256];
 
 /*---------------------------------------------------------------------------*/
 
@@ -255,17 +256,19 @@ void prefs_end_hndl(void *data, const char *name)
 	if (!stricmp(name,"book")) p->book = NULL;
 }
 
-//! If called, uhoh.
 int unknown_hndl(void *encodingHandlerData,
                  const XML_Char *name,
                  XML_Encoding *info)
 {
-	return(XML_STATUS_ERROR);
+	// noops!
+	strcpy(msg, "warn : encoding handler encountered, did nothing.");
+	app->Log(msg);
+	return 0;
 }
 
 void default_hndl(void *data, const XML_Char *s, int len)
 {
-	//! Fallback callback.
+	//! Fallback callback. NYUK!
 	
 #ifdef DEBUG
 	char msg[256];
