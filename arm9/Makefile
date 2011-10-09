@@ -23,15 +23,15 @@ DATA		:=	../data
 #-----------------------------------------------------------------------
 # options for code generation
 #-----------------------------------------------------------------------
-#ARCH	:=	-mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s 
-ARCH	:=	-mthumb -mthumb-interwork -mcpu=arm9tdmi -mtune=arm9tdmi 
+ARCH	:=	-mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s 
+#ARCH	:=	-mthumb -mthumb-interwork -mcpu=arm9tdmi -mtune=arm9tdmi 
 
 CFLAGS	:=	-Wall -fomit-frame-pointer \
 		-ffast-math $(ARCH) $(INCLUDE) -DARM9
 ifeq ($(DEBUG),1)
 	CFLAGS += -g
 else
-	CFLAGS += -O3
+	CFLAGS += -O2
 endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
