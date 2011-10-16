@@ -25,14 +25,14 @@ INCLUDES	:=	../include build
 #-----------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork \
 		-mcpu=arm7tdmi -mtune=arm7tdmi
-		
+
 CFLAGS	:=	-Wformat=2 -Wall -Winline \
 		-fomit-frame-pointer -ffast-math \
-		$(ARCH) $(INCLUDE) -DARM7 -DWIFI
-ifeq ($(debug),1)
-CFLAGS += -g
+		$(ARCH) $(INCLUDE) -DARM7
+ifeq ($(DEBUG),1)
+CFLAGS +=	-g
 else
-CFLAGS += -O2
+CFLAGS +=	-O2
 endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
@@ -43,7 +43,7 @@ LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -mno-fpu -Wl,-Map,$(notdir $*.map)
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #-----------------------------------------------------------------------
-LIBS	:=  -ldswifi7 -lmm7 -lnds7
+LIBS	:=	-lmm7 -lnds7
 
 #-----------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
