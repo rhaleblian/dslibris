@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+#./configure --exec-prefix=/usr/local/arm-eabi --host=arm-eabi
+./configure --prefix=/usr/local/arch/arm-eabi --host=arm-eabi
+

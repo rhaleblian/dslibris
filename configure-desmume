@@ -1,3 +1,0 @@
-#./configure --prefix=/opt --enable-gdb-stub --enable-debug
-./configure --prefix=/opt --enable-gdb-stub
-
