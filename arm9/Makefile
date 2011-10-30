@@ -29,13 +29,9 @@ CFLAGS	:=	-Wall -fomit-frame-pointer \
 		-ffast-math $(ARCH) $(INCLUDE) -DARM9
 
 ifeq ($(DEBUG),1)
-CFLAGS += 	-g
+CFLAGS += 	-g -O2
 else
-<<<<<<< HEAD
-CFLAGS +=	-O2
-=======
 CFLAGS +=	-O3
->>>>>>> freetype
 endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
