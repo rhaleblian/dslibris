@@ -28,7 +28,7 @@ ARCH	:=	-mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s
 CFLAGS	:=	-Wall -fomit-frame-pointer \
 		-ffast-math $(ARCH) $(INCLUDE) -DARM9
 ifeq ($(DEBUG),1)
-CFLAGS += 	-g
+CFLAGS += 	-g -O2
 else
 CFLAGS +=	-O3
 endif
