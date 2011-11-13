@@ -108,7 +108,7 @@ gdb: $(TARGET).nds
 	sleep 4
 	arm-eabi-gdb -x data/gdb/commands arm9/$(TARGET).arm9.elf
 
-# Make DLDI patched target.
+# Make DLDI patched target.s
 $(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
 	cp dslibris.nds dslibris.$(MEDIATYPE).nds
 	dlditool data/dldi/$(MEDIATYPE).dldi dslibris.$(MEDIATYPE).nds
