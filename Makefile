@@ -44,7 +44,7 @@ MEDIATYPE			:=	mpcf
 # Device emulation.
 #-------------------------------------------------------------------------------
 # Location of desmume.
-EMULATOR			:=	desmume
+EMULATOR			:=	desmume-cli
 
 .PHONY: $(TARGET).arm7 $(TARGET).arm9 \
 	browse debug debug7 debug9 dist dldi doc install install-dldi gdb

@@ -29,7 +29,7 @@ CFLAGS	:=	-Wall -fomit-frame-pointer \
 		-ffast-math $(ARCH) $(INCLUDE) -DARM9
 
 ifeq ($(DEBUG),1)
-CFLAGS += 	-g -O2
+CFLAGS += 	-g
 else
 CFLAGS +=	-O3
 endif
