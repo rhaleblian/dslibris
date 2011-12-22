@@ -38,6 +38,8 @@ char msg[256];
 
 int main(void)
 {	
+	//defaultExceptionHandler();
+
 	// Get a console going.
 	consoleDemoInit();
 	iprintf("$ dslibris\n");
