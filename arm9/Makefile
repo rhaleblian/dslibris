@@ -17,7 +17,7 @@ include $(DEVKITARM)/ds_rules
 TARGET		:=	dslibris
 BUILD		:=	build
 SOURCES		:=	source
-INCLUDES	:=	../include ../include/freetype2
+INCLUDES	:=	../include
 DATA		:=	../data
 
 #-----------------------------------------------------------------------
@@ -27,10 +27,11 @@ ARCH	:=	-mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s
 
 CFLAGS	:=	-Wall -fomit-frame-pointer \
 		-ffast-math $(ARCH) $(INCLUDE) -DARM9
+
 ifeq ($(DEBUG),1)
 CFLAGS += 	-g
 else
-CFLAGS +=	-O2
+CFLAGS +=	-O3
 endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
@@ -48,7 +49,7 @@ LIBS	:= -lz -lfreetype -lexpat -lfat -lnds9
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-----------------------------------------------------------------------
-LIBDIRS	:=	 $(LIBNDS) $(CURDIR)/..
+LIBDIRS	:=	 $(LIBNDS) $(CURDIR)/.. /usr/local/arch/arm-eabi
 #-----------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add
 # additional rules for different file extensions
@@ -90,9 +91,10 @@ export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include -I$(dir)/include/nds) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/lib) \
-			-I$(CURDIR)/$(BUILD)
+			-I$(CURDIR)/$(BUILD) \
+			-I/usr/local/arch/arm-eabi/include/freetype2
 
-export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
 
 .PHONY: $(BUILD) export dldi test install
 
