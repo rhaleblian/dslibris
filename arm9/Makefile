@@ -3,14 +3,14 @@
 #-----------------------------------------------------------------------
 
 ifeq ($(strip $(DEVKITARM)),)
-$(error "DEVKITARM not in environment.")
+$(error "DEVKITARM is not in the shell environment.")
 endif
 
 include $(DEVKITARM)/ds_rules
 
 #-----------------------------------------------------------------------
 # TARGET is the name of the output
-# BUILD is the directory where object files & intermediate files will be placed
+# BUILD is the destination directory for object and intermediate files
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #-----------------------------------------------------------------------
@@ -86,15 +86,19 @@ endif
 
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 			$(PNGFILES:.png=.o) \
-			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+			$(CPPFILES:.cpp=.o) \
+			$(CFILES:.c=.o) \
+			$(SFILES:.s=.o)
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include -I$(dir)/include/nds) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/lib) \
 			-I$(CURDIR)/$(BUILD) \
-			-I/usr/local/arch/arm-eabi/include/freetype2
+			$(shell $(DEVKITARM)/arm-eabi/bin/freetype-config --cflags)
+		
 
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
+			$(shell $(DEVKITARM)/arm-eabi/bin/freetype-config --libs)
 
 .PHONY: $(BUILD) export dldi test install
 
