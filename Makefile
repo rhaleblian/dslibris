@@ -93,18 +93,18 @@ test: $(TARGET).nds
 # First, build with 'DEBUG=1 make'
 debug9: $(TARGET).nds
 	arm-eabi-insight arm9/$(TARGET).arm9.elf &
-	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20001 $(TARGET).nds &
+	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20009 $(TARGET).nds &
 
 debug7: $(TARGET).nds
 	arm-eabi-insight arm7/$(TARGET).arm7.elf &
-	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm7gdb=20001 $(TARGET).nds &
+	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm7gdb=20007 $(TARGET).nds &
 
 debug:	debug9
 
 # Debug under emulation and arm-eabi-gdb.
 gdb: $(TARGET).nds
 	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) \
-	 --arm9gdb=20001 $(TARGET).nds &
+	 --arm9gdb=20009 $(TARGET).nds &
 	sleep 4
 	arm-eabi-gdb -x data/gdb/commands arm9/$(TARGET).arm9.elf
 
