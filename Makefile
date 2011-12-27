@@ -80,7 +80,7 @@ clean:
 	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
 
 #-------------------------------------------------------------------------------
-# Platform specifics.
+# Build platform specifics.
 #-------------------------------------------------------------------------------
 include etc/Makefile.$(shell uname)
 
