@@ -82,7 +82,7 @@ clean:
 #-------------------------------------------------------------------------------
 # Platform specifics.
 #-------------------------------------------------------------------------------
-include Makefile.$(shell uname)
+include etc/Makefile.$(shell uname)
 
 # Run under emulator with an image file.
 # Use desmume 0.9.7+ with DLDI-autopatch.
