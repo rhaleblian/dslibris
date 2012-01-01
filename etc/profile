@@ -1,0 +1,4 @@
+export DEVKITPRO=/usr/local/devkitpro_r35
+export DEVKITARM=$DEVKITPRO/devkitARM
+export PATH=$PATH:$DEVKITARM/bin:/usr/local/bin
+
