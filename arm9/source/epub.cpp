@@ -127,10 +127,12 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 	char *filebuf = new char[BUFSIZE];
 	XML_Parser p = XML_ParserCreate(NULL);
 	if(epd->type == PARSE_CONTAINER) {
+		Log("progr: parse-container\n");
 		XML_SetUserData(p, epd);
 		XML_SetElementHandler(p, epub_container_start, NULL);
 	}
 	else if(epd->type == PARSE_ROOTFILE) {
+		Log("progr: parse-rootfile\n");
 		XML_SetUserData(p, epd);
 		XML_SetElementHandler(p, epub_rootfile_start, epub_rootfile_end);
 		XML_SetCharacterDataHandler(p, epub_rootfile_char);
@@ -149,6 +151,7 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 	enum XML_Status status;
 	do {
 		len = unzReadCurrentFile(uf,filebuf,BUFSIZE);
+		sprintf(msg,"progr: parsing %d byte chunk\n",len); Log(msg);
 		status = XML_Parse(p, filebuf, len, len == 0);
 		if (status == XML_STATUS_ERROR) {
 			sprintf(msg,"error: expat %d\n", status); Log(msg);
