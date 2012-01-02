@@ -30,7 +30,7 @@ CFLAGS	:=	-Wformat=2 -Wall -Winline \
 		-fomit-frame-pointer -ffast-math \
 		$(ARCH) $(INCLUDE) -DARM7
 ifeq ($(DEBUG),1)
-CFLAGS +=	-g -O2
+CFLAGS +=	-g
 else
 CFLAGS +=	-O2
 endif
