@@ -8,7 +8,12 @@ platforms. Have:
 
 * devkitPro r31, as per the Windows installer.
 * on Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
+* expat-2.0.1, freetype-2.4.3, and zlib-1.2.5, built for ARM EABI.
 * a media card and a DLDI patcher, but you knew that.
+
+To build expat, freetype and zlib, obtain the source tarball and see 
+etc/configure-* for working configure incantations. zlib requires modifying
+the Makefile for cross-compiling as well. Installation is into $DEVKITARM.
 
 BUILDING
 

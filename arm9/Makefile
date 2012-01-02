@@ -17,7 +17,7 @@ include $(DEVKITARM)/ds_rules
 TARGET		:=	dslibris
 BUILD		:=	build
 SOURCES		:=	source
-INCLUDES	:=	../include ../include/freetype2
+INCLUDES	:=	../include $(DEVKITARM)/include $(DEVKITARM)/include/freetype2
 DATA		:=	../data
 
 #-----------------------------------------------------------------------
@@ -87,7 +87,7 @@ export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 			$(PNGFILES:.png=.o) \
 			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include -I$(dir)/include/nds) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/lib) \
 			-I$(CURDIR)/$(BUILD)
