@@ -17,13 +17,10 @@ the Makefile for cross-compiling as well. Installation is into $DEVKITARM.
 
 BUILDING
 
-cd ndslibris/trunk  # or wherever you put your bzr branch
-make
+  cd ndslibris/trunk  # or wherever you put your bzr branch
+  make
 
 dslibris.nds should show up in your current directory.
- 
-Note the support libraries in 'lib', prebuilt for arm-eabi; make sure you 
-don't have conflicting libs in your path.
 
 INSTALLATION
 
