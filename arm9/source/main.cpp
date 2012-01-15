@@ -437,7 +437,7 @@ void start_hndl(void *data, const char *el, const char **attr)
 void char_hndl(void *data, const XML_Char *txt, int txtlen)
 {
 	//! reflow text on the fly, into page data structure.
-	
+
 	parsedata_t *p = (parsedata_t *)data;
 	//if (p->pagecount > 3) return;
 	if (app->parse_in(p,TAG_TITLE)) return;
