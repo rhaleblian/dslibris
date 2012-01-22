@@ -48,7 +48,7 @@ LIBS	:= -lz -lfreetype -lexpat -lfat -lnds9
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-----------------------------------------------------------------------
-LIBDIRS	:=	 $(LIBNDS) $(CURDIR)/..
+LIBDIRS	:=	 $(LIBNDS) $(DEVKITARM)
 #-----------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add
 # additional rules for different file extensions
