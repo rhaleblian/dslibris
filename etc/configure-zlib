@@ -1,0 +1,1 @@
+CC=arm-eabi-gcc CPP=arm-eabi-gcc -E ./configure --prefix=$DEVKITARM --eprefix=$DEVKITARM/arm-eabi --static
