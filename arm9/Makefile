@@ -17,7 +17,9 @@ include $(DEVKITARM)/ds_rules
 TARGET		:=	dslibris
 BUILD		:=	build
 SOURCES		:=	source
-INCLUDES	:=	../include $(DEVKITARM)/include $(DEVKITARM)/include/freetype2
+INCLUDES	:=	../../include \
+                        $(DEVKITARM)/include \
+                        $(DEVKITARM)/include/freetype2
 DATA		:=	../data
 
 #-----------------------------------------------------------------------
