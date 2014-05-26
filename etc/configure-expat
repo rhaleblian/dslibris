@@ -1,1 +1,1 @@
-./configure --host=arm-eabi --prefix=/usr/local/devkitpro_r35/devkitARM
+./configure --host=arm-eabi --prefix=$DEVKITARM
