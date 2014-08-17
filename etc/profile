@@ -1,4 +1,5 @@
-export DEVKITPRO=/usr/local/devkitpro_r35
+# Example environment setup for building devtools and dslibris.
+export DEVKITPRO=/usr/local/devkitpro/r35
 export DEVKITARM=$DEVKITPRO/devkitARM
-export PATH=$PATH:$DEVKITARM/bin:/usr/local/bin
+export PATH=$DEVKITARM/bin:$PATH
 
