@@ -1,1 +1,1 @@
-./configure --host=arm-eabi --prefix=$DEVKITARM
+./configure --host=arm-none-eabi --prefix=$DEVKITARM

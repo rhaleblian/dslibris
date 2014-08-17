@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
+#include <sys/param.h>
 #include <nds.h>
 #include <fat.h>
 #include "Text.h"

@@ -24,45 +24,25 @@
 /*!
 \mainpage
 
-Welcome to the documentation for dslibris, a book reader for Nintendo DS.
+Welcome to the developer's documentation for dslibris, a book reader for Nintendo DS.
 
-\section Prerequisites
+For information about prerequistites, building, and installing, see
 
-Fedora, Ubuntu, Arch, OS X, and Windows XP have all been used as build platforms; currently we're on Ubuntu 8.04 and Arch Linux. Have
-  - devkitPro v20 (circa 10/23/2007) installed, including
-	devkitARM,
-	libnds,
-	libfat,
-	libwifi,
-	and masscat's DS wifi debug stub library.
-  - On Windows XP, MSYS/MINGW. The MSYS provided with devkitPro is fine.
-  - Optionally, desmume 0.7.3 or better and Insight, if you want to debug with gdb (see Debugging).
-  - A media card and a DLDI patcher, but you knew that.
+ README.md
 
-Set DEVKITPRO and DEVKITARM in your environment.
+which is the same file displayed on SourceForge at
 
-\section Building
+ https://sourceforge.net/p/ndslibris/code/ci/master/tree/
 
-\code
-cd ndslibris/trunk  # or wherever you put the SVN trunk
-make
-\endcode
+This documentation is built by running
 
-dslibris.nds should show up in your current directory.
- 
-Note the libraries in 'lib' are required prebuilts for arm-eabi; make sure you don't have conflicting libs in your path.
+ make doc
 
-\section Installation
-
-see INSTALL.txt.
-
-\section Debugging
-
-gdb and insight-6.6 have been known to work for debugging. See online forums for means to build an arm-eabi targeted Insight for your platform.
+in the source root directory.
 
 \section Homepage
 
-http://sourceforge.net/projects/ndslibris
+ http://sourceforge.net/projects/ndslibris
 
 \author ray haleblian
 

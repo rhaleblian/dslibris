@@ -5,6 +5,7 @@
 #include "App.h"
 #include <stdio.h>
 #include <errno.h>
+#include <sys/param.h>
 
 extern App *app;
 extern bool parseFontBold;
