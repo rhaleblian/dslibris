@@ -1,4 +1,3 @@
 #!/usr/bin/env sh
-#./configure --prefix=$DEVKITARM --exec-prefix=$DEVKITARM/arm-eabi --host=arm-eabi
 ./configure --prefix=$DEVKITARM --host=arm-eabi
 
