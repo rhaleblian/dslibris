@@ -16,10 +16,11 @@ To build expat, freetype and zlib for the ARM EABI architecture, obtain the sour
 
 > export PATH=$DEVKITARM/bin:$PATH
 
+To build and install into $DEVKITARM,
+
 > make
 > make install
 
-will install into $DEVKITARM.
 
 # Building
 > make
@@ -29,8 +30,10 @@ for a debugging build,
 
 > DEBUG=1 make
 
+
 # Installation
 See INSTALL.
+
 
 # Debugging
 arm-eabi-gdb, insight-6.8 and desmume-0.9.2 have been known to work for debugging. See online forums for means to build an arm-eabi-targeted Insight for your platform.
