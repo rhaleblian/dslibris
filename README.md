@@ -1,11 +1,11 @@
 Herein lies the source for dslibris, an EPUB reader for the Nintendo DS.
 
 # Prerequisites
-Fedora, Ubuntu, Arch Linux, OS X, and Windows XP have all been used as build platforms. Have:
+CentOS, Fedora, Ubuntu, Arch Linux, OS X, and Windows XP have all been used as build platforms. Have:
 
-*   devkitARM_r42
-*   libnds-1.5.8
-*   libfat-1.0.12
+*   devkitARM_r43
+*   libnds-1.5.9
+*   libfat-nds-1.0.13
 *   maxmod-nds-1.0.9
 *   expat-2.1.0
 *   freetype-2.4.8
