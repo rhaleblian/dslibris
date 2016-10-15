@@ -7,7 +7,7 @@ MEDIA_MOUNTPOINT	:= /media/NDS
 
 image: $(CFLASH_IMAGE)
 
-# Create a cflash image for use with desmume.
+# Create a cflash test image for use with emulator.
 $(CFLASH_IMAGE):
 	dd if=/dev/zero of=$(CFLASH_IMAGE) bs=1048576 count=8
 	/sbin/mkfs.vfat $(CFLASH_IMAGE)
@@ -23,7 +23,7 @@ mount:
 	chmod a+w $(CFLASH_MOUNTPOINT)
 	sudo mount -t vfat -o loop -o rw,uid=$(USER),gid=$(USER) $(CFLASH_IMAGE) $(CFLASH_MOUNTPOINT)
 
-# Unmont image.
+# Unmount emulator disk image.
 umount:
 	sync
 	- sudo umount $(CFLASH_MOUNTPOINT)
@@ -34,8 +34,13 @@ eject:
 	sync
 	- umount $(MEDIA_MOUNTPOINT)
 
-# Install all required source into devkitARM. 
+# Install all required source into devkitPro.
 # Overwrites anything that may be there!
 install-tools:
-	tar -C $DEVKITARM xf tool/libnds-1.5.9.tar.bz2 
-
+	mkdir $(DEVKITPRO)/libnds
+	tar -C $(DEVKITPRO)/libnds -xf tool/libnds-1.5.9.tar.bz2
+	tar -C $(DEVKITPRO)/libnds -xf tool/libfat-nds-1.0.13.tar.bz2
+	tar -C $(DEVKITPRO)/libnds -xf tool/maxmod-nds-1.0.9.tar.bz2
+	tar -C $(DEVKITARM) -xf expat-2.1.0.tar.gz
+	tar -C $(DEVKITARM) -xf freetype-2.4.8.tar.bz2
+	tar -C $(DEVKITARM) -xf zlib-1.2.8.tar.gz

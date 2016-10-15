@@ -1,9 +1,9 @@
 Herein lies the source for dslibris, an EPUB reader for the Nintendo DS.
 
 # Prerequisites
-CentOS, Fedora, Ubuntu, Arch Linux, OS X, and Windows XP have all been used as build platforms. Have:
+CentOS, Fedora, Ubuntu, Arch Linux, OS X, and Windows XP have all been used as build platforms. Needs:
 
-*   devkitARM_r43
+*   devkitPro r42 with devkitARM
 *   libnds-1.5.9
 *   libfat-nds-1.0.13
 *   maxmod-nds-1.0.9
@@ -12,14 +12,13 @@ CentOS, Fedora, Ubuntu, Arch Linux, OS X, and Windows XP have all been used as b
 *   zlib-1.2.8
 *   a media card and a DLDI patcher, but you knew that.
 
-To build expat, freetype and zlib for the ARM EABI architecture, obtain the source tarball and see etc/configure-* for working configure incantations. You will want the devkitARM GCC tools in your PATH:
+After installing devkitPro/devkitARM, see
 
-> export PATH=$DEVKITARM/bin:$PATH
+> etc/profile
 
-To build and install into $DEVKITARM,
+for an example of setting DEVKITPRO and DEVKITARM in your shell. based on where you installed devkitPro.
 
-> make
-> make install
+Source tarballs for the above are in tool/. See the Makefile 'install-tools' rule for where all of the devkitPro bits need to go. See etc/configure-* for configure incantations. 
 
 
 # Building
