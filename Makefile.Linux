@@ -5,10 +5,17 @@ CFLASH_MOUNTPOINT	:=	./cflash
 # Path to mounted media card.
 MEDIA_MOUNTPOINT	:= /media/NDS
 
+image: $(CFLASH_IMAGE)
+
 # Create a cflash image for use with desmume.
 $(CFLASH_IMAGE):
-	dd if=/dev/zero of=$(CFLASH_IMAGE) bs=1048576 count=64
+	dd if=/dev/zero of=$(CFLASH_IMAGE) bs=1048576 count=8
 	/sbin/mkfs.vfat $(CFLASH_IMAGE)
+	make mount
+	cp -r data/font $(CFLASH_MOUNTPOINT)
+	cp -r data/book $(CFLASH_MOUNTPOINT)
+	sync
+	make umount
 
 # Mount emulator disk image.
 mount:
@@ -26,3 +33,9 @@ umount:
 eject:
 	sync
 	- umount $(MEDIA_MOUNTPOINT)
+
+# Install all required source into devkitARM. 
+# Overwrites anything that may be there!
+install-tools:
+	tar -C $DEVKITARM xf tool/libnds-1.5.9.tar.bz2 
+
