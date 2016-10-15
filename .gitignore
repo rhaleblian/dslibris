@@ -5,7 +5,6 @@ arm9/build/
 arm9/dslibris.arm9
 arm9/dslibris.arm9.elf
 cflash.dmg
-cflash.img
 dslibris.nds
 .DS_Store
 /doc
