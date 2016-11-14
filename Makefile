@@ -87,23 +87,23 @@ include Makefile.$(shell uname)
 # Run under emulator with an image file.
 # Use desmume 0.9.7+ with DLDI-autopatch.
 test: $(TARGET).nds
-	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) $(TARGET).nds
+	$(EMULATOR) --preload-rom --cflash-image $(CFLASH_IMAGE) $(TARGET).nds
 
 # Debug under emulation and arm-eabi-insight 6.8.1. Linux only.
 # First, build with 'DEBUG=1 make'
 debug9: $(TARGET).nds
 	arm-eabi-insight arm9/$(TARGET).arm9.elf &
-	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
+	$(EMULATOR) --preload-rom --cflash-image $(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
 
 debug7: $(TARGET).nds
 	arm-eabi-insight arm7/$(TARGET).arm7.elf &
-	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) --arm7gdb=20001 $(TARGET).nds &
+	$(EMULATOR) --preload-rom --cflash-image $(CFLASH_IMAGE) --arm7gdb=20001 $(TARGET).nds &
 
 debug:	debug9
 
 # Debug under emulation and arm-eabi-gdb.
 gdb: $(TARGET).nds
-	$(EMULATOR) --cflash-image=$(CFLASH_IMAGE) \
+	$(EMULATOR) --preload-rom --cflash-image $(CFLASH_IMAGE) \
 	 --arm9gdb=20000 $(TARGET).nds &
 	sleep 4
 	arm-eabi-gdb -x data/gdb.commands arm9/$(TARGET).arm9.elf

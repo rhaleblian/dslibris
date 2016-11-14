@@ -35,7 +35,7 @@ See INSTALL.
 
 
 # Debugging
-arm-eabi-gdb, insight-6.8 and desmume-0.9.2 have been known to work for debugging. See online forums for means to build an arm-eabi-targeted Insight for your platform.
+arm-eabi-gdb, insight-6.8 and desmume-0.9.12-svn5575 have been known to work for debugging. See online forums for means to build an arm-eabi-targeted Insight for your platform.
 
 # More Info
 http://sourceforge.net/projects/ndslibris
