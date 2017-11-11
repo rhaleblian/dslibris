@@ -33,6 +33,8 @@ for a debugging build,
 # Installation
 See INSTALL.
 
+# Screenshots
+![UTF-8 Multingual](http://rhaleblian.files.wordpress.com/2007/09/utf8.png)
 
 # Debugging
 arm-eabi-gdb, insight-6.8 and desmume-0.9.12-svn5575 have been known to work for debugging. See online forums for means to build an arm-eabi-targeted Insight for your platform.
