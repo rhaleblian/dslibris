@@ -17,9 +17,10 @@ include $(DEVKITARM)/ds_rules
 TARGET		:=	dslibris
 BUILD		:=	build
 SOURCES		:=	source
-INCLUDES	:=	../../include \
-                        $(DEVKITARM)/include \
-                        $(DEVKITARM)/include/freetype2
+INCLUDES	:=	$(shell realpath ../include) \
+                        $(shell realpath ../tool/include) \
+                        $(shell realpath ../tool/include/freetype2) \
+                        $(DEVKITARM)/include
 DATA		:=	../data
 
 #-----------------------------------------------------------------------
@@ -50,7 +51,7 @@ LIBS	:= -lz -lfreetype -lexpat -lfat -lnds9
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-----------------------------------------------------------------------
-LIBDIRS	:=	 $(LIBNDS) $(DEVKITARM)
+LIBDIRS	:=	 $(LIBNDS) $(DEVKITARM) $(shell realpath ../tool)
 #-----------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add
 # additional rules for different file extensions
