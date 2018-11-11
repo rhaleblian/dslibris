@@ -56,9 +56,9 @@ void epub_data_delete(epub_data_t *d)
 void epub_container_start(void *data, const char *el, const char **attr)
 {
 	epub_data_t *d = (epub_data_t*)data;
-	if(!stricmp(el,"rootfile"))
+	if(!strcmp(el,"rootfile"))
 		for(int i=0;attr[i];i+=2)
-			if(!stricmp(attr[i],"full-path"))
+			if(!strcmp(attr[i],"full-path"))
 				d->rootfile = attr[i+1];
 }
 
@@ -73,9 +73,9 @@ void epub_rootfile_start(void *data, const char *el, const char **attr) {
 		epub_item *item = new epub_item;
 		d->manifest.push_back(item);
 		for(int i=0;attr[i];i+=2) {
-			if(!stricmp(attr[i],"id"))
+			if(!strcmp(attr[i],"id"))
 				item->id = attr[i+1];
-			if(!stricmp(attr[i],"href"))
+			if(!strcmp(attr[i],"href"))
 				item->href = attr[i+1];
 		}
 	}
@@ -86,7 +86,7 @@ void epub_rootfile_start(void *data, const char *el, const char **attr) {
 		epub_itemref *itemref = new epub_itemref;
 		d->spine.push_back(itemref);
 		for(int i=0;attr[i];i+=2) {
-			if(!stricmp(attr[i],"idref"))
+			if(!strcmp(attr[i],"idref"))
 				itemref->idref = attr[i+1];
 		}
 	}

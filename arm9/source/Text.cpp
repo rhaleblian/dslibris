@@ -704,7 +704,7 @@ void Text::PrintSplash(u16 *screen)
 
 void Text::SetFontFile(const char *filename, u8 style)
 {
-	if(!stricmp(filenames[style].c_str(),filename)) return;
+	if(!strcmp(filenames[style].c_str(),filename)) return;
 	filenames[style] = filename;
 	if(initialized) ClearCache(style);
 }

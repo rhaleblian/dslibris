@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-./configure --prefix=$(realpath ..) --host=arm-none-eabi
-

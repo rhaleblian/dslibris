@@ -180,7 +180,7 @@ int App::Run(void)
 		for (c=filename+strlen(filename)-1;
 		     c!=filename && *c!='.';
 		     c--);
-		if (!stricmp(".xht",c) || !stricmp(".xhtml",c))
+		if (!strcmp(".xht",c) || !strcmp(".xhtml",c))
 		{
 			Book *book = new Book();
 			book->SetFolderName(bookdir.c_str());
@@ -204,7 +204,7 @@ int App::Run(void)
 			}
 			Log(msg);
 		}
-		else if (!stricmp(".epub",c))
+		else if (!strcmp(".epub",c))
 		{
 			Book *book = new Book();
 			book->SetFolderName(bookdir.c_str());
