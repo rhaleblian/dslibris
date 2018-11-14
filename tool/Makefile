@@ -3,7 +3,8 @@ TARGETS=lib/libexpat.a lib/libz.a lib/libfreetype.a
 default: ${TARGETS}
 
 clean:
-	rm ${TARGETS}
+	- rm -r bin include lib share
+	- rm -r expat-2.1.0 freetype-2.4.8 zlib-1.2.8
 
 lib/libexpat.a: expat-2.1.0
 	cd $< && ../configure-expat && make install	
