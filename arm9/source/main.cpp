@@ -108,20 +108,20 @@ void prefs_start_hndl(	void *data,
 	bool current = FALSE;
 	int i;
 	
-	if (!stricmp(name,"library"))
+	if (!strcmp(name,"library"))
 	{
 		for(i=0;attr[i];i+=2)
-			if(!stricmp(attr[i],"modtime"))
+			if(!strcmp(attr[i],"modtime"))
 			   app->prefs->modtime = atoi(attr[i+1]);
 	}
-	else if (!stricmp(name,"library"))
+	else if (!strcmp(name,"library"))
 	{
 		for(i=0;attr[i];i+=2) {
 			if(!strcmp(attr[i],"folder"))
 				app->bookdir = std::string(attr[i+1]);
 		}
 	}
-	else if (!stricmp(name,"screen"))
+	else if (!strcmp(name,"screen"))
 	{
 		for(i=0;attr[i];i+=2)
 		{
@@ -140,7 +140,7 @@ void prefs_start_hndl(	void *data,
 			}
 		}
 	}
-	else if (!stricmp(name,"paragraph"))
+	else if (!strcmp(name,"paragraph"))
 	{
 		for(i=0;attr[i];i+=2)
 		{
@@ -148,7 +148,7 @@ void prefs_start_hndl(	void *data,
 			if(!strcmp(attr[i],"indent")) app->paraindent = atoi(attr[i+1]);
 		}
 	}
-	else if (!stricmp(name,"font"))
+	else if (!strcmp(name,"font"))
 	{
 		for(i=0;attr[i];i+=2)
 		{
@@ -166,7 +166,7 @@ void prefs_start_hndl(	void *data,
 			}
 		}
 	}
-	else if (!stricmp(name, "books"))
+	else if (!strcmp(name, "books"))
 	{
 		for (i = 0; attr[i]; i+=2) {
 			if (!strcmp(attr[i], "reopen"))
@@ -179,7 +179,7 @@ void prefs_start_hndl(	void *data,
 			}
         }
 	}
-	else if (!stricmp(name, "book"))
+	else if (!strcmp(name, "book"))
 	{
 		strcpy(filename,"");
 		current = FALSE;
@@ -203,7 +203,7 @@ void prefs_start_hndl(	void *data,
 		for(it = app->books.begin(); it < app->books.end(); it++)
 		{
 			const char *bookname = (*it)->GetFileName();
-			if(!stricmp(bookname, filename))
+			if(!strcmp(bookname, filename))
 			{
 				// bookmark tags will refer to this.
 				p->book = *it;
@@ -226,7 +226,7 @@ void prefs_start_hndl(	void *data,
 			}
 		}
 	}
-	else if (!stricmp(name, "bookmark"))
+	else if (!strcmp(name, "bookmark"))
 	{
 		for (i = 0; attr[i]; i+=2) {
 			if (!strcmp(attr[i], "page"))
@@ -238,7 +238,7 @@ void prefs_start_hndl(	void *data,
 			p->book->GetBookmarks()->push_back(position - 1);
 		}
 	}
-	else if (!stricmp(name,"margin"))
+	else if (!strcmp(name,"margin"))
 	{
 		for (i=0;attr[i];i+=2)
 		{
@@ -262,7 +262,7 @@ void prefs_end_hndl(void *data, const char *name)
 {
 	//! Exit element callback for the prefs file.
 	parsedata_t *p = (parsedata_t*)data;
-	if (!stricmp(name,"book")) p->book = NULL;
+	if (!strcmp(name,"book")) p->book = NULL;
 }
 
 int unknown_hndl(void *encodingHandlerData,
@@ -314,31 +314,31 @@ void default_hndl(void *data, const XML_Char *s, int len)
 		}
 
 		/** otherwise, handle only common HTML named entities. */
-		if (!strnicmp(s,"&nbsp;",5))
+		if (!strncmp(s,"&nbsp;",5))
 		{
 			p->buf[p->buflen++] = ' ';
 			p->pen.x += advancespace;
 			return;
 		}
-		if (!stricmp(s,"&quot;"))
+		if (!strcmp(s,"&quot;"))
 		{
 			p->buf[p->buflen++] = '"';
 			p->pen.x += advancespace;
 			return;
 		}
-		if (!stricmp(s,"&amp;"))
+		if (!strcmp(s,"&amp;"))
 		{
 			p->buf[p->buflen++] = '&';
 			p->pen.x += advancespace;
 			return;
 		}
-		if (!stricmp(s,"&lt;"))
+		if (!strcmp(s,"&lt;"))
 		{
 			p->buf[p->buflen++] = '<';
 			p->pen.x += advancespace;
 			return;
 		}
-		if (!stricmp(s,"&lt;"))
+		if (!strcmp(s,"&lt;"))
 		{
 			p->buf[p->buflen++] = '>';
 			p->pen.x += advancespace;
@@ -354,7 +354,7 @@ void title_start_hndl(void *userdata, const char *el, const char **attr)
 	//! Expat callback, when entering an element.
 	//! For finding book title only.
 
-	if(!stricmp(el,"title"))
+	if(!strcmp(el,"title"))
 	{
 		app->parse_push((parsedata_t *)userdata,TAG_TITLE);
 		strcpy(title,"");
@@ -389,8 +389,8 @@ void title_end_hndl(void *userdata, const char *el)
 	//! Expat callback, when exiting an element.
 	//! For finding book title only.
 	parsedata_t *data = (parsedata_t*)userdata;
-	if(!stricmp(el,"title")) data->book->SetTitle(title);
-	if(!stricmp(el,"head")) data->status = 1; // done.
+	if(!strcmp(el,"title")) data->book->SetTitle(title);
+	if(!strcmp(el,"head")) data->status = 1; // done.
 	app->parse_pop(data);	
 }
 
@@ -400,39 +400,39 @@ void start_hndl(void *data, const char *el, const char **attr)
 {
 	//! Expat callback, when starting an element.
 	parsedata_t *p = (parsedata_t*)data;
-	if (!stricmp(el,"html")) app->parse_push(p,TAG_HTML);
-	else if (!stricmp(el,"body")) app->parse_push(p,TAG_BODY);
-	else if (!stricmp(el,"div")) app->parse_push(p,TAG_DIV);
-	else if (!stricmp(el,"dt")) app->parse_push(p,TAG_DT);
-	else if (!stricmp(el,"h1")) {
+	if (!strcmp(el,"html")) app->parse_push(p,TAG_HTML);
+	else if (!strcmp(el,"body")) app->parse_push(p,TAG_BODY);
+	else if (!strcmp(el,"div")) app->parse_push(p,TAG_DIV);
+	else if (!strcmp(el,"dt")) app->parse_push(p,TAG_DT);
+	else if (!strcmp(el,"h1")) {
 		app->parse_push(p,TAG_H1);
 		p->buf[p->buflen] = TEXT_BOLD_ON;
 		p->buflen++;
 		p->pos++;
 		p->bold = true;
 	}
-	else if (!stricmp(el,"h2")) app->parse_push(p,TAG_H2);
-	else if (!stricmp(el,"h3")) app->parse_push(p,TAG_H3);
-	else if (!stricmp(el,"h4")) app->parse_push(p,TAG_H4);
-	else if (!stricmp(el,"h5")) app->parse_push(p,TAG_H5);
-	else if (!stricmp(el,"h6")) app->parse_push(p,TAG_H6);
-	else if (!stricmp(el,"head")) app->parse_push(p,TAG_HEAD);
-	else if (!stricmp(el,"ol")) app->parse_push(p,TAG_OL);
-	else if (!stricmp(el,"p")) app->parse_push(p,TAG_P);
-	else if (!stricmp(el,"pre")) app->parse_push(p,TAG_PRE);
-	else if (!stricmp(el,"script")) app->parse_push(p,TAG_SCRIPT);
-	else if (!stricmp(el,"style")) app->parse_push(p,TAG_STYLE);
-	else if (!stricmp(el,"title")) app->parse_push(p,TAG_TITLE);
-	else if (!stricmp(el,"td")) app->parse_push(p,TAG_TD);
-	else if (!stricmp(el,"ul")) app->parse_push(p,TAG_UL);
-	else if (!stricmp(el,"strong") || !stricmp(el, "b")) {
+	else if (!strcmp(el,"h2")) app->parse_push(p,TAG_H2);
+	else if (!strcmp(el,"h3")) app->parse_push(p,TAG_H3);
+	else if (!strcmp(el,"h4")) app->parse_push(p,TAG_H4);
+	else if (!strcmp(el,"h5")) app->parse_push(p,TAG_H5);
+	else if (!strcmp(el,"h6")) app->parse_push(p,TAG_H6);
+	else if (!strcmp(el,"head")) app->parse_push(p,TAG_HEAD);
+	else if (!strcmp(el,"ol")) app->parse_push(p,TAG_OL);
+	else if (!strcmp(el,"p")) app->parse_push(p,TAG_P);
+	else if (!strcmp(el,"pre")) app->parse_push(p,TAG_PRE);
+	else if (!strcmp(el,"script")) app->parse_push(p,TAG_SCRIPT);
+	else if (!strcmp(el,"style")) app->parse_push(p,TAG_STYLE);
+	else if (!strcmp(el,"title")) app->parse_push(p,TAG_TITLE);
+	else if (!strcmp(el,"td")) app->parse_push(p,TAG_TD);
+	else if (!strcmp(el,"ul")) app->parse_push(p,TAG_UL);
+	else if (!strcmp(el,"strong") || !strcmp(el, "b")) {
 		app->parse_push(p,TAG_STRONG);
 		p->buf[p->buflen] = TEXT_BOLD_ON;
 		p->buflen++;
 		p->pos++;
 		p->bold = true;
 	}
-	else if (!stricmp(el,"em") || !stricmp(el, "i")) {
+	else if (!strcmp(el,"em") || !strcmp(el, "i")) {
 		app->parse_push(p,TAG_EM);
 		p->buf[p->buflen] = TEXT_ITALIC_ON;
 		p->buflen++;
@@ -588,22 +588,22 @@ void end_hndl(void *data, const char *el)
 	parsedata_t *p = (parsedata_t *)data;
 	Text *ts = app->ts;	
 	if (
-	       !stricmp(el,"br")
-	    || !stricmp(el,"div")
-	    || !stricmp(el,"dt")
-	    || !stricmp(el,"h1")
-	    || !stricmp(el,"h2")
-	    || !stricmp(el,"h3")
-	    || !stricmp(el,"h4")
-	    || !stricmp(el,"h5")
-	    || !stricmp(el,"h6")
-	    || !stricmp(el,"hr")
-	    || !stricmp(el,"li")
-	    || !stricmp(el,"p")
-	    || !stricmp(el,"pre")
-	    || !stricmp(el,"ol")
-	    || !stricmp(el,"td")
-	    || !stricmp(el,"ul"))
+	       !strcmp(el,"br")
+	    || !strcmp(el,"div")
+	    || !strcmp(el,"dt")
+	    || !strcmp(el,"h1")
+	    || !strcmp(el,"h2")
+	    || !strcmp(el,"h3")
+	    || !strcmp(el,"h4")
+	    || !strcmp(el,"h5")
+	    || !strcmp(el,"h6")
+	    || !strcmp(el,"hr")
+	    || !strcmp(el,"li")
+	    || !strcmp(el,"p")
+	    || !strcmp(el,"pre")
+	    || !strcmp(el,"ol")
+	    || !strcmp(el,"td")
+	    || !strcmp(el,"ul"))
 	{
 		if(p->linebegan || !strcmp(el,"br")) {
 			p->linebegan = false;
@@ -611,7 +611,7 @@ void end_hndl(void *data, const char *el)
 			p->buflen++;
 			p->pen.x = MARGINLEFT;
 			p->pen.y += ts->GetHeight() + ts->linespacing;
-			if (!stricmp(el,"p"))
+			if (!strcmp(el,"p"))
 			{
 				for(int i=0;i<app->paraspacing;i++)
 				{
@@ -673,7 +673,7 @@ void end_hndl(void *data, const char *el)
 				p->linebegan = false;
 			}
 		}
-	} else if (!stricmp(el,"body")) {
+	} else if (!strcmp(el,"body")) {
 		// Save off our last page.
 		Page *page = p->book->AppendPage();
 		page->SetBuffer(p->buf,p->buflen);
@@ -682,11 +682,11 @@ void end_hndl(void *data, const char *el)
 		p->buflen = 0;
 		if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
 		if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;
-	} else if (!stricmp(el, "strong") || !stricmp(el, "b")) {
+	} else if (!strcmp(el, "strong") || !strcmp(el, "b")) {
 		p->buf[p->buflen] = TEXT_BOLD_OFF;
 		p->buflen++;
 		p->bold = false;
-	} else if (!stricmp(el, "em") || !stricmp(el, "i")) {
+	} else if (!strcmp(el, "em") || !strcmp(el, "i")) {
 		p->buf[p->buflen] = TEXT_ITALIC_OFF;
 		p->buflen++;
 		p->italic = false;

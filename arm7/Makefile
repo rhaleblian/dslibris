@@ -43,7 +43,7 @@ LDFLAGS	=	-specs=ds_arm7.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #-----------------------------------------------------------------------
-LIBS	:=	-lmm7 -lnds7
+LIBS	:=	-lnds7
 
 #-----------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level

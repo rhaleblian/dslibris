@@ -50,7 +50,7 @@ void App::FontInit()
 		char *filename = ent->d_name;
 		char *c;
 		for (c=filename; c != filename + strlen(filename) && *c != '.'; c++);
-		if (!stricmp(".ttf",c) || !stricmp(".otf",c) || !stricmp(".ttc",c))
+		if (!strcmp(".ttf",c) || !strcmp(".otf",c) || !strcmp(".ttc",c))
 		{
 			Button *b = new Button();
 			b->Init(ts);

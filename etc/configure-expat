@@ -1,1 +1,0 @@
-./configure --host=arm-none-eabi --prefix=$DEVKITARM
