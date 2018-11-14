@@ -14,16 +14,13 @@ Other platforms might, as long as the correct toolchain can be obtained.
 *   a media card and a DLDI patcher, but you knew that.
 
 devkitARM r43 is not easily found. If you need to build it,
-clone the r43 branch of devkitPro/buildscripts from GitHub and patch it with the files in tool/buildscipts. Use the installer tarballs there if the source locations have disappeared.
+clone the r43 branch of devkitPro/buildscripts from GitHub and patch it with the files in tool/buildscripts. Use the installer tarballs there if the source locations have disappeared.
 
 After installing devkitPro/devkitARM, see
 
 > etc/profile
 
 for an example of setting DEVKITPRO and DEVKITARM in your shell.
-
-Source tarballs for the above are in tool/. See the Makefile 'install-tools' rule for where all of the devkitPro bits need to go. See etc/configure-* for configure incantations. 
-
 
 # Building
 
@@ -32,7 +29,7 @@ To build the dependent libraries,
 > cd tool
 > make
 
-The arm-none-eabi-* executables must be in your PATH.
+The arm-none-eabi-* executables must be in your PATH for the above to work.
 
 Then, to build the program,
 
