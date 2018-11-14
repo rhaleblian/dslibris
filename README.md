@@ -8,9 +8,6 @@ Other platforms might, as long as the correct toolchain can be obtained.
 *   devkitARM r43
 *   libnds-1.5.8
 *   libfat-1.0.12
-*   expat-2.1.0
-*   freetype-2.4.8
-*   zlib-1.2.8
 *   a media card and a DLDI patcher, but you knew that.
 
 devkitARM r43 is not easily found. If you need to build it,
