@@ -15,7 +15,9 @@ clone the r43 branch of devkitPro/buildscripts from GitHub and patch it with the
 
 After installing devkitPro/devkitARM, see
 
-> etc/profile
+```bash
+etc/profile
+```
 
 for an example of setting DEVKITPRO and DEVKITARM in your shell.
 
@@ -23,21 +25,26 @@ for an example of setting DEVKITPRO and DEVKITARM in your shell.
 
 To build the dependent libraries,
 
-> cd tool
-> make
+```shell
+cd tool
+make
+```
 
 The arm-none-eabi-* executables must be in your PATH for the above to work.
 
 Then, to build the program,
 
-> cd ..
-> make
+```shell
+cd ..
+make
+```
 
 dslibris.nds should show up in your current directory.
 for a debugging build,
 
-> DEBUG=1 make
-
+```shell
+DEBUG=1 make
+```
 
 # Installation
 
