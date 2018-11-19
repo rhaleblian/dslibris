@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+#
+# Run this from within the cairo source dir:
+#   cd cairo-1.6.0
+#   ../congfigure-cairo
+
+./configure --prefix=$(realpath ..) --host=arm-none-eabi \
+--enable-shared=no \
+--enable-gtk=no \
+PKG_CONFIG_PATH=../lib/pkgconfig \
+CPPFLAGS="-I$(realpath ../include)" LDFLAGS="-L$(realpath ../lib)"
+
