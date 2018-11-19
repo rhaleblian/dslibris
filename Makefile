@@ -58,7 +58,8 @@ $(TARGET).ds.gba	: $(TARGET).nds
 #-------------------------------------------------------------------------------
 $(TARGET).nds		: $(TARGET).arm7 $(TARGET).arm9
 	ndstool -b data/icon.bmp \
-	"dslibris;an ebook reader;for the Nintendo DS" \
+	"dslibris;an ebook reader;for Nintendo DS" \
+ 	-g LBRS YO 'dslibris' 2 \
 	-c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
 
 #-------------------------------------------------------------------------------

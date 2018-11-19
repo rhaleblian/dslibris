@@ -152,7 +152,7 @@ class Text {
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
-	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit);
+	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit, FTC_Node *anode=NULL);
 	FT_UInt GetGlyphIndex(u32 ucs);
 
 	u8   GetAdvance(u32 ucs, FT_Face face);
@@ -160,6 +160,8 @@ class Text {
 	void ClearCache(FT_Face face);
 	void PrintChar(u32 ucs, FT_Face face);
 	void PrintString(const char *string, FT_Face face);
+
+	void ReportFace(FT_Face face);
 	
 public:
 	App *app;

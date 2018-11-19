@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <sys/param.h>
 #include <nds.h>
 #include <fat.h>
+#include <string.h>
 #include "Text.h"
 #include "App.h"
 #include "main.h"
@@ -97,7 +98,9 @@ TextFaceRequester(    FTC_FaceID   face_id,
 
 int Text::InitWithCacheManager(void) {
 	//! Use FreeType's cache manager. borken!
-	
+	char msg[256];
+	app->Log("initializing FTC manager.\n");
+
 	int error = FT_Init_FreeType(&library);
 	if(error) return error;
 
@@ -107,15 +110,24 @@ int Text::InitWithCacheManager(void) {
 	FTC_SBitCache_New(cache.manager,&cache.sbit);
 	FTC_CMapCache_New(cache.manager,&cache.cmap);
 
-	face_id.file_path = filenames[TEXT_STYLE_NORMAL].c_str();
+        face_id.file_path = filenames[TEXT_STYLE_NORMAL].c_str();
 	face_id.face_index = 0;
+	sprintf(msg, "looking up %s\n", face_id.file_path);
+	app->Log(msg);
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_NORMAL]);
-	if(error) return error;
+	if(error) {
+		app->Log("failed!\n");
+		return error;
+	}
+	ReportFace(faces[TEXT_STYLE_NORMAL]);
 	FT_Select_Charmap(GetFace(TEXT_STYLE_NORMAL), FT_ENCODING_UNICODE);
 	charmap_index = FT_Get_Charmap_Index(GetFace(TEXT_STYLE_NORMAL)->charmap);
 	imagetype.face_id = (FTC_FaceID)&face_id;
 	imagetype.height = pixelsize;
 	imagetype.width = pixelsize;
+
+	screen = screenleft;
+	InitPen();
 	ftc = true;
 	initialized = true;
 	return 0;
@@ -150,6 +162,7 @@ int Text::InitDefault(void) {
 		
 		textCache.insert(make_pair(face, new Cache()));
 		faces[iter->first] = face;
+		ReportFace(face);
 	}
 	
 	screen = screenleft;
@@ -164,6 +177,24 @@ int Text::Init()
 {
 	if(ftc) return InitWithCacheManager();
 	else return InitDefault();
+}
+
+void Text::ReportFace(FT_Face face)
+{
+	char msg[256];
+	sprintf(msg, "%ld faces\n", face->num_faces);
+	app->Log(msg);
+	sprintf(msg, "%ld glyphs\n", face->num_glyphs);
+	app->Log(msg);
+	sprintf(msg, "%d sizes\n", face->num_fixed_sizes);
+	app->Log(msg);
+	for (int i=0;i<face->num_fixed_sizes;i++)
+	{
+		sprintf(msg, "%d %d\n",
+			face->available_sizes[i].width,
+			face->available_sizes[i].height);
+		app->Log(msg);
+	}	
 }
 
 void Text::Begin()
@@ -230,16 +261,14 @@ FT_UInt Text::GetGlyphIndex(u32 ucs)
 		charmap_index,ucs);
 }
 
-int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit)
+int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit, FTC_Node *anode)
 {
-	//! Given a UCS code, fills sbit with a bitmap.
+	//! Given a UCS code, fills sbit and anode.
 	
-	//! Returns nonzero on error.Glyth
-	imagetype.flags = FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL;
-	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
-		GetGlyphIndex(ucs),sbit,NULL);
-	if(error) return error;
-	return 0;
+	//! Returns nonzero on error.
+	imagetype.flags = FT_LOAD_DEFAULT|FT_LOAD_RENDER;
+	return FTC_SBitCache_Lookup(cache.sbit,&imagetype,
+		GetGlyphIndex(ucs),sbit,anode);
 }
 
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags)
@@ -510,13 +539,15 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	u16 bx, by, width, height = 0;
 	FT_Byte *buffer = NULL;
 	FT_UInt advance = 0;
+	FTC_Node anode;
+	char msg[256];
 
 	// get metrics and glyph pointer.
 
 	if(ftc)
 	{
 		// use the FT cache.
-		error = GetGlyphBitmap(ucs,&sbit);
+		error = GetGlyphBitmap(ucs,&sbit,&anode);
 		buffer = sbit->buffer;
 		bx = sbit->left;
 		by = sbit->top;
@@ -538,9 +569,12 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 		advance = glyph->advance.x >> 6;
 		buffer = bitmap.buffer;
 	}
+	//sprintf(msg, "%ld %d %d %d %d %d\n", ucs, bx, by, width, height, advance);
+	//app->Log(msg);
 
-	// kern.
 #ifdef EXPERIMENTAL_KERNING
+	// kern.
+
 	if(codeprev) {
 		FT_Vector k;
 		error = FT_Get_Kerning(face,codeprev,ucs,FT_KERNING_UNSCALED,&k);
@@ -570,6 +604,8 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	for (gy=0; gy<height; gy++) {
 		for (gx=0; gx<width; gx++) {
 			u8 a = buffer[gy*width+gx];
+			//sprintf(msg, "%d", a);
+			//app->Log(msg);
 			if (a) {
 				u16 sx = (pen.x+gx+bx);
 				u16 sy = (pen.y+gy-by);
@@ -594,9 +630,12 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 				}
 			}
 		}
+		//app->Log("\n");
 	}
 	pen.x += advance;
 	codeprev = ucs;
+	if (ftc)
+		FTC_Node_Unref(anode,cache.manager);
 }
 
 bool Text::PrintNewLine(void) {
@@ -633,7 +672,8 @@ void Text::PrintString(const char *s, u8 style) {
 
 void Text::PrintString(const char *s, FT_Face face) {
 	//! Render a character string starting at the pen position.
-	u32 clast = 0;
+	//app->Log(s);
+	//u32 clast = 0;
 	u8 i=0;
 	while(i<strlen((char*)s)) {
 		u32 c = s[i];
@@ -643,7 +683,7 @@ void Text::PrintString(const char *s, FT_Face face) {
 		} else {
 			i+=GetCharCode(&(s[i]),&c);
 			PrintChar(c, face);
-			clast = c;
+			//clast = c;
 		}
 	}
 }
@@ -669,7 +709,7 @@ void Text::PrintStatusMessage(const char *msg)
 	screen = screenleft;
 	SetInvert(false);
 	SetPixelSize(10);
-	SetPen(10,16);
+	SetPen(16, PAGE_HEIGHT-32);
 	PrintString(msg);
 
 	SetInvert(invert);
