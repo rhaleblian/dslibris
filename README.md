@@ -1,4 +1,5 @@
-Herein lies the source for *dslibris*, an EPUB reader for the Nintendo DS.
+Herein lies the source for *dslibris*, an [EPUB](http://idpf.org/epub)
+reader for the Nintendo DS.
 
 # Prerequisites
 
@@ -65,3 +66,6 @@ arm-eabi-gdb, insight-6.8 and desmume-0.9.12-svn5575 have been known to work for
 # More Info
 
 http://github.com/rhaleblian/dslibris
+
+
+[1] http://idpf.org/epub
