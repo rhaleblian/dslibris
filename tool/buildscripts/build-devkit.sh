@@ -1,7 +1,7 @@
 #!/bin/bash
 #---------------------------------------------------------------------------------
 # Build scripts for
-#	devkitARM release 43
+#	devkitARM release 45
 #	devkitPPC release 27
 #	devkitPSP release 17
 #---------------------------------------------------------------------------------
@@ -25,30 +25,31 @@ echo "https://sourceforge.net/tracker/?group_id=114505&atid=668553"
 echo
 
 LIBOGC_VER=1.8.12
-LIBGBA_VER=0.5.0
-LIBNDS_VER=1.5.8
-LIBCTRU_VER=0.1.0
-DEFAULT_ARM7_VER=0.5.25
-DSWIFI_VER=0.3.16
+LIBGBA_VER=20150106
+LIBNDS_VER=1.5.12
+LIBCTRU_VER=0.6.0
+DEFAULT_ARM7_VER=0.6.0
+DSWIFI_VER=0.3.17
 LIBMIRKO_VER=0.9.7
-MAXMOD_VER=1.0.10
-FILESYSTEM_VER=0.9.11
-LIBFAT_VER=1.0.12
+MAXMOD_VER=1.0.9
+FILESYSTEM_VER=0.9.12
+LIBFAT_VER=1.0.14
 PSPSDK_VER=20120404
 GBATOOLS_VER=1.0.0
-DSTOOLS_VER=1.0.1
-GRIT_VER=0.8.14
-NDSTOOL_VER=2.0.1
+DSTOOLS_VER=1.0.2
+GP32_TOOLS_VER=1.0.1
+GRIT_VER=0.8.13
+NDSTOOL_VER=1.50.3
 GENERAL_TOOLS_VER=1.0.0
 DLDITOOL_VER=1.24.0
-GXTEXCONV_VER=0.1.9
-GCDSPSUITE_VER=1.4.0
-ELF2DOL_VER=1.0.0
+GAMECUBE_TOOLS_VER=1.0.0
 WIILOAD_VER=0.5.1
 MMUTIL_VER=1.8.6
-DFU_UTIL_VER=0.7.1
+DFU_UTIL_VER=0.8.1
 STLINK_VER=0.5.8
-TOOLS3DS_VER=1.0.0
+TOOLS3DS_VER=1.1.1
+LINK3DS_VER=0.5.1
+PICASSO_VER=2.1.0
 
 #---------------------------------------------------------------------------------
 function extract_and_patch {
@@ -92,7 +93,7 @@ unset LDFLAGS
 #---------------------------------------------------------------------------------
 # Look for automated configuration file to bypass prompts
 #---------------------------------------------------------------------------------
- 
+
 echo -n "Looking for configuration file... "
 if [ -f ./config.sh ]; then
   echo "Found."
@@ -191,26 +192,37 @@ DEVKITPRO_URL="http://downloads.sourceforge.net/devkitpro"
 patchdir=$(pwd)/$basedir/patches
 scriptdir=$(pwd)/$basedir/scripts
 
-archives="binutils-${BINUTILS_VER}.tar.bz2 gcc-${GCC_VER}.tar.bz2 newlib-${NEWLIB_VER}.tar.gz gdb-${GDB_VER}.tar.bz2"
+archives="binutils-${BINUTILS_VER}.tar.bz2 gcc-${GCC_VER}.tar.bz2 newlib-${NEWLIB_VER}.tar.gz gdb-${GDB_VER}.tar.gz"
 
 if [ $VERSION -eq 1 ]; then
-	targetarchives="
-		libnds-$LIBNDS_VER.tar.gz 
-		libfat-$LIBFAT_VER.tar.gz
-	"
-	hostarchives="
-		grit-$GRIT_VER.tar.gz
-	"
+
+	# targetarchives="libnds-src-${LIBNDS_VER}.tar.bz2 libgba-src-${LIBGBA_VER}.tar.bz2
+	# 	libmirko-src-${LIBMIRKO_VER}.tar.bz2 dswifi-src-${DSWIFI_VER}.tar.bz2 maxmod-src-${MAXMOD_VER}.tar.bz2
+	# 	default_arm7-src-${DEFAULT_ARM7_VER}.tar.bz2 libfilesystem-src-${FILESYSTEM_VER}.tar.bz2
+	# 	libfat-src-${LIBFAT_VER}.tar.bz2 libctru-src-${LIBCTRU_VER}.tar.bz2"
+
+	# hostarchives="gbatools-$GBATOOLS_VER.tar.bz2 gp32tools-$GP32_TOOLS_VER.tar.bz2
+	# 	dstools-$DSTOOLS_VER.tar.bz2 grit-$GRIT_VER.tar.bz2 ndstool-$NDSTOOL_VER.tar.bz2
+	# 	general-tools-$GENERAL_TOOLS_VER.tar.bz2 dlditool-$DLDITOOL_VER.tar.bz2 mmutil-$MMUTIL_VER.tar.bz2
+	# 	dfu-util-$DFU_UTIL_VER.tar.bz2 stlink-$STLINK_VER.tar.bz2 3dstools-$TOOLS3DS_VER.tar.bz2
+	# 	picasso-$PICASSO_VER.tar.bz2 3dslink-$LINK3DS_VER.tar.bz2"
+
+	targetarchives="libnds-src-$LIBNDS_VER.tar.gz libfat-src-$LIBFAT_VER.tar.gz"
+	#hostarchives="general-tools-$GENERAL_TOOLS_VER.tar.gz"
+	hostarchives=""
 fi
 
 if [ $VERSION -eq 2 ]; then
+
 	targetarchives="libogc-src-${LIBOGC_VER}.tar.bz2 libfat-src-${LIBFAT_VER}.tar.bz2"
-	hostarchives="gxtexconv-$GXTEXCONV_VER.tar.bz2 gcdspsuite-$GCDSPSUITE_VER.tar.bz2
-			wiiload-$WIILOAD_VER.tar.bz2 elf2dol-$ELF2DOL_VER.tar.bz2 general-tools-$GENERAL_TOOLS_VER.tar.bz2"
+
+	hostarchives="gamecube-tools-$GAMECUBE_TOOLS_VER.tar.bz2 wiiload-$WIILOAD_VER.tar.bz2 general-tools-$GENERAL_TOOLS_VER.tar.bz2"
 fi
 
 if [ $VERSION -eq 3 ]; then
+
 	targetarchives="pspsdk-src-${PSPSDK_VER}.tar.bz2"
+
 fi
 
 if [ ! -z "$BUILD_DKPRO_SRCDIR" ] ; then
@@ -221,9 +233,9 @@ fi
 
 cd "$SRCDIR"
 for archive in $archives $targetarchives $hostarchives
-do	
+do
 	echo $archive
-    if [ ! -f $archive ]; then
+	if [ ! -f $archive ]; then
 		$FETCH http://downloads.sf.net/devkitpro/$archive || { echo "Error: Failed to download $archive"; exit 1; }
 	fi
 done
@@ -236,16 +248,25 @@ extract_and_patch binutils $BINUTILS_VER bz2
 extract_and_patch gcc $GCC_VER bz2
 rm -fr gcc-$GCC_VER/zlib
 extract_and_patch newlib $NEWLIB_VER gz
-extract_and_patch gdb $GDB_VER bz2
+extract_and_patch gdb $GDB_VER gz
 
-for archive in $targetarchives $hostarchives
+for archive in $targetarchives
 do
-	destdir=$(echo $archive | sed -e 's/\(.*\)\-\(.*\)\.tar\.gz/\1-\2/' )
+	destdir=$(echo $archive | sed -e 's/\(.*\)-src-\(.*\)\.tar\.(.*)/\1-\2\.3/' )
 	echo $destdir
 	if [ ! -d $destdir ]; then
-		#mkdir -p $destdir
-		#tar -xf "$SRCDIR/$archive" -C $destdir || { echo "Error extracting "$archive; exit 1; }
-		tar -xf $SRCDIR/$archive
+		mkdir -p $destdir
+	#	bzip2 -cd "$SRCDIR/$archive" | tar -xf - -C $destdir || { echo "Error extracting "$archive; exit 1; }
+	tar -xf $SRCDIR/$archive -C $destdir || { echo "Error extracting "$archive; exit 1; }
+	fi
+done
+
+for archive in $hostarchives
+do
+	destdir=$(echo $archive | sed -e 's/\(.*\)-src-\(.*\)\.tar\.bz2/\1-\2/' )
+	if [ ! -d $destdir ]; then
+	#	tar -xjf "$SRCDIR/$archive"
+		tar -xf "$SRCDIR/$archive"
 	fi
 done
 
@@ -258,7 +279,7 @@ if [ -f $scriptdir/build-crtls.sh ]; then . $scriptdir/build-crtls.sh || { echo 
 
 if [ ! -z $CROSSBUILD ]; then
 	if [ $VERSION -ne 3 ]; then
-		cp -v 	$CROSSLIBPATH/FreeImage.dll $prefix/bin
+		cp -v $CROSSBINPATH/FreeImage.dll $prefix/bin
 	fi
 	if [ $VERSION -eq 1 ]; then
 		cp -v $CROSSBINPATH/libusb-1.0.dll $prefix/bin

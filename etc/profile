@@ -1,5 +1,7 @@
 # Example environment setup for building devtools and dslibris.
-export DEVKITPRO=/usr/local/devkitpro/r35
+export DEVKITPRO=$HOME/Library/devkitpro/r45
 export DEVKITARM=$DEVKITPRO/devkitARM
+# Needed to point library build processes (in 'tool') 
+# to the right gcc architecture...
 export PATH=$DEVKITARM/bin:$PATH
 

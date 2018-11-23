@@ -21,7 +21,7 @@ $MAKE CRT=gp32_gpsdk
 $MAKE CRT=ds_arm7
 $MAKE CRT=ds_arm9
 $MAKE CRT=ds_cart
-$MAKE CRT=3dsx
+$target-gcc -march=armv6k -mfloat-abi=hard -c 3dsx_crt0.s -o armv6k/fpu/3dsx_crt0.o
 
 # cd $BUILDDIR/libgba-$LIBGBA_VER
 # $MAKE || { echo "error building libgba"; exit 1; }
@@ -31,9 +31,9 @@ cd $BUILDDIR/libnds-$LIBNDS_VER
 $MAKE || { echo "error building libnds"; exit 1; }
 $MAKE install || { echo "error installing libnds"; exit 1; }
 
-#cd $BUILDDIR/dswifi-$DSWIFI_VER
-#$MAKE || { echo "error building dswifi"; exit 1; }
-#$MAKE install || { echo "error installing dswifi"; exit 1; }
+# cd $BUILDDIR/dswifi-$DSWIFI_VER
+# $MAKE || { echo "error building dswifi"; exit 1; }
+# $MAKE install || { echo "error installing dswifi"; exit 1; }
 
 # cd $BUILDDIR/maxmod-$MAXMOD_VER
 # $MAKE || { echo "error building maxmod"; exit 1; }
@@ -45,7 +45,7 @@ $MAKE install || { echo "error installing libnds"; exit 1; }
 
 cd $BUILDDIR/libfat-$LIBFAT_VER
 $MAKE nds-install || { echo "error building nds libfat"; exit 1; }
-$MAKE gba-install || { echo "error installing gba libfat"; exit 1; }
+#$MAKE gba-install || { echo "error installing gba libfat"; exit 1; }
 
 # cd $BUILDDIR/libmirko-$LIBMIRKO_VER
 # $MAKE || { echo "error building libmirko"; exit 1; }
@@ -55,7 +55,7 @@ $MAKE gba-install || { echo "error installing gba libfat"; exit 1; }
 # $MAKE || { echo "error building libfilesystem"; exit 1; }
 # $MAKE install || { echo "error installing libfilesystem"; exit 1; }
 
-#cd $BUILDDIR/libctru-$LIBCTRU_VER
-#$MAKE || { echo "error building libctru"; exit 1; }
-#$MAKE install || { echo "error installing libctru"; exit 1; }
+# cd $BUILDDIR/libctru-$LIBCTRU_VER
+# $MAKE || { echo "error building libctru"; exit 1; }
+# $MAKE install || { echo "error installing libctru"; exit 1; }
 

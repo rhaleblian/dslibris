@@ -16,18 +16,12 @@ BUILD_DKPRO_PACKAGE=1
 #---------------------------------------------------------------------------------
 # Toolchain installation directory, comment if not specified
 #---------------------------------------------------------------------------------
-BUILD_DKPRO_INSTALLDIR=/home/ray/Library/devkitpro/r43
+BUILD_DKPRO_INSTALLDIR=$HOME/Library/devkitpro/r45
 
 #---------------------------------------------------------------------------------
 # Path to previously downloaded source packages, comment if not specified
 #---------------------------------------------------------------------------------
-BUILD_DKPRO_SRCDIR=/home/ray/Documents/r43/archive
-
-#---------------------------------------------------------------------------------
-# MAKEFLAGS for building - use number of processors for jobs
-#---------------------------------------------------------------------------------
-numcores=`getconf _NPROCESSORS_ONLN`
-export MAKEFLAGS="$MAKEFLAGS -j${numcores}"
+BUILD_DKPRO_SRCDIR=$(realpath $(dirname $0)/../archive)
 
 #---------------------------------------------------------------------------------
 # Automated script execution
