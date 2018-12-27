@@ -17,10 +17,7 @@ include $(DEVKITARM)/ds_rules
 TARGET		:=	dslibris
 BUILD		:=	build
 SOURCES		:=	source
-INCLUDES	:=	$(shell realpath ../include) \
-                        $(shell realpath ../tool/include) \
-                        $(shell realpath ../tool/include/freetype2) \
-                        $(DEVKITARM)/include
+INCLUDES	:=	../include
 DATA		:=	../data
 
 #-----------------------------------------------------------------------
@@ -28,7 +25,7 @@ DATA		:=	../data
 #-----------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork -march=armv5te -mtune=arm946e-s 
 
-CFLAGS	:=	-Wall -fomit-frame-pointer \
+CFLAGS	:=	-Wall -fomit-frame-pointer `freetype-config --cflags` \
 		-ffast-math $(ARCH) $(INCLUDE) -DARM9
 ifeq ($(DEBUG),1)
 CFLAGS += 	-g
@@ -45,13 +42,13 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) \
 #-----------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #-----------------------------------------------------------------------
-LIBS	:= -lz -lfreetype -lexpat -lfat -lnds9
+LIBS	:= `freetype-config --libs` -lexpat -lfat -lnds9
 
 #-----------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-----------------------------------------------------------------------
-LIBDIRS	:=	 $(LIBNDS) $(DEVKITARM) $(shell realpath ../tool)
+LIBDIRS	:=	 $(PORTLIBS) $(LIBNDS)
 #-----------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add
 # additional rules for different file extensions
@@ -90,9 +87,8 @@ export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 			$(PNGFILES:.png=.o) \
 			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 
-export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(dir)) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/include -I$(dir)/include/nds) \
-			$(foreach dir,$(LIBDIRS),-I$(dir)/lib) \
+export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
+			$(foreach dir,$(LIBDIRS),-I$(dir)/include ) \
 			-I$(CURDIR)/$(BUILD)
 
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
@@ -109,7 +105,7 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD)
-	@rm -fr $(TARGET).arm9.elf $(TARGET).arm9
+	@rm -fr $(TARGET).elf
 
 #-----------------------------------------------------------------------
 else
@@ -119,8 +115,7 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #-----------------------------------------------------------------------
 # main targets
 #-----------------------------------------------------------------------
-$(OUTPUT).arm9	:	$(OUTPUT).arm9.elf
-$(OUTPUT).arm9.elf	:	$(OFILES)
+$(OUTPUT).elf	:	$(OFILES)
 
 #-----------------------------------------------------------------------
 %.o	:	%.bin

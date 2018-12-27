@@ -32,10 +32,6 @@ include $(DEVKITARM)/ds_rules
 export TARGET		:=	dslibris
 export TOPDIR		:=	$(CURDIR)
 
-#-------------------------------------------------------------------------------
-# path to tools
-#-------------------------------------------------------------------------------
-export PATH			:=	$(DEVKITARM)/bin:$(PATH)
 
 # MEDIATYPE should match a DLDI driver name.
 MEDIATYPE			:=	mpcf
@@ -46,31 +42,34 @@ MEDIATYPE			:=	mpcf
 # Location of desmume.
 EMULATOR			:=	desmume-cli
 
-.PHONY: $(TARGET).arm7 $(TARGET).arm9 \
+.PHONY: checkarm7 checkarm9 clean \
 	browse debug debug7 debug9 dist dldi doc install install-dldi gdb
 
-#-------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
 # main targets
-#-------------------------------------------------------------------------------
-all: $(TARGET).ds.gba
-$(TARGET).ds.gba	: $(TARGET).nds
+#---------------------------------------------------------------------------------
+all: checkarm7 checkarm9 $(TARGET).nds
+
+#---------------------------------------------------------------------------------
+checkarm7:
+	$(MAKE) -C arm7
+
+#---------------------------------------------------------------------------------
+checkarm9:
+	$(MAKE) -C arm9
 
 #-------------------------------------------------------------------------------
-$(TARGET).nds		: $(TARGET).arm7 $(TARGET).arm9
+$(TARGET).nds		: arm7/$(TARGET).elf arm9/$(TARGET).elf
 	ndstool -b data/icon.bmp \
 	"dslibris;an ebook reader;for Nintendo DS" \
  	-g LBRS YO 'dslibris' 2 \
-	-c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
+	-c $(TARGET).nds -7 arm7/$(TARGET).elf -9 arm9/$(TARGET).elf
 
-#-------------------------------------------------------------------------------
-$(TARGET).arm7		: arm7/$(TARGET).elf
-$(TARGET).arm9		: arm9/$(TARGET).elf
-
-#-------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
 arm7/$(TARGET).elf:
 	$(MAKE) -C arm7
 
-#-------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
 arm9/$(TARGET).elf:
 	$(MAKE) -C arm9
 

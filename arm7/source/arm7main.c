@@ -65,14 +65,21 @@ void brightness_fifo(u32 msg, void* data) { //incoming fifo message
 //---------------------------------------------------------------------------------
 int main() {
 //---------------------------------------------------------------------------------
-	irqInit();
-	fifoInit();
+	// clear sound registers
+	dmaFillWords(0, (void*)0x04000400, 0x100);
 
-	// read User Settings from firmware
+	REG_SOUNDCNT |= SOUND_ENABLE;
+	writePowerManagement(PM_CONTROL_REG, ( readPowerManagement(PM_CONTROL_REG) & ~PM_SOUND_MUTE ) | PM_SOUND_AMP );
+	powerOn(POWER_SOUND);
+
 	readUserSettings();
+	ledBlink(0);
 
+	irqInit();
 	// Start the RTC tracking IRQ
 	initClockIRQ();
+	fifoInit();
+	touchInit();
 
 	SetYtrigger(80);
 
