@@ -62,7 +62,6 @@ checkarm9:
 $(TARGET).nds		: arm7/$(TARGET).elf arm9/$(TARGET).elf
 	ndstool -b data/icon.bmp \
 	"dslibris;an ebook reader;for Nintendo DS" \
- 	-g LBRS YO 'dslibris' 2 \
 	-c $(TARGET).nds -7 arm7/$(TARGET).elf -9 arm9/$(TARGET).elf
 
 #---------------------------------------------------------------------------------
