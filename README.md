@@ -1,6 +1,8 @@
 Herein lies the source for *dslibris*, an [EPUB](http://idpf.org/epub)
 reader for the Nintendo DS.
 
+![UTF-8 Multingual](http://rhaleblian.files.wordpress.com/2007/09/utf8.png)
+
 # Prerequisites
 
 Ubuntu 16.04 LTS is Ray's current development platform.
@@ -39,10 +41,6 @@ DEBUG=1 make
 # Installation
 
 See INSTALL.
-
-# Screenshots
-
-![UTF-8 Multingual](http://rhaleblian.files.wordpress.com/2007/09/utf8.png)
 
 # Debugging
 
