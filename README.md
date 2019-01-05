@@ -3,28 +3,13 @@ reader for the Nintendo DS.
 
 # Prerequisites
 
-Ubuntu 16.04 LTS is known to work as a build platform.
-Other platforms might, as long as the correct toolchain can be obtained.
+Ubuntu 16.04 LTS is Ray's current development platform.
+macOS, CentOS and Cygwin have also worked, but haven't been checked recently.
 
 *   devkitARM r45
 *   libnds-1.5.8
 *   libfat-1.0.12
 *   a media card and a DLDI patcher, but you knew that.
-
-devkitARM r45 is not easily found. If you need to build it,
-clone the r45 branch of devkitPro/buildscripts from GitHub
-and patch it with the files in tool/buildscripts.
-You'll need to obtain the required tarball archives from each
-project's release webpage; check out the version numbers in
-the main build script.
-
-After installing devkitPro/devkitARM, see
-
-```bash
-etc/profile
-```
-
-for an example of setting DEVKITPRO and DEVKITARM in your shell.
 
 # Building
 
