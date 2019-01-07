@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+prefix=$(dirname $(dirname $PWD))/build
+./configure --prefix=$prefix --host=arm-none-eabi \
+--with-png=no --with-harfbuzz=no --with-pic=yes \
+CPPFLAGS="-I$DEVKITPRO/portlibs/nds/include" \
+LDFLAGS="-L$DEVKITPRO/portlibs/nds/lib"
+

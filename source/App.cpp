@@ -47,6 +47,11 @@ static bool book_title_lessthan(Book* a, Book* b) {
     return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
 }
 
+void halt()
+{
+	while(TRUE) swiWaitForVBlank();
+}
+
 App::App()
 {	
 	fontdir = string(FONTDIR);
@@ -97,20 +102,10 @@ App::~App()
 
 int App::Run(void)
 {
-	char msg[128];
+	char msg[512];
 	SetBrightness(0);	
-	
-	// Start up FAT on this media.
-	
-	if(!fatInitDefault())
-	{
-		iprintf("fatal: no filesystem.\n");
-		iprintf("info : DLDI patch?\n");
-		while(true) swiWaitForVBlank();
-	}
-	iprintf("progr: filesystem mounted.\n");
 
-	Log("----\nprogr: App starting up.\n");
+	Log("progr: dslibris starting up.\n");
 	console = true;
 
 	// Read preferences, pass 1,
@@ -118,8 +113,6 @@ int App::Run(void)
 
    	if (int err = prefs->Read())
 	{
-		sprintf(msg,"warn : can't read prefs (%d).\n",err);
-		Log(msg);
 		if(err == 255)
 		{
 			Log("info : writing new prefs.\n");
@@ -417,7 +410,7 @@ void App::Log(const char *format, const char *msg)
 {
 	if(console)
 	{
-		char s[128];
+		char s[1024];
 		sprintf(s,format,msg);
 		iprintf(s);
 	}

@@ -157,9 +157,6 @@ void App::HandleEventInPrefs()
 		touchPosition touch;
 		touchRead(&touch);
 		touchPosition coord;
-		u8 regionprev[2];
-		regionprev[0] = 0;
-		regionprev[1] = 16;
 
 		if(!orientation)
 		{

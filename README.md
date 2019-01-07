@@ -1,5 +1,5 @@
 Herein lies the source for *dslibris*, an [EPUB](http://idpf.org/epub)
-reader for the Nintendo DS.
+ebook reader for the Nintendo DS.
 
 ![Startup Screen](etc/2.jpeg)
 ![A Sample (Left and Right) Page](etc/2-2.jpeg)
