@@ -10,7 +10,7 @@ ebook reader for the Nintendo DS.
 
 devkitPro pacman packages:
 
-    dkp-pacman -U devkitARM libnds libfat nds-expat nds-bzip nds-zlib
+    (dkp-)pacman -S devkitARM libnds libfat nds-expat nds-bzip nds-zlib
 
 Ubuntu 16.04 LTS and macOS are known good development platforms. CentOS and Cygwin have also worked, but haven't been checked recently.
 
@@ -34,11 +34,10 @@ See INSTALL.
 
 arm-eabi-gdb, insight-6.8 and desmume-0.9.12-svn5575 have been known to work for debugging. See online forums for means to build an arm-eabi-targeted Insight for your platform.
 
-# More Info
+# See Also
 
 https://rhaleblian.wordpress.com/dslibris-an-ebook-reader-for-the-nintendo-ds/
 
 http://devkitpro.org
 
----
-[1] http://idpf.org/epub
+http://idpf.org/epub
