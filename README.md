@@ -8,38 +8,23 @@ ebook reader for the Nintendo DS.
 
 # Prerequisites
 
-Ubuntu 16.04 LTS is Ray's current development platform.
-macOS, CentOS and Cygwin have also worked, but haven't been checked recently.
+devkitPro pacman packages:
 
-*   devkitARM r45
-*   libnds-1.5.8
-*   libfat-1.0.12
-*   a media card and a DLDI patcher, but you knew that.
+    dkp-pacman -U devkitARM libnds libfat nds-expat nds-bzip nds-zlib
+
+Ubuntu 16.04 LTS and macOS are known good development platforms. CentOS and Cygwin have also worked, but haven't been checked recently.
 
 # Building
 
-To build the dependent libraries,
-
-```shell
-cd tool
-make
-```
-
-The arm-none-eabi-* executables must be in your PATH for the above to work.
+In order for Freetype to build, the `arm-none-eabi-*` executables must be in your `PATH`.
 
 Then, to build the program,
 
 ```shell
-cd ..
 make
 ```
 
-dslibris.nds should show up in your current directory.
-for a debugging build,
-
-```shell
-DEBUG=1 make
-```
+`dslibris.nds` should show up in the top directory.
 
 # Installation
 
@@ -51,7 +36,9 @@ arm-eabi-gdb, insight-6.8 and desmume-0.9.12-svn5575 have been known to work for
 
 # More Info
 
-http://github.com/rhaleblian/dslibris
+https://rhaleblian.wordpress.com/dslibris-an-ebook-reader-for-the-nintendo-ds/
 
+http://devkitpro.org
 
+---
 [1] http://idpf.org/epub
