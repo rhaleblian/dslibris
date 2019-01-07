@@ -1,147 +1,225 @@
-#
-#
-# dslibris - an ebook reader for the Nintendo DS.
-#
-#  Copyright (C) 2007-2014 Ray Haleblian (ray23@sourceforge.net)
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-#
-#
-
-#-------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
 .SUFFIXES:
-#-------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
+
 ifeq ($(strip $(DEVKITARM)),)
-	$(error "Set DEVKITARM in your environment.")
+$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
+
+# These set the information text in the nds file
+#GAME_TITLE     := My Wonderful Homebrew
+#GAME_SUBTITLE1 := built with devkitARM
+#GAME_SUBTITLE2 := http://devitpro.org
 
 include $(DEVKITARM)/ds_rules
 
-export TARGET		:=	dslibris
-export TOPDIR		:=	$(CURDIR)
+#---------------------------------------------------------------------------------
+# TARGET is the name of the output
+# BUILD is the directory where object files & intermediate files will be placed
+# SOURCES is a list of directories containing source code
+# INCLUDES is a list of directories containing extra header files
+# DATA is a list of directories containing binary files embedded using bin2o
+# GRAPHICS is a list of directories containing image files to be converted with grit
+# AUDIO is a list of directories containing audio to be converted by maxmod
+# ICON is the image used to create the game icon, leave blank to use default rule
+# NITRO is a directory that will be accessible via NitroFS
+#---------------------------------------------------------------------------------
+TARGET   := $(shell basename $(CURDIR))
+BUILD    := build
+SOURCES  := source
+INCLUDES := include
+DATA     := data
+GRAPHICS := graphics
+AUDIO    :=
+ICON     := graphics/icon.bmp
 
-#-------------------------------------------------------------------------------
-# path to tools
-#-------------------------------------------------------------------------------
-export PATH			:=	$(DEVKITARM)/bin:$(PATH)
+# specify a directory which contains the nitro filesystem
+# this is relative to the Makefile
+NITRO    := 
 
-# MEDIATYPE should match a DLDI driver name.
-MEDIATYPE			:=	mpcf
+#---------------------------------------------------------------------------------
+# options for code generation
+#---------------------------------------------------------------------------------
+ARCH := -marm -mthumb-interwork -march=armv5te -mtune=arm946e-s
 
-#-------------------------------------------------------------------------------
-# Device emulation.
-#-------------------------------------------------------------------------------
-# Location of desmume.
-EMULATOR			:=	desmume-cli
+CFLAGS   := -g -Wall -O3\
+            -Iinclude/freetype2\
+            $(ARCH) $(INCLUDE) -DARM9
+CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
+ASFLAGS  := -g $(ARCH)
+LDFLAGS   = -specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-.PHONY: $(TARGET).arm7 $(TARGET).arm9 \
-	browse debug debug7 debug9 dist dldi doc install install-dldi gdb
+#---------------------------------------------------------------------------------
+# any extra libraries we wish to link with the project (order is important)
+#---------------------------------------------------------------------------------
+LIBS := -lfat -lnds9 -lfreetype -lexpat -lz -lbz2
 
-#-------------------------------------------------------------------------------
-# main targets
-#-------------------------------------------------------------------------------
-all: $(TARGET).ds.gba
-$(TARGET).ds.gba	: $(TARGET).nds
+# automatigically add libraries for NitroFS
+ifneq ($(strip $(NITRO)),)
+LIBS := -lfilesystem -lfat $(LIBS)
+endif
+# automagically add maxmod library
+ifneq ($(strip $(AUDIO)),)
+LIBS := -lmm9 $(LIBS)
+endif
 
-#-------------------------------------------------------------------------------
-$(TARGET).nds		: $(TARGET).arm7 $(TARGET).arm9
-	ndstool -b data/icon.bmp \
-	"dslibris;an ebook reader;for Nintendo DS" \
- 	-g LBRS YO 'dslibris' 2 \
-	-c $(TARGET).nds -7 arm7/$(TARGET).arm7 -9 arm9/$(TARGET).arm9
+#---------------------------------------------------------------------------------
+# list of directories containing libraries, this must be the top level containing
+# include and lib
+#---------------------------------------------------------------------------------
+LIBDIRS := $(LIBNDS) $(CURDIR)/$(BUILD) $(PORTLIBS)
 
-#-------------------------------------------------------------------------------
-$(TARGET).arm7		: arm7/$(TARGET).elf
-$(TARGET).arm9		: arm9/$(TARGET).elf
+#---------------------------------------------------------------------------------
+# no real need to edit anything past this point unless you need to add additional
+# rules for different file extensions
+#---------------------------------------------------------------------------------
+ifneq ($(BUILD),$(notdir $(CURDIR)))
+#---------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-arm7/$(TARGET).elf:
-	$(MAKE) -C arm7
+export OUTPUT := $(CURDIR)/$(TARGET)
 
-#-------------------------------------------------------------------------------
-arm9/$(TARGET).elf:
-	$(MAKE) -C arm9
+export VPATH := $(CURDIR)/$(subst /,,$(dir $(ICON)))\
+                $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))\
+                $(foreach dir,$(DATA),$(CURDIR)/$(dir))\
+                $(foreach dir,$(GRAPHICS),$(CURDIR)/$(dir))
 
-#-------------------------------------------------------------------------------
+export DEPSDIR := $(CURDIR)/$(BUILD)
+
+CFILES   := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CPPFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+SFILES   := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+PNGFILES := $(foreach dir,$(GRAPHICS),$(notdir $(wildcard $(dir)/*.png)))
+BINFILES := $(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.*)))
+
+# prepare NitroFS directory
+ifneq ($(strip $(NITRO)),)
+  export NITRO_FILES := $(CURDIR)/$(NITRO)
+endif
+
+# get audio list for maxmod
+ifneq ($(strip $(AUDIO)),)
+  export MODFILES	:=	$(foreach dir,$(notdir $(wildcard $(AUDIO)/*.*)),$(CURDIR)/$(AUDIO)/$(dir))
+
+  # place the soundbank file in NitroFS if using it
+  ifneq ($(strip $(NITRO)),)
+    export SOUNDBANK := $(NITRO_FILES)/soundbank.bin
+
+  # otherwise, needs to be loaded from memory
+  else
+    export SOUNDBANK := soundbank.bin
+    BINFILES += $(SOUNDBANK)
+  endif
+endif
+
+#---------------------------------------------------------------------------------
+# use CXX for linking C++ projects, CC for standard C
+#---------------------------------------------------------------------------------
+ifeq ($(strip $(CPPFILES)),)
+#---------------------------------------------------------------------------------
+  export LD := $(CC)
+#---------------------------------------------------------------------------------
+else
+#---------------------------------------------------------------------------------
+  export LD := $(CXX)
+#---------------------------------------------------------------------------------
+endif
+#---------------------------------------------------------------------------------
+
+export OFILES_BIN   :=	$(addsuffix .o,$(BINFILES))
+
+export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+
+export OFILES := $(PNGFILES:.png=.o) $(OFILES_BIN) $(OFILES_SOURCES)
+
+export HFILES := $(PNGFILES:.png=.h) $(addsuffix .h,$(subst .,_,$(BINFILES)))
+
+export INCLUDE  := $(foreach dir,$(INCLUDES),-iquote $(CURDIR)/$(dir))\
+                   $(foreach dir,$(LIBDIRS),-I$(dir)/include)\
+                   -I$(CURDIR)/$(BUILD)
+export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+
+ifeq ($(strip $(ICON)),)
+  icons := $(wildcard *.bmp)
+
+  ifneq (,$(findstring $(TARGET).bmp,$(icons)))
+    export GAME_ICON := $(CURDIR)/$(TARGET).bmp
+  else
+    ifneq (,$(findstring icon.bmp,$(icons)))
+      export GAME_ICON := $(CURDIR)/icon.bmp
+    endif
+  endif
+else
+  ifeq ($(suffix $(ICON)), .grf)
+    export GAME_ICON := $(CURDIR)/$(ICON)
+  else
+    export GAME_ICON := $(CURDIR)/$(BUILD)/$(notdir $(basename $(ICON))).grf
+  endif
+endif
+
+.PHONY: $(BUILD) clean
+
+#---------------------------------------------------------------------------------
+$(BUILD):
+	@mkdir -p $@
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+
+#---------------------------------------------------------------------------------
 clean:
-	$(MAKE) -C arm9 clean
-	$(MAKE) -C arm7 clean
-	rm -f $(TARGET).ds.gba $(TARGET).nds $(TARGET).$(MEDIATYPE).nds
+	@echo clean ...
+	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(SOUNDBANK)
 
-#-------------------------------------------------------------------------------
-# Platform specifics.
-#-------------------------------------------------------------------------------
-include Makefile.$(shell uname)
+#---------------------------------------------------------------------------------
+else
 
-# Run under emulator with an image file.
-# Use desmume 0.9.7+ with DLDI-autopatch.
-test: $(TARGET).nds
-	$(EMULATOR) --preload-rom --cflash-image $(CFLASH_IMAGE) $(TARGET).nds
+#---------------------------------------------------------------------------------
+# main targets
+#---------------------------------------------------------------------------------
+$(OUTPUT).nds: $(OUTPUT).elf $(NITRO_FILES) $(GAME_ICON)
+$(OUTPUT).elf: $(OFILES)
 
-# Debug under emulation and arm-eabi-insight 6.8.1. Linux only.
-# First, build with 'DEBUG=1 make'
-debug9: $(TARGET).nds
-	arm-eabi-insight arm9/$(TARGET).arm9.elf &
-	$(EMULATOR) --preload-rom --cflash-image $(CFLASH_IMAGE) --arm9gdb=20000 $(TARGET).nds &
+# source files depend on generated headers
+$(OFILES_SOURCES) : $(HFILES)
 
-debug7: $(TARGET).nds
-	arm-eabi-insight arm7/$(TARGET).arm7.elf &
-	$(EMULATOR) --preload-rom --cflash-image $(CFLASH_IMAGE) --arm7gdb=20001 $(TARGET).nds &
+# need to build soundbank first
+$(OFILES): $(SOUNDBANK) lib/pkgconfig
 
-debug:	debug9
+#---------------------------------------------------------------------------------
+# rule to build solution from music files
+#---------------------------------------------------------------------------------
+$(SOUNDBANK) : $(MODFILES)
+#---------------------------------------------------------------------------------
+	mmutil $^ -d -o$@ -hsoundbank.h
 
-# Debug under emulation and arm-eabi-gdb.
-gdb: $(TARGET).nds
-	$(EMULATOR) --preload-rom --cflash-image $(CFLASH_IMAGE) \
-	 --arm9gdb=20000 $(TARGET).nds &
-	sleep 4
-	arm-eabi-gdb -x data/gdb.commands arm9/$(TARGET).arm9.elf
+#---------------------------------------------------------------------------------
+%.bin.o %_bin.h : %.bin
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	@$(bin2o)
 
-# Make DLDI patched target.
-$(TARGET).$(MEDIATYPE).nds: $(TARGET).nds
-	cp dslibris.nds dslibris.$(MEDIATYPE).nds
-	dlditool data/dldi/$(MEDIATYPE).dldi dslibris.$(MEDIATYPE).nds
+#---------------------------------------------------------------------------------
+# This rule creates assembly source files using grit
+# grit takes an image file and a .grit describing how the file is to be processed
+# add additional rules like this for each image extension
+# you use in the graphics folders
+#---------------------------------------------------------------------------------
+%.s %.h: %.png %.grit
+#---------------------------------------------------------------------------------
+	grit $< -fts -o$*
 
-dldi: $(TARGET).$(MEDIATYPE).nds
+#---------------------------------------------------------------------------------
+# Convert non-GRF game icon to GRF if needed
+#---------------------------------------------------------------------------------
+$(GAME_ICON): $(notdir $(ICON))
+#---------------------------------------------------------------------------------
+	@echo convert $(notdir $<)
+	@grit $< -g -gt -gB4 -gT FF00FF -m! -p -pe 16 -fh! -ftr
 
-# Copy target to mounted microSD at $(MEDIA_MOUNTPOINT)
-install: $(TARGET).nds
-	cp $(TARGET).nds $(MEDIA_MOUNTPOINT)
-	sync
+-include $(DEPSDIR)/*.d
 
-# Installation as above, including DLDI patching.
-install-dldi: $(TARGET).$(MEDIATYPE).nds
-	cp $(TARGET).$(MEDIATYPE).nds $(MEDIA_MOUNTPOINT)/$(TARGET).nds
-	sync
+#---------------------------------------------------------------------------------------
+endif
+#---------------------------------------------------------------------------------------
 
-doc: Doxyfile
-	doxygen
-
-browse: doc
-	firefox doc/html/index.html
-
-# Make an archive to release on Sourceforge.
-dist/$(TARGET).zip: $(TARGET).nds INSTALL
-	- mkdir dist
-	- rm -r dist/*
-	cp INSTALL dist/INSTALL.txt
-	cp $(TARGET).nds data/$(TARGET).xml dist
-	- mkdir dist/font
-	cp data/font/*.ttf dist/font
-	- mkdir dist/book	
-	(cd dist; zip -r $(TARGET).zip *)
-
-dist: dist/$(TARGET).zip
+lib/pkgconfig:
+	make -C ../portlibs
 

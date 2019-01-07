@@ -91,11 +91,6 @@ void App::HandleEventInFont()
 		touchPosition touch;
 		touchRead(&touch);
 		touchPosition coord;
-		u8 regionprev[2], regionnext[2];
-		regionprev[0] = 0;
-		regionprev[1] = 16;
-		regionnext[0] = 240;
-		regionnext[1] = 255;
 
 		if(!orientation)
 		{

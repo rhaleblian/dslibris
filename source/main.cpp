@@ -21,9 +21,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 #include <sys/param.h>
+#include <filesystem.h>
 #include <nds.h>
 #include <fat.h>
-#include <expat.h>
+#include "expat.h"
 #include "types.h"
 #include "App.h"
 #include "Book.h"
@@ -41,8 +42,11 @@ int main(void)
 {	
 	// Get a console going.
 	consoleDemoInit();
-	iprintf("$ dslibris\n");
-			
+
+	// Start up the filesystem.
+	//nitroFSInit(NULL);
+	fatInitDefault();
+
 	app = new App();
 	return app->Run();
 }
@@ -372,7 +376,7 @@ void title_char_hndl(void *userdata, const char *txt, int txtlen)
 	{
 		if(iswhitespace(txt[t])) 
 		{
-			if(strlen(title)) strncat(title," ",1);
+			if(strlen(title)) strncat(title," ",2);
 		}
 		else strncat(title,txt+t,1);
 

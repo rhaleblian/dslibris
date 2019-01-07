@@ -56,9 +56,9 @@ int Prefs::Read()
 	struct timeval time;
 	gettimeofday(&time,NULL);
 	char msg[64];
-	sprintf(msg,"info : file timestamp %ld",st.st_mtime);
+	sprintf(msg,"info : file timestamp %lld",st.st_mtime);
 	app->Log(msg);
-	sprintf(msg,"info : current time %ld",time.tv_sec);
+	sprintf(msg,"info : current time %lld",time.tv_sec);
 	app->Log(msg);
 }
 

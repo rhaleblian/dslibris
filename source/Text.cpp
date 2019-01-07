@@ -157,7 +157,7 @@ int Text::InitDefault(void) {
 		sprintf(msg,"info : font '%s'\n", iter->second.c_str());
 		app->Log(msg);
 		
-		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
+		//FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 		FT_Set_Pixel_Sizes(face, 0, pixelsize);
 		
 		textCache.insert(make_pair(face, new Cache()));
@@ -168,7 +168,6 @@ int Text::InitDefault(void) {
 	screen = screenleft;
 	ClearCache();
 	InitPen();
-	ftc = false;
 	initialized = true;
 	return 0;
 }
@@ -540,7 +539,6 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	FT_Byte *buffer = NULL;
 	FT_UInt advance = 0;
 	FTC_Node anode;
-	char msg[256];
 
 	// get metrics and glyph pointer.
 
