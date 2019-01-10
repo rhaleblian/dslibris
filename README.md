@@ -12,7 +12,7 @@ devkitPro pacman packages:
 
     (dkp-)pacman -S devkitARM libnds libfat nds-expat nds-bzip nds-zlib
 
-Ubuntu 16.04 LTS and macOS are known good development platforms. CentOS and Cygwin have also worked, but haven't been checked recently.
+Ubuntu 16.04 LTS and macOS are known good development platforms. CentOS and MinGW have also worked, but haven't been checked recently.
 
 # Building
 
