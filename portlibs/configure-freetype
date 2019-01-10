@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
+PATH=$PATH:$DEVKITARM/bin
 prefix=$(dirname $(dirname $PWD))/build
 ./configure --prefix=$prefix --host=arm-none-eabi \
---with-png=no --with-harfbuzz=no --with-pic=yes \
+--with-png=no --with-harfbuzz=no \
 CPPFLAGS="-I$DEVKITPRO/portlibs/nds/include" \
 LDFLAGS="-L$DEVKITPRO/portlibs/nds/lib"
-

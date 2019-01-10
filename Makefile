@@ -31,7 +31,7 @@ INCLUDES := include
 DATA     := data
 GRAPHICS := graphics
 AUDIO    :=
-ICON     := graphics/icon.bmp
+ICON     := 
 
 # specify a directory which contains the nitro filesystem
 # this is relative to the Makefile
@@ -43,7 +43,7 @@ NITRO    :=
 ARCH := -marm -mthumb-interwork -march=armv5te -mtune=arm946e-s
 
 CFLAGS   := -g -Wall -O3\
-            -Iinclude/freetype2\
+            -I$(CURDIR)/include/freetype2\
             $(ARCH) $(INCLUDE) -DARM9
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS  := -g $(ARCH)
@@ -159,7 +159,7 @@ endif
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
-$(BUILD):
+$(BUILD): lib/libfreetype.la
 	@mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
@@ -167,6 +167,8 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(SOUNDBANK)
+
+include etc/Makefile.$(shell uname)
 
 #---------------------------------------------------------------------------------
 else
@@ -181,7 +183,9 @@ $(OUTPUT).elf: $(OFILES)
 $(OFILES_SOURCES) : $(HFILES)
 
 # need to build soundbank first
-$(OFILES): $(SOUNDBANK) lib/pkgconfig
+$(OFILES): $(SOUNDBANK)
+
+
 
 #---------------------------------------------------------------------------------
 # rule to build solution from music files
@@ -220,6 +224,8 @@ $(GAME_ICON): $(notdir $(ICON))
 endif
 #---------------------------------------------------------------------------------------
 
-lib/pkgconfig:
-	make -C ../portlibs
+lib/libfreetype.la:
+	make -C portlibs
 
+test:
+	$(EMULATOR) --cflash-path cflash dslibris.nds

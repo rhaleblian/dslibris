@@ -1,5 +1,6 @@
 FREETYPE_VERSION=2.5.5
 TARGETS=lib/libfreetype.a
+PATH+=:${DEVKITARM}/bin
 
 default: ${TARGETS}
 
@@ -12,4 +13,3 @@ lib/libfreetype.a: freetype-${FREETYPE_VERSION}
 
 freetype-${FREETYPE_VERSION}:
 	tar xf $@.tar.bz2
-

@@ -1,7 +1,7 @@
-*.elf
-/build
-cflash.img
-cflash.dmg
-dslibris.nds
 .DS_Store
-
+*.elf
+*.nds
+*.img
+*.dmg
+/build
+/portlibs/freetype-2.5.5

@@ -1,0 +1,6 @@
+
+lib/libfreetype.la:
+	PATH+=:$(DEVKITPRO)/bin make -C ../portlibs
+
+test: ndslibris.nds
+	$(EMULATOR) --cflash-path cflash dslibris.nds
