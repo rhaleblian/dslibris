@@ -1,6 +1,7 @@
 {
     "C_Cpp.default.includePath": [
         "include",
+        "/opt/devkitpro/libnds/include",
         "/opt/devkitpro/devkitARM/include",
         "/opt/devkitpro/portlibs/nds/include"
     ]
