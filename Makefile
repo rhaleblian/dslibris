@@ -168,8 +168,6 @@ clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(SOUNDBANK)
 
-include etc/Makefile.$(shell uname)
-
 #---------------------------------------------------------------------------------
 else
 
@@ -184,8 +182,6 @@ $(OFILES_SOURCES) : $(HFILES)
 
 # need to build soundbank first
 $(OFILES): $(SOUNDBANK)
-
-
 
 #---------------------------------------------------------------------------------
 # rule to build solution from music files
@@ -227,5 +223,3 @@ endif
 lib/libfreetype.la:
 	make -C portlibs
 
-test:
-	$(EMULATOR) --cflash-path cflash dslibris.nds

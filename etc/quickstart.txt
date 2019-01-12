@@ -1,0 +1,18 @@
+% Quick Start
+% Ray Haleblian
+
+Welcome to dslibris.
+
+## Navigation
+
+* Directional Pad: advance or retreat a page
+* X: invert colours
+* START: Return to the book browser
+
+## Adding Books
+
+To add books, place EPUB files into the book/ directory of your media cartridge's storage.
+
+## Adding Fonts
+
+To add your own fonts, add TrueType TTF files to the font/ directory and select them using the prefs screen.
