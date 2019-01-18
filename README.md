@@ -2,7 +2,7 @@ Herein lies the source for *dslibris*, an [EPUB](http://idpf.org/epub)
 ebook reader for the Nintendo DS.
 
 ![Startup Screen](etc/browser.jpg)
-![A Sample (Left and Right) Page](etc/page.jpeg)
+![A Sample (Left and Right) Page](etc/page.jpg)
 
 ![UTF-8 Multingual](http://rhaleblian.files.wordpress.com/2007/09/utf8.png)
 
