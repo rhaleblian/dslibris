@@ -2,16 +2,17 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
-ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
-endif
+#ifeq ($(strip $(DEVKITARM)),)
+#$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
+#endif
 
 # These set the information text in the nds file
 #GAME_TITLE     := My Wonderful Homebrew
 #GAME_SUBTITLE1 := built with devkitARM
 #GAME_SUBTITLE2 := http://devitpro.org
 
-include $(DEVKITARM)/ds_rules
+#include $(DEVKITARM)/ds_rules
+CC=gcc
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
