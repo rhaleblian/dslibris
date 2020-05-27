@@ -1,23 +1,34 @@
 VERSION=VER-2-10-0
 DIR=freetype2-$(VERSION)
-ARCHIVE=$(DIR).tar.gz
-URL=https://github.com/aseprite/freetype2/archive/$(ARCHIVE)
+ARCHIVE=$(VERSION).tar.gz
+URL=https://github.com/aseprite/freetype2/archive/VER-2-10-0.tar.gz
 
 PATH:=${DEVKITARM}/bin:$(PATH)
 
-freetype2: $(DIR)
+install: build
+	make -C $(DIR) install
+
+build: configure
+	# CMake isn't usable until cross-compiling switches exist.
 	#cd $< && install -d build && cd build && cmake .. && make
-	cd $< && ./autogen.sh && ../configure && make install
-	
+	make -C $(DIR)
+
+configure: $(DIR)
+	cd $< && ./autogen.sh && ../configure-arm
+
 $(DIR): $(ARCHIVE)
 	tar xf $<
 
 $(ARCHIVE):
-	curl $(URL)
+	wget $(URL)
+
+clean:
+	make -C $(DIR) clean
+
+distclean:
+	make -C $(DIR) distclean
+	- rm $(ARCHIVE)
+	- rm -rf $(DIR)
 
 preflight:
 	apt install libtool
-
-clean:
-	- rm $(ARCHIVE)
-	- rm -rf $(DIR)

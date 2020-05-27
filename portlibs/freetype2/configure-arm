@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
-PATH=$DEVKITARM/bin:$PATH
-prefix=$(dirname $(dirname $PWD))/build
-./autogen.sh
-./configure --prefix=$prefix --host=arm-none-eabi \
+PATH=$DEVKITPRO/devkitARM/bin:$PATH
+PREFIX=$DEVKITPRO/devkitARM/local
+
+./configure --prefix=$PREFIX --host=arm-none-eabi \
 --with-png=no --with-harfbuzz=no --with-zlib=no --with-bzip=no \
 CPPFLAGS="-I$DEVKITPRO/portlibs/nds/include" \
 LDFLAGS="-L$DEVKITPRO/portlibs/nds/lib"
