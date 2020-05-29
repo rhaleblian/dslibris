@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "defines": [],
+            "compilerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "clang-x64",
+            "includePath": [
+                "include",
+                "/opt/devkitpro/libnds/include",
+                "/opt/devkitpro/devkitARM/include",
+                "/opt/devkitpro/portlibs/nds/include",
+                "/opt/devkitpro/portlibs/nds/include/freetype2"  
+            ]
+        }
+    ],
+    "version": 4
+}
