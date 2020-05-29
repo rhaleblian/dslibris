@@ -72,7 +72,7 @@ in the source root directory.
 #define APP_MODE_PREFS_FONT 3
 #define APP_MODE_PREFS_FONT_BOLD 4
 #define APP_MODE_PREFS_FONT_ITALIC 5
-#define APP_URL "http://sourceforge.net/projects/ndslibris"
+#define APP_URL "http://github.com/rhaleblian/dslibris"
 
 #define PREFS_BUTTON_COUNT 5
 #define PREFS_BUTTON_FONT 2
