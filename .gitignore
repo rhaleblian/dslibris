@@ -5,5 +5,3 @@
 *.tar.gz
 .DS_Store
 /build
-/portlibs/freetype2/freetype2-*
-/portlibs/zlib/zlib-*
