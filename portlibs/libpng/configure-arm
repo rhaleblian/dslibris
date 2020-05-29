@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+prefix=$DEVKITARM/local
+./configure --prefix=$prefix --host=arm-none-eabi \
+CPPFLAGS="-I$prefix/include" LDFLAGS="-L$prefix/lib"
+

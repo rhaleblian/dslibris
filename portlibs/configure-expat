@@ -1,2 +1,0 @@
-./configure --host=arm-none-eabi --prefix=$(realpath ..)
-
