@@ -27,9 +27,10 @@ using namespace std;
 #define TEXT_STYLE_SPLASH (u8)4
 
 class App;
+int asciiart();
 
 typedef struct TextFaceRec_ {
-	const char* file_path;
+	char file_path[128];
 	int face_index;
 } TextFaceRec, *TextFace;
 
@@ -116,7 +117,7 @@ class Text {
 	bool ftc;
 	TextCache cache;
 	TextFaceRec face_id;
-	FTC_SBit sbit;
+	FTC_SBitRec sbit;
 	FTC_ImageTypeRec imagetype;
 	FT_Int charmap_index;
 	
@@ -148,7 +149,7 @@ class Text {
 	int CacheGlyph(u32 ucs, u8 style);
 	int CacheGlyph(u32 ucs, FT_Face face);
 	int InitDefault();
-	int InitWithCacheManager();
+	FT_Error InitWithCacheManager();
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);

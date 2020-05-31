@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+PATH=$PATH:$DEVKITARM/bin
+prefix=$DEVKITPRO/portlibs/nds
+
+./configure --prefix=$prefix --host=arm-none-eabi \
+--with-png=no --with-harfbuzz=no \
+CPPFLAGS="-I$prefix/include" \
+LDFLAGS="-L$prefix/lib"
+

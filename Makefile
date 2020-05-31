@@ -24,9 +24,9 @@ INCLUDES	:=	include build
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-CFLAGS	:=	-g -Wall -O2\
-			-I$(DEVKITPRO)/portlibs/nds/include/freetype2\
- 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
+CFLAGS	:=	-g -Wall -O2 \
+			-I$(DEVKITPRO)/portlibs/nds/include/freetype2 \
+ 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
 			-ffast-math \
 			$(ARCH)
 
@@ -41,8 +41,6 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 LIBS	:= -lfat -lnds9 -lfilesystem -lfreetype -lexpat -lz -lbz2 -lpng
 
- 
- 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
@@ -134,3 +132,33 @@ $(OUTPUT).elf	:	$(OFILES)
 #---------------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------------
+
+
+/tmp/cflash:
+	- mkdir /tmp/cflash
+
+$(HOME)/cflash.image:
+# Create an empty image for DeSMuME --cflash-path.
+	dd if=/dev/zero of=$@ bs=1M count=16
+	mkfs.fat -n dslibris $@
+	make mount
+	sudo cp -r cflash/* /tmp/cflash
+	make umount
+
+test: $(BUILD) $(HOME)/cflash.image
+	dlditool $(HOME)/mpcf.dldi dslibris.nds
+	desmume --cflash-image=$(HOME)/cflash.image dslibris.nds
+
+log: mount
+# Fetch the log from inside the cflash image.
+	cp /tmp/cflash/dslibris.log .
+	make umount
+
+mount: /tmp/cflash
+	sudo mount -o loop $(HOME)/cflash.image /tmp/cflash
+
+umount:
+	sudo umount /tmp/cflash
+	rmdir /tmp/cflash
+
+.PHONY: test log mount umount

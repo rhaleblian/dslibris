@@ -21,11 +21,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 #include <sys/param.h>
-#include <filesystem.h>
-#include <nds.h>
-#include <fat.h>
+
+#define ARM9
+#include "filesystem.h"
+#include "nds.h"
+#include "fat.h"
 #include "expat.h"
 #include "types.h"
+
 #include "App.h"
 #include "Book.h"
 #include "Button.h"
@@ -35,6 +38,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 App *app;
 char msg[256];
+int ft_main(int argc, char **argv);
 
 /*---------------------------------------------------------------------------*/
 
@@ -44,11 +48,24 @@ int main(void)
 	consoleDemoInit();
 
 	// Start up the filesystem.
-	//nitroFSInit(NULL);
 	fatInitDefault();
 
 	app = new App();
 	return app->Run();
+}
+
+int main_asciiart(void)
+{	
+	// Get a console going.
+	consoleDemoInit();
+
+	// Start up the filesystem.
+	fatInitDefault();
+
+	// Draw to the console.
+	asciiart();
+	while (true) swiWaitForVBlank();
+	return 0;
 }
 
 bool iswhitespace(u8 c)

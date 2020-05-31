@@ -30,8 +30,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <sys/stat.h>
 #include <unistd.h>
 #include <algorithm>   // for std::sort
-#include <fat.h>
-#include <nds/bios.h>
+
+#define ARM9
+#include "fat.h"
+#include "nds/system.h"
+#include "nds/arm9/background.h"
+#include "nds/arm9/input.h"
 
 #include "ndsx_brightness.h"
 #include "types.h"
@@ -105,7 +109,8 @@ int App::Run(void)
 	char msg[512];
 	SetBrightness(0);	
 
-	Log("progr: dslibris starting up.\n");
+	Log("--------------------\n");
+	Log("dslibris starting up\n");
 	console = true;
 
 	// Read preferences, pass 1,
@@ -115,11 +120,10 @@ int App::Run(void)
 	{
 		if(err == 255)
 		{
-			Log("info : writing new prefs.\n");
 			prefs->Write();
+			Log("wrote new prefs\n");
 		}
 	}
-	else Log("progr: read prefs, bookdir is '%s'.\n",bookdir.c_str());
 
 	// Start up typesetter.
 
@@ -127,16 +131,16 @@ int App::Run(void)
 	switch(err)
 	{
 		case 0:
-		sprintf(msg, "progr: typesetter started.\n");
+		sprintf(msg, "typesetter started\n");
 		break;
 		case 1:
-		sprintf(msg, "fatal: no FreeType (%d).\n", err);
+		sprintf(msg, "fatal: font file not found (%d)\n", err);
 		break;
 		case 2:
-		sprintf(msg, "fatal: font not found (%d).\n",err);
+		sprintf(msg, "fatal: font file unreadable (%d)\n", err);
 		break;
 		default:
-		sprintf(msg, "fatal: unknown typesetting error (%d).\n",err);
+		sprintf(msg, "fatal: freetype error (%d)\n", err);
 	}
 	Log(msg);
 	if(err) while(1) swiWaitForVBlank();
@@ -145,7 +149,7 @@ int App::Run(void)
 	
 	// Look in the book directory and construct library.
 
-	sprintf(msg,"info : scanning '%s' for books.\n",bookdir.c_str());
+	sprintf(msg,"scanning '%s' for books\n",bookdir.c_str());
 	Log(msg);
 	
 	DIR *dp = opendir(bookdir.c_str());
@@ -155,17 +159,12 @@ int App::Run(void)
 			bookdir.c_str());
 		Log(msg);
 	}
-	else
-	{
-		sprintf(msg,"progr: scanning '%s'.\n",bookdir.c_str());
-		Log(msg);
-	}
 	
 	struct dirent *ent;
 	while ((ent = readdir(dp)))
 	{
 		char *filename = ent->d_name;
-		sprintf(msg,"info : file: %s\n", filename);
+		sprintf(msg,"%s\n", filename);
 		Log(msg);
 		if(*filename == '.') continue;
 		char *c;
@@ -182,17 +181,17 @@ int App::Run(void)
 			books.push_back(book);
 			bookcount++;
 			
-			Log("info : indexing book '%s'.\n", book->GetFileName());
+			Log("indexing '%s'\n", book->GetFileName());
 
 			u8 rc = book->Index();
 			if (rc)
 			{
-				sprintf(msg,"warn : indexer failed (%d).\n",
+				sprintf(msg,"warn : indexer failed (%d)\n",
 					rc);
 			}
 			else
 			{
-				sprintf(msg, "info : indexed title '%s'.\n",
+				sprintf(msg, "indexed title '%s'\n",
 					book->GetTitle());
 			}
 			Log(msg);
@@ -210,7 +209,7 @@ int App::Run(void)
 		}
 	}
 	closedir(dp);
-	sprintf(msg,"progr: %d books indexed.\n",bookcount);
+	sprintf(msg,"%d books indexed.\n",bookcount);
 	Log(msg);
 
 	if(bookcurrent)
@@ -401,9 +400,11 @@ void App::Log(const char *msg)
 	Log("%s",msg);
 }
 
-void App::Log(std::string msg)
+void App::Log(const char *format, const int value)
 {
-	Log("%s",msg.c_str());
+	std::stringstream ss;
+	ss << value << std::endl;
+	Log(format, ss.str().c_str());
 }
 
 void App::Log(const char *format, const char *msg)
@@ -417,6 +418,11 @@ void App::Log(const char *format, const char *msg)
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,format,msg);
 	fclose(logfile);
+}
+
+void App::Log(const std::string msg)
+{
+	Log("%s",msg.c_str());
 }
 
 void App::InitScreens()
