@@ -13,13 +13,7 @@ The release file also contains a file structure for books and fonts that you sho
 
 # Installation
 
-1. DLDI patch `dslibris.nds`, if your cart needs it, and copy it to the root of your cart.
-2. make a directory `font` and copy the fonts in it.
-3. make a directory `book` and copy your books into it.
-
-These directory locations cannot be changed.
-
-For additional notes, see `INSTALL`.
+See ![INSTALL.txt](INSTALL.txt) .
 
 # Development
 
