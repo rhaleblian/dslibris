@@ -27,7 +27,11 @@ For additional notes, see `INSTALL`.
 
 devkitPro pacman packages:
 
-    (dkp-)pacman -S devkitARM libnds libfat libfilesystem nds-expat nds-bzip nds-zlib nds-libpng nds-freetype
+    (dkp-)pacman -S devkitARM libnds libfat libfilesystem nds-expat nds-bzip2 nds-zlib nds-libpng nds-pkg-config ndstool dstools grit
+
+Instead of installing `nds-freetype`, build version 2.5.5 from source, configuring it with
+
+    portlibs/configure-freetype
 
 Ubuntu 16.04 LTS and macOS are known good development platforms.
 CentOS and MinGW have also worked, but haven't been checked recently.
