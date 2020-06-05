@@ -18,6 +18,7 @@ TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	gfx source data  
 INCLUDES	:=	include build
+CFLASH		:=	$(HOME)/fat.img
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -39,7 +40,7 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lfat -lnds9 -lfilesystem -lfreetype -lexpat -lz -lbz2 -lpng
+LIBS	:= -lfat -lnds9 -lfreetype -lexpat -lz -lbz2 -lpng
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -137,7 +138,7 @@ endif
 /tmp/cflash:
 	- mkdir /tmp/cflash
 
-$(HOME)/cflash.image:
+$(HOME)/fat.img:
 # Create an empty image for DeSMuME --cflash-path.
 	dd if=/dev/zero of=$@ bs=1M count=16
 	mkfs.fat -n dslibris $@
@@ -145,20 +146,21 @@ $(HOME)/cflash.image:
 	sudo cp -r cflash/* /tmp/cflash
 	make umount
 
-test: $(BUILD) $(HOME)/cflash.image
+test: $(BUILD) $(HOME)/fat.img
 	dlditool $(HOME)/mpcf.dldi dslibris.nds
-	desmume --cflash-image=$(HOME)/cflash.image dslibris.nds
+	desmume --cflash-image $(HOME)/fat.img dslibris.nds
 
 log: mount
 # Fetch the log from inside the cflash image.
 	cp /tmp/cflash/dslibris.log .
 	make umount
 
-mount: /tmp/cflash
-	sudo mount -o loop $(HOME)/cflash.image /tmp/cflash
+mount: $(HOME)/fat.img /tmp/cflash
+	sudo mount -o loop $(HOME)/fat.img /tmp/cflash
 
 umount:
 	sudo umount /tmp/cflash
 	rmdir /tmp/cflash
 
 .PHONY: test log mount umount
+
