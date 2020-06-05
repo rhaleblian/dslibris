@@ -1,11 +1,7 @@
 
-For the latest documentation, see the wiki on Sourceforge at
-http://sourceforge.net/projects/ndslibris
-
-
 INSTALLATION
 
-1. DLDI patch dslibris.nds to work for your media. eg. for R4DS
+1. DLDI patch dslibris.nds to work for your media; eg. for R4DS
 
 	dlditool r4tf.dldi dslibris.nds
 
@@ -20,6 +16,6 @@ INSTALLATION
 
 TROUBLESHOOTING
 
-Look for the file DSLIBRIS.LOG on your media root.
+Look for the file `dslibris.log` on your media root.
 Send this file to developers when you encounter a problem.
 Contact us via the dslibris Issues section on GitHub.
