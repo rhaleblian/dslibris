@@ -1,7 +1,11 @@
-.DS_Store
+*.d
+*.dmg
 *.elf
 *.nds
+*.o
 *.img
-*.dmg
+*.tar.gz
+.DS_Store
 /build
-/portlibs/freetype-2.5.5
+/dslibris.log
+/dslibris.img

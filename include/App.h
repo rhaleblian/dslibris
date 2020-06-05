@@ -49,20 +49,19 @@ in the source root directory.
 */
 
 
-#include <nds.h>
-#include <expat.h>
+#include <list>
+#include <sstream>
 #include <unistd.h>
+#include <vector>
+
+#include "expat.h"
 
 #include "Book.h"
 #include "Button.h"
 #include "Prefs.h"
 #include "Text.h"
-
 #include "main.h"
 #include "parse.h"
-
-#include <vector>
-#include <list>
 
 #define APP_BROWSER_BUTTON_COUNT 7
 #define APP_LOGFILE "dslibris.log"
@@ -72,7 +71,7 @@ in the source root directory.
 #define APP_MODE_PREFS_FONT 3
 #define APP_MODE_PREFS_FONT_BOLD 4
 #define APP_MODE_PREFS_FONT_ITALIC 5
-#define APP_URL "http://sourceforge.net/projects/ndslibris"
+#define APP_URL "http://github.com/rhaleblian/dslibris"
 
 #define PREFS_BUTTON_COUNT 5
 #define PREFS_BUTTON_FONT 2
@@ -161,9 +160,12 @@ class App {
 	void Flip();
 	void SetProgress(int amount);
 	void UpdateClock();
+
 	void Log(const char*);
-	void Log(std::string);
 	void Log(const char* format, const char *msg);
+	void Log(const std::string);
+	void Log(const char *format, const int value);
+
 	int  Run(void);
 	bool parse_in(parsedata_t *data, context_t context);
 	void parse_init(parsedata_t *data);

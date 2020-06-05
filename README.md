@@ -1,8 +1,8 @@
-Herein lies the source for *dslibris*, an [EPUB](http://idpf.org/epub)
-ebook reader for the Nintendo DS.
+Herein lies the source for **dslibris**, an [EPUB](http://idpf.org/epub)
+ebook reader for the Nintendo DS, DSi and DSi XL.
 
-![Startup Screen](etc/browser.jpg)
-![A Sample (Left and Right) Page](etc/page.jpg)
+![Browser](etc/sample/browser.png)
+![Faust](etc/sample/iliad.png)
 
 ![UTF-8 Multingual](http://rhaleblian.files.wordpress.com/2007/09/utf8.png)
 
@@ -13,13 +13,7 @@ The release file also contains a file structure for books and fonts that you sho
 
 # Installation
 
-1. DLDI patch `dslibris.nds`, if your cart needs it, and copy it to the root of your cart.
-2. make a directory `font` and copy the fonts in it.
-3. make a directory `book` and copy your books into it.
-
-These directory locations cannot be changed.
-
-For additional notes, see `INSTALL`.
+See ![INSTALL.txt](INSTALL.txt) .
 
 # Development
 
@@ -27,10 +21,12 @@ For additional notes, see `INSTALL`.
 
 devkitPro pacman packages:
 
-    (dkp-)pacman -S devkitARM libnds libfat libfilesystem nds-expat nds-bzip nds-zlib nds-libpng nds-freetype
+    (dkp-)pacman -S devkitARM libnds libfat libfilesystem nds-expat nds-bzip2 nds-zlib nds-freetype nds-libpng nds-pkg-config ndstool dstools grit
 
-Ubuntu 16.04 LTS and macOS are known good development platforms.
-CentOS and MinGW have also worked, but haven't been checked recently.
+Development is biased towards Ubuntu 20 as a platform.
+You should also get far with macOS.
+CentOS and msys2 have also worked, but haven't been checked recently.
+Ubuntu under WSL would work too, but you'll be missing mount support for testing.
 
 ## Building
 
@@ -46,6 +42,18 @@ make
 
 arm-eabi-gdb, insight-6.8 and desmume-0.9.12-svn5575 have been known to work for debugging.
 See online forums for means to build an arm-eabi-targeted Insight for your platform.
+
+## Troubleshooting
+
+### The app runs, but no text is rendered.
+
+Instead of installing `nds-freetype`, build version 2.5.5 from source,
+configuring it with
+
+    portlibs/configure-freetype
+
+instead of the supplied configure script. This will get inserted into the build
+via the `build/` directory.
 
 # See Also
 

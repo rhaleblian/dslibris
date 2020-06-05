@@ -1,0 +1,21 @@
+
+INSTALLATION
+
+1. DLDI patch dslibris.nds to work for your media; eg. for R4DS
+
+	dlditool r4tf.dldi dslibris.nds
+
+2. Copy all files and folders in this distribution .zip to the root folder 
+   of your DS media. Using a subfolder does not work!
+
+3. Put any EPUB you have into the 'book' folder.
+   The filenames should have an .epub extension.
+
+4. Run dslibris.nds on the DS.
+
+
+TROUBLESHOOTING
+
+Look for the file `dslibris.log` on your media root.
+Send this file to developers when you encounter a problem.
+Contact us via the dslibris Issues section on GitHub.

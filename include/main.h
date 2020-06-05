@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2007-2009 Ray Haleblian
+ Copyright (C) 2007-2020 Ray Haleblian
  
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  
- To contact the copyright holder: rayh23@sourceforge.net
+ To contact the copyright holder: ray@haleblian.com
  */
 
 #ifndef _main_h_
@@ -23,7 +23,7 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include <nds.h>
+#include "nds.h"
 #include "splash.h"
 
 #define MARGINLEFT 12
@@ -40,13 +40,14 @@
 
 #define FONTDIR "/font/"
 #define BOOKDIR "/book/"
-#define PREFSPATH "/dslibris.xml"
-#define FONTFILEPATH "/font/LiberationSerif-Regular.ttf"
-#define FONTBOLDFILEPATH "/font/LiberationSerif-Bold.ttf"
-#define FONTITALICFILEPATH "/font/LiberationSerif-Italic.ttf"
-#define FONTBROWSERFILEPATH "/font/LiberationSans-Regular.ttf"
-#define FONTSPLASHFILEPATH "/font/LiberationSans-Regular.ttf"
 #define LOGFILEPATH "/dslibris.log"
+#define PREFSPATH "/dslibris.xml"
+
+#define FONTREGULARFILE "LiberationSerif-Regular.ttf"
+#define FONTBOLDFILE "LiberationSerif-Bold.ttf"
+#define FONTITALICFILE "LiberationSerif-Italic.ttf"
+#define FONTBROWSERFILE "LiberationSans-Regular.ttf"
+#define FONTSPLASHFILE "LiberationSans-Regular.ttf"
 
 //! For drawing splash screen.
 int getSize(uint8 *source, uint16 *dest, uint32 arg);

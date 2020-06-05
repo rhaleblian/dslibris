@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-# If make install fails, copy zconf.h and zlib.h to $DEVKITARM/include.
-CHOST=arm-none-eabi ./configure --prefix=$(realpath ..) --static
