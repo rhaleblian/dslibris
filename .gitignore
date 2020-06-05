@@ -1,6 +1,8 @@
+*.d
 *.dmg
 *.elf
 *.nds
+*.o
 *.img
 *.tar.gz
 .DS_Store
