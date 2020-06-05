@@ -21,14 +21,12 @@ See ![INSTALL.txt](INSTALL.txt) .
 
 devkitPro pacman packages:
 
-    (dkp-)pacman -S devkitARM libnds libfat libfilesystem nds-expat nds-bzip2 nds-zlib nds-libpng nds-pkg-config ndstool dstools grit
+    (dkp-)pacman -S devkitARM libnds libfat libfilesystem nds-expat nds-bzip2 nds-zlib nds-freetype nds-libpng nds-pkg-config ndstool dstools grit
 
-Instead of installing `nds-freetype`, build version 2.5.5 from source, configuring it with
-
-    portlibs/configure-freetype
-
-Ubuntu 16.04 LTS and macOS are known good development platforms.
-CentOS and MinGW have also worked, but haven't been checked recently.
+Development is biased towards Ubuntu 20 as a platform.
+You should also get far with macOS.
+CentOS and msys2 have also worked, but haven't been checked recently.
+Ubuntu under WSL would work too, but you'll be missing mount support for testing.
 
 ## Building
 
@@ -44,6 +42,18 @@ make
 
 arm-eabi-gdb, insight-6.8 and desmume-0.9.12-svn5575 have been known to work for debugging.
 See online forums for means to build an arm-eabi-targeted Insight for your platform.
+
+## Troubleshooting
+
+### The app runs, but no text is rendered.
+
+Instead of installing `nds-freetype`, build version 2.5.5 from source,
+configuring it with
+
+    portlibs/configure-freetype
+
+instead of the supplied configure script. This will get inserted into the build
+via the `build/` directory.
 
 # See Also
 
