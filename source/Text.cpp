@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <sstream>
 #include <sys/param.h>
 
-#define ARM9
 #include "nds.h"
 #include "fat.h"
 #include "string.h"
@@ -59,12 +58,12 @@ Text::Text()
 	imagetype.flags = FT_LOAD_DEFAULT; 
 	imagetype.height = pixelsize;
 	imagetype.width = 0;
-	filenames[TEXT_STYLE_NORMAL] = FONTREGULARFILE;
+	filenames[TEXT_STYLE_REGULAR] = FONTREGULARFILE;
 	filenames[TEXT_STYLE_BOLD] = FONTBOLDFILE;
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
-	style = TEXT_STYLE_NORMAL;
+	style = TEXT_STYLE_REGULAR;
 	face = NULL;
 
 	// Font rendering state.
@@ -115,7 +114,7 @@ TextFaceRequester(    FTC_FaceID   face_id,
 	return FT_New_Face( library, face->file_path, face->face_index, aface );
 }
 
-FT_Error Text::InitWithCacheManager(void) {
+FT_Error Text::InitFreeTypeCache(void) {
 	//! Use FreeType's cache manager. borken!
 
 	auto error = FT_Init_FreeType(&library);
@@ -135,11 +134,11 @@ FT_Error Text::InitWithCacheManager(void) {
 	if(error) return error;
 	app->Log("ok\n");
 
-	sprintf(face_id.file_path, "/font/%s", filenames[TEXT_STYLE_NORMAL].c_str());
+	sprintf(face_id.file_path, "/font/%s", filenames[TEXT_STYLE_REGULAR].c_str());
 	face_id.face_index = 0;
-	sprintf(msg, "%s %s %d\n", filenames[TEXT_STYLE_NORMAL].c_str(), face_id.file_path, face_id.face_index);
+	sprintf(msg, "%s %s %d\n", filenames[TEXT_STYLE_REGULAR].c_str(), face_id.file_path, face_id.face_index);
 	app->Log(msg);
-	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_NORMAL]);
+	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
 	if(error) return error;
 	app->Log("ok\n");
 	// FT_EXPORT( FT_Error )
@@ -147,10 +146,10 @@ FT_Error Text::InitWithCacheManager(void) {
 //                           FTC_Scaler   scaler,
 //                           FT_Size     *asize );
 
-	ReportFace(faces[TEXT_STYLE_NORMAL]);
+	ReportFace(faces[TEXT_STYLE_REGULAR]);
 
-	// FT_Select_Charmap(GetFace(TEXT_STYLE_NORMAL), FT_ENCODING_UNICODE);
-	// charmap_index = FT_Get_Charmap_Index(GetFace(TEXT_STYLE_NORMAL)->charmap);
+	// FT_Select_Charmap(GetFace(TEXT_STYLE_REGULAR), FT_ENCODING_UNICODE);
+	// charmap_index = FT_Get_Charmap_Index(GetFace(TEXT_STYLE_REGULAR)->charmap);
 
 	screen = screenleft;
 	InitPen();
@@ -159,38 +158,62 @@ FT_Error Text::InitWithCacheManager(void) {
 	return 0;
 }
 
-int Text::InitDefault(void) {
+FT_Error Text::CreateFace(int style) {
+	std::string path = std::string("/font/") + filenames[style];
+	FT_Error err = FT_New_Face(library, path.c_str(), 0, &face);
+	if (!err)
+		faces[style] = face;
+	return err;
+}
+
+int Text::InitHomemadeCache(void) {
 	//! Use our own cheesey glyph cache.
 	FT_Error err;
 
 	err = FT_Init_FreeType(&library);
 	if (err) return err;
 	
-	map<u8, string>::iterator iter;
-	for (iter = filenames.begin(); iter != filenames.end(); iter++) {
-		std::string path = std::string("/font/") + iter->second;
-		err = FT_New_Face(library, path.c_str(), 0, &face);
-		if (err) return err;
-		// if (err) {
-		// 	// Assume this is a non-regular lookup.
-		// 	// Use the NORMAL/Regular face.
-		// 	map<u8, FT_Face>::iterator find = faces.find(TEXT_STYLE_NORMAL);			
-		// 	if (find == faces.end())
-		// 		return err;
-		// 	face = find->second;
-		// }
-		
-		// FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-		FT_Set_Pixel_Sizes(face, 0, pixelsize);
-		
-		textCache.insert(make_pair(face, new Cache()));
-		faces[iter->first] = face;
+	err = CreateFace(TEXT_STYLE_BROWSER);
+	err = CreateFace(TEXT_STYLE_SPLASH);
+	err = CreateFace(TEXT_STYLE_REGULAR);
+	err = CreateFace(TEXT_STYLE_ITALIC);
+	if (err)
+		faces[TEXT_STYLE_ITALIC] = faces[TEXT_STYLE_REGULAR];
+	err = CreateFace(TEXT_STYLE_BOLD);
+	if (err)
+		faces[TEXT_STYLE_BOLD] = faces[TEXT_STYLE_REGULAR];
 
-		sprintf(msg, "%s\n", path.c_str());
-		app->Log(msg);
-		// ReportFace(face);
+	std::map<u8, FT_Face>::iterator iter;
+	for (iter = faces.begin(); iter != faces.end(); iter++) {
+		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
+		textCache.insert(make_pair(iter->second, new Cache()));
 	}
-	
+
+	// map<u8, string>::iterator iter;
+	// for (iter = filenames.begin(); iter != filenames.end(); iter++) {
+		// std::string path = std::string("/font/") + iter->second;
+		// err = FT_New_Face(library, path.c_str(), 0, &face);
+		// if (err) return err;
+		// // if (err) {
+		// // 	// Assume this is a non-regular lookup.
+		// // 	// Use the NORMAL/Regular face.
+		// // 	map<u8, FT_Face>::iterator find = faces.find(TEXT_STYLE_REGULAR);			
+		// // 	if (find == faces.end())
+		// // 		return err;
+		// // 	face = find->second;
+		// // }
+		
+		// // FT_Select_Charmap(face, FT_ENCODING_UNICODE);
+		// FT_Set_Pixel_Sizes(face, 0, pixelsize);
+		
+		// textCache.insert(make_pair(face, new Cache()));
+		// faces[iter->first] = face;
+
+		// sprintf(msg, "%s\n", path.c_str());
+		// app->Log(msg);
+		// ReportFace(face);	
+	// }	
+
 	screen = screenleft;
 	ClearCache();
 	InitPen();
@@ -201,8 +224,10 @@ int Text::InitDefault(void) {
 
 int Text::Init()
 {
-	if(ftc) return InitWithCacheManager();
-	else return InitDefault();
+	if(ftc)
+		return InitFreeTypeCache();
+	else
+		return InitHomemadeCache();
 }
 
 void Text::ReportFace(FT_Face face)
@@ -240,7 +265,7 @@ void Text::End() {}
 
 int Text::CacheGlyph(u32 ucs)
 {
-	return CacheGlyph(ucs, TEXT_STYLE_NORMAL);
+	return CacheGlyph(ucs, TEXT_STYLE_REGULAR);
 }
 
 int Text::CacheGlyph(u32 ucs, u8 style)
@@ -257,7 +282,7 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 
 	if(textCache[face]->cacheMap.size() == CACHESIZE) return -1;
 
-	FT_Select_Charmap(GetFace(TEXT_STYLE_NORMAL), FT_ENCODING_UNICODE);
+	FT_Select_Charmap(GetFace(TEXT_STYLE_REGULAR), FT_ENCODING_UNICODE);
 	FT_Load_Char(face, ucs,
 		FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
 	FT_GlyphSlot src = face->glyph;
@@ -539,7 +564,7 @@ int Text::GetStringAdvance(const char *s) {
 }
 
 bool Text::GetFontName(std::string &s) {
-	const char *name = FT_Get_Postscript_Name(GetFace(TEXT_STYLE_NORMAL));
+	const char *name = FT_Get_Postscript_Name(GetFace(TEXT_STYLE_REGULAR));
 	if(!name)
 		return false;
 	else {
@@ -610,7 +635,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 		width = sbit.width;
 		advance = sbit.xadvance;
 
-		error = FT_Render_Glyph(faces[TEXT_STYLE_NORMAL]->glyph,            /* glyph slot  */
+		error = FT_Render_Glyph(faces[TEXT_STYLE_REGULAR]->glyph,            /* glyph slot  */
         	                    FT_RENDER_MODE_NORMAL); /* render mode */
 		if (error) {
 			ss << "error " << error << std::endl;
@@ -619,7 +644,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 		}
 		app->Log("ok\n");
 
-		// auto glyph = faces[TEXT_STYLE_NORMAL]->glyph;
+		// auto glyph = faces[TEXT_STYLE_REGULAR]->glyph;
 		// buffer = glyph->bitmap.buffer;
 		// bx = glyph->bitmap_left;
 		// by = glyph->bitmap_top;
@@ -644,7 +669,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 
 		// error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 		// if (error) app->Log("boo\n");
-		// error = FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
+		// error = FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_REGULAR);
 		// if (error) app->Log("hoo\n");
 		// auto glyph = face->glyph;
   		// error = FT_Get_Glyph( face->glyph, &glyph );
@@ -878,31 +903,38 @@ FT_Face Text::GetFace(u8 style)
 	if (iter != faces.end())
 		return iter->second;
 	else
-		return faces[TEXT_STYLE_NORMAL];
+		return faces[TEXT_STYLE_REGULAR];
 }
 */
 
-int asciirenderer(FT_Face face) {
-  std::stringstream ss;
-  auto bitmap = face->glyph->bitmap;
-  iprintf("%d %d\n", bitmap.width, bitmap.rows);
-
-  for (uint y=0; y<bitmap.rows; y++) {
-    for (uint x=0; x<bitmap.width; x++) {
-      uint v = bitmap.buffer[y*bitmap.width+x];
-      char s[4];
-      sprintf(s, "%d", v);
-      ss << " " << s;
-    }
-    ss << std::endl;
-  }
-  iprintf(ss.str().c_str());
-  return 0;
-}
-
 int asciiart() {
   auto ft = typesetter();
-  auto error = asciirenderer(ft.face);
+  auto error = renderer(ft.face);
   free_ft(ft);
   return error;
 }
+
+const char* ErrorString(uint c) {
+	switch (c) {
+		case 0:
+		return "ok";
+		break;
+		default:
+		return "unknown error";
+	}
+}
+
+//    "no error",
+//     "cannot open resource" ,
+//     "unknown file format" ,
+//     "broken file" ,
+//     "invalid FreeType version" 
+//     "module version is too low", 
+//     "invalid argument" 
+//     "unimplemented feature" 
+//     "broken table" 
+//     "broken offset within table" 
+//     "array allocation size too large" 
+//     "missing module" 
+//     "missing property" 
+// ]

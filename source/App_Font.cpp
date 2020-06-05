@@ -204,7 +204,7 @@ void App::FontButton()
 	std::string path = fontdir;
 	path.append(fontButtons[fontSelected]->GetLabel());
 	if (mode == APP_MODE_PREFS_FONT)
-		ts->SetFontFile(path.c_str(), TEXT_STYLE_NORMAL);
+		ts->SetFontFile(path.c_str(), TEXT_STYLE_REGULAR);
 	else if (mode == APP_MODE_PREFS_FONT_BOLD)
 		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLD);
 	else if (mode == APP_MODE_PREFS_FONT_ITALIC)

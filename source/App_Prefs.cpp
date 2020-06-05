@@ -56,7 +56,7 @@ void App::PrefsRefreshButtonFont()
 {
 	char msg[128];
 	strcpy(msg, "");
-	sprintf((char*)msg, "Regular Font:\n %s", ts->GetFontFile(TEXT_STYLE_NORMAL).c_str());
+	sprintf((char*)msg, "Regular Font:\n %s", ts->GetFontFile(TEXT_STYLE_REGULAR).c_str());
 	prefsButtonFont.Label(msg);
 }
 

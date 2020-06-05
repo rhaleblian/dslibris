@@ -10,3 +10,4 @@ typedef struct {
 
 FT_Freeables typesetter();
 void free_ft(FT_Freeables f);
+int renderer(FT_Face face);

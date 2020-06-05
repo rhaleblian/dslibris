@@ -3,31 +3,35 @@
 
 #include <string>
 #include <map>
-#include <ft2build.h>
+
+#include "ft2build.h"
 #include FT_FREETYPE_H
-//#include FT_ADVANCES_H
 #include FT_CACHE_H
 
 using namespace std;
 
 //! Reference: FreeType2 online documentation
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
-#define CACHESIZE 512
-#define PIXELSIZE 12
+
 //! Reference: http://www.displaymate.com/psp_ds_shootout.htm
 #define DPI 110
+
 #define TEXT_BOLD_ON 2
 #define TEXT_BOLD_OFF 3
 #define TEXT_ITALIC_ON 4
 #define TEXT_ITALIC_OFF 5
-#define TEXT_STYLE_NORMAL (u8)0
+#define TEXT_STYLE_REGULAR (u8)0
 #define TEXT_STYLE_BOLD (u8)1
 #define TEXT_STYLE_ITALIC (u8)2
 #define TEXT_STYLE_BROWSER (u8)3
 #define TEXT_STYLE_SPLASH (u8)4
 
+#define CACHESIZE 512
+#define PIXELSIZE 12
+
 class App;
 int asciiart();
+const char* ErrorString(uint);
 
 typedef struct TextFaceRec_ {
 	char file_path[128];
@@ -90,7 +94,7 @@ class Style {
 	int pixelsize;
 
 	Style() {
-		id = TEXT_STYLE_NORMAL;
+		id = TEXT_STYLE_REGULAR;
 		face = NULL;
 		pixelsize = PIXELSIZE;
 	}
@@ -105,9 +109,8 @@ class Style {
 //! Typesetter singleton that provides all text rendering services.
 
 //! Implemented atop FreeType 2.
-//! Attempts to cache for performance,
-//! but the caching is now a bit broken
-//! since font styles were introduced.
+//! Attempts to cache for draw performance using a homemade cache.
+//! The code using FreeType's cache is inoperative.
 
 class Text {
 	FT_Library library;
@@ -115,27 +118,32 @@ class Text {
 
 	//! Use the FreeType cache?
 	bool ftc;
+
+	// A: Homemade cache
 	TextCache cache;
 	TextFaceRec face_id;
+	map<FT_Face, Cache*> textCache;
+	
+	// B: FreeType cache subsystem
 	FTC_SBitRec sbit;
 	FTC_ImageTypeRec imagetype;
 	FT_Int charmap_index;
 	
-	map<FT_Face, Cache*> textCache;
 	map<u8, FT_Face> faces;
 	map<u8, string> filenames;
 //	vector<Face> faces;
 //	map<u8, Face*> styles;
+
 	//! Current style, as TEXT_FONT_STYLE.
 	int style;
 	//! Current face.
 	FT_Face face;
 
-	//! Current draw position (in pixels?).
+	//! Current draw position.
 	FT_Vector pen;
-	//! Draw white text on black?
+	//! Draw light text on dark?
 	bool invert;
-	//! We wish this worked.
+	//! It would fully justify, if it worked.
 	bool justify;
 	
 	//! Last printed char code.
@@ -148,22 +156,21 @@ class Text {
 	int CacheGlyph(u32 ucs);
 	int CacheGlyph(u32 ucs, u8 style);
 	int CacheGlyph(u32 ucs, FT_Face face);
-	int InitDefault();
-	FT_Error InitWithCacheManager();
+	void ClearCache(FT_Face face);
+	FT_Error CreateFace(int style);
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
 	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit, FTC_Node *anode=NULL);
 	FT_UInt GetGlyphIndex(u32 ucs);
-
 	u8   GetAdvance(u32 ucs, FT_Face face);
 	u8   GetStringWidth(const char *txt, FT_Face face);
-	void ClearCache(FT_Face face);
+	FT_Error InitFreeTypeCache();
+	int InitHomemadeCache();
 	void PrintChar(u32 ucs, FT_Face face);
 	void PrintString(const char *string, FT_Face face);
-
 	void ReportFace(FT_Face face);
-	
+
 public:
 	App *app;
 	int pixelsize;

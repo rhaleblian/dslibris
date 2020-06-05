@@ -2,7 +2,7 @@
 
 dslibris - an ebook reader for the Nintendo DS.
 
- Copyright (C) 2007-2011 Ray Haleblian (ray23@sourceforge.net)
+ Copyright (C) 2007-2020 Ray Haleblian (ray@haleblian.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,20 +21,17 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 #include <sys/param.h>
-
-#define ARM9
-#include "filesystem.h"
-#include "nds.h"
+#include "dirent.h"
 #include "fat.h"
-#include "expat.h"
-#include "types.h"
 
 #include "App.h"
 #include "Book.h"
 #include "Button.h"
 #include "Text.h"
+#include "expat.h"
 #include "main.h"
 #include "parse.h"
+#include "types.h"
 
 App *app;
 char msg[256];
@@ -42,30 +39,63 @@ int ft_main(int argc, char **argv);
 
 /*---------------------------------------------------------------------------*/
 
-int main(void)
-{	
-	// Get a console going.
-	consoleDemoInit();
 
+int kungheyfatcheck(void) {
+	iprintf("** kungheyfatcheck **\n");
+	iprintf("root directory:\n");
+	swiWaitForVBlank();
+
+	DIR *dp = opendir("/");
+	if (!dp) {
+		printf("[PANIC] root dir inaccessible!\n");
+		return false;
+	}
+	struct dirent *ent;
+	while ((ent = readdir(dp)))
+	{
+		iprintf("%s %d\n", ent->d_name, ent->d_type);
+	}
+	closedir(dp);
+
+	return true;
+}
+
+PrintConsole* boot_console(void) {
+	// Get a console going.
+	auto console = consoleDemoInit();
+	if (!console) iprintf("[FAIL] console!\n");		// This, of course, won't print :D
+	else iprintf("[OK] console\n");
+	return console;
+}
+
+int boot_filesystem(void) {
 	// Start up the filesystem.
-	fatInitDefault();
+	bool success = fatInitDefault();
+	if (!success) iprintf("[FAIL] filesystem!\n");
+	else iprintf("[OK] filesystem\n");
+	return success;
+}
+
+void spin(void) {
+	while(true) swiWaitForVBlank();
+}
+
+void fatal(const char *msg) {
+	iprintf(msg);
+	spin();
+}
+
+int main(void)
+{
+	if(!boot_console()) spin();
+	if(!boot_filesystem()) spin();
+
+	//kungheyfatcheck();
+	// asciiart();
+	// while(true) swiWaitForVBlank();
 
 	app = new App();
 	return app->Run();
-}
-
-int main_asciiart(void)
-{	
-	// Get a console going.
-	consoleDemoInit();
-
-	// Start up the filesystem.
-	fatInitDefault();
-
-	// Draw to the console.
-	asciiart();
-	while (true) swiWaitForVBlank();
-	return 0;
 }
 
 bool iswhitespace(u8 c)
@@ -108,7 +138,7 @@ u8 GetParserFace(parsedata_t *pdata)
 	else if (pdata->bold)
 		return TEXT_STYLE_BOLD;
 	else
-		return TEXT_STYLE_NORMAL;
+		return TEXT_STYLE_REGULAR;
 }
 
 void WriteBufferToCache(parsedata_t *pdata)
@@ -176,7 +206,7 @@ void prefs_start_hndl(	void *data,
 			if(!strcmp(attr[i],"size"))
 				app->ts->pixelsize = atoi(attr[i+1]);
 			else if(!strcmp(attr[i],"normal"))
-				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_NORMAL);
+				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_REGULAR);
 			else if(!strcmp(attr[i],"bold"))
 				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_BOLD);
 			else if(!strcmp(attr[i],"italic"))

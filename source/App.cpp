@@ -2,7 +2,7 @@
 
 dslibris - an ebook reader for the Nintendo DS.
 
- Copyright (C) 2007-2011 Ray Haleblian (ray23@sourceforge.net)
+ Copyright (C) 2007-2020 Ray Haleblian (ray@haleblian.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <unistd.h>
 #include <algorithm>   // for std::sort
 
-#define ARM9
 #include "fat.h"
 #include "nds/system.h"
 #include "nds/arm9/background.h"
@@ -120,8 +119,12 @@ int App::Run(void)
 	{
 		if(err == 255)
 		{
-			prefs->Write();
-			Log("wrote new prefs\n");
+			err = prefs->Write();
+			if (err) {
+				Log("could not create preferences\n");
+				return err;
+			}
+			Log("created preferences\n");
 		}
 	}
 
@@ -133,14 +136,16 @@ int App::Run(void)
 		case 0:
 		sprintf(msg, "typesetter started\n");
 		break;
-		case 1:
-		sprintf(msg, "fatal: font file not found (%d)\n", err);
-		break;
-		case 2:
-		sprintf(msg, "fatal: font file unreadable (%d)\n", err);
-		break;
 		default:
-		sprintf(msg, "fatal: freetype error (%d)\n", err);
+		sprintf(msg, ErrorString(err));
+		// case 1:
+		// sprintf(msg, "fatal: font file not found (%d)\n", err);
+		// break;
+		// case 2:
+		// sprintf(msg, "fatal: font file unreadable (%d)\n", err);
+		// break;
+		// default:
+		// sprintf(msg, "fatal: freetype error (%d)\n", err);
 	}
 	Log(msg);
 	if(err) while(1) swiWaitForVBlank();

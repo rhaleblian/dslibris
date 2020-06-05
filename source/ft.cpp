@@ -3,7 +3,7 @@
 // portions from
 // https://www.willusher.io/sdl2%20tutorials/2013/08/17/lesson-1-hello-world
 
-#define ASCIIART
+#define ASCIIART  // We are building under ARM without SDL
 
 #ifndef ASCIIART
 #include "SDL2/SDL.h"
@@ -43,7 +43,7 @@ FT_Freeables typesetter() {
   FT_Library library;
   FT_Face face;
   FTC_Manager manager;
-  FTC_ScalerRec scaler;
+  // FTC_ScalerRec scaler;
   FTC_ImageCache cache;
   FTC_ImageTypeRec imagetyperec;
   FTC_ImageType imagetype = &imagetyperec;
@@ -106,7 +106,23 @@ FT_Freeables typesetter() {
   return f;
 }
 
-#ifndef ASCIIART
+#ifdef ASCIIART
+int renderer(FT_Face face) {
+  std::string s;
+  auto bitmap = face->glyph->bitmap;
+  for (uint y=0; y<bitmap.rows; y++) {
+    s.clear();
+    for (uint x=0; x<bitmap.width; x++) {
+      uint v = bitmap.buffer[y*bitmap.width+x];
+      if (v) s.append("&");
+      else s.append(" ");
+    }
+    std::cerr << s << std::endl;
+    iprintf(s.c_str());
+  }
+  return 0;
+}
+#else
 int renderer(FT_Face face) {
   // Make something to draw things with.
 
@@ -156,20 +172,6 @@ int renderer(FT_Face face) {
   SDL_DestroyRenderer(ren);
   SDL_DestroyWindow(win);
   SDL_Quit();
-}
-#else
-int renderer(FT_Face face) {
-  auto bitmap = face->glyph->bitmap;
-  for (uint y=0; y<bitmap.rows; y++) {
-    for (uint x=0; x<bitmap.width; x++) {
-      uint v = bitmap.buffer[y*bitmap.width+x];
-      char s[4];
-      sprintf(s, "%03d", v);
-      std::cout << " " << s;
-    }
-    std::cerr << std::endl << std::endl;
-  }
-  return 0;
 }
 #endif
 

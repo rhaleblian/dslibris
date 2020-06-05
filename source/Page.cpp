@@ -119,7 +119,7 @@ void Page::Draw(Text *ts)
 			else if (ts->bold)
 				ts->PrintChar(c, TEXT_STYLE_BOLD);
 			else
-				ts->PrintChar(c, TEXT_STYLE_NORMAL);
+				ts->PrintChar(c, TEXT_STYLE_REGULAR);
 			
 			ts->linebegan = true;
 		}
