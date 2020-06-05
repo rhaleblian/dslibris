@@ -1,0 +1,167 @@
+dkp-libs 3ds-bulletphysics 2.87-4
+dkp-libs 3ds-bzip2 1.0.6-3
+dkp-libs 3ds-curl 7.69.1-1
+dkp-libs 3ds-examples 20200417-2
+dkp-libs 3ds-flac 1.3.2-1
+dkp-libs 3ds-flite 2.1-2
+dkp-libs 3ds-freetype 2.9-2
+dkp-libs 3ds-jansson 2.13-1
+dkp-libs 3ds-libarchive 3.1.2-3
+dkp-libs 3ds-libconfig 1.7.2-3
+dkp-libs 3ds-libid3tag 0.15.1b-2
+dkp-libs 3ds-libjpeg-turbo 1.5.3-2
+dkp-libs 3ds-libjson-c 0.13.1-2
+dkp-libs 3ds-liblzma 5.2.3-1
+dkp-libs 3ds-libmad 0.15.1b-1
+dkp-libs 3ds-libogg 1.3.3-2
+dkp-libs 3ds-libopus 1.3-1
+dkp-libs 3ds-libpng 1.6.37-1
+dkp-libs 3ds-libsidplay 1.36.60-1
+dkp-libs 3ds-libvorbisidec 1.2.1-3
+dkp-libs 3ds-libxmp 4.4.1-2
+dkp-libs 3ds-mbedtls 2.16.6-1
+dkp-libs 3ds-mikmod 3.3.11.1-1
+dkp-libs 3ds-mpg123 1.25.13-1
+dkp-libs 3ds-opusfile 0.11-1
+dkp-libs 3ds-physfs 3.0.2-2
+dkp-libs 3ds-pkg-config 0.28-2
+dkp-libs 3ds-sdl 1.2.15-12
+dkp-libs 3ds-sdl_gfx 2.0.25-2
+dkp-libs 3ds-sdl_image 1.2.12-2
+dkp-libs 3ds-sdl_mixer 1.2.12-8
+dkp-libs 3ds-sdl_ttf 2.0.11-2
+dkp-libs 3ds-tinyxml2 6.0.0-2
+dkp-libs 3ds-wildmidi 0.4.3-2
+dkp-libs 3ds-zlib 1.2.11-2
+dkp-libs citro2d 1.3.1-1
+dkp-libs citro3d 1.6.0-1
+dkp-libs default-arm7 0.7.4-7 [installed]
+dkp-libs deko3d 0.2.0-1
+dkp-libs devkitarm-crtls 1.0.3-1 [installed]
+dkp-libs devkitarm-rules 1.0.0-1 [installed]
+dkp-libs devkitppc-rules 1.0.1-1
+dkp-libs devkitpro-pkgbuild-helpers 2.0.1-1
+dkp-libs dswifi 0.4.2-1
+dkp-libs gamecube-examples 20190412-1
+dkp-libs gba-examples 20190122-1
+dkp-libs gp32-examples 20051021-2
+dkp-libs libctru 1.9.0-1
+dkp-libs libfat-gba 1.1.5-1
+dkp-libs libfat-nds 1.1.5-1 [installed]
+dkp-libs libfat-ogc 1.1.5-1
+dkp-libs libfilesystem 0.9.14-2
+dkp-libs libgba 0.5.2-2
+dkp-libs libmirko 0.9.8-1
+dkp-libs libnds 1.8.0-1 [installed]
+dkp-libs libnx 3.3.0-1
+dkp-libs libogc 1.8.24-1
+dkp-libs libtonc 1.4.3-3
+dkp-libs maxmod-gba 1.0.12-2
+dkp-libs maxmod-nds 1.0.13-1 [installed]
+dkp-libs nds-bzip2 1.0.6-3 [installed]
+dkp-libs nds-examples 20200510-1
+dkp-libs nds-freetype 2.9-1
+dkp-libs nds-libexpat 2.2.5-1 [installed]
+dkp-libs nds-libpng 1.6.37-1 [installed]
+dkp-libs nds-pkg-config 0.28-2 [installed]
+dkp-libs nds-zlib 1.2.11-1 [installed]
+dkp-libs ppc-bzip2 1.0.6-2
+dkp-libs ppc-freetype 2.9.1-2
+dkp-libs ppc-glm 0.9.9.2-1
+dkp-libs ppc-jansson 2.12-1
+dkp-libs ppc-libgd 2.2.5-2
+dkp-libs ppc-libjpeg-turbo 1.5.3-4
+dkp-libs ppc-libmad 0.15.1b-1
+dkp-libs ppc-libogg 1.3.3-2
+dkp-libs ppc-libpng 1.6.37-1
+dkp-libs ppc-libvorbisidec 1.2.1-2
+dkp-libs ppc-mpg123 1.25.10-2
+dkp-libs ppc-mxml 2.11-2
+dkp-libs ppc-pkg-config 0.28-3
+dkp-libs ppc-zlib 1.2.11-1
+dkp-libs switch-bulletphysics 2.88-2
+dkp-libs switch-bzip2 1.0.6-3
+dkp-libs switch-curl 7.69.1-2
+dkp-libs switch-examples 20200528-2
+dkp-libs switch-ffmpeg 4.2.2-1
+dkp-libs switch-flac 1.3.2-4
+dkp-libs switch-freetype 2.10.1-1
+dkp-libs switch-giflib 5.1.4-1
+dkp-libs switch-glad 0.1.27-1
+dkp-libs switch-glfw 3.3.2-1
+dkp-libs switch-glm 0.9.9.7-1
+dkp-libs switch-jansson 2.11-1
+dkp-libs switch-libass 0.14.0-1
+dkp-libs switch-libconfig 1.7.2-3
+dkp-libs switch-libdrm_nouveau 1.0.1-1
+dkp-libs switch-libexpat 2.2.5-1
+dkp-libs switch-libfribidi 1.0.4-1
+dkp-libs switch-libgd 2.2.5-2
+dkp-libs switch-libjpeg-turbo 1.5.3-2
+dkp-libs switch-libjson-c 0.13.1-2
+dkp-libs switch-liblzma 5.2.4-1
+dkp-libs switch-liblzo2 2.10-1
+dkp-libs switch-libmad 0.15.1b-1
+dkp-libs switch-libmikmod 3.3.11.1-2
+dkp-libs switch-libmodplug 0.8.8.5-1
+dkp-libs switch-libmpv 0.30.0-2
+dkp-libs switch-libogg 1.3.3-1
+dkp-libs switch-libopus 1.3-2
+dkp-libs switch-libpcre2 10.33-1
+dkp-libs switch-libpng 1.6.37-1
+dkp-libs switch-libsamplerate 0.1.9-1
+dkp-libs switch-libsodium 1.0.18-1
+dkp-libs switch-libtheora 1.1.1-2
+dkp-libs switch-libtimidity 0.2.6-1
+dkp-libs switch-libvorbis 1.3.5-2
+dkp-libs switch-libvorbisidec 1.2.1-2
+dkp-libs switch-libvpx 1.8.0-1
+dkp-libs switch-libwebp 1.0.2-1
+dkp-libs switch-libxml2 2.9.8-3
+dkp-libs switch-libzstd 1.4.4-1
+dkp-libs switch-mbedtls 2.16.6-2
+dkp-libs switch-mesa 20.1.0-1
+dkp-libs switch-miniupnpc 2.1.20190824-1
+dkp-libs switch-mpg123 1.25.10-3
+dkp-libs switch-ode 0.16-1
+dkp-libs switch-oniguruma 6.9.2-1
+dkp-libs switch-opusfile 0.10-3
+dkp-libs switch-physfs 3.0.2-1
+dkp-libs switch-pkg-config 0.28-2
+dkp-libs switch-sdl2 2.0.12-2
+dkp-libs switch-sdl2_gfx 1.0.4-2
+dkp-libs switch-sdl2_image 2.0.4-1
+dkp-libs switch-sdl2_mixer 2.0.4-2
+dkp-libs switch-sdl2_net 2.0.1-3
+dkp-libs switch-sdl2_ttf 2.0.15-1
+dkp-libs switch-smpeg2 2.0.0-1
+dkp-libs switch-tinyxml2 6.0.0-2
+dkp-libs switch-wslay 1.1.0-1
+dkp-libs switch-zlib 1.2.11-2
+dkp-libs switch-zziplib 0.13.69-3
+dkp-libs wii-examples 20190201-1
+dkp-libs wiiu-pkg-config 0.28-2
+dkp-libs wut 1.0.0_beta9-1
+dkp-linux 3dslink 0.5.2-2
+dkp-linux 3dstools 1.1.4-2
+dkp-linux contents-delivery-manager 1.0.0-2
+dkp-linux devkit-env 1.0.1-2
+dkp-linux devkitA64 r15-8
+dkp-linux devkitARM r54-3 [installed]
+dkp-linux devkitPPC r36-1
+dkp-linux devkitpro-keyring r1.787e015-2 [installed]
+dkp-linux dstools 1.2.1-1 [installed]
+dkp-linux gamecube-tools 1.0.2-1
+dkp-linux gba-tools 1.2.0-1
+dkp-linux general-tools 1.0.3-1
+dkp-linux gp32-tools 1.0.3-1
+dkp-linux grit 0.8.15-1 [installed]
+dkp-linux hactool 1.3.2-1
+dkp-linux mmutil 1.8.7-1 [installed]
+dkp-linux ndstool 2.1.2-1 [installed]
+dkp-linux picasso 2.7.0-1
+dkp-linux switch-tools 1.6.1-1
+dkp-linux tex3ds 2.0.1-2
+dkp-linux uam 1.0.0-2
+dkp-linux wiiload 0.5.1-1
+dkp-linux wut-tools 1.1.1-1
