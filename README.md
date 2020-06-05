@@ -1,8 +1,8 @@
-Herein lies the source for *dslibris*, an [EPUB](http://idpf.org/epub)
-ebook reader for the Nintendo DS.
+Herein lies the source for **dslibris**, an [EPUB](http://idpf.org/epub)
+ebook reader for the Nintendo DS, DSi and DSi XL.
 
-![Startup Screen](etc/browser.jpg)
-![A Sample (Left and Right) Page](etc/page.jpg)
+![Browser](etc/sample/browser.png)
+![Faust](etc/smaple/faust.jpg)
 
 ![UTF-8 Multingual](http://rhaleblian.files.wordpress.com/2007/09/utf8.png)
 
