@@ -11,6 +11,7 @@
                 "${workspaceFolder}/include",
                 "/opt/devkitpro/devkitARM/include",
                 "/opt/devkitpro/libnds/include",
+                "/opt/devkitpro/libnds/include/nds",
                 "/opt/devkitpro/portlibs/nds/include",
                 "/opt/devkitpro/portlibs/nds/include/freetype2"  
             ]
