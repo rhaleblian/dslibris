@@ -1,6 +1,5 @@
-<dslibris modtime="0">
+<dslibris>
  	<font
-        path="font"
         size="10" 
         normal="LiberationSerif-Regular.ttf"
         bold="LiberationSerif-Bold.ttf"

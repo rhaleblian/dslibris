@@ -69,7 +69,7 @@ int Prefs::Write()
 	FILE* fp = fopen(PREFSPATH,"w");
 	if(!fp) return 255;
 	
-	fprintf(fp, "<dslibris modtime=\"%ld\">\n",modtime);
+	fprintf(fp, "<dslibris>\n");
 	if(swapshoulder)
 		fprintf(fp, "<option swapshoulder=\"%d\" />\n",swapshoulder);		
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
@@ -79,8 +79,7 @@ int Prefs::Write()
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
 			app->ts->margin.top, app->ts->margin.left,
 			app->ts->margin.bottom, app->ts->margin.right);
- 	fprintf(fp, "\t<font path=\"%s\" size=\"%d\" normal=\"%s\" bold=\"%s\" italic=\"%s\" />\n",
- 		app->fontdir.c_str(),
+ 	fprintf(fp, "\t<font size=\"%d\" normal=\"%s\" bold=\"%s\" italic=\"%s\" />\n",
 		app->ts->GetPixelSize(),
 		app->ts->GetFontFile(TEXT_STYLE_REGULAR).c_str(),
 		app->ts->GetFontFile(TEXT_STYLE_BOLD).c_str(),

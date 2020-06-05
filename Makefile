@@ -18,7 +18,6 @@ TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	gfx source data  
 INCLUDES	:=	include build
-CFLASH		:=	$(HOME)/fat.img
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -135,32 +134,37 @@ endif
 #---------------------------------------------------------------------------------------
 
 
-/tmp/cflash:
-	- mkdir /tmp/cflash
+#----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-$(HOME)/fat.img:
-# Create an empty image for DeSMuME --cflash-path.
+MOUNTPOINT = /tmp/dslibris
+CFLASHIMAGE = $(HOME)/dslibris.img
+
+$(MOUNTPOINT):
+	- mkdir $(MOUNTPOINT)
+
+# Create a FAT image file for DeSMuME's --cflash-image option.
+$(CFLASHIMAGE):
 	dd if=/dev/zero of=$@ bs=1M count=16
-	mkfs.fat -n dslibris $@
+	mkfs.fat -n DSLIBRIS $@
 	make mount
-	sudo cp -r cflash/* /tmp/cflash
+	sudo install --target-directory $(MOUNTPOINT) etc/root/*
 	make umount
-
-test: $(BUILD) $(HOME)/fat.img
-	dlditool $(HOME)/mpcf.dldi dslibris.nds
-	desmume --cflash-image $(HOME)/fat.img dslibris.nds
-
-log: mount
-# Fetch the log from inside the cflash image.
-	cp /tmp/cflash/dslibris.log .
-	make umount
-
-mount: $(HOME)/fat.img /tmp/cflash
-	sudo mount -o loop $(HOME)/fat.img /tmp/cflash
-
-umount:
-	sudo umount /tmp/cflash
-	rmdir /tmp/cflash
 
 .PHONY: test log mount umount
 
+test: $(BUILD) $(CFLASHIMAGE)
+	dlditool etc/mpcf.dldi dslibris.nds
+	desmume --cflash-image $(CFLASHIMAGE) dslibris.nds
+
+mount: $(CFLASHIMAGE) $(MOUNTPOINT)
+	sudo mount -o loop $(CFLASHIMAGE) $(MOUNTPOINT)
+	ls $(MOUNTPOINT)
+
+umount:
+	sudo umount $(MOUNTPOINT)
+	rmdir $(MOUNTPOINT)
+
+# Fetch the log from inside the cflash image.
+log: mount
+	cp /tmp/cflash/dslibris.log .
+	make umount

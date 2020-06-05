@@ -591,7 +591,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	// Draw a character for the given UCS codepoint,
 	// into the current screen buffer at the current pen position.
 
-	static bool firsttime = true;
+	// static bool firsttime = true;
 	u16 bx, by, width, height = 0;
 	FT_Byte *buffer = NULL;
 	FT_UInt advance = 0;
@@ -770,7 +770,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	codeprev = ucs;
 	if (ftc && anode)
 		FTC_Node_Unref(anode, cache.manager);
-	firsttime = false;
+	// firsttime = false;
 }
 
 bool Text::PrintNewLine(void) {
