@@ -5,3 +5,5 @@
 *.tar.gz
 .DS_Store
 /build
+/dslibris.log
+/dslibris.img
