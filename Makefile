@@ -138,6 +138,7 @@ endif
 
 MOUNTPOINT = /tmp/dslibris
 CFLASHIMAGE = $(HOME)/dslibris.img
+TOOLSBIN = $(DEVKITPRO)/tools/bin
 
 $(MOUNTPOINT):
 	- mkdir $(MOUNTPOINT)
@@ -147,24 +148,34 @@ $(CFLASHIMAGE):
 	dd if=/dev/zero of=$@ bs=1M count=16
 	mkfs.fat -n DSLIBRIS $@
 	make mount
-	sudo install --target-directory $(MOUNTPOINT) etc/root/*
+	install --target-directory $(MOUNTPOINT) etc/root/*
 	make umount
 
-.PHONY: test log mount umount
+.PHONY: test log mount umount patch
 
-test: $(BUILD) $(CFLASHIMAGE)
-	dlditool etc/mpcf.dldi dslibris.nds
-	desmume --cflash-image $(CFLASHIMAGE) dslibris.nds
+header:
+	$(TOOLSBIN)/ndstool -h 0x400 -g LBRS YO dslibris $(shell cat version.txt) $(TARGET).nds
+
+patch:
+	$(TOOLSBIN)/dlditool etc/mpcf.dldi dslibris.nds
+
+test: $(BUILD) $(CFLASHIMAGE) patch
+	desmume --cflash-image $(CFLASHIMAGE) $(TARGET).nds
+
+debug:
+	desmume --cflash-image $(CFLASHIMAGE) --arm9gdb=9000 $(TARGET).nds &
+	sleep 2
+	$(DEVKITARM)/bin/arm-none-eabi-gdb --init-command=etc/gdb-init-commands $(TARGET).elf
 
 mount: $(CFLASHIMAGE) $(MOUNTPOINT)
-	sudo mount -o loop $(CFLASHIMAGE) $(MOUNTPOINT)
+	mount -o loop $(CFLASHIMAGE) $(MOUNTPOINT)
 	ls $(MOUNTPOINT)
 
 umount:
-	sudo umount $(MOUNTPOINT)
+	umount $(MOUNTPOINT)
 	rmdir $(MOUNTPOINT)
 
 # Fetch the log from inside the cflash image.
 log: mount
-	cp /tmp/cflash/dslibris.log .
+	cp $(MOUNTPOINT)/$(TARGET).log .
 	make umount
