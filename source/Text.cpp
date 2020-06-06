@@ -37,6 +37,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 extern char msg[];
 std::stringstream ss;
 
+void Text::CopyScreen(u16 *src, u16 *dst) {
+	memcpy(src, dst, display.width * display.height * sizeof(u16));
+}
+
 Text::Text()
 {
 	display.height = PAGE_HEIGHT;
@@ -45,6 +49,7 @@ Text::Text()
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	screen = screenleft;
+	offscreen = new u16[display.width * display.height];
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
 	margin.top = MARGINTOP;
@@ -53,7 +58,11 @@ Text::Text()
 	bgcolor.g = 31;
 	bgcolor.b = 15;
 	usebgcolor = false;
-	
+	invert = false;
+	justify = false;
+	linespacing = 0;
+	ftc = false;
+	initialized = false;
 	imagetype.face_id = (FTC_FaceID)&face_id;
 	imagetype.flags = FT_LOAD_DEFAULT; 
 	imagetype.height = pixelsize;
@@ -70,37 +79,34 @@ Text::Text()
 	hit = false;
 	linebegan = false;
 	codeprev = 0;
-
 	bold = false;
 	italic = false;
-	invert = false;
-	justify = false;
-	linespacing = 0;
 
+	// Caching statistics.
 	stats_hits = 0;
 	stats_misses = 0;
 
-	ftc = false;
-	initialized = false;
-
+	ClearScreen(offscreen, 255, 255, 255);
 	ss.clear();
 }
 
 Text::~Text()
 {
-	ClearCache();
+	// framebuffers
+	free(offscreen);
 	
+	// homemade cache
+	ClearCache();
 	for(map<FT_Face, Cache*>::iterator iter = textCache.begin();
 		iter != textCache.end(); iter++) {
 		delete iter->second;
 	}
-
 	textCache.clear();
 	
+	// FreeType
 	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		FT_Done_Face(iter->second);
 	}
-	
 	FT_Done_FreeType(library);
 }
 
@@ -134,7 +140,7 @@ FT_Error Text::InitFreeTypeCache(void) {
 	if(error) return error;
 	app->Log("ok\n");
 
-	sprintf(face_id.file_path, "/font/%s", filenames[TEXT_STYLE_REGULAR].c_str());
+	sprintf(face_id.file_path, "%s/%s", FONTDIR, filenames[TEXT_STYLE_REGULAR].c_str());
 	face_id.face_index = 0;
 	sprintf(msg, "%s %s %d\n", filenames[TEXT_STYLE_REGULAR].c_str(), face_id.file_path, face_id.face_index);
 	app->Log(msg);
@@ -159,7 +165,7 @@ FT_Error Text::InitFreeTypeCache(void) {
 }
 
 FT_Error Text::CreateFace(int style) {
-	std::string path = std::string("/font/") + filenames[style];
+	std::string path = std::string(FONTDIR) + "/" + filenames[style];
 	FT_Error err = FT_New_Face(library, path.c_str(), 0, &face);
 	if (!err)
 		faces[style] = face;
@@ -652,12 +658,12 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 		// height = glyph->bitmap.rows;
 		// advance = width;
 
-		ss.clear();
-		ss << " err " << error 
-		   << " glyph_index " << glyph_index  << " glyph " << glyph 
-		   << " width " << width << " height " << height << " advance " << advance
-		   << std::endl;
-		app->Log(ss.str());
+		// ss.clear();
+		// ss << " err " << error 
+		//    << " glyph_index " << glyph_index  << " glyph " << glyph 
+		//    << " width " << width << " height " << height << " advance " << advance
+		//    << std::endl;
+		// app->Log(ss.str());
 	}
 	else
 	{
@@ -684,16 +690,6 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 		advance = glyph->advance.x >> 6;
 		buffer = bitmap.buffer;
 	}
-	//sprintf(msg, "%ld %d %d %d %d %d\n", ucs, bx, by, width, height, advance);
-	//app->Log(msg);
-
-	// ss.clear();
-	// ss << "buffer ";
-	// for(auto i=0; i<128; i++) {
-	// 	ss << " " << buffer[i];
-	// }
-	// ss << std::endl;
-	// app->Log(ss.str());
 
 #ifdef EXPERIMENTAL_KERNING
 	// kern.
@@ -723,21 +719,16 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 
 	// render to framebuffer.
 
-	// if (firsttime) {
-	// 	std::stringstream ss;
-	// 	ss << pen.x << " " << pen.y << " " << bx << " " << by << " " << width << " " <<  height << std::endl;
-	// 	app->Log("%s\n", ss.str().c_str());
-	// }
-
+#ifdef DEBUG
 	// DEBUG Mark the pen position.
-	// screen[pen.y*display.height+pen.x] = RGB15(0, 0, 0) | BIT(15);
+	screen[pen.y*display.height+pen.x] = RGB15(0, 0, 0) | BIT(15);
+#endif
 
 	u16 gx, gy;
 	for (gy=0; gy<height; gy++) {
 		for (gx=0; gx<width; gx++) {
 			u8 a = buffer[gy*width+gx];
 			if (a) {
-				// ss << " " << a;
 				u16 sx = (pen.x+gx+bx);
 				u16 sy = (pen.y+gy-by);
 				if(usebgcolor) {
@@ -753,7 +744,8 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 					if (invert) l = a >> 3;
 					else l = (255-a) >> 3;
 #ifdef DEBUG_CACHE
-					if(!hit) 
+					// Draw cache hits in red.
+					if(!hit)
 						screen[sy*display.height+sx] = RGB15(l,0,0) | BIT(15);
 					else
 #endif
@@ -763,14 +755,12 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 		}
 	}
 
-	// app->Log(ss.str());
-	// ss.clear();
-
 	pen.x += advance;
 	codeprev = ucs;
+
+	// Release the glyph storage.
 	if (ftc && anode)
 		FTC_Node_Unref(anode, cache.manager);
-	// firsttime = false;
 }
 
 bool Text::PrintNewLine(void) {
@@ -841,7 +831,7 @@ void Text::PrintStatusMessage(const char *msg)
 	bool invert = GetInvert();
 	
 	screen = screenleft;
-	SetInvert(false);
+	SetInvert(invert);
 	SetPixelSize(10);
 	SetPen(16, PAGE_HEIGHT-32);
 	PrintString(msg);

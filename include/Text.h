@@ -177,7 +177,7 @@ public:
 	//! Not used ... really.
 	struct { u8 r; u8 g; u8 b; } bgcolor;
 	bool usebgcolor;
-	u16 *screen, *screenleft, *screenright;
+	u16 *screen, *screenleft, *screenright, *offscreen;
 	struct {
 		int left, right, top, bottom;
 	} margin;
@@ -231,6 +231,7 @@ public:
 	void ClearRect(u16 xl, u16 yl, u16 xh, u16 yh);
 	void ClearScreen();
 	void ClearScreen(u16*, u8, u8, u8);
+	void CopyScreen(u16 *src, u16 *dst);
 	void SwapScreens();
 
 	void PrintChar(u32 ucs);

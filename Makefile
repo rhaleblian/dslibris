@@ -166,16 +166,18 @@ debug:
 	desmume --cflash-image $(CFLASHIMAGE) --arm9gdb=9000 $(TARGET).nds &
 	sleep 2
 	$(DEVKITARM)/bin/arm-none-eabi-gdb --init-command=etc/gdb-init-commands $(TARGET).elf
+	# Stop both GDB and DeSMuME when done.
 
 mount: $(CFLASHIMAGE) $(MOUNTPOINT)
-	mount -o loop $(CFLASHIMAGE) $(MOUNTPOINT)
+	- sudo mount -o loop $(CFLASHIMAGE) $(MOUNTPOINT)
 	ls $(MOUNTPOINT)
 
 umount:
-	umount $(MOUNTPOINT)
+	sudo umount $(MOUNTPOINT)
 	rmdir $(MOUNTPOINT)
 
 # Fetch the log from inside the cflash image.
 log: mount
-	cp $(MOUNTPOINT)/$(TARGET).log .
+	- sudo mount -o loop $(CFLASHIMAGE) $(MOUNTPOINT)
+	sudo mv $(MOUNTPOINT)/$(TARGET).log .
 	make umount

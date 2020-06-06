@@ -61,17 +61,25 @@ void Page::Draw()
 
 void Page::Draw(Text *ts)
 {
-	//! Write directly to video memory, for both screens.
-	ts->SetScreen(ts->screenleft);
-	ts->ClearScreen();
-	ts->SetScreen(ts->screenright);
-	ts->ClearScreen();
-	ts->SetScreen(ts->screenleft);
+	iprintf("hi\n");
+	//! Write to offscreen buffer, then blit to video memory, for both screens.
 	ts->InitPen();
 	ts->linebegan = false;
 	ts->italic = false;
 	ts->bold = false;
-	
+
+#ifdef OFFSCREEN
+	// Draw offscreen.
+	auto pushscreen = ts->screen;
+	ts->SetScreen(ts->offscreen);
+#else
+	ts->SetScreen(ts->screenleft);
+#endif
+	ts->SetScreen(ts->screenright);
+	ts->ClearScreen();
+	ts->SetScreen(ts->screenleft);
+	ts->ClearScreen();
+
 	u16 i=0;
 	while (i<length)
 	{
@@ -81,11 +89,19 @@ void Page::Draw(Text *ts)
 			// line break, page breaking if necessary
 			i++;
 			
-			if (ts->GetPenY() + ts->GetHeight() + ts->linespacing 
+			if (ts->GetPenY() + ts->GetHeight() + ts->linespacing
 				> ts->display.height - ts->margin.bottom)
 			{
+				// Move to right page
 				if(ts->GetScreen() == ts->screenleft) {
+#ifdef OFFSCREEN
+					ts->SetScreen(ts->screenleft);
+					ts->CopyScreen(ts->offscreen, ts->screen);
+					ts->SetScreen(ts->offscreen);
+#else
 					ts->SetScreen(ts->screenright);
+#endif
+					ts->ClearScreen();
 					ts->InitPen();
 					ts->linebegan = false;
 				}
@@ -124,7 +140,13 @@ void Page::Draw(Text *ts)
 			ts->linebegan = true;
 		}
 	}
+
 	DrawNumber(ts);
+#ifdef OFFSCREEN
+	ts->SetScreen(ts->screenright);
+	ts->CopyScreen(ts->offscreen, ts->screen);
+	ts->SetScreen(pushscreen);
+#endif
 }
 
 void Page::DrawNumber(Text *ts)

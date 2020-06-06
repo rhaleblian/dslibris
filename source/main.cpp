@@ -442,34 +442,85 @@ void title_end_hndl(void *userdata, const char *el)
 	parsedata_t *data = (parsedata_t*)userdata;
 	if(!strcmp(el,"title")) data->book->SetTitle(title);
 	if(!strcmp(el,"head")) data->status = 1; // done.
-	app->parse_pop(data);	
+	app->parse_pop(data);
 }
 
 // Expat callbacks for parsing full text follow. //
 
+void linefeed(parsedata_t *p) {
+	Text *ts = app->ts;
+	p->buf[p->buflen++] = '\n';
+	p->pen.x = MARGINLEFT;
+	p->pen.y += ts->GetHeight() + ts->linespacing;
+	p->linebegan = false;
+}
+
+bool blankline(parsedata_t *p) {
+	// Was the preceding text a blenk line?
+	return p->buflen > 1 && p->buf[p->buflen] == '\n' && p->buf[p->buflen-1] == '\n';
+}
+
 void start_hndl(void *data, const char *el, const char **attr)
 {
 	//! Expat callback, when starting an element.
+
 	parsedata_t *p = (parsedata_t*)data;
+
 	if (!strcmp(el,"html")) app->parse_push(p,TAG_HTML);
 	else if (!strcmp(el,"body")) app->parse_push(p,TAG_BODY);
 	else if (!strcmp(el,"div")) app->parse_push(p,TAG_DIV);
 	else if (!strcmp(el,"dt")) app->parse_push(p,TAG_DT);
 	else if (!strcmp(el,"h1")) {
 		app->parse_push(p,TAG_H1);
+		bool lf = !blankline(p);
 		p->buf[p->buflen] = TEXT_BOLD_ON;
 		p->buflen++;
 		p->pos++;
 		p->bold = true;
+		if (lf) linefeed(p);
 	}
-	else if (!strcmp(el,"h2")) app->parse_push(p,TAG_H2);
-	else if (!strcmp(el,"h3")) app->parse_push(p,TAG_H3);
-	else if (!strcmp(el,"h4")) app->parse_push(p,TAG_H4);
-	else if (!strcmp(el,"h5")) app->parse_push(p,TAG_H5);
-	else if (!strcmp(el,"h6")) app->parse_push(p,TAG_H6);
+	else if (!strcmp(el,"h2")) {
+		app->parse_push(p,TAG_H2);
+		bool lf = !blankline(p);
+		p->buf[p->buflen] = TEXT_BOLD_ON;
+		p->buflen++;
+		p->pos++;
+		p->bold = true;
+		if (lf) linefeed(p);		
+	}
+	else if (!strcmp(el,"h3")) {
+		app->parse_push(p,TAG_H3);
+		linefeed(p);
+	}
+	else if (!strcmp(el,"h4")) {
+		app->parse_push(p,TAG_H4);
+		if (!blankline(p)) linefeed(p);
+	}
+	else if (!strcmp(el,"h5")) {
+		app->parse_push(p,TAG_H5);
+		if (!blankline(p)) linefeed(p);
+	}
+	else if (!strcmp(el,"h6")) {
+		app->parse_push(p,TAG_H6);
+		if (!blankline(p)) linefeed(p);
+	}
 	else if (!strcmp(el,"head")) app->parse_push(p,TAG_HEAD);
 	else if (!strcmp(el,"ol")) app->parse_push(p,TAG_OL);
-	else if (!strcmp(el,"p")) app->parse_push(p,TAG_P);
+	else if (!strcmp(el,"p")) {
+		app->parse_push(p,TAG_P);
+		if (!blankline(p)) {
+			// for(int i=0;i<app->paraspacing;i++)
+			// {
+			// 	linefeed(p);
+			// }
+			// for(int i=0;i<app->paraindent;i++)
+			// {
+			// 	p->buf[p->buflen++] = ' ';
+			// 	p->pen.x += ts->GetAdvance(' ');
+			// }
+			linefeed(p);
+		}
+	}
 	else if (!strcmp(el,"pre")) app->parse_push(p,TAG_PRE);
 	else if (!strcmp(el,"script")) app->parse_push(p,TAG_SCRIPT);
 	else if (!strcmp(el,"style")) app->parse_push(p,TAG_STYLE);
@@ -638,101 +689,27 @@ void end_hndl(void *data, const char *el)
 {
 	parsedata_t *p = (parsedata_t *)data;
 	Text *ts = app->ts;	
-	if (
-	       !strcmp(el,"br")
-	    || !strcmp(el,"div")
-	    || !strcmp(el,"dt")
-	    || !strcmp(el,"h1")
-	    || !strcmp(el,"h2")
-	    || !strcmp(el,"h3")
-	    || !strcmp(el,"h4")
-	    || !strcmp(el,"h5")
-	    || !strcmp(el,"h6")
-	    || !strcmp(el,"hr")
-	    || !strcmp(el,"li")
-	    || !strcmp(el,"p")
-	    || !strcmp(el,"pre")
-	    || !strcmp(el,"ol")
-	    || !strcmp(el,"td")
-	    || !strcmp(el,"ul"))
-	{
-		if(p->linebegan || !strcmp(el,"br")) {
-			p->linebegan = false;
-			p->buf[p->buflen] = '\n';
-			p->buflen++;
-			p->pen.x = MARGINLEFT;
-			p->pen.y += ts->GetHeight() + ts->linespacing;
-			if (!strcmp(el,"p"))
-			{
-				for(int i=0;i<app->paraspacing;i++)
-				{
-					p->buf[p->buflen++] = '\n';
-					p->pen.x = MARGINLEFT;
-					p->pen.y += ts->GetHeight() + ts->linespacing;
-				}
-				for(int i=0;i<app->paraindent;i++)
-				{
-					p->buf[p->buflen++] = ' ';
-					p->pen.x += ts->GetAdvance(' ');
-				}
-			}
-			else if(!strcmp(el,"h1")) {
-				p->buf[p->buflen] = '\n';
-				p->buflen++;
-				p->linebegan = false;
-				p->pen.x = ts->margin.left;
-				p->pen.y += ts->GetHeight() + ts->linespacing;
-				p->buf[p->buflen] = TEXT_BOLD_OFF;
-				p->buflen++;
-				p->bold = false;
-			} else if (
-				   !strcmp(el,"h2")
-				|| !strcmp(el,"h3")
-				|| !strcmp(el,"h4")
-				|| !strcmp(el,"h5")
-				|| !strcmp(el,"h6")
-				|| !strcmp(el,"hr")
-				|| !strcmp(el,"pre")
-			)
-			{
-				p->buf[p->buflen] = '\n';
-				p->buflen++;
-				p->linebegan = false;
-				p->pen.x = ts->margin.left;
-				p->pen.y += ts->GetHeight() + ts->linespacing;
-			}
-			if (p->pen.y > (ts->display.height - ts->margin.bottom))
-			{
-				if (p->screen == 1)
-				{
-					// End of right screen; end of page.
-					// Copy in buffered char data into a new page.
-					Page *page = p->book->AppendPage();
-					page->SetBuffer(p->buf, p->buflen);
-					if (app->cache)
-						WriteBufferToCache(p);
-					p->buflen = 0;
-					if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
-					if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;
-					p->screen = 0;
-				}
-				else
-					// End of left screen; same page, next screen.
-					p->screen = 1;
-				p->pen.x = ts->margin.left;
-				p->pen.y = ts->margin.top + ts->GetHeight();
-				p->linebegan = false;
-			}
-		}
-	} else if (!strcmp(el,"body")) {
+	
+	if (!strcmp(el,"body")) {
 		// Save off our last page.
 		Page *page = p->book->AppendPage();
 		page->SetBuffer(p->buf,p->buflen);
 		if (app->cache)
 			WriteBufferToCache(p);
 		p->buflen = 0;
+		// Retain styles across the page.
 		if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
-		if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;
+		if (p->bold) p->buf[p->buflen++] = TEXT_BOLD_ON;
+		app->parse_pop(p);
+		return;
+	}
+	
+	if (!strcmp(el,"br")) {
+		linefeed(p);
+	} else if (!strcmp(el,"p")) {
+		linefeed(p);
+		linefeed(p);
+	} else if(!strcmp(el,"div")) {
 	} else if (!strcmp(el, "strong") || !strcmp(el, "b")) {
 		p->buf[p->buflen] = TEXT_BOLD_OFF;
 		p->buflen++;
@@ -741,6 +718,58 @@ void end_hndl(void *data, const char *el)
 		p->buf[p->buflen] = TEXT_ITALIC_OFF;
 		p->buflen++;
 		p->italic = false;
+	} else if(!strcmp(el,"h1")) {
+		p->buf[p->buflen] = TEXT_BOLD_OFF;
+		p->buflen++;
+		p->bold = false;
+		linefeed(p);
+		linefeed(p);
+	} else if (!strcmp(el,"h2")) {
+		p->buf[p->buflen] = TEXT_BOLD_OFF;
+		p->buflen++;
+		p->bold = false;
+		linefeed(p);
+	} else if (
+		   !strcmp(el,"h3")
+		|| !strcmp(el,"h4")
+		|| !strcmp(el,"h5")
+		|| !strcmp(el,"h6")
+		|| !strcmp(el,"hr")
+		|| !strcmp(el,"pre")
+	) {
+		linefeed(p);
+		linefeed(p);
+	} else if (
+		   !strcmp(el, "li")
+		|| !strcmp(el, "ul")
+		|| !strcmp(el, "ol")
+	) {
+		linefeed(p);
+	}
+
+	app->parse_pop(p);
+
+	if (p->pen.y > (ts->display.height - ts->margin.bottom))
+	{
+		if (p->screen == 1)
+		{
+			// End of right screen; end of page.
+			// Copy in buffered char data into a new page.
+			Page *page = p->book->AppendPage();
+			page->SetBuffer(p->buf, p->buflen);
+			if (app->cache)
+				WriteBufferToCache(p);
+			p->buflen = 0;
+			if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
+			if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;
+			p->screen = 0;
+		}
+		else
+			// End of left screen; same page, next screen.
+			p->screen = 1;
+		p->pen.x = ts->margin.left;
+		p->pen.y = ts->margin.top + ts->GetHeight();
+		p->linebegan = false;
 	}
 
 	app->parse_pop(p);
