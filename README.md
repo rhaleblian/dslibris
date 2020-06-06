@@ -2,6 +2,9 @@ Herein lies the source for **dslibris**, an [EPUB](http://idpf.org/epub)
 ebook reader for the Nintendo DS, DSi and DSi XL.
 
 ![Browser](etc/sample/browser.png)
+
+![Quickstart](etc/sample/quickstart.png)
+
 ![Faust](etc/sample/iliad.png)
 
 # Releases
