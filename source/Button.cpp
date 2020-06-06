@@ -72,22 +72,22 @@ void Button::Draw(u16 *fb, bool highlight) {
 
 	u16 bgcolor;
 	if(highlight) bgcolor = RGB15(31,31,15) | BIT(15);
-	else bgcolor = RGB15(31,31,31) | BIT(15);
-	for (y=ul.y;y<lr.y;y++) {
-		for (x=ul.x;x<lr.x;x++) {
+	else bgcolor = RGB15(30,30,30) | BIT(15);
+	for (y=ul.y+1;y<lr.y-1;y++) {
+		for (x=ul.x+1;x<lr.x-1;x++) {
 			fb[y*SCREEN_WIDTH + x] = bgcolor;
 		}
 	}
 
-	u16 bordercolor = RGB15(22,22,22) | BIT(15);
-	for (x=ul.x;x<lr.x;x++) {
-		fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
-		fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
-	}
-	for (y=ul.y;y<lr.y;y++) {
-		fb[y*SCREEN_WIDTH + ul.x] = bordercolor;
-		fb[y*SCREEN_WIDTH + lr.x-1] = bordercolor;
-	}
+	// u16 bordercolor = RGB15(22,22,22) | BIT(15);
+	// for (x=ul.x;x<lr.x;x++) {
+	// 	fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
+	// 	fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
+	// }
+	// for (y=ul.y;y<lr.y;y++) {
+	// 	fb[y*SCREEN_WIDTH + ul.x] = bordercolor;
+	// 	fb[y*SCREEN_WIDTH + lr.x-1] = bordercolor;
+	// }
 
 	bool invert = ts->GetInvert();
 	ts->SetScreen(fb);
@@ -96,16 +96,21 @@ void Button::Draw(u16 *fb, bool highlight) {
 
 	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
+
 	// FIXME request a string fitting into the bounding box instead.
+	ts->SetPixelSize(ts->GetPixelSize()+1);
 	if(text.length() > 30)
 		ts->PrintString((const char*)text.substr(0,30).append("...").c_str(),
-			TEXT_STYLE_BROWSER);	
+			TEXT_STYLE_BROWSER);
 	else
 		ts->PrintString((const char*)text.c_str(), TEXT_STYLE_BROWSER);
+	ts->SetPixelSize(ts->GetPixelSize()-1);
 
 	if (text2.length()) {
+		ts->SetPixelSize(ts->GetPixelSize()-1);
 		ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
 		ts->PrintString((const char *)text2.c_str(), TEXT_STYLE_BROWSER);
+		ts->SetPixelSize(ts->GetPixelSize()+1);
 	}
 
 	ts->usebgcolor = false;
