@@ -456,8 +456,9 @@ void linefeed(parsedata_t *p) {
 }
 
 bool blankline(parsedata_t *p) {
-	// Was the preceding text a blenk line?
-	return p->buflen > 1 && p->buf[p->buflen] == '\n' && p->buf[p->buflen-1] == '\n';
+	// Was the preceding text a blank line?
+	if (p->buflen < 3) return true;
+	return (p->buf[p->buflen-1] == '\n') && (p->buf[p->buflen-2] == '\n');
 }
 
 void start_hndl(void *data, const char *el, const char **attr)
