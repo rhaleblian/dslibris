@@ -27,7 +27,7 @@ devkitPro pacman packages:
 Development is biased towards Ubuntu 20 as a platform.
 You should also get far with macOS.
 CentOS and msys2 have also worked, but haven't been checked recently.
-Ubuntu under WSL would work too, but you'll be missing mount support for testing.
+Ubuntu under WSL would work too, but you'll be missing mount support for emulator testing.
 
 ## Building
 
@@ -41,8 +41,11 @@ make
 
 ## Debugging
 
-arm-eabi-gdb, insight-6.8 and desmume-0.9.12-svn5575 have been known to work for debugging.
-See online forums for means to build an arm-eabi-targeted Insight for your platform.
+$DEVKITARM/bin/arm-none-eabi-gdb and DeSMuME,
+using the latter's cflash image and ARM9 stub
+features.
+
+See the `gdb` Make rule for a debugging process.
 
 ## Troubleshooting
 
