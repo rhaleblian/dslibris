@@ -24,25 +24,21 @@
 /*!
 \mainpage
 
-Welcome to the developer's documentation for dslibris, a book reader for Nintendo DS.
+dslibris is an ebook reader for the Nintendo DS family
+of handheld game consoles.
 
-For information about prerequistites, building, and installing, see
+For information about prerequisites, building, and installing,
+see
 
- README.md
+https://github.com/rhaleblian/dslibris/blob/master/README.md
 
-which is the same file displayed on SourceForge at
+This documentation was built by running
 
- https://sourceforge.net/p/ndslibris/code/ci/master/tree/
+  make doc
 
-This documentation is built by running
+in the repo root directory. The origin Git repo is located at
 
- make doc
-
-in the source root directory.
-
-\section Homepage
-
- http://sourceforge.net/projects/ndslibris
+https://github.com/rhaleblian/dslibris
 
 \author ray haleblian
 

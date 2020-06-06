@@ -7,7 +7,9 @@
 *.tar.gz
 .DS_Store
 /build
+/doc
 /dslibris.log
 /dslibris.img
 /mnt
 /portlibs/freetype-2.5.5
+/venv

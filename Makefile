@@ -151,8 +151,11 @@ $(CFLASHIMAGE):
 	install --target-directory $(MOUNTPOINT) etc/root/*
 	make umount
 
-.PHONY: test log mount umount patch
+.PHONY: test log mount umount patch doc
 
+doc:
+	doxygen
+	echo "Documentation is located at doc/html ."
 header:
 	$(TOOLSBIN)/ndstool -h 0x400 -g LBRS YO dslibris $(shell cat version.txt) $(TARGET).nds
 

@@ -17,7 +17,12 @@
  
  To contact the copyright holder: rayh23@sourceforge.net
  */
+/*!
+A Page stores the flowed output from the XML parse and is equipped
+to render a full left and right screen of text.
 
+A Book contains a vector of Pages.
+*/
 #ifndef PAGE_H
 #define PAGE_H
 
@@ -30,16 +35,21 @@ class Page {
 	void DrawNumber(Text *ts);
 
  public:
-	u8 *buf;       //! UTF-8 chars, allocated per-page at parse time, to exact length.
-	int length;    //! Length of buf.
-	int start;     //! In a book-long char buffer, where would i begin? 
-	int end;       //! Ditto, for end char.
+	//! UTF-8 chars, allocated per-page at parse time, to exact length.
+	u8 *buf;
+	//! Length of buf.
+	int length;
+	//! In a book-long char buffer, where would i begin?
+	int start;
+	//! Ditto, for end char. 
+	int end;
 	Page(Book *b);
 	Page(Book *b, Text *t);
 	~Page();
 	u8*  GetBuffer() { return buf; }
 	int  GetLength() { return length; }
-	u8   SetBuffer(u8 *src, u16 len); //! Copy src to buf for len bytes.
+	//! Copy src to buf for len bytes.
+	u8   SetBuffer(u8 *src, u16 len); 
 	void Cache(FILE *fp);
 //	void Draw();
 	void Draw(Text *ts);
