@@ -136,8 +136,8 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-MOUNTPOINT = /tmp/dslibris
-CFLASHIMAGE = $(HOME)/dslibris.img
+CFLASHIMAGE = dslibris.img
+MOUNTPOINT = mnt
 TOOLSBIN = $(DEVKITPRO)/tools/bin
 
 $(MOUNTPOINT):
@@ -162,7 +162,7 @@ patch:
 test: $(BUILD) $(CFLASHIMAGE) patch
 	desmume --cflash-image $(CFLASHIMAGE) $(TARGET).nds
 
-debug:
+gdb:
 	desmume --cflash-image $(CFLASHIMAGE) --arm9gdb=9000 $(TARGET).nds &
 	sleep 2
 	$(DEVKITARM)/bin/arm-none-eabi-gdb --init-command=etc/gdb-init-commands $(TARGET).elf
