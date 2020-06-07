@@ -45,10 +45,13 @@ Text::Text()
 {
 	display.height = PAGE_HEIGHT;
 	display.width = PAGE_WIDTH;
-	pixelsize = PIXELSIZE;
+	filenames[TEXT_STYLE_REGULAR] = FONTREGULARFILE;
+	filenames[TEXT_STYLE_BOLD] = FONTBOLDFILE;
+	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
+	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
+	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
-	screen = screenleft;
 	offscreen = new u16[display.width * display.height];
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
@@ -67,22 +70,19 @@ Text::Text()
 	imagetype.flags = FT_LOAD_DEFAULT; 
 	imagetype.height = pixelsize;
 	imagetype.width = 0;
-	filenames[TEXT_STYLE_REGULAR] = FONTREGULARFILE;
-	filenames[TEXT_STYLE_BOLD] = FONTBOLDFILE;
-	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
-	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
-	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
-	style = TEXT_STYLE_REGULAR;
-	face = NULL;
 
-	// Font rendering state.
+	// Rendering state.
 	hit = false;
 	linebegan = false;
 	codeprev = 0;
 	bold = false;
 	italic = false;
+	face = NULL;
+	style = TEXT_STYLE_REGULAR;
+	pixelsize = PIXELSIZE;
+	screen = screenleft;
 
-	// Caching statistics.
+	// Statistics.
 	stats_hits = 0;
 	stats_misses = 0;
 

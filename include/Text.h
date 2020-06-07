@@ -131,28 +131,25 @@ class Text {
 	
 	map<u8, FT_Face> faces;
 	map<u8, string> filenames;
-//	vector<Face> faces;
-//	map<u8, Face*> styles;
 
 	//! Current style, as TEXT_FONT_STYLE.
 	int style;
 	//! Current face.
 	FT_Face face;
-
 	//! Current draw position.
 	FT_Vector pen;
 	//! Draw light text on dark?
 	bool invert;
-	//! It would fully justify, if it worked.
-	bool justify;
-	
 	//! Last printed char code.
 	u32 codeprev;
 	//! Was the last glyph lookup a cache hit?
 	bool hit;
 	//! Has Init() run?
 	bool initialized;
-	
+
+	//! It would fully justify, if it worked.
+	bool justify;
+
 	int CacheGlyph(u32 ucs);
 	int CacheGlyph(u32 ucs, u8 style);
 	int CacheGlyph(u32 ucs, FT_Face face);
@@ -177,7 +174,10 @@ public:
 	//! Not used ... really.
 	struct { u8 r; u8 g; u8 b; } bgcolor;
 	bool usebgcolor;
-	u16 *screen, *screenleft, *screenright, *offscreen;
+	//! Pointers to screens and which one is current.
+	u16 *screen, *screenleft, *screenright;
+	//! Offscreen buffer. Only used when OFFSCREEN defined.
+	u16 *offscreen;
 	struct {
 		int left, right, top, bottom;
 	} margin;
@@ -186,9 +186,12 @@ public:
 	} display;
 	int linespacing;
 	bool linebegan, bold, italic;
-	
-	// keeps stats to check efficiency of caching.
+
+	// Keep stats to check efficiency of caching.
+
+	//! Total glyph cache hits.
 	int stats_hits;
+	//! Total glyph cache misses.
 	int stats_misses;
 
 	Text();
