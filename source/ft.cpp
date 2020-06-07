@@ -53,6 +53,7 @@ FT_Freeables typesetter() {
   FTC_CMapCache cmcache;
 
   FT_Error error = FT_Init_FreeType(&library);
+  if (error);  // shush g++.
 
   error =
       FTC_Manager_New(library, 1, 1, 1000000, requester, &designator, &manager);
