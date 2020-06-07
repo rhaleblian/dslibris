@@ -195,31 +195,6 @@ int Text::InitHomemadeCache(void) {
 		textCache.insert(make_pair(iter->second, new Cache()));
 	}
 
-	// map<u8, string>::iterator iter;
-	// for (iter = filenames.begin(); iter != filenames.end(); iter++) {
-		// std::string path = std::string("/font/") + iter->second;
-		// err = FT_New_Face(library, path.c_str(), 0, &face);
-		// if (err) return err;
-		// // if (err) {
-		// // 	// Assume this is a non-regular lookup.
-		// // 	// Use the NORMAL/Regular face.
-		// // 	map<u8, FT_Face>::iterator find = faces.find(TEXT_STYLE_REGULAR);			
-		// // 	if (find == faces.end())
-		// // 		return err;
-		// // 	face = find->second;
-		// // }
-		
-		// // FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-		// FT_Set_Pixel_Sizes(face, 0, pixelsize);
-		
-		// textCache.insert(make_pair(face, new Cache()));
-		// faces[iter->first] = face;
-
-		// sprintf(msg, "%s\n", path.c_str());
-		// app->Log(msg);
-		// ReportFace(face);	
-	// }	
-
 	screen = screenleft;
 	ClearCache();
 	InitPen();
@@ -692,34 +667,28 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	}
 
 #ifdef EXPERIMENTAL_KERNING
-	// kern.
+	// Fetch a kerning vector.
 
 	if(codeprev) {
-		FT_Vector k;
-		error = FT_Get_Kerning(face,codeprev,ucs,FT_KERNING_UNSCALED,&k);
+		FT_Vector kerning_vector;
+		std::stringstream ss;
+		error = FT_Get_Kerning(face, codeprev, ucs, FT_KERNING_DEFAULT, &kerning_vector);
+#ifdef DEBUG
 		if(error) {
-			app->Log("warn : kerning lookup error ");
-			app->Log((char *)&codeprev);
-			app->Log("->");
-			app->Log((char *)&ucs);
-			app->Log("\n");
+			ss << "error: kerning lookup error: " << codeprev << " -> " << ucs << std::endl;
+		} else {
+			ss << "info : kerning lookup: " << codeprev << " -> " << ucs
+			   << " = " << kerning_vector.x << "," << kerning_vector.y << std::endl;
+			// pen.x += k.x >> 6;
 		}
-		else if (k.x)
-		{
-			app->Log("info : kern ");
-			app->Log((int)k.x);
-			app->Log(" ");
-			app->Log((char *)&codeprev);
-			app->Log((char *)&ucs);
-			app->Log("\n");
-			pen.x += k.x >> 6;
-		}
+		app->Log(ss.str());
+#endif
 	}
 #endif
 
 	// render to framebuffer.
 
-#ifdef DEBUG
+#ifdef DEBUG_PEN_POSITION
 	// DEBUG Mark the pen position.
 	screen[pen.y*display.height+pen.x] = RGB15(0, 0, 0) | BIT(15);
 #endif

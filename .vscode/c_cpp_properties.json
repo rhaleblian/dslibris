@@ -7,6 +7,7 @@
             "cStandard": "gnu11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "clang-x64",
+            "compilerArgs": ["-DEXPERIMENTAL_KERNING"],
             "includePath": [
                 "${workspaceFolder}/include",
                 "/opt/devkitpro/devkitARM/include",
