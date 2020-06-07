@@ -156,6 +156,10 @@ $(CFLASHIMAGE):
 doc:
 	doxygen
 	echo "Documentation is located at doc/html ."
+
+markdown: doc
+	node ../moxygen/bin/moxygen.js -h doc/xml
+
 header:
 	$(TOOLSBIN)/ndstool -h 0x400 -g LBRS YO dslibris $(shell cat version.txt) $(TARGET).nds
 
