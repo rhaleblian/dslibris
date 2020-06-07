@@ -642,7 +642,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 		advance = sbit.xadvance;
 
 		error = FT_Render_Glyph(faces[TEXT_STYLE_REGULAR]->glyph,            /* glyph slot  */
-        	                    FT_RENDER_MODE_NORMAL); /* render mode */
+        	                    FT_RENDER_MODE_LCD_V); /* render mode */
 		if (error) {
 			ss << "error " << error << std::endl;
 			app->Log(ss.str().c_str());
