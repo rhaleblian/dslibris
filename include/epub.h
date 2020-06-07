@@ -1,7 +1,7 @@
 #ifndef _EPUB_H_
 #define _EPUB_H_
 
-#include "Book.h"
+#include "book.h"
 #include <string>
 
 typedef enum { PARSE_CONTAINER, PARSE_ROOTFILE, PARSE_CONTENT } epub_parse_t;

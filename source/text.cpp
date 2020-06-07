@@ -28,11 +28,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "fat.h"
 #include "string.h"
 
-#include "App.h"
+#include "app.h"
 #include "ft.h"
 #include "main.h"
 #include "version.h"
-#include "Text.h"
+#include "text.h"
 
 extern char msg[];
 std::stringstream ss;

@@ -1,8 +1,8 @@
-#include "Book.h"
+#include "book.h"
 #include "main.h"
 #include "parse.h"
 #include "epub.h"
-#include "App.h"
+#include "app.h"
 #include <stdio.h>
 #include <errno.h>
 #include <sys/param.h>

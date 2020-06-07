@@ -27,8 +27,8 @@ A Book contains a vector of Pages.
 #define PAGE_H
 
 #include <nds.h>
-#include "Book.h"
-#include "Text.h"
+#include "book.h"
+#include "text.h"
 
 class Page {
 	class Book *book;

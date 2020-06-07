@@ -52,10 +52,10 @@ https://github.com/rhaleblian/dslibris
 
 #include "expat.h"
 
-#include "Book.h"
-#include "Button.h"
-#include "Prefs.h"
-#include "Text.h"
+#include "book.h"
+#include "button.h"
+#include "prefs.h"
+#include "text.h"
 #include "main.h"
 #include "parse.h"
 

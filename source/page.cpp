@@ -18,7 +18,7 @@
  To contact the copyright holder: rayh23@sourceforge.net
  */
 
-#include "Page.h"
+#include "page.h"
 #include <string.h>
 #include <list>
 
