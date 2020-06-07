@@ -3,7 +3,7 @@
 // portions from
 // https://www.willusher.io/sdl2%20tutorials/2013/08/17/lesson-1-hello-world
 
-#define ASCIIART  // We are building under ARM without SDL
+#define ASCIIART // We are building under ARM without SDL
 
 #ifndef ASCIIART
 #include "SDL2/SDL.h"
@@ -32,8 +32,7 @@ FT_Error requester(FTC_FaceID face_id, FT_Library library, FT_Pointer req_data,
 FT_Freeables typesetter() {
   // char filepath[128] =
   //     "/home/ray/GitHub/dslibris/cflash/font/LiberationSerif-Regular.ttf";
-  char filepath[128] =
-      "/font/LiberationSerif-Regular.ttf";
+  char filepath[128] = "/font/LiberationSerif-Regular.ttf";
   const uint char_code = 38; // ASCII &
   Designator designator;
   designator.path = filepath;
@@ -53,7 +52,8 @@ FT_Freeables typesetter() {
   FTC_CMapCache cmcache;
 
   FT_Error error = FT_Init_FreeType(&library);
-  if (error);  // shush g++.
+  if (error)
+    ; // shush g++.
 
   error =
       FTC_Manager_New(library, 1, 1, 1000000, requester, &designator, &manager);
@@ -67,23 +67,25 @@ FT_Freeables typesetter() {
 
   // Set a size.
 
-  // FT_Size_RequestRec rec;
-  // FT_Request_Size(face, &rec);
-  // error = FT_Set_Char_Size(face,    /* handle to face object           */
-  //                          0,       /* char_width in 1/64th of points  */
-  //                          16 * 64, /* char_height in 1/64th of points */
-  //                          300,     /* horizontal device resolution    */
-  //                          300);
-  // or
-  // error = FT_Set_Pixel_Sizes(
-  //       face,   /* handle to face object */
-  //       0,      /* pixel_width           */
-  //       16 );   /* pixel_height          */
+#if 0
+  FT_Size_RequestRec rec;
+  FT_Request_Size(face, &rec);
+  error = FT_Set_Char_Size(face,    /* handle to face object           */
+                           0,       /* char_width in 1/64th of points  */
+                           16 * 64, /* char_height in 1/64th of points */
+                           300,     /* horizontal device resolution    */
+                           300);
+  or
+  error = FT_Set_Pixel_Sizes(
+        face,   /* handle to face object */
+        0,      /* pixel_width           */
+        16 );   /* pixel_height          */
 
-  // Get the glyph index.
+  Get the glyph index.
 
-  // char_code = FT_Get_First_Char(face, &glyph_index);
-  // glyph_index = FT_Get_Char_Index(face, char_code);
+  char_code = FT_Get_First_Char(face, &glyph_index);
+  glyph_index = FT_Get_Char_Index(face, char_code);
+#endif
   glyph_index = FTC_CMapCache_Lookup(cmcache, face_id, 0, char_code);
 
   // Get the glyph fron the glyph index.
@@ -92,7 +94,7 @@ FT_Freeables typesetter() {
   //                       glyph_index,              /* glyph index           */
   //                       FT_LOAD_DEFAULT);         /* load flags, see below */
   imagetype->face_id = face_id;
-  imagetype->flags = FT_LOAD_DEFAULT; 
+  imagetype->flags = FT_LOAD_DEFAULT;
   imagetype->height = 16;
   imagetype->width = 0;
   error = FTC_ImageCache_Lookup(cache, imagetype, glyph_index, &glyph, &node);
@@ -111,12 +113,14 @@ FT_Freeables typesetter() {
 int renderer(FT_Face face) {
   std::string s;
   auto bitmap = face->glyph->bitmap;
-  for (uint y=0; y<bitmap.rows; y++) {
+  for (uint y = 0; y < bitmap.rows; y++) {
     s.clear();
-    for (uint x=0; x<bitmap.width; x++) {
-      uint v = bitmap.buffer[y*bitmap.width+x];
-      if (v) s.append("&");
-      else s.append(" ");
+    for (uint x = 0; x < bitmap.width; x++) {
+      uint v = bitmap.buffer[y * bitmap.width + x];
+      if (v)
+        s.append("&");
+      else
+        s.append(" ");
     }
     std::cerr << s << std::endl;
     iprintf(s.c_str());
@@ -179,7 +183,7 @@ int renderer(FT_Face face) {
 void free_ft(FT_Freeables f) {
   FTC_Manager_Reset(f.manager);
   FTC_Manager_Done(f.manager);
-  //FT_Done_Face(f.face);
+  // FT_Done_Face(f.face);
   FT_Done_FreeType(f.library);
 }
 
@@ -190,19 +194,18 @@ int ft_main(int argc, char **argv) {
   return error;
 }
 
+// int SDL_BlitSurface(SDL_Surface*    src,
+//                     const SDL_Rect* srcrect,
+//                     SDL_Surface*    dst,
+//                     SDL_Rect*       dstrect)
 
-  // int SDL_BlitSurface(SDL_Surface*    src,
-  //                     const SDL_Rect* srcrect,
-  //                     SDL_Surface*    dst,
-  //                     SDL_Rect*       dstrect)
-
-  // FTC_SBitCache_Lookup(cache.sbit,&imagetype, GetGlyphIndex(ucs),sbit,anode)
-  // FT_GlyphSlot glyph = GetGlyph(ucs,
-  // 	FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL, face);
-  // FT_Bitmap bitmap = glyph->bitmap;
-  // bx = glyph->bitmap_left;
-  // by = glyph->bitmap_top;
-  // width = bitmap.width;
-  // height = bitmap.rows;
-  // advance = glyph->advance.x >> 6;
-  // buffer = bitmap.buffer;
+// FTC_SBitCache_Lookup(cache.sbit,&imagetype, GetGlyphIndex(ucs),sbit,anode)
+// FT_GlyphSlot glyph = GetGlyph(ucs,
+// 	FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL, face);
+// FT_Bitmap bitmap = glyph->bitmap;
+// bx = glyph->bitmap_left;
+// by = glyph->bitmap_top;
+// width = bitmap.width;
+// height = bitmap.rows;
+// advance = glyph->advance.x >> 6;
+// buffer = bitmap.buffer;
