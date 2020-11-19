@@ -4,8 +4,6 @@ ebook reader for the Nintendo DS, DSi and DSi XL.
 ![Browser](etc/sample/browser.png)
 ![Faust](etc/sample/iliad.png)
 
-![UTF-8 Multingual](http://rhaleblian.files.wordpress.com/2007/09/utf8.png)
-
 # Releases
 
 See the Releases section for a program ready to be DLDI patched and copied to your cartridge media.
@@ -56,8 +54,6 @@ instead of the supplied configure script. This will get inserted into the build
 via the `build/` directory.
 
 # See Also
-
-https://rhaleblian.wordpress.com/dslibris-an-ebook-reader-for-the-nintendo-ds/
 
 http://devkitpro.org
 
