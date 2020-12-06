@@ -19,7 +19,7 @@ See ![INSTALL.txt](INSTALL.txt) .
 
 devkitPro pacman packages:
 
-    (dkp-)pacman -S devkitARM libnds nds-libfat libfilesystem nds-libexpat nds-bzip2 nds-zlib nds-freetype nds-libpng nds-pkg-config ndstool dstools grit
+    (dkp-)pacman -S devkitARM libnds libfat-nds libfilesystem nds-libexpat nds-bzip2 nds-zlib nds-freetype nds-libpng nds-pkg-config ndstool dstools grit
 
 Development is biased towards Ubuntu 20 as a platform.
 You should also get far with macOS.
