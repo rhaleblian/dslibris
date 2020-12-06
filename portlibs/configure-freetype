@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-PATH=$PATH:$DEVKITARM/bin
+PATH=$DEVKITARM/bin:$PATH
 prefix=$DEVKITPRO/portlibs/nds
 
 ./configure --prefix=$prefix --host=arm-none-eabi \
