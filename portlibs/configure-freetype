@@ -1,9 +1,8 @@
 #!/usr/bin/env sh
 
 PATH=$DEVKITARM/bin:$PATH
-prefix=$DEVKITPRO/portlibs/nds
+prefix=$(cd .. && pwd)
+portlibs=$DEVKITPRO/portlibs/nds
 
 ./configure --prefix=$prefix --host=arm-none-eabi \
---with-harfbuzz=no \
-CPPFLAGS="-I$prefix/include" LDFLAGS="-L$prefix/lib"
-
+CPPFLAGS="-I$portlibs/include" LDFLAGS="-L$portlibs/lib"

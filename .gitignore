@@ -11,5 +11,9 @@
 /dslibris.log
 /dslibris.img
 /mnt
+/portlibs/bin
+/portlibs/include
 /portlibs/freetype-2.5.5
+/portlibs/lib
+/portlibs/share
 /venv

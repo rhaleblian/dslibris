@@ -25,6 +25,7 @@ INCLUDES	:=	include build
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-g -Wall -O2 \
+			$(shell $(PWD)/portlibs/bin/freetype-config --cflags) \
 			-I$(DEVKITPRO)/portlibs/nds/include/freetype2 \
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
 			-ffast-math \
@@ -45,7 +46,7 @@ LIBS	:= -lfat -lnds9 -lfreetype -lexpat -lz -lbz2 -lpng
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(DEVKITPRO)/portlibs/nds
+LIBDIRS	:=	$(LIBNDS) $(PWD)/portlibs $(DEVKITPRO)/portlibs/nds
  
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
