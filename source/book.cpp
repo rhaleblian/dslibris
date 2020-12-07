@@ -191,6 +191,7 @@ u8 Book::Open() {
 			app->PrintStatus("opening EPUB...\n");
 			std::string path;
 			path.append(GetFolderName());
+			path.append("/");
 			path.append(GetFileName());
 			err = epub(this,path,false);
 		} else

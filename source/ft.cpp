@@ -4,6 +4,7 @@
 // https://www.willusher.io/sdl2%20tutorials/2013/08/17/lesson-1-hello-world
 
 #define ASCIIART // We are building under ARM without SDL
+#define D 512
 
 #ifndef ASCIIART
 #include "SDL2/SDL.h"
@@ -11,12 +12,11 @@
 #endif
 #include "ft2build.h"
 #include <iostream>
-#include FT_FREETYPE_H
-#include FT_CACHE_H
 
 #include "ft.h"
+#include FT_ERRORS_H
 
-#define D 512
+#include "log.h"
 
 typedef struct {
   char *path;
@@ -32,7 +32,7 @@ FT_Error requester(FTC_FaceID face_id, FT_Library library, FT_Pointer req_data,
 FT_Freeables typesetter() {
   // char filepath[128] =
   //     "/home/ray/GitHub/dslibris/cflash/font/LiberationSerif-Regular.ttf";
-  char filepath[128] = "/font/LiberationSerif-Regular.ttf";
+  char filepath[128] = "/Font/regular.ttf";
   const uint char_code = 38; // ASCII &
   Designator designator;
   designator.path = filepath;
@@ -50,10 +50,13 @@ FT_Freeables typesetter() {
   FT_Glyph glyph;
   FTC_Node node;
   FTC_CMapCache cmcache;
+  char msg[256];
 
   FT_Error error = FT_Init_FreeType(&library);
-  if (error)
-    ; // shush g++.
+  if (error) {
+    sprintf(msg, "error: init: %d\n", error);
+    Log(msg);
+  }
 
   error =
       FTC_Manager_New(library, 1, 1, 1000000, requester, &designator, &manager);
