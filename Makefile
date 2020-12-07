@@ -2,9 +2,17 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
-ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Please set DEVKITPRO in your environment.")
 endif
+ifeq ($(strip $(DEVKITARM)),)
+$(error "Please set DEVKITARM in your environment.")
+endif
+
+GAME_TITLE := dslibris
+GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
+GAME_SUBTITLE2 := http://github.com/rhaleblian/dslibris
+GAME_ICON := $(PWD)/gfx/icon.bmp
 
 include $(DEVKITARM)/ds_rules
 
@@ -24,8 +32,8 @@ INCLUDES	:=	include build
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
+#			$(shell $(PWD)/portlibs/bin/freetype-config --cflags)
 CFLAGS	:=	-g -Wall -O2 \
-			$(shell $(PWD)/portlibs/bin/freetype-config --cflags) \
 			-I$(DEVKITPRO)/portlibs/nds/include/freetype2 \
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
 			-ffast-math \
@@ -137,22 +145,7 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-CFLASHIMAGE = dslibris.img
-MOUNTPOINT = mnt
-TOOLSBIN = $(DEVKITPRO)/tools/bin
-
-$(MOUNTPOINT):
-	- mkdir $(MOUNTPOINT)
-
-# Create a FAT image file for DeSMuME's --cflash-image option.
-$(CFLASHIMAGE):
-	dd if=/dev/zero of=$@ bs=1M count=16
-	mkfs.fat -n DSLIBRIS $@
-	make mount
-	install --target-directory $(MOUNTPOINT) etc/root/*
-	make umount
-
-.PHONY: test log mount umount patch doc
+.PHONY: cycloevo doc markdown mpcf
 
 doc:
 	doxygen
@@ -161,31 +154,8 @@ doc:
 markdown: doc
 	node ../moxygen/bin/moxygen.js -h doc/xml
 
-header:
-	$(TOOLSBIN)/ndstool -h 0x400 -g LBRS YO dslibris $(shell cat version.txt) $(TARGET).nds
+mpcf: $(OUTPUT).nds
+	$(DEVKITPRO)/tools/bin/dlditool etc/mpcf.dldi dslibris.nds
 
-patch:
-	$(TOOLSBIN)/dlditool etc/mpcf.dldi dslibris.nds
-
-test: $(BUILD) $(CFLASHIMAGE) patch
-	desmume --cflash-image $(CFLASHIMAGE) $(TARGET).nds
-
-gdb:
-	desmume --cflash-image $(CFLASHIMAGE) --arm9gdb=9000 $(TARGET).nds &
-	sleep 2
-	$(DEVKITARM)/bin/arm-none-eabi-gdb --init-command=etc/gdb-init-commands $(TARGET).elf
-	# Stop both GDB and DeSMuME when done.
-
-mount: $(CFLASHIMAGE) $(MOUNTPOINT)
-	- sudo mount -o loop $(CFLASHIMAGE) $(MOUNTPOINT)
-	ls $(MOUNTPOINT)
-
-umount:
-	sudo umount $(MOUNTPOINT)
-	rmdir $(MOUNTPOINT)
-
-# Fetch the log from inside the cflash image.
-log: mount
-	- sudo mount -o loop $(CFLASHIMAGE) $(MOUNTPOINT)
-	sudo mv $(MOUNTPOINT)/$(TARGET).log .
-	make umount
+cycloevo: $(OUTPUT).nds
+	$(DEVKITPRO)/tools/bin/dlditool etc/CycloEvo.dldi dslibris.nds
