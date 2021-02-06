@@ -17,7 +17,7 @@ See ![INSTALL.txt](INSTALL.txt) .
 
 ## Prerequisites
 
-devkitPro pacman packages:
+devkitARM pacman packages:
 
     (dkp-)pacman -S devkitARM libnds libfat-nds libfilesystem nds-libexpat nds-bzip2 nds-zlib nds-freetype nds-libpng nds-pkg-config ndstool dstools grit
 
