@@ -11,13 +11,13 @@ The release file also contains a file structure for books and fonts that you sho
 
 # Installation
 
-See ![INSTALL.txt](INSTALL.txt) .
+See INSTALL.txt .
 
 # Development
 
 ## Prerequisites
 
-devkitARM pacman packages:
+devkitPro [pacman](https://github.com/devkitPro/pacman) packages:
 
     (dkp-)pacman -S devkitARM libnds libfat-nds libfilesystem nds-libexpat nds-bzip2 nds-zlib nds-freetype nds-libpng nds-pkg-config ndstool dstools grit
 
