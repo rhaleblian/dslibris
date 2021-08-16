@@ -1,8 +1,8 @@
-#include "Book.h"
+#include "book.h"
 #include "main.h"
 #include "parse.h"
 #include "epub.h"
-#include "App.h"
+#include "app.h"
 #include <stdio.h>
 #include <errno.h>
 #include <sys/param.h>
@@ -191,6 +191,7 @@ u8 Book::Open() {
 			app->PrintStatus("opening EPUB...\n");
 			std::string path;
 			path.append(GetFolderName());
+			path.append("/");
 			path.append(GetFileName());
 			err = epub(this,path,false);
 		} else

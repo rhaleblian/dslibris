@@ -2,9 +2,17 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
-ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Please set DEVKITPRO in your environment.")
 endif
+ifeq ($(strip $(DEVKITARM)),)
+$(error "Please set DEVKITARM in your environment.")
+endif
+
+GAME_TITLE := dslibris
+GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
+GAME_SUBTITLE2 := http://github.com/rhaleblian/dslibris
+GAME_ICON := $(PWD)/gfx/icon.bmp
 
 include $(DEVKITARM)/ds_rules
 
@@ -24,6 +32,7 @@ INCLUDES	:=	include build
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
+#			$(shell $(PWD)/portlibs/bin/freetype-config --cflags)
 CFLAGS	:=	-g -Wall -O2 \
 			-I$(DEVKITPRO)/portlibs/nds/include/freetype2 \
  			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
@@ -45,7 +54,7 @@ LIBS	:= -lfat -lnds9 -lfreetype -lexpat -lz -lbz2 -lpng
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(DEVKITPRO)/portlibs/nds
+LIBDIRS	:=	$(LIBNDS) $(PWD)/portlibs $(DEVKITPRO)/portlibs/nds
  
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -136,35 +145,17 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-MOUNTPOINT = /tmp/dslibris
-CFLASHIMAGE = $(HOME)/dslibris.img
+.PHONY: cycloevo doc markdown mpcf
 
-$(MOUNTPOINT):
-	- mkdir $(MOUNTPOINT)
+doc:
+	doxygen
+	echo "Documentation is located at doc/html ."
 
-# Create a FAT image file for DeSMuME's --cflash-image option.
-$(CFLASHIMAGE):
-	dd if=/dev/zero of=$@ bs=1M count=16
-	mkfs.fat -n DSLIBRIS $@
-	make mount
-	sudo install --target-directory $(MOUNTPOINT) etc/root/*
-	make umount
+markdown: doc
+	node ../moxygen/bin/moxygen.js -h doc/xml
 
-.PHONY: test log mount umount
+mpcf: $(OUTPUT).nds
+	$(DEVKITPRO)/tools/bin/dlditool etc/mpcf.dldi dslibris.nds
 
-test: $(BUILD) $(CFLASHIMAGE)
-	dlditool etc/mpcf.dldi dslibris.nds
-	desmume --cflash-image $(CFLASHIMAGE) dslibris.nds
-
-mount: $(CFLASHIMAGE) $(MOUNTPOINT)
-	sudo mount -o loop $(CFLASHIMAGE) $(MOUNTPOINT)
-	ls $(MOUNTPOINT)
-
-umount:
-	sudo umount $(MOUNTPOINT)
-	rmdir $(MOUNTPOINT)
-
-# Fetch the log from inside the cflash image.
-log: mount
-	cp /tmp/cflash/dslibris.log .
-	make umount
+cycloevo: $(OUTPUT).nds
+	$(DEVKITPRO)/tools/bin/dlditool etc/CycloEvo.dldi dslibris.nds

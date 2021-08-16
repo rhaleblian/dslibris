@@ -8,9 +8,7 @@
 *
 */
 
-#ifndef WIFI_H_
-#define WIFI_H_
-#endif /*WIFI_H_*/
+#pragma once
 
 #if 0
 
@@ -19,6 +17,24 @@
 #define WFTIMEOUT 60
 #define  RETRIES 3
 #define  RETRYDELAY 120 // 2 seconds
+
+typedef struct wifid {
+  char ssid[3][32];
+  char wepKey[3][13];
+  unsigned long ipAddress[3];
+  unsigned long  gateway[3];
+  unsigned long  dns1[3];
+  unsigned long  dns2[3];
+  unsigned char subnetLength[3];
+  int wepMode[3];
+  bool read;
+  unsigned char mac[6];
+  } wifidata;
+
+
+/* Address of the shared CommandControl structure */
+#define wifiData ((wifidata*)((uint32)(IPC) + sizeof(TransferRegion)))
+//#define timeData ((timedata*)((uint32)(wifiData) + sizeof(wifidata)))
 
 char rcvdbuf[4096];
 int rcvdlen;

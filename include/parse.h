@@ -2,7 +2,7 @@
 #define _parse_h
 
 #include <expat.h>
-#include "Book.h"
+#include "book.h"
 
 #define PAGEBUFSIZE 2048
 

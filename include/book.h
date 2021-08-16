@@ -1,7 +1,7 @@
 #ifndef BOOK_H
 #define BOOK_H
 
-#include "Page.h"
+#include "page.h"
 #include <nds.h>
 #include <string>
 #include <list>
