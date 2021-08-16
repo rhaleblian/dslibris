@@ -35,6 +35,7 @@ void App::HandleEventInBook()
 			bookcurrent->SetPosition(pagecurrent);
 			bookcurrent->GetPage()->Draw(ts);
 		}
+		prefs->Write();
 	}
 
 	else if (key.downrepeat & (KEY_B|key.l|key.up))
@@ -46,6 +47,7 @@ void App::HandleEventInBook()
 			bookcurrent->SetPosition(pagecurrent);
 			bookcurrent->GetPage()->Draw(ts);
 		}
+		prefs->Write();
 	}
 
 	uint32 keys = keysDown();
@@ -104,6 +106,7 @@ void App::HandleEventInBook()
 					bookcurrent->GetPage()->Draw(ts);
 				}
 			}
+			prefs->Write();
 		}
 
 		else if (keys & KEY_SELECT)
