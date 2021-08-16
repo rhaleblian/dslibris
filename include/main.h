@@ -38,10 +38,10 @@
 #define SPLASH_LEFT 28
 #define SPLASH_TOP 44
 
-#define FONTDIR "/font/"
-#define BOOKDIR "/book/"
-#define LOGFILEPATH "/dslibris.log"
-#define PREFSPATH "/dslibris.xml"
+#define FONTDIR "Font"
+#define BOOKDIR "Book"
+#define LOGFILEPATH "dslibris.log"
+#define PREFSPATH "dslibris.xml"
 
 #define FONTREGULARFILE "LiberationSerif-Regular.ttf"
 #define FONTBOLDFILE "LiberationSerif-Bold.ttf"

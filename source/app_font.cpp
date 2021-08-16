@@ -17,10 +17,10 @@
 #include "types.h"
 #include "main.h"
 #include "parse.h"
-#include "App.h"
-#include "Book.h"
-#include "Button.h"
-#include "Text.h"
+#include "app.h"
+#include "book.h"
+#include "button.h"
+#include "text.h"
 
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)

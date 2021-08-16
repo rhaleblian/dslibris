@@ -1,7 +1,7 @@
 #ifndef _PREFS_H
 #define _PREFS_H
 #include "expat.h"
-#include "App.h"
+#include "app.h"
 
 class Prefs
 {

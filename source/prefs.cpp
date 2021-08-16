@@ -4,9 +4,9 @@
 #include "sys/time.h"
 #include "nds.h"
 #include "main.h"
-#include "App.h"
-#include "Prefs.h"
-#include "Book.h"
+#include "app.h"
+#include "prefs.h"
+#include "book.h"
 
 #define PARSEBUFSIZE 1024*64
 

@@ -1,7 +1,7 @@
 #ifndef _button_h
 #define _button_h
 
-#include "Text.h"
+#include "text.h"
 #include <unistd.h>
 #include <string>
 

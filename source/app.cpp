@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
-#include "App.h"
+#include "app.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -40,9 +40,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "types.h"
 #include "main.h"
 #include "parse.h"
-#include "Book.h"
-#include "Button.h"
-#include "Text.h"
+#include "book.h"
+#include "button.h"
+#include "text.h"
 #include "version.h"
 
 // less-than operator to compare books by title

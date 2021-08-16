@@ -19,10 +19,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
-
-#ifndef _LOG_H_
-#define _LOG_H_
-
 /*
  * log.h
  *
@@ -30,10 +26,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *      Author: rhaleblian
  */
 
+#pragma once
+
 #include <string>
 
 void Log(const char *msg);
 void Log(std::string msg);
 void Log(const char *format, const char *msg);
-
-#endif
