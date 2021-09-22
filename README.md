@@ -47,17 +47,6 @@ features.
 
 See the `gdb` Make rule for a debugging process.
 
-## Troubleshooting
-
-### The app runs, but no text is rendered.
-
-Instead of installing `nds-freetype`, build version 2.5.5 from source,
-configuring it with
-
-    portlibs/configure-freetype
-
-instead of the supplied configure script. This will get inserted into the build
-via the `build/` directory.
 
 # See Also
 
