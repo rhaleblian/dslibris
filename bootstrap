@@ -1,4 +1,4 @@
 sudo dkp-pacman -S devkitARM libnds libfat-nds ndstool \
-  grit default-arm7 \
-  nds-zlib nds-pkg-config nds-libexpat nds-freetype nds-bzip2
+  nds-zlib nds-pkg-config nds-libexpat nds-freetype nds-bzip2 \
+  grit default-arm7 dstools dosfstools desmume
 
