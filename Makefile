@@ -145,7 +145,7 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-.PHONY: cycloevo doc markdown mpcf
+.PHONY: cycloevo doc markdown mpcf check distcheck
 
 doc:
 	doxygen
@@ -159,3 +159,10 @@ mpcf: $(OUTPUT).nds
 
 cycloevo: $(OUTPUT).nds
 	$(DEVKITPRO)/tools/bin/dlditool etc/CycloEvo.dldi dslibris.nds
+
+check:
+	true
+
+distcheck:
+	true
+
