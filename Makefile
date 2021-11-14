@@ -3,10 +3,12 @@
 #---------------------------------------------------------------------------------
 
 ifeq ($(strip $(DEVKITPRO)),)
-$(error "Please set DEVKITPRO in your environment.")
+#$(error "Please set DEVKITPRO in your environment.")
+DEVKITPRO := /opt/devkitpro
 endif
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment.")
+#$(error "Please set DEVKITARM in your environment.")
+DEVKITARM := $(DEVKITPRO)/devkitARM
 endif
 
 GAME_TITLE := dslibris
