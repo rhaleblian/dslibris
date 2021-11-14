@@ -1,3 +1,5 @@
-source activate
+wget https://github.com/devkitPro/pacman/releases/download/v1.0.2/devkitpro-pacman.amd64.deb
+sudo apt install -y devkitpro-pacman.amd64.deb
 ./bootstrap
+source activate
 
