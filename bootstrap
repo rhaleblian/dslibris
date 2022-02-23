@@ -1,12 +1,9 @@
 #!/usr/bin/env sh
 
-sudo apt install wget
+sudo apt install wget gdebi-core -y
 
-if [ $(uname) == 'Linux' && -f /etc/debian_version ]
-then
-	wget https://github.com/devkitPro/pacman/releases/download/v1.0.2/devkitpro-pacman.amd64.deb
-	sudo apt install -y ./devkitpro-pacman.amd64.deb
-fi
+wget https://github.com/devkitPro/pacman/releases/download/v1.0.2/devkitpro-pacman.amd64.deb
+sudo gdebi -n devkitpro-pacman.amd64.deb
 
-sudo dkp-pacman -S default-arm7 devkitARM devkitarm-crtls devkitarm-rules devkitpro-keyring dstools grit libfat-nds libnds nds-bzip2 nds-freetype nds-libexpat nds-libpng nds-pkg-config nds-zlib ndstool 
+sudo dkp-pacman -S --noconfirm default-arm7 devkitARM devkitarm-crtls devkitarm-rules devkitpro-keyring dstools grit libfat-nds libnds nds-bzip2 nds-freetype nds-libexpat nds-libpng nds-pkg-config nds-zlib ndstool 
 
