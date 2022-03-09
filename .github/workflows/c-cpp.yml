@@ -9,8 +9,8 @@ on:
 jobs:
   build:
 
-    runs-on: devkitpro/devkitarm
-
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm
     steps:
     - uses: actions/checkout@v2
     - name: ls
