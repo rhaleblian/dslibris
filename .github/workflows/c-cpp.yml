@@ -13,10 +13,8 @@ jobs:
     container: devkitpro/devkitarm
     steps:
     - uses: actions/checkout@v2
-    - name: configure
-      run: env
-    # - name: make
-    #   run: make
+    - name: make
+      run: make
     # - name: make check
     #   run: make check
     # - name: make distcheck
