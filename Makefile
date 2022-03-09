@@ -162,6 +162,9 @@ mpcf: $(OUTPUT).nds
 cycloevo: $(OUTPUT).nds
 	$(DEVKITPRO)/tools/bin/dlditool etc/CycloEvo.dldi dslibris.nds
 
+dldi-r4: $(OUTPUT).nds
+	$(DEVKITPRO)/tools/bin/dlditool etc/r4tf_v2.dldi dslibris.nds
+
 debug: mpcf
 	desmume --cflash-path etc/root dslibris.nds
 
