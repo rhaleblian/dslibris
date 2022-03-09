@@ -13,10 +13,8 @@ jobs:
     container: devkitpro/devkitarm
     steps:
     - uses: actions/checkout@v2
-    - name: ls
-      run: ls
-    # - name: configure
-    #   run: ./configure
+    - name: configure
+      run: env
     # - name: make
     #   run: make
     # - name: make check
