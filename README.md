@@ -1,3 +1,5 @@
+[![C/C++ CI](https://github.com/rhaleblian/dslibris/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/rhaleblian/dslibris/actions/workflows/c-cpp.yml)
+
 Herein lies the source for **dslibris**, an [EPUB](https://en.wikipedia.org/wiki/EPUB)
 ebook reader for the Nintendo DS, DSi and DSi XL.
 
