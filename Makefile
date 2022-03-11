@@ -166,7 +166,7 @@ dldi-r4: $(OUTPUT).nds
 	$(DEVKITPRO)/tools/bin/dlditool etc/r4tf_v2.dldi dslibris.nds
 
 debug: dldi-mpcf
-	desmume --cflash-path etc/root dslibris.nds
+	desmume --cflash-path test dslibris.nds
 
 check:
 	true
