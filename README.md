@@ -11,7 +11,7 @@ ebook reader for the Nintendo DS, DSi and DSi XL.
 
 # Releases
 
-See the Releases section for a program ready to be DLDI patched and copied to your cartridge media.
+See the Releases section for a program ready to be [DLDI](https://wiki.gbatemp.net/wiki/DLDI) patched and copied to your cartridge media.
 The release file also contains a file structure for books and fonts that you should also copy.
 
 # Installation
