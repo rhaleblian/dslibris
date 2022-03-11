@@ -43,7 +43,7 @@ make
 
 ## Debugging
 
-$DEVKITARM/bin/arm-none-eabi-gdb and DeSMuME,
+`$DEVKITARM/bin/arm-none-eabi-gdb` and DeSMuME,
 using the latter's cflash image and ARM9 stub
 features.
 
