@@ -16,7 +16,7 @@ The release file also contains a file structure for books and fonts that you sho
 
 # Installation
 
-See INSTALL.txt .
+See INSTALL.txt or the Quickstart page in the Wiki.
 
 # Development
 
