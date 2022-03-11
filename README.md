@@ -22,14 +22,16 @@ See INSTALL.txt or the [Quickstart](https://github.com/rhaleblian/dslibris/wiki/
 
 ## Prerequisites
 
-devkitPro [pacman](https://github.com/devkitPro/pacman) packages:
-
-    (dkp-)pacman -S devkitARM libnds libfat-nds libfilesystem nds-libexpat nds-bzip2 nds-zlib nds-freetype nds-libpng nds-pkg-config ndstool dstools grit
-
 Development is biased towards Ubuntu 20 as a platform.
 You should also get far with macOS.
 CentOS and msys2 have also worked, but haven't been checked recently.
 Ubuntu under WSL would work too, but you'll be missing mount support for emulator testing.
+
+On Debian, the `bootstrap` script can speed up getting started.  Just run it after cloning.
+
+devkitPro [pacman](https://github.com/devkitPro/pacman) packages:
+
+    (dkp-)pacman -S devkitARM libnds libfat-nds libfilesystem nds-libexpat nds-bzip2 nds-zlib nds-freetype nds-libpng nds-pkg-config ndstool dstools grit
 
 ## Building
 
