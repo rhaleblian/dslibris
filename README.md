@@ -16,7 +16,7 @@ The release file also contains a file structure for books and fonts that you sho
 
 # Installation
 
-See INSTALL.txt or the Quickstart page in the Wiki.
+See INSTALL.txt or the [Quickstart](https://github.com/rhaleblian/dslibris/wiki/User:-Quickstart) page in the Wiki.
 
 # Development
 
