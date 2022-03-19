@@ -176,4 +176,4 @@ distcheck:
 
 release.zip: dldi-r4
 	zip release.zip dslibris.nds
-	(cd etc/root; zip -r -u ../../release.zip .)
+	(cd etc/filesystem; zip -r -u ../../release.zip .)
