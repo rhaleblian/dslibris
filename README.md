@@ -11,27 +11,31 @@ ebook reader for the Nintendo DS, DSi and DSi XL.
 
 # Releases
 
-See the Releases section for a program ready to be [DLDI](https://wiki.gbatemp.net/wiki/DLDI) patched and copied to your cartridge media.
-The release file also contains a file structure for books and fonts that you should also copy.
+See the Releases section for a program ready to be
+[DLDI](https://wiki.gbatemp.net/wiki/DLDI)
+patched and copied to your cartridge media.
+The release file also contains a file structure for
+books and fonts that you should also copy.
 
 # Installation
 
-See INSTALL.txt or the [Quickstart](https://github.com/rhaleblian/dslibris/wiki/User:-Quickstart) page in the Wiki.
+See INSTALL.txt or the
+[Quickstart](https://github.com/rhaleblian/dslibris/wiki/User:-Quickstart)
+page in the Wiki.
 
 # Development
 
 ## Prerequisites
+
+We use devkitPro's toolchain for ARM, aka `devkitARM`.
 
 Development is biased towards Ubuntu 20 as a platform.
 You should also get far with macOS.
 CentOS and msys2 have also worked, but haven't been checked recently.
 Ubuntu under WSL would work too, but you'll be missing mount support for emulator testing.
 
-On Debian, the `bootstrap` script can speed up getting started.  Just run it after cloning.
-
-devkitPro [pacman](https://github.com/devkitPro/pacman) packages:
-
-    (dkp-)pacman -S devkitARM libnds libfat-nds libfilesystem nds-libexpat nds-bzip2 nds-zlib nds-freetype nds-libpng nds-pkg-config ndstool dstools grit
+The `bootstrap` script can speed up getting started.
+Run it after cloning the repo.
 
 ## Building
 
