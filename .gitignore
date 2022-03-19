@@ -1,6 +1,7 @@
 *.d
 *.dmg
 *.elf
+*.map
 *.nds
 *.o
 *.img
