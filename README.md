@@ -1,13 +1,14 @@
 [![C/C++ CI](https://github.com/rhaleblian/dslibris/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/rhaleblian/dslibris/actions/workflows/c-cpp.yml)
 
-Herein lies the source for **dslibris**, an [EPUB](https://en.wikipedia.org/wiki/EPUB)
+Herein lies the source code for **dslibris**, an
+[EPUB](https://en.wikipedia.org/wiki/EPUB)
 ebook reader for the Nintendo DS, DSi and DSi XL.
 
 ![Browser](etc/sample/browser.png)
 
 ![Quickstart](etc/sample/quickstart.png)
 
-![Faust](etc/sample/iliad.png)
+![A sample page](etc/sample/iliad.png)
 
 # Releases
 
@@ -32,7 +33,8 @@ We use devkitPro's toolchain for ARM, aka `devkitARM`.
 Development is biased towards Ubuntu 20 as a platform.
 You should also get far with macOS.
 CentOS and msys2 have also worked, but haven't been checked recently.
-Ubuntu under WSL would work too, but you'll be missing mount support for emulator testing.
+Ubuntu under WSL would work too, but you'll be missing mount support
+for emulator testing.
 
 The `bootstrap` script can speed up getting started.
 Run it after cloning the repo.
@@ -51,7 +53,7 @@ make
 
 ## Debugging
 
-`$DEVKITARM/bin/arm-none-eabi-gdb` and DeSMuME,
+`$DEVKITARM/bin/arm-none-eabi-gdb` and `DeSMuME`,
 using the latter's cflash image and ARM9 stub
 features.
 

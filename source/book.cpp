@@ -234,7 +234,7 @@ u8 Book::Parse(bool fulltext)
 	FILE *fp = fopen(path,"r");
 	if (!fp)
 	{
-		free(filebuf);
+		delete(filebuf);
 		rc = 255;
 		return(rc);
 	}
@@ -247,7 +247,7 @@ u8 Book::Parse(bool fulltext)
 	XML_Parser p = XML_ParserCreate(NULL);
 	if(!p)
 	{
-		free(filebuf);
+		delete(filebuf);
 		fclose(fp);
 		rc = 253;
 		return rc;
@@ -284,7 +284,7 @@ u8 Book::Parse(bool fulltext)
 
 	XML_ParserFree(p);
 	fclose(fp);
-	free(filebuf);
+	delete(filebuf);
 
 	return(rc);
 }

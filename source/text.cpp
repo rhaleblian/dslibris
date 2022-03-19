@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "nds.h"
 #include "fat.h"
 #include "string.h"
+#include <harfbuzz/hb.h>
 
 #include "app.h"
 #include "ft.h"
