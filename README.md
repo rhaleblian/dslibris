@@ -37,6 +37,8 @@ Ubuntu under WSL would work too, but you'll be missing mount support for emulato
 The `bootstrap` script can speed up getting started.
 Run it after cloning the repo.
 
+Some configuration exists for using Visual Studio Code.
+
 ## Building
 
 To build the program,
