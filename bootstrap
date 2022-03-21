@@ -1,8 +1,15 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+
+arch=$(uname -m)
+if [ "$arch" == "aarch64" ]
+then
+	arch=arm64
+fi
+#arch=arm64
 
 sudo apt install wget gdebi-core -y
 
-wget https://github.com/devkitPro/pacman/releases/download/v1.0.2/devkitpro-pacman.amd64.deb
-sudo gdebi -n devkitpro-pacman.amd64.deb
+wget https://github.com/devkitPro/pacman/releases/download/v1.0.2/devkitpro-pacman.$arch.deb
+sudo gdebi -n devkitpro-pacman.$arch.deb
 
 sudo dkp-pacman -S --noconfirm dkp-toolchain-vars default-arm7 devkitARM devkitarm-crtls devkitarm-rules devkitpro-keyring dstools grit libfat-nds libnds nds-bzip2 nds-freetype nds-libexpat nds-libpng nds-pkg-config nds-zlib ndstool 
