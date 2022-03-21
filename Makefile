@@ -34,10 +34,9 @@ INCLUDES	:=	include build
 #---------------------------------------------------------------------------------
 ARCH	:=	-mthumb -mthumb-interwork
 
-#			$(shell $(PWD)/portlibs/bin/freetype-config --cflags)
 CFLAGS	:=	-g -Wall -O2 \
 			-I$(DEVKITPRO)/portlibs/nds/include/freetype2 \
- 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
+			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
 			-ffast-math \
 			$(ARCH)
 
@@ -57,16 +56,16 @@ LIBS	:= -lfat -lnds9 -lfreetype -lharfbuzz -lexpat -lz -lbz2 -lpng
 # include and lib
 #---------------------------------------------------------------------------------
 LIBDIRS	:=	$(LIBNDS) $(PWD)/portlibs $(DEVKITPRO)/portlibs/nds
- 
+
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
 # rules for different file extensions
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
- 
+
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
- 
+
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
@@ -74,7 +73,7 @@ CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 BINFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.bin)))
- 
+
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
 #---------------------------------------------------------------------------------
@@ -91,37 +90,37 @@ endif
 
 export OFILES	:=	$(BINFILES:.bin=.o) \
 					$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
- 
+
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 					-I$(CURDIR)/$(BUILD)
- 
+
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
- 
+
 .PHONY: $(BUILD) clean
- 
+
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
- 
+
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(TARGET).ds.gba 
- 
- 
+
+
 #---------------------------------------------------------------------------------
 else
- 
+
 DEPENDS	:=	$(OFILES:.o=.d)
- 
+
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).nds	: 	$(OUTPUT).elf
 $(OUTPUT).elf	:	$(OFILES)
- 
+
 #---------------------------------------------------------------------------------
 %.o	:	%.bin
 #---------------------------------------------------------------------------------
@@ -137,9 +136,9 @@ $(OUTPUT).elf	:	$(OFILES)
 %.s %.h: %.png %.grit
 #---------------------------------------------------------------------------------
 	grit $< -fts -o$*
- 
+
 -include $(DEPENDS)
- 
+
 #---------------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------------
@@ -166,7 +165,7 @@ dldi-r4: $(OUTPUT).nds
 	$(DEVKITPRO)/tools/bin/dlditool etc/r4tf_v2.dldi dslibris.nds
 
 debug: dldi-mpcf
-	desmume --cflash-path test dslibris.nds
+	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
 
 check:
 	true
