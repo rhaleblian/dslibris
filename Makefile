@@ -3,11 +3,11 @@
 #---------------------------------------------------------------------------------
 
 ifeq ($(strip $(DEVKITPRO)),)
-#$(error "Please set DEVKITPRO in your environment.")
+$(error "Please set DEVKITPRO in your environment.")
 DEVKITPRO := /opt/devkitpro
 endif
 ifeq ($(strip $(DEVKITARM)),)
-#$(error "Please set DEVKITARM in your environment.")
+$(error "Please set DEVKITARM in your environment.")
 DEVKITARM := $(DEVKITPRO)/devkitARM
 endif
 
@@ -163,6 +163,9 @@ dldi-cycloevo: $(OUTPUT).nds
 
 dldi-r4: $(OUTPUT).nds
 	$(DEVKITPRO)/tools/bin/dlditool etc/r4tf_v2.dldi dslibris.nds
+
+run: dldi-mpcf
+	desmume --cflash-path test dslibris.nds
 
 debug: dldi-mpcf
 	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
