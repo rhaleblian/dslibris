@@ -210,6 +210,7 @@ u8 Book::Index()
 	{
 		std::string path;
 		path.append(GetFolderName());
+		path.append("/");
 		path.append(GetFileName());
 		int err = epub(this,path,true);
 		return err;
