@@ -3,17 +3,15 @@
 #---------------------------------------------------------------------------------
 
 ifeq ($(strip $(DEVKITPRO)),)
-$(error "Please set DEVKITPRO in your environment.")
-DEVKITPRO := /opt/devkitpro
+$(error "fatal: Set DEVKITPRO in your environment.")
 endif
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment.")
-DEVKITARM := $(DEVKITPRO)/devkitARM
+$(error "fatal: Set DEVKITARM in your environment.")
 endif
 
 GAME_TITLE := dslibris
 GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
-GAME_SUBTITLE2 := http://github.com/rhaleblian/dslibris
+GAME_SUBTITLE2 := Yoyodyne Research
 GAME_ICON := $(PWD)/gfx/icon.bmp
 
 include $(DEVKITARM)/ds_rules
