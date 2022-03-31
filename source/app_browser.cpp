@@ -10,8 +10,8 @@
 
 #include <fat.h>
 #include <nds/bios.h>
+#include <nds/arm9/input.h>
 
-//#include "ndsx_brightness.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
