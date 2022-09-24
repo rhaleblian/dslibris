@@ -10,6 +10,7 @@ ebook reader for the Nintendo DS, DSi and DSi XL.
 
 ![A sample page](etc/sample/iliad.png)
 
+
 # Releases
 
 See the Releases section for a program ready to be
@@ -18,11 +19,13 @@ patched and copied to your cartridge media.
 The release file also contains a file structure for
 books and fonts that you should also copy.
 
+
 # Installation
 
 See INSTALL.txt or the
 [Quickstart](https://github.com/rhaleblian/dslibris/wiki/User:-Quickstart)
 page in the Wiki.
+
 
 # Development
 
@@ -30,26 +33,30 @@ page in the Wiki.
 
 We use devkitPro's toolchain for ARM, aka `devkitARM`.
 
-Development is biased towards Ubuntu 20 as a platform.
+Development is biased towards Debian-clan (eg Ubuntu) as a platform.
 You should also get far with macOS.
 CentOS and msys2 have also worked, but haven't been checked recently.
 Ubuntu under WSL would work too, but you'll be missing mount support
 for emulator testing.
 
-The `bootstrap` script can speed up getting started.
-Run it after cloning the repo.
+The `bootstrap` script can speed up getting started after cloning the repo.
 
 Some configuration exists for using Visual Studio Code.
 
 ## Building
 
-To build the program,
+To build the program, assure devkitARM is available to your shell:
 
-```shell
-make
-```
+    . activate
+
+then
+
+    make
 
 `dslibris.nds` should show up in the top directory.
+
+See the Makefile for rules that apply DLDI for a few specific cases
+(R4, CycloDS Evolution, MPCF).
 
 ## Debugging
 
@@ -65,3 +72,4 @@ See the `gdb` Make rule for a debugging process.
 http://devkitpro.org
 
 http://idpf.org/epub
+
