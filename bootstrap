@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Attempts to set up a machine that has never seen anything devkitPro-related before.
+# Take it with a salt-grain; read it and do it yourself step by step.
 
 arch=$(uname -m)
 system=$(uname -s)
