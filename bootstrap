@@ -2,20 +2,39 @@
 # Attempts to set up a machine that has never seen anything devkitPro-related before.
 # Take it with a salt-grain; read it and do it yourself step by step.
 
+packages="dkp-toolchain-vars default-arm7 devkitARM devkitarm-crtls devkitarm-rules devkitpro-keyring dstools grit libfat-nds libnds nds-bzip2 nds-freetype nds-libexpat nds-libpng nds-pkg-config nds-zlib ndstool"
+ext=none
+mgr=none
+pacman=pacman
 arch=$(uname -m)
 system=$(uname -s)
+
 case $system in
 	Darwin)
+	mgr=pkg
 	ext=pkg
+	pacman=dkp-pacman
 	;;
 	Linux)
-	ext=deb
+	if [ -f /etc/arch-release ]
+	then
+		pacman=pacman
+		mgr=pacman
+		ext=none
+	fi
+	if [ -f /etc/debian-version ]
+	then
+		mgr=apt
+		ext=deb
+		pacman=dkp-pacman
+	fi
 	;;
 	*)
 	echo fatal: system $system unknown.	
 	exit 1
 	;;
 esac
+
 case $arch in
 	aarch64)
 	arch=arm64
@@ -29,16 +48,23 @@ case $arch in
 	;;
 esac
 
-pacball=devkitpro-pacman.$arch.$ext
-wget https://github.com/devkitPro/pacman/releases/download/v1.0.2/$pacball
-
-if [ $system = Linux ]
+if [ $ext == pkg ] || [ $ext == deb ]
 then
-	sudo apt install wget gdebi-core -y
-	sudo gdebi -n devkitpro-pacman.$arch.deb
+	pacball=devkitpro-pacman.$arch.$ext
+	wget https://github.com/devkitPro/pacman/releases/download/v1.0.2/$pacball
+
+	if [ $system = Linux ]
+	then
+		sudo apt install wget gdebi-core -y
+		sudo gdebi -n devkitpro-pacman.$arch.deb
+	fi
+
+	sudo $pacman -S --noconfirm "$packages"
+
+	rm $pacball
 fi
-
-sudo dkp-pacman -S --noconfirm dkp-toolchain-vars default-arm7 devkitARM devkitarm-crtls devkitarm-rules devkitpro-keyring dstools grit libfat-nds libnds nds-bzip2 nds-freetype nds-libexpat nds-libpng nds-pkg-config nds-zlib ndstool 
-
-rm $pacball
-
+if [ $mgr == pacman ]
+then
+	echo 'For pacman-based systems, see DevkitPro online doc to add repos.'
+	sudo $pacman -S --noconfirm $packages
+fi
