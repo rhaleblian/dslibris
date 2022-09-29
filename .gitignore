@@ -7,6 +7,7 @@
 *.o
 *.img
 *.tar.gz
+#.*#
 .DS_Store
 /build
 /doc
