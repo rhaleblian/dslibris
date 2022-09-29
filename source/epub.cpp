@@ -160,7 +160,7 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 	} while (len);
 	sprintf(msg,"info : read %d bytes total\n",len_total); Log(msg);
 	XML_ParserFree(p);
-	delete filebuf;
+	delete [] filebuf;
 	return(rc);
 }
 
