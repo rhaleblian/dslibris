@@ -69,9 +69,9 @@ See the `gdb` Make rule for a debugging process.
 
 # See Also
 
-http://ray.haleblian.com/wordpress/dslibris-an-ebook-reader-for-the-nintendo-ds/
+Blog: http://ray.haleblian.com/wordpress/dslibris-an-ebook-reader-for-the-nintendo-ds/
 
-http://devkitpro.org
+Development Tools: http://devkitpro.org
 
-http://idpf.org/epub
+W3C: http://idpf.org/epub
 
