@@ -1,1 +1,3 @@
-source /opt/devkitpro/ndsvars.sh
+#source /opt/devkitpro/ndsvars.sh
+source ./ndsvars.sh
+
