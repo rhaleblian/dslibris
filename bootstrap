@@ -36,6 +36,9 @@ case $system in
 esac
 
 case $arch in
+	arm64)
+	arch=arm64
+	;;
 	aarch64)
 	arch=arm64
 	;;
@@ -50,21 +53,35 @@ esac
 
 if [ $ext == pkg ] || [ $ext == deb ]
 then
-	pacball=devkitpro-pacman.$arch.$ext
+	pacball=none
+	case $ext in
+		pkg)
+		pacball=devkitpro-pacman-installer.pkg
+		;;
+		deb)
+		pacball=devkitpro-pacman.$arch.deb
+		;;
+	esac
+
 	wget https://github.com/devkitPro/pacman/releases/download/v1.0.2/$pacball
 
-	if [ $system = Linux ]
-	then
+	case $system in
+		Darwin)
+		sudo installer -pkg $pacball -target /
+		;;
+		Linux)
 		sudo apt install wget gdebi-core -y
 		sudo gdebi -n devkitpro-pacman.$arch.deb
-	fi
+		;;
+	esac
 
-	sudo $pacman -S --noconfirm "$packages"
+	sudo $pacman -S --noconfirm $packages
 
 	rm $pacball
 fi
-if [ $mgr == pacman ]
-then
-	echo 'For pacman-based systems, see DevkitPro online doc to add repos.'
-	sudo $pacman -S --noconfirm $packages
-fi
+
+# if [ $mgr == pacman ]
+# then
+# 	echo 'For pacman-native systems, see DevkitPro online doc to add repos.'
+# 	sudo $pacman -S --noconfirm $packages
+# fi
