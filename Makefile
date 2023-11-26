@@ -3,17 +3,15 @@
 #---------------------------------------------------------------------------------
 
 ifeq ($(strip $(DEVKITPRO)),)
-$(error "Please set DEVKITPRO in your environment.")
-DEVKITPRO := /opt/devkitpro
+$(error "fatal: Set DEVKITPRO in your environment.")
 endif
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment.")
-DEVKITARM := $(DEVKITPRO)/devkitARM
+$(error "fatal: Set DEVKITARM in your environment.")
 endif
 
 GAME_TITLE := dslibris
 GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
-GAME_SUBTITLE2 := http://github.com/rhaleblian/dslibris
+GAME_SUBTITLE2 := Yoyodyne Research
 GAME_ICON := $(PWD)/gfx/icon.bmp
 
 include $(DEVKITARM)/ds_rules
@@ -156,13 +154,13 @@ markdown: doc
 	node ../moxygen/bin/moxygen.js -h doc/xml
 
 dldi-mpcf: $(OUTPUT).nds
-	$(DEVKITPRO)/tools/bin/dlditool etc/mpcf.dldi dslibris.nds
+	dlditool etc/dldi/mpcf.dldi dslibris.nds
 
 dldi-cycloevo: $(OUTPUT).nds
-	$(DEVKITPRO)/tools/bin/dlditool etc/CycloEvo.dldi dslibris.nds
+	dlditool etc/dldi/CycloEvo.dldi dslibris.nds
 
 dldi-r4: $(OUTPUT).nds
-	$(DEVKITPRO)/tools/bin/dlditool etc/r4tf_v2.dldi dslibris.nds
+	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
 
 run: dldi-mpcf
 	desmume --cflash-path test dslibris.nds
@@ -178,4 +176,4 @@ distcheck:
 
 release.zip: dldi-r4
 	zip release.zip dslibris.nds
-	(cd etc/filesystem; zip -r -u ../../release.zip .)
+	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
