@@ -154,13 +154,13 @@ markdown: doc
 	node ../moxygen/bin/moxygen.js -h doc/xml
 
 dldi-mpcf: $(OUTPUT).nds
-	$(DEVKITPRO)/tools/bin/dlditool etc/mpcf.dldi dslibris.nds
+	dlditool etc/dldi/mpcf.dldi dslibris.nds
 
 dldi-cycloevo: $(OUTPUT).nds
-	$(DEVKITPRO)/tools/bin/dlditool etc/CycloEvo.dldi dslibris.nds
+	dlditool etc/dldi/CycloEvo.dldi dslibris.nds
 
 dldi-r4: $(OUTPUT).nds
-	$(DEVKITPRO)/tools/bin/dlditool etc/r4tf_v2.dldi dslibris.nds
+	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
 
 run: dldi-mpcf
 	desmume --cflash-path test dslibris.nds
@@ -176,4 +176,4 @@ distcheck:
 
 release.zip: dldi-r4
 	zip release.zip dslibris.nds
-	(cd etc/filesystem; zip -r -u ../../release.zip .)
+	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
