@@ -16,3 +16,6 @@ steps:
    chmod +x ./install-devkitpro-pacman
    sudo ./install-devkitpro-pacman
   displayName: 'Install devkitpro pacman'
+
+- script: sudo dkp-pacman -S nds-dev 
+  displayName: 'Install NDS toolchain'
