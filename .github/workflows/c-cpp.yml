@@ -15,6 +15,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: make
       run: make
+    - name: assess
+      run: |
+        ls
     # - name: make check
     #   run: make check
     # - name: make distcheck
