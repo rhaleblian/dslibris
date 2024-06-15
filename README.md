@@ -1,4 +1,4 @@
-[![C/C++ CI](https://github.com/rhaleblian/dslibris/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/rhaleblian/dslibris/actions/workflows/c-cpp.yml)
+[![C/C++ CI](https://github.com/rhaleblian/dslibris/actions/workflows/build.yml/badge.svg)](https://github.com/rhaleblian/dslibris/actions/workflows/build.yml)
 
 Herein lies the source code for **dslibris**, an
 [EPUB](https://en.wikipedia.org/wiki/EPUB)
