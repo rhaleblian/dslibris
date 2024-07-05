@@ -50,8 +50,6 @@ https://github.com/rhaleblian/dslibris
 #include <unistd.h>
 #include <vector>
 
-#include "expat.h"
-
 #include "book.h"
 #include "button.h"
 #include "prefs.h"
@@ -102,8 +100,8 @@ class App {
 	
 	//! key functions are remappable to support screen flipping.
 	struct {
-		u16 up,down,left,right,l,r,a,b,x,y,start,select;
-		uint32 downrepeat;
+		uint32_t up,down,left,right,l,r,a,b,x,y,start,select;
+		uint32_t downrepeat;
 	} key;
 	
 	vector<Button*> buttons;
@@ -166,7 +164,7 @@ class App {
 	bool parse_in(parsedata_t *data, context_t context);
 	void parse_init(parsedata_t *data);
 	context_t parse_pop(parsedata_t *data);
-	void parse_error(XML_ParserStruct *ps);
+	// void parse_error(XML_ParserStruct *ps);
 	void parse_push(parsedata_t *data, context_t context);
 
 	//! in App_Browser.cpp

@@ -6,11 +6,7 @@
 #include <sys/dir.h>
 #include <sys/stat.h>
 
-#include <expat.h>
-
-#include <fat.h>
-#include <nds/bios.h>
-
+#include "3ds.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
@@ -75,7 +71,7 @@ void App::HandleEventInBook()
 			bookcurrent = NULL;
 			if(mode == APP_MODE_BOOK)
 			{
-				if(orientation) lcdSwap();
+				// if(orientation) lcdSwap();
 				mode = APP_MODE_BROWSER;
 			}
 			ts->PrintSplash(ts->screenleft);
@@ -194,7 +190,7 @@ u8 App::OpenBook(void)
 
 	if(!bookselected) return 254;	
 	PrintStatus("opening book...");
-	swiWaitForVBlank();
+	gspWaitForVBlank();
 
 	const char *filename = bookselected->GetFileName();
 	const char *c; 	// will point to the file's extension.
@@ -211,7 +207,7 @@ u8 App::OpenBook(void)
 	PrintStatus("book opened");
 	bookcurrent = bookselected;
 	if(mode == APP_MODE_BROWSER) {
-		if(orientation) lcdSwap();
+		// if(orientation) lcdSwap();
 		mode = APP_MODE_BOOK;
 	}
 	if(bookcurrent->GetPosition() >= bookcurrent->GetPageCount())
@@ -222,6 +218,7 @@ u8 App::OpenBook(void)
 	return 0;
 }
 
+#if 0
 void App::parse_error(XML_Parser p)
 {
 	char msg[128];
@@ -232,6 +229,7 @@ void App::parse_error(XML_Parser p)
 	Log(msg);
 	PrintStatus(msg);
 }
+#endif
 
 void App::parse_init(parsedata_t *data)
 {

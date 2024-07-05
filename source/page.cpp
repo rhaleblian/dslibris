@@ -35,7 +35,7 @@ Page::~Page()
 	if(buf) delete buf;
 }
 
-u8 Page::SetBuffer(u8 *src, u16 len)
+u8 Page::SetBuffer(uint8_t *src, uint16_t len)
 {
 	//! Write to offscreen buffer. NYI
 	if(buf) delete buf;
@@ -83,7 +83,7 @@ void Page::Draw(Text *ts)
 	u16 i=0;
 	while (i<length)
 	{
-		u32 c = buf[i];
+		uint32_t c = buf[i];
 		if (c == '\n')
 		{
 			// line break, page breaking if necessary

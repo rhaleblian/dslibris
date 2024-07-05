@@ -1,6 +1,8 @@
 #ifndef _ui_h
 #define _ui_h
 
+#include "types.h"
+
 typedef struct {
   u16 x;
   u16 y;

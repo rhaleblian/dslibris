@@ -2,7 +2,7 @@
 #include <vector>
 #include "sys/stat.h"
 #include "sys/time.h"
-#include "nds.h"
+#include "3ds.h"
 #include "main.h"
 #include "app.h"
 #include "prefs.h"
@@ -23,7 +23,7 @@ int Prefs::Read()
 	parsedata_t pdata;
 	app->parse_init(&pdata);
 	pdata.prefs = this;
-		
+#if 0
 	FILE *fp = fopen(PREFSPATH,"r");
 	if (!fp) { err = 255; return err; }
 
@@ -49,8 +49,7 @@ int Prefs::Read()
 	}
 	XML_ParserFree(p);
 	fclose(fp);
-	return err;
-
+#endif
 	struct stat st;
 	stat(PREFSPATH,&st);
 	struct timeval time;
@@ -60,12 +59,12 @@ int Prefs::Read()
 	app->Log(msg);
 	sprintf(msg,"info : current time %lld",time.tv_sec);
 	app->Log(msg);
+	return err;
 }
 
 //! \return Error code, 0: success.
 int Prefs::Write()
 {
-	int err = 0;
 	FILE* fp = fopen(PREFSPATH,"w");
 	if(!fp) return 255;
 	
@@ -117,10 +116,10 @@ int Prefs::Write()
 	fprintf(fp, "\n");
 	fclose(fp);
 
-	return err;
+	return 0;
 }
 
 void Prefs::Init(){
 	modtime = 0;  // fill this in with gettimeofday()
-	swapshoulder = FALSE;
+	swapshoulder = 0;
 }

@@ -20,8 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
-#include <nds.h>
 #include <stdio.h>
+
+#include "3ds.h"
 #include "button.h"
 
 Button::Button() {
@@ -71,15 +72,15 @@ void Button::Draw(u16 *fb, bool highlight) {
 	u16 y;
 
 	u16 bgcolor;
-	if(highlight) bgcolor = RGB15(31,31,15) | BIT(15);
-	else bgcolor = RGB15(30,30,30) | BIT(15);
+	if(highlight) bgcolor = RGB565(31,31,15) | BIT(15);
+	else bgcolor = RGB565(30,30,30) | BIT(15);
 	for (y=ul.y+1;y<lr.y-1;y++) {
 		for (x=ul.x+1;x<lr.x-1;x++) {
-			fb[y*SCREEN_WIDTH + x] = bgcolor;
+			fb[y*GSP_SCREEN_WIDTH + x] = bgcolor;
 		}
 	}
 
-	// u16 bordercolor = RGB15(22,22,22) | BIT(15);
+	// u16 bordercolor = RGB565(22,22,22) | BIT(15);
 	// for (x=ul.x;x<lr.x;x++) {
 	// 	fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
 	// 	fb[lr.y*SCREEN_WIDTH + x] = bordercolor;

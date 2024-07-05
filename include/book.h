@@ -2,7 +2,6 @@
 #define BOOK_H
 
 #include "page.h"
-#include <nds.h>
 #include <string>
 #include <list>
 #include <vector>
@@ -20,14 +19,14 @@ class Book {
 	std::string title;
 	std::string author;
 	int position;  //! as page index.
-	std::list<u16> bookmarks;  //! as page indices.
+	std::list<uint16_t> bookmarks;  //! as page indices.
 	std::vector<class Page*> pages;
 public:
 	Book();
 	~Book();
 	format_t format;
 	inline std::string* GetAuthor() { return &author; }
-	std::list<u16>* GetBookmarks(void);
+	std::list<uint16_t>* GetBookmarks(void);
 	int  GetNextBookmark(void);
 	int  GetPreviousBookmark(void);
 	int  GetNextBookmarkedPage(void);
@@ -36,7 +35,7 @@ public:
 	const char* GetFolderName(void);
 	Page* GetPage();
 	Page* GetPage(int i);
-	u16  GetPageCount();
+	uint16_t  GetPageCount();
 	int  GetPosition(void);
 	int  GetPosition(int offset);
 	const char* GetTitle();
@@ -44,7 +43,7 @@ public:
 	void SetFileName(const char *filename);
 	void SetFolderName(const char *foldername);	
 	void SetFolderName(std::string &foldername);
-	void SetPage(u16 index);
+	void SetPage(uint16_t index);
 	void SetPosition(int pos);
 	void SetTitle(const char *title);
 	Page* AppendPage();
@@ -52,10 +51,10 @@ public:
 	Page* RetreatPage();
 	void Cache();
 	void Close();
-	u8   Index();
+	uint8_t   Index();
 	void IndexHTML();
-	u8   Open();
-	u8   Parse(bool fulltext);
+	uint8_t   Open();
+	uint8_t   Parse(bool fulltext);
 	int  ParseHTML();
 	void Restore();
 };

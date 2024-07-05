@@ -128,7 +128,7 @@ int Book::GetPosition()
 	return position;
 }
 
-void Book::SetPage(u16 index)
+void Book::SetPage(uint16_t index)
 {
 	position = index;
 }
@@ -173,7 +173,7 @@ void Book::Cache()
 	fclose(fp);
 }
 
-u8 Book::Open() {
+uint8_t Book::Open() {
 	int err = 0;
 
 	//	if( access( fname.c_str(), F_OK ) != -1 ) {
@@ -223,69 +223,69 @@ u8 Book::Parse(bool fulltext)
 	//! Expat callback handlers do the heavy work.
 	u8 rc = 0;
 	
-	char *filebuf = new char[BUFSIZE];
-	if(!filebuf)
-	{
-		rc = 1;
-		return(rc);
-	}
+	// char *filebuf = new char[BUFSIZE];
+	// if(!filebuf)
+	// {
+	// 	rc = 1;
+	// 	return(rc);
+	// }
 	
-	char path[MAXPATHLEN];
-	sprintf(path,"%s%s",GetFolderName(),GetFileName());
-	FILE *fp = fopen(path,"r");
-	if (!fp)
-	{
-		delete [] filebuf;
-		rc = 255;
-		return(rc);
-	}
+	// char path[MAXPATHLEN];
+	// sprintf(path,"%s%s",GetFolderName(),GetFileName());
+	// FILE *fp = fopen(path,"r");
+	// if (!fp)
+	// {
+	// 	delete [] filebuf;
+	// 	rc = 255;
+	// 	return(rc);
+	// }
 	
-	parsedata_t parsedata;
-	app->parse_init(&parsedata);
-	parsedata.cachefile = fopen("/cache.dat", "w");
-	parsedata.book = this;
+	// parsedata_t parsedata;
+	// app->parse_init(&parsedata);
+	// parsedata.cachefile = fopen("/cache.dat", "w");
+	// parsedata.book = this;
 	
-	XML_Parser p = XML_ParserCreate(NULL);
-	if(!p)
-	{
-		delete [] filebuf;
-		fclose(fp);
-		rc = 253;
-		return rc;
-	}
-	XML_ParserReset(p,NULL);
-	XML_SetUserData(p, &parsedata);
-	XML_SetDefaultHandler(p, default_hndl);
-	XML_SetProcessingInstructionHandler(p, proc_hndl);
-	if(fulltext)
-	{
-		XML_SetElementHandler(p, start_hndl, end_hndl);
-		XML_SetCharacterDataHandler(p, char_hndl);
-	}
-	else
-	{
-		XML_SetElementHandler(p, title_start_hndl, title_end_hndl);
-		XML_SetCharacterDataHandler(p, title_char_hndl);
-	}
+	// XML_Parser p = XML_ParserCreate(NULL);
+	// if(!p)
+	// {
+	// 	delete [] filebuf;
+	// 	fclose(fp);
+	// 	rc = 253;
+	// 	return rc;
+	// }
+	// XML_ParserReset(p,NULL);
+	// XML_SetUserData(p, &parsedata);
+	// XML_SetDefaultHandler(p, default_hndl);
+	// XML_SetProcessingInstructionHandler(p, proc_hndl);
+	// if(fulltext)
+	// {
+	// 	XML_SetElementHandler(p, start_hndl, end_hndl);
+	// 	XML_SetCharacterDataHandler(p, char_hndl);
+	// }
+	// else
+	// {
+	// 	XML_SetElementHandler(p, title_start_hndl, title_end_hndl);
+	// 	XML_SetCharacterDataHandler(p, title_char_hndl);
+	// }
 	
-	enum XML_Status status;
-	while (true)
-	{
-		int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
-		status = XML_Parse(p, filebuf, bytes_read, (bytes_read == 0));
-		if (status == XML_STATUS_ERROR)
-		{
-			app->parse_error(p);
-			rc = 254;
-			break;
-		}
-		if (parsedata.status) break; // non-fulltext parsing signals it is done.
-		if (bytes_read == 0) break; // assume our buffer ran out.
-	}
+	// enum XML_Status status;
+	// while (true)
+	// {
+	// 	int bytes_read = fread(filebuf, 1, BUFSIZE, fp);
+	// 	status = XML_Parse(p, filebuf, bytes_read, (bytes_read == 0));
+	// 	if (status == XML_STATUS_ERROR)
+	// 	{
+	// 		app->parse_error(p);
+	// 		rc = 254;
+	// 		break;
+	// 	}
+	// 	if (parsedata.status) break; // non-fulltext parsing signals it is done.
+	// 	if (bytes_read == 0) break; // assume our buffer ran out.
+	// }
 
-	XML_ParserFree(p);
-	fclose(fp);
-	delete [] filebuf;
+	// XML_ParserFree(p);
+	// fclose(fp);
+	// delete [] filebuf;
 
 	return(rc);
 }

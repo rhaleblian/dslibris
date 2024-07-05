@@ -6,10 +6,7 @@
 #include <sys/dir.h>
 #include <sys/stat.h>
 
-#include <expat.h>
-
-#include <fat.h>
-#include <nds/bios.h>
+#include "tinyxml2.h"
 
 #include "types.h"
 #include "main.h"

@@ -26,7 +26,6 @@ A Book contains a vector of Pages.
 #ifndef PAGE_H
 #define PAGE_H
 
-#include <nds.h>
 #include "book.h"
 #include "text.h"
 

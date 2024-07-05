@@ -6,10 +6,7 @@
 #include <sys/dir.h>
 #include <sys/stat.h>
 
-#include <expat.h>
-
-#include <fat.h>
-#include <nds/bios.h>
+#include "tinyxml2.h"
 
 #include <string>
 #include <vector>
@@ -33,7 +30,7 @@ void App::FontInit()
 	if (!dp)
 	{
 		Log("fatal: no font directory.\n");
-		swiWaitForVBlank();
+		gspWaitForVBlank();
 		exit(-3);
 	}
 	

@@ -43,7 +43,7 @@ int ft_main(int argc, char **argv);
 int kungheyfatcheck(void) {
 	iprintf("** kungheyfatcheck **\n");
 	iprintf("root directory:\n");
-	swiWaitForVBlank();
+	gspWaitForVBlank();
 
 	DIR *dp = opendir("/");
 	if (!dp) {
@@ -77,7 +77,7 @@ int boot_filesystem(void) {
 }
 
 void spin(void) {
-	while(true) swiWaitForVBlank();
+	while(true) gspWaitForVBlank();
 }
 
 void fatal(const char *msg) {
@@ -92,7 +92,7 @@ int main(void)
 
 	//kungheyfatcheck();
 	// asciiart();
-	// while(true) swiWaitForVBlank();
+	// while(true) gspWaitForVBlank();
 
 	app = new App();
 	return app->Run();

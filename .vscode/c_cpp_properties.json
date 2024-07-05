@@ -2,20 +2,17 @@
     "configurations": [
         {
             "name": "Linux",
-            "defines": [],
+            "defines": ["EXPERIMENTAL_KERNING"],
             "compilerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc",
             "cStandard": "gnu11",
             "cppStandard": "gnu++14",
-            "intelliSenseMode": "clang-x64",
-            "compilerArgs": ["-DEXPERIMENTAL_KERNING"],
+            "intelliSenseMode": "linux-gcc-x86",
+            "compilerArgs": [],
             "includePath": [
                 "${workspaceFolder}/include",
-                "/opt/devkitpro/devkitARM/include",
-                "/opt/devkitpro/libnds/include",
-                "/opt/devkitpro/libnds/include/nds",
-                "/opt/devkitpro/portlibs/nds/include",
-                "/opt/devkitpro/portlibs/nds/include/freetype2",
-                "/opt/devkitpro/portlibs/nds/include/freetype2/freetype"
+                "/opt/devkitpro/libctru/include",
+                "/opt/devkitpro/portlibs/3ds/include",
+                "/opt/devkitpro/portlibs/3ds/include/freetype2"
             ]
         }
     ],

@@ -24,15 +24,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <sstream>
 #include <sys/param.h>
 
-#include "nds.h"
-#include "fat.h"
 #include "string.h"
 
+#include "3ds.h"
 #include "app.h"
 #include "ft.h"
 #include "main.h"
 #include "version.h"
 #include "text.h"
+#include "types.h"
 
 extern char msg[];
 std::stringstream ss;
@@ -50,8 +50,8 @@ Text::Text()
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
-	screenleft = (u16*)BG_BMP_RAM_SUB(0);
-	screenright = (u16*)BG_BMP_RAM(0);
+	screenleft = (u16*)gfxGetFramebuffer(GFX_TOP, GFX_LEFT, &display.width, &display.height);
+	screenright = (u16*)gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, &display.width, &display.height);;
 	offscreen = new u16[display.width * display.height];
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
@@ -377,8 +377,8 @@ void Text::ClearScreen()
 void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 {
 	u16 clearcolor;
-	if(invert) clearcolor = RGB15(0,0,0) | BIT(15);
-	else clearcolor = RGB15(31,31,31) | BIT(15);
+	if(invert) clearcolor = RGB565(0,0,0) | BIT(15);
+	else clearcolor = RGB565(31,31,31) | BIT(15);
 	//uint word = (clearcolor << 16) | clearcolor;
 	for(u16 y=yl; y<yh; y++) {
 //		memcpy((void*)screen[y*display.height+xl],(void*)word,xh-xl/2);
@@ -690,7 +690,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 
 #ifdef DEBUG_PEN_POSITION
 	// DEBUG Mark the pen position.
-	screen[pen.y*display.height+pen.x] = RGB15(0, 0, 0) | BIT(15);
+	screen[pen.y*display.height+pen.x] = RGB565(0, 0, 0) | BIT(15);
 #endif
 
 	u16 gx, gy;
@@ -707,7 +707,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 					g = (bgcolor.g * alpha);
 					b = (bgcolor.b * alpha);
 					screen[sy*display.height+sx]
-						= RGB15(r/256,g/256,b/256) | BIT(15);
+						= RGB565(r/256,g/256,b/256) | BIT(15);
 				} else {
 					u8 l;
 					if (invert) l = a >> 3;
@@ -715,10 +715,10 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 #ifdef DEBUG_CACHE
 					// Draw cache hits in red.
 					if(!hit)
-						screen[sy*display.height+sx] = RGB15(l,0,0) | BIT(15);
+						screen[sy*display.height+sx] = RGB565(l,0,0) | BIT(15);
 					else
 #endif
-					screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
+					screen[sy*display.height+sx] = RGB565(l,l,l) | BIT(15);
 				}
 			}
 		}
@@ -744,14 +744,13 @@ bool Text::PrintNewLine(void) {
 			pen.y = margin.top + height;
 			return true;
 		}
-		else
-			return false;
 	}
 	else
 	{
 		pen.y += height + linespacing;
 		return true;
 	}
+	return false;
 }
 
 void Text::PrintString(const char *s) {
@@ -814,7 +813,7 @@ void Text::PrintStatusMessage(const char *msg)
 void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 {
 	for (int i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++)
-		screen[i] = RGB15(r,g,b) | BIT(15);
+		screen[i] = RGB565(r,g,b) | BIT(15);
 }
 
 void Text::PrintSplash(u16 *screen)
@@ -831,7 +830,7 @@ void Text::PrintSplash(u16 *screen)
 	SetInvert(invert);
 	SetScreen(s);
 	
-	swiWaitForVBlank();
+	gspWaitForVBlank();
 }
 
 void Text::SetFontFile(const char *filename, u8 style)

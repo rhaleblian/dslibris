@@ -1,7 +1,6 @@
 #ifndef _parse_h
 #define _parse_h
 
-#include <expat.h>
 #include "book.h"
 
 #define PAGEBUFSIZE 2048
@@ -54,9 +53,9 @@ void start_hndl(void *data, const char *el, const char **attr);
 void char_hndl(void *data, const char *txt, int txtlen);
 void end_hndl(void *data, const char *el);
 void proc_hndl(void *data, const char *target, const char *pidata);
-int unknown_hndl(void *encodingHandlerData,
-					const XML_Char *name,
-					XML_Encoding *info);
+// int unknown_hndl(void *encodingHandlerData,
+// 					const XML_Char *name,
+// 					XML_Encoding *info);
 void prefs_start_hndl(void *data, const char *el, const char **attr);
 extern void prefs_end_hndl(void *data, const char *name);
 
@@ -67,6 +66,6 @@ void title_end_hndl(void *data, const char *el);
 bool iswhitespace(u8 c);
 
 void parse_init(parsedata_t *data);
-void parse_printerror(XML_Parser p);
+// void parse_printerror(XML_Parser p);
 
 #endif

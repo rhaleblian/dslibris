@@ -23,7 +23,8 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include "nds.h"
+
+#include "3ds.h"
 #include "splash.h"
 
 #define MARGINLEFT 12
@@ -32,8 +33,8 @@
 #define MARGINBOTTOM 16
 #define LINESPACING 0
 #define PARASPACING 0
-#define PAGE_HEIGHT SCREEN_WIDTH
-#define PAGE_WIDTH SCREEN_HEIGHT
+#define PAGE_HEIGHT GSP_SCREEN_WIDTH
+#define PAGE_WIDTH GSP_SCREEN_HEIGHT_BOTTOM
 #define BUFSIZE 1024*128
 #define SPLASH_LEFT 28
 #define SPLASH_TOP 44
@@ -50,8 +51,8 @@
 #define FONTSPLASHFILE "LiberationSans-Regular.ttf"
 
 //! For drawing splash screen.
-int getSize(uint8 *source, uint16 *dest, uint32 arg);
-uint8 readByte(uint8 *source);
-void drawstack(u16 *screen);
+int getSize(uint8_t *source, uint16_t *dest, uint32_t arg);
+uint8_t readByte(uint8_t *source);
+void drawstack(uint16_t *screen);
 
 #endif

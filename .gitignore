@@ -4,6 +4,8 @@
 *.elf
 *.map
 *.nds
+*.3dsx
+*.smdh
 *.o
 *.img
 *.tar.gz
@@ -21,3 +23,4 @@
 /portlibs/share
 /release.zip
 /venv
+/dslibris.lst

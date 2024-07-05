@@ -20,8 +20,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
-#include "app.h"
-
 #include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -31,12 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <unistd.h>
 #include <algorithm>   // for std::sort
 
-#include "fat.h"
-#include "nds/system.h"
-#include "nds/arm9/background.h"
-#include "nds/arm9/input.h"
-
-#include "ndsx_brightness.h"
+#include "app.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
@@ -52,7 +45,7 @@ static bool book_title_lessthan(Book* a, Book* b) {
 
 void halt()
 {
-	while(TRUE) swiWaitForVBlank();
+	while(1) gspWaitForVBlank();
 }
 
 App::App()
@@ -148,7 +141,7 @@ int App::Run(void)
 		// sprintf(msg, "fatal: freetype error (%d)\n", err);
 	}
 	Log(msg);
-	if(err) while(1) swiWaitForVBlank();
+	if(err) while(1) gspWaitForVBlank();
 	
 	SetBrightness(brightness);
 	
@@ -222,7 +215,7 @@ int App::Run(void)
 		sprintf(msg,"info : currentbook = %s.\n",bookcurrent->GetTitle());
 		Log(msg);
 	}
-	swiWaitForVBlank();
+	gspWaitForVBlank();
 	
 	// Read preferences, pass 2, to bind preferences to books.
 	
@@ -251,7 +244,7 @@ int App::Run(void)
 	// Bring up displays.
 	console = false;
 	InitScreens();
-	if(orientation) lcdSwap();
+	// if(orientation) lcdSwap();
 	if (prefs->swapshoulder)
 	{
 		int tmp = key.l;
@@ -280,17 +273,17 @@ int App::Run(void)
 	}
 	else Log("info : not reopening previous book.\n");
 
-	swiWaitForVBlank();
+	gspWaitForVBlank();
 
 	// Start polling event loop.
 	// FIXME use interrupt driven event handling.
 	
-	keysSetRepeat(60,2);
+	// keysSetRepeat(60,2);
 	while (true)
 	{
 		scanKeys();
 
-		key.downrepeat = keysDownRepeat();
+		// key.downrepeat = keysDownRepeat();
 
 		if (key.downrepeat)
 		{
@@ -312,7 +305,7 @@ int App::Run(void)
 						break;
 			}
 		}
-		swiWaitForVBlank();
+		gspWaitForVBlank();
 	}
 
 	exit(0);
@@ -322,7 +315,7 @@ void App::SetBrightness(int b)
 {
 	if(b<0) brightness = 0;
 	brightness = b%4;
-	fifoSendValue32(BACKLIGHT_FIFO,brightness);
+	// fifoSendValue32(BACKLIGHT_FIFO,brightness);
 }
 
 void App::CycleBrightness()
@@ -352,6 +345,7 @@ void App::UpdateClock()
 
 void App::SetOrientation(bool flip)
 {
+#if 0
 	s16 s;
 	s16 c;
 	if(flip)
@@ -398,6 +392,7 @@ void App::SetOrientation(bool flip)
 	REG_BG3PB_SUB = -s;
 	REG_BG3PC_SUB = s;
 	REG_BG3PD_SUB = c;
+#endif
 }
 
 void App::Log(const char *msg)
@@ -432,6 +427,7 @@ void App::Log(const std::string msg)
 
 void App::InitScreens()
 {
+#if 0
 	videoSetMode(MODE_5_2D);
 	vramSetBankA(VRAM_A_MAIN_BG);
 	bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
@@ -443,12 +439,13 @@ void App::InitScreens()
 	ts->SetScreen(ts->screenleft);
 	ts->ClearScreen();
 	SetOrientation(orientation);
+#endif
 }
 
 void App::Fatal(const char *msg)
 {
 	Log(msg);
-	while(1) swiWaitForVBlank();
+	while(1) gspWaitForVBlank();
 }
 
 

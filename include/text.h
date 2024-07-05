@@ -7,6 +7,7 @@
 #include "ft2build.h"
 #include FT_FREETYPE_H
 #include FT_CACHE_H
+#include "types.h"
 
 using namespace std;
 
@@ -182,7 +183,7 @@ public:
 		int left, right, top, bottom;
 	} margin;
 	struct {
-		int width, height;
+		uint16_t width, height;
 	} display;
 	int linespacing;
 	bool linebegan, bold, italic;

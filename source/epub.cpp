@@ -20,15 +20,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
-#include "epub.h"
-#include <nds.h>
 #include <string.h>
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+
+#include "3ds.h"
+#include "epub.h"
 #include "main.h"
 #include "parse.h"
-#include "expat.h"
+#include "tinyxml2.h"
 #include "zlib.h"
 #include "unzip.h"
 #include "log.h"
@@ -107,7 +108,7 @@ void epub_rootfile_end(void *data, const char *el) {
 	d->ctx.pop_back();
 }
 
-void epub_rootfile_char(void *data, const XML_Char *txt, int len) {
+void epub_rootfile_char(void *data, const char *txt, int len) {
    	epub_data_t *d = (epub_data_t*)data;
 	std::string *ctx = d->ctx.back();
 	if (!ctx) return;
@@ -123,8 +124,9 @@ void epub_rootfile_char(void *data, const XML_Char *txt, int len) {
 int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 {
 	int rc = 0;
-	parsedata_t pd;
 	char *filebuf = new char[BUFSIZE];
+#if 0
+	parsedata_t pd;
 	XML_Parser p = XML_ParserCreate(NULL);
 	if(epd->type == PARSE_CONTAINER) {
 		XML_SetUserData(p, epd);
@@ -160,6 +162,7 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 	} while (len);
 	sprintf(msg,"info : read %d bytes total\n",len_total); Log(msg);
 	XML_ParserFree(p);
+#endif
 	delete [] filebuf;
 	return(rc);
 }
