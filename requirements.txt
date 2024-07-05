@@ -1,0 +1,17 @@
+dkp-toolchain-vars
+default-arm7
+devkitARM
+devkitarm-crtls
+devkitarm-rules
+devkitpro-keyring
+dstools
+grit
+libfat-nds
+libnds
+nds-bzip2
+nds-freetype
+nds-libexpat
+nds-libpng
+nds-pkg-config
+nds-zlib
+ndstool

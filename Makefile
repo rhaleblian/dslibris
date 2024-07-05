@@ -144,7 +144,7 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-.PHONY: cycloevo debug doc markdown mpcf check distcheck
+.PHONY: dldi-r4 dldi-cycloevo debug doc markdown dldi-mpcf check distcheck run
 
 doc:
 	doxygen
