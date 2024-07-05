@@ -2,12 +2,8 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
-ifeq ($(strip $(DEVKITPRO)),)
-$(error "fatal: Set DEVKITPRO in your environment.")
-endif
-ifeq ($(strip $(DEVKITARM)),)
-$(error "fatal: Set DEVKITARM in your environment.")
-endif
+DEVKITPRO ?= /opt/devkitpro
+DEVKITARM ?= /opt/devkitpro/devkitARM
 
 GAME_TITLE := dslibris
 GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
