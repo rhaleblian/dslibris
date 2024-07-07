@@ -80,9 +80,3 @@ then
 		;;
 	esac
 fi
-
-# if [ $mgr == pacman ]
-# then
-# 	echo 'For pacman-native systems, see DevkitPro online doc to add repos.'
-# 	sudo $pacman -S --noconfirm $packages
-# fi
