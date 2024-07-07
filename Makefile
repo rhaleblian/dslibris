@@ -164,6 +164,10 @@ run: dldi-mpcf
 debug: dldi-mpcf
 	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
 
+upload:
+# macOS only
+	ftp -u ftp://${DS_HOST}:5000/dslibris.nds dslibris.nds
+
 check:
 	true
 
