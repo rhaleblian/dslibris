@@ -408,6 +408,21 @@ u8 Text::GetStringWidth(const char *txt, FT_Face face)
 	return width;
 }
 
+u8 Text::GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels) {
+	u8 n = 0;
+	u8 width = 0;
+	const char *c;
+	for(c = txt; c != NULL; c++)
+	{
+		u32 ucs = 0;
+		GetCharCode(c, &ucs);
+		width += GetAdvance(ucs, GetFace(style));
+		if (width > pixels) return n;
+		n++;
+	}
+	return n;
+}
+
 u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 	//! Given a UTF-8 encoding, fill in the Unicode/UCS code point.
 	//! Return the bytelength of the encoding, for advancing

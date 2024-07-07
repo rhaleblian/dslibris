@@ -164,15 +164,15 @@ void App::browser_init(void)
 			buttons[i]->SetLabel2(*(book->GetAuthor()));
 	}
 	buttonprev.Init(ts);
-	buttonprev.Move(2,240);
+	buttonprev.Move(2,238);
 	buttonprev.Resize(60,16);
 	buttonprev.Label("prev");
 	buttonnext.Init(ts);
-	buttonnext.Move(130,240);
+	buttonnext.Move(130,238);
 	buttonnext.Resize(60,16);
 	buttonnext.Label("next");
 	buttonprefs.Init(ts);
-	buttonprefs.Move(66,240);
+	buttonprefs.Move(66,238);
 	buttonprefs.Resize(60,16);
 	buttonprefs.Label("prefs");
 

@@ -205,6 +205,7 @@ public:
 	u8   GetAdvance(u32 ucs);
 	u8   GetAdvance(u32 ucs, u8 style);
 	u8   GetCharCode(const char* txt, u32* code);
+	u8   GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels);
 	FT_Face GetFace() { return face; }
 	FT_Face GetFace(u8 style) { return faces[style]; }
 	string GetFontFile(u8 style);
