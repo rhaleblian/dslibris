@@ -174,6 +174,9 @@ check:
 distcheck:
 	true
 
+upload:
+	ftp -u ftp://192.168.1.231:5000/dslibris.nds  dslibris.nds
+
 release.zip: dldi-r4
 	zip release.zip dslibris.nds
 	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
