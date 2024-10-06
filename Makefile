@@ -10,6 +10,8 @@ GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
 GAME_SUBTITLE2 := Yoyodyne Research
 GAME_ICON := $(PWD)/gfx/icon.bmp
 
+DS_HOST := 192.168.1.231
+
 include $(DEVKITARM)/ds_rules
 
 #---------------------------------------------------------------------------------
@@ -164,8 +166,8 @@ run: dldi-mpcf
 debug: dldi-mpcf
 	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
 
-upload:
 # macOS only
+upload:
 	ftp -u ftp://${DS_HOST}:5000/dslibris.nds dslibris.nds
 
 check:
@@ -173,9 +175,6 @@ check:
 
 distcheck:
 	true
-
-upload:
-	ftp -u ftp://192.168.1.231:5000/dslibris.nds  dslibris.nds
 
 release.zip: dldi-r4
 	zip release.zip dslibris.nds
