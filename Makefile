@@ -166,16 +166,14 @@ debug: dldi-mpcf
 
 upload:
 # macOS only
-	ftp -u ftp://${DS_HOST}:5000/dslibris.nds dslibris.nds
+	# ftp -u ftp://${DS_HOST}:5000/dslibris.nds dslibris.nds
+	ftp -u ftp://192.168.1.231:5000/dslibris.nds  dslibris.nds
 
 check:
 	true
 
 distcheck:
 	true
-
-upload:
-	ftp -u ftp://192.168.1.231:5000/dslibris.nds  dslibris.nds
 
 release.zip: dldi-r4
 	zip release.zip dslibris.nds
