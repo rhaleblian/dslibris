@@ -158,10 +158,10 @@ dldi-cycloevo: $(OUTPUT).nds
 dldi-r4: $(OUTPUT).nds
 	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
 
-run: dldi-mpcf
+run: dldi-r4
 	desmume --cflash-path test dslibris.nds
 
-debug: dldi-mpcf
+debug: dldi-r4
 	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
 
 upload:
