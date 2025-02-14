@@ -50,7 +50,7 @@ void App::HandleEventInBook()
 		prefs->Write();
 	}
 
-	uint32 keys = keysDown();
+	uint32_t keys = keysDown();
 
 	if(keys){
 

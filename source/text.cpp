@@ -888,7 +888,7 @@ int asciiart() {
   return error;
 }
 
-const char* ErrorString(uint c) {
+const char* ErrorString(unsigned char c) {
 	switch (c) {
 		case 0:
 		return "ok";

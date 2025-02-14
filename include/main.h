@@ -50,8 +50,8 @@
 #define FONTSPLASHFILE "LiberationSans-Regular.ttf"
 
 //! For drawing splash screen.
-int getSize(uint8 *source, uint16 *dest, uint32 arg);
-uint8 readByte(uint8 *source);
+int getSize(uint8_t *source, uint16_t *dest, uint32_t arg);
+uint8_t readByte(uint8_t *source);
 void drawstack(u16 *screen);
 
 #endif

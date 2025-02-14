@@ -322,7 +322,7 @@ void App::SetBrightness(int b)
 {
 	if(b<0) brightness = 0;
 	brightness = b%4;
-	fifoSendValue32(BACKLIGHT_FIFO,brightness);
+	//fifoSendValue32(BACKLIGHT_FIFO,brightness);
 }
 
 void App::CycleBrightness()

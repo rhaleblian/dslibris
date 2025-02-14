@@ -103,7 +103,7 @@ class App {
 	//! key functions are remappable to support screen flipping.
 	struct {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
-		uint32 downrepeat;
+		uint32_t downrepeat;
 	} key;
 	
 	vector<Button*> buttons;

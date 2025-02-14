@@ -25,7 +25,7 @@
 
 void App::HandleEventInBrowser()
 {
-	uint32 keys = keysDown();
+	uint32_t keys = keysDown();
 	
 	if (keys & (KEY_A | key.down))
 	{

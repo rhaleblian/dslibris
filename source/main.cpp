@@ -781,11 +781,11 @@ void proc_hndl(void *data, const char *target, const char *pidata)
 	app->Log("called proc_hndl().\n");
 }
 
-int getSize(uint8 *source, uint16 *dest, uint32 arg) {
-       return *(uint32*)source;
+int getSize(uint8_t *source, uint16_t *dest, uint32_t arg) {
+       return *(uint32_t*)source;
 }
 
-uint8 readByte(uint8 *source) { return *source; }
+uint8_t readByte(uint8_t *source) { return *source; }
 
 void drawstack(u16 *screen) {
        TDecompressionStream decomp = {getSize, NULL, readByte};
