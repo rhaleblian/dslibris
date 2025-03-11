@@ -140,41 +140,28 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-.PHONY: dldi-r4 dldi-cycloevo debug doc markdown dldi-mpcf check distcheck run
+.PHONY: debug doc markdown run
+
+all: $(OUTPUT).nds
 
 doc:
 	doxygen
-	echo "Documentation is located at doc/html ."
+	echo "Documentation is located at ./doc/html ."
 
 markdown: doc
 	node ../moxygen/bin/moxygen.js -h doc/xml
+	echo "Documentation is located at ./doc/xml ."
 
-dldi-mpcf: $(OUTPUT).nds
-	dlditool etc/dldi/mpcf.dldi dslibris.nds
+run: $(OUTPUT).nds
+	desmume-cli --cflash-path cflash $(OUTPUT).nds
 
-dldi-cycloevo: $(OUTPUT).nds
-	dlditool etc/dldi/CycloEvo.dldi dslibris.nds
+debug: $(OUTPUT).nds
+	desmume-cli --arm9gdb=9000 --cflash-path cflash $(OUTPUT).nds
 
-dldi-r4: $(OUTPUT).nds
-	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
+upload: $(OUTPUT).nds
+	ftp -u ftp://${DS_HOST}:5000/$(OUTPUT).nds $(OUTPUT).nds
 
-run: dldi-r4
-	desmume --cflash-path test dslibris.nds
-
-debug: dldi-r4
-	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
-
-upload:
-# macOS only
-	# ftp -u ftp://${DS_HOST}:5000/dslibris.nds dslibris.nds
-	ftp -u ftp://192.168.1.231:5000/dslibris.nds  dslibris.nds
-
-check:
-	true
-
-distcheck:
-	true
-
-release.zip: dldi-r4
-	zip release.zip dslibris.nds
+release.zip: $(OUTPUT).nds
+	dlditool etc/dldi/r4tf_v2.dldi $(OUTPUT).nds
+	zip release.zip $(OUTPUT).nds
 	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
