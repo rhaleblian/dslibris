@@ -165,7 +165,8 @@ debug: dldi-mpcf
 	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
 
 upload:
-# macOS only
+	# macOS only
+	# ftp -u ftp://192.168.1.231:5000/dslibris.nds  dslibris.nds
 	ftp -u ftp://${DS_HOST}:5000/dslibris.nds dslibris.nds
 
 check:
@@ -173,9 +174,6 @@ check:
 
 distcheck:
 	true
-
-upload:
-	ftp -u ftp://192.168.1.231:5000/dslibris.nds  dslibris.nds
 
 release.zip: dldi-r4
 	zip release.zip dslibris.nds

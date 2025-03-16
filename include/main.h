@@ -43,11 +43,12 @@
 #define LOGFILEPATH "dslibris.log"
 #define PREFSPATH "dslibris.xml"
 
-#define FONTREGULARFILE "LiberationSerif-Regular.ttf"
-#define FONTBOLDFILE "LiberationSerif-Bold.ttf"
-#define FONTITALICFILE "LiberationSerif-Italic.ttf"
-#define FONTBROWSERFILE "LiberationSans-Regular.ttf"
-#define FONTSPLASHFILE "LiberationSans-Regular.ttf"
+#define CJKFILE "NotoSansMonoCJKhk-Regular.otf"
+#define FONTREGULARFILE CJKFILE
+#define FONTBOLDFILE CJKFILE
+#define FONTITALICFILE CJKFILE
+#define FONTBROWSERFILE CJKFILE
+#define FONTSPLASHFILE CJKFILE
 
 //! For drawing splash screen.
 int getSize(uint8 *source, uint16 *dest, uint32 arg);
