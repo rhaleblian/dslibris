@@ -7,15 +7,21 @@
             "cStandard": "gnu11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "clang-x64",
-            "compilerArgs": ["-DEXPERIMENTAL_KERNING"],
+            "compilerArgs": [
+                "-DARM9", "-D__NDS__"
+            ],
             "includePath": [
                 "${workspaceFolder}/include",
                 "/opt/devkitpro/devkitARM/include",
+                "/opt/devkitpro/calico/include",
+                "/opt/devkitpro/calico/include/calico/nds",
+                "/opt/devkitpro/calico/include/calico/system",
                 "/opt/devkitpro/libnds/include",
                 "/opt/devkitpro/libnds/include/nds",
                 "/opt/devkitpro/portlibs/nds/include",
                 "/opt/devkitpro/portlibs/nds/include/freetype2",
-                "/opt/devkitpro/portlibs/nds/include/freetype2/freetype"
+                "/opt/devkitpro/portlibs/nds/include/freetype2/freetype",
+                "${workspaceFolder}/build"
             ]
         }
     ],
