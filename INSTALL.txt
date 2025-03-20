@@ -1,14 +1,17 @@
 
 INSTALLATION
 
-1. DLDI patch dslibris.nds to work for your media; eg. for R4DS
+1. If needed, DLDI patch dslibris.nds to work for your cart, e.g.
 
-	dlditool r4tf.dldi dslibris.nds
+	  dlditool etc/dldi/yourcart.dldi dslibris.nds
 
-2. Copy all files and folders in this distribution .zip to the root folder 
-   of your DS media. Using a subfolder does not work!
+   dslibris releases are already patched for R4 carts.
 
-3. Put any EPUB you have into the 'book' folder.
+2. Copy all files and folders in this distribution .zip
+   to the root folder of your DS media.
+   Using a subfolder does not work!
+
+3. Put any EPUB you have into the 'Book' folder.
    The filenames should have an .epub extension.
 
 4. Run dslibris.nds on the DS.
