@@ -286,7 +286,7 @@ int App::Run(void)
 	// FIXME use interrupt driven event handling.
 	
 	keysSetRepeat(60,2);
-	while (true)
+	while (pmMainLoop())
 	{
 		scanKeys();
 

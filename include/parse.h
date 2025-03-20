@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef _parse_h
 #define _parse_h
 

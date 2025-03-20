@@ -140,9 +140,22 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-.PHONY: debug doc markdown run
+DESMUME := "$(HOME)/Applications/DeSmuME (Debug).app/Contents/MacOS/DeSmuME (debug)"
+# DESMUME := ../desmume/desmume/src/frontend/posix/build/cli/desmume-cli
+# DESMUME := /Users/ray/Library/Developer/Xcode/DerivedData/DeSmuME_\(Latest\)-ewlwovwrwltvgmanisirmngyqxuk/Build/Products/Release/DeSmuME.app/Contents/MacOS/DeSmuME
 
-DESMUME := /Applications/DeSmuME.app/Contents/MacOS/DeSmuME
+.PHONY: debug doc markdown run upload
+
+run: $(OUTPUT).nds
+	$(DESMUME) --cflash-path $(PWD)/cflash $(OUTPUT).nds
+
+debug: $(OUTPUT).nds
+	$(DESMUME) --arm9gdb=9000 --cflash-path $(PWD)/cflash $(OUTPUT).nds
+
+release.zip: $(OUTPUT).nds
+	dlditool etc/dldi/r4tf_v2.dldi $(OUTPUT).nds
+	zip release.zip dslibris.nds
+	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
 
 doc:
 	doxygen
@@ -150,18 +163,4 @@ doc:
 
 markdown: doc
 	node ../moxygen/bin/moxygen.js -h doc/xml
-	echo "Documentation is located at ./doc/xml ."
-
-run: $(OUTPUT).nds
-	desmume-cli --cflash-path cflash $(OUTPUT).nds
-
-debug: $(OUTPUT).nds
-	desmume-cli --arm9gdb=9000 --cflash-path cflash $(OUTPUT).nds
-
-upload: $(OUTPUT).nds
-	ftp -u ftp://${DS_HOST}:5000/$(OUTPUT).nds $(OUTPUT).nds
-
-release.zip: $(OUTPUT).nds
-	dlditool etc/dldi/r4tf_v2.dldi $(OUTPUT).nds
-	zip release.zip $(OUTPUT).nds
-	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
+	echo "Documentation is located at doc/xml ."

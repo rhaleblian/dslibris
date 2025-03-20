@@ -1,3 +1,5 @@
+# dslibris
+
 [![C/C++ CI](https://github.com/rhaleblian/dslibris/actions/workflows/build.yml/badge.svg)](https://github.com/rhaleblian/dslibris/actions/workflows/build.yml)
 
 Herein lies the source code for **dslibris**, an
@@ -10,22 +12,19 @@ ebook reader for the Nintendo DS, DSi and DSi XL.
 
 ![A sample page](etc/sample/iliad.png)
 
-
-# Releases
+## Releases
 
 Download the zip file in the Releases section.
 
-
-# Installation
+## Installation
 
 See INSTALL.txt or the
 [Quickstart](https://github.com/rhaleblian/dslibris/wiki/User:-Quickstart)
 page in the Wiki.
 
+## Development
 
-# Development
-
-## Prerequisites
+### Prerequisites
 
 We use devkitPro's toolchain for ARM, aka `devkitARM`.
 
@@ -39,7 +38,7 @@ The `bootstrap` script can speed up getting started after cloning the repo.
 
 Some configuration exists for using Visual Studio Code.
 
-## Building
+### Building
 
 To build the program, assure devkitARM is available to your shell:
 
@@ -54,20 +53,18 @@ then
 See the Makefile for rules that apply DLDI for a few specific cases
 (R4, CycloDS Evolution, MPCF).
 
-## Debugging
+### Debugging
 
 `$DEVKITARM/bin/arm-none-eabi-gdb` and `DeSMuME`,
 using the latter's cflash image and ARM9 stub
 features.
 
-See the `gdb` Make rule for a debugging process.
+See the `debug` Make rule for a debugging process.
 
-
-# See Also
+## See Also
 
 Blog: http://ray.haleblian.com/wordpress/dslibris-an-ebook-reader-for-the-nintendo-ds/
 
 Development Tools: http://devkitpro.org
 
 W3C: http://idpf.org/epub
-
