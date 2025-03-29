@@ -33,10 +33,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "parse.h"
 #include "types.h"
 
-#define FAIL "\x1b[31;1m[FAIL]\x1b[39m"
-#define OK   "\x1b[32;1m[ OK ]\x1b[39m"
-#define WARN "\x1b[33;1m[WARN]\x1b[39m"
-
 App *app;
 char msg[256];
 int ft_main(int argc, char **argv);
@@ -52,29 +48,11 @@ void fatal(const char *msg) {
 
 int main(void)
 {
-	consoleDemoInit();
-	printf("\n[ OK ] dslibrOS 1.6\n");
-
-	bool success = fatInitDefault();
-	if (!success) {
-		printf("\x1b[31;1m[FAIL] no filesystem\x1b[39m\n");
-	 	spin();
-	}
-	else
-		printf("%s started filesystem\n", OK);
-
-	// fatInitDefault();
-
-	printf("[ OK ] starting app\n");
-	// swiWaitForVBlank();
-
-	while (pmMainLoop()) {
-		scanKeys();
-	}
-	return 0;
-
-	// app = new App();
-	// return app->Run();
+	int error;
+	app = new App();
+	app->Init();
+	error = app->Run();
+	return error;
 }
 
 bool iswhitespace(u8 c)

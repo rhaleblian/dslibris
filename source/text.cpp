@@ -125,20 +125,15 @@ FT_Error Text::InitFreeTypeCache(void) {
 
 	auto error = FT_Init_FreeType(&library);
 	if(error) return error;
-	app->Log("ok\n");
 	error = FTC_Manager_New(library,0,0,0,
 		&TextFaceRequester,NULL,&cache.manager);
 	if(error) return error;
-	app->Log("ok\n");
 	error = FTC_ImageCache_New(cache.manager,&cache.image);
 	if(error) return error;
-	app->Log("ok\n");
 	error = FTC_SBitCache_New(cache.manager,&cache.sbit);
 	if(error) return error;
-	app->Log("ok\n");
 	error = FTC_CMapCache_New(cache.manager,&cache.cmap);
 	if(error) return error;
-	app->Log("ok\n");
 
 	sprintf(face_id.file_path, "%s/%s", FONTDIR, filenames[TEXT_STYLE_REGULAR].c_str());
 	face_id.face_index = 0;
@@ -146,8 +141,8 @@ FT_Error Text::InitFreeTypeCache(void) {
 	app->Log(msg);
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
 	if(error) return error;
-	app->Log("ok\n");
-	// FT_EXPORT( FT_Error )
+
+// FT_EXPORT( FT_Error )
 //   FTC_Manager_LookupSize( FTC_Manager  manager,
 //                           FTC_Scaler   scaler,
 //                           FT_Size     *asize );
@@ -166,6 +161,7 @@ FT_Error Text::InitFreeTypeCache(void) {
 
 FT_Error Text::CreateFace(int style) {
 	std::string path = std::string(FONTDIR) + "/" + filenames[style];
+	app->Log("text: creating face %s\n", path.c_str());
 	FT_Error err = FT_New_Face(library, path.c_str(), 0, &face);
 	if (!err)
 		faces[style] = face;
@@ -230,6 +226,11 @@ void Text::ReportFace(FT_Face face)
 			face->available_sizes[i].height);
 		app->Log(msg);
 	}	
+}
+
+void Text::ReportFace(int style)
+{
+	ReportFace(GetFace(style));
 }
 
 void Text::Begin()
@@ -888,27 +889,21 @@ int asciiart() {
   return error;
 }
 
-const char* ErrorString(unsigned char c) {
-	switch (c) {
-		case 0:
-		return "ok";
-		break;
-		default:
-		return "unknown error";
-	}
+const char* ErrorString(int errorcode) {
+	const char *msg[] = {
+		"no error",
+		"cannot open resource",
+		"unknown file format",
+		"broken file",
+		"invalid FreeType version",
+		"module version is too low", 
+		"invalid argument",
+		"unimplemented feature",
+		"broken table",
+		"broken offset within table",
+		"array allocation size too large",
+		"missing module",
+		"missing property"
+	};
+	return msg[errorcode];
 }
-
-//    "no error",
-//     "cannot open resource" ,
-//     "unknown file format" ,
-//     "broken file" ,
-//     "invalid FreeType version" 
-//     "module version is too low", 
-//     "invalid argument" 
-//     "unimplemented feature" 
-//     "broken table" 
-//     "broken offset within table" 
-//     "array allocation size too large" 
-//     "missing module" 
-//     "missing property" 
-// ]

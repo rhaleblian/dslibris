@@ -31,7 +31,7 @@ using namespace std;
 
 class App;
 int asciiart();
-const char* ErrorString(unsigned char);
+const char* ErrorString(int);
 
 typedef struct TextFaceRec_ {
 	char file_path[128];
@@ -246,6 +246,8 @@ public:
 	void PrintString(const char *string);
 	void PrintString(const char *string, u8 style);
 	void PrintSplash(u16 *screen);
+
+	void ReportFace(int style);
 };
 
 #endif

@@ -46,13 +46,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "version.h"
 
 // less-than operator to compare books by title
-static bool book_title_lessthan(Book* a, Book* b) {
-    return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
-}
+// static bool book_title_lessthan(Book* a, Book* b) {
+//     return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
+// }
 
 void halt()
 {
-	while(TRUE) swiWaitForVBlank();
+	while(pmMainLoop()) scanKeys();
 }
 
 App::App()
@@ -103,10 +103,20 @@ App::~App()
 	books.clear();
 }
 
-int App::Run(void)
-{
+int App::Init(void) {
+	consoleDemoInit();
+	printf("%s dslibrOS 1.6\n", OK);
+	bool success = fatInitDefault();
+	if (!success) {
+		printf("%s no filesystem\n", FAIL);
+		swiWaitForVBlank();
+		return 1;
+	}
+	printf("%s started filesystem\n", OK);
+	swiWaitForVBlank();
+	return 0;
+#if 0
 	char msg[512];
-	SetBrightness(0);	
 
 	Log("--------------------\n");
 	Log("dslibris starting up\n");
@@ -131,26 +141,17 @@ int App::Run(void)
 	// Start up typesetter.
 
    	int err = ts->Init();
-	switch(err)
-	{
-		case 0:
-		sprintf(msg, "typesetter started\n");
-		break;
-		default:
+	if (err) {
 		sprintf(msg, ErrorString(err));
-		// case 1:
-		// sprintf(msg, "fatal: font file not found (%d)\n", err);
-		// break;
-		// case 2:
-		// sprintf(msg, "fatal: font file unreadable (%d)\n", err);
-		// break;
-		// default:
-		// sprintf(msg, "fatal: freetype error (%d)\n", err);
+		return 2;
 	}
+	sprintf(msg, "typesetter started\n");
 	Log(msg);
-	if(err) while(1) swiWaitForVBlank();
+
+	ts->ReportFace(TEXT_STYLE_REGULAR);
 	
-	SetBrightness(brightness);
+	// TODO rework for libnds2
+	// SetBrightness(brightness);
 	
 	// Look in the book directory and construct library.
 
@@ -286,6 +287,12 @@ int App::Run(void)
 	// FIXME use interrupt driven event handling.
 	
 	keysSetRepeat(60,2);
+
+#endif
+}
+
+int App::Run(void)
+{
 	while (pmMainLoop())
 	{
 		scanKeys();
@@ -300,7 +307,6 @@ int App::Run(void)
 						break;
 					case APP_MODE_BOOK:
 						HandleEventInBook();
-						//UpdateClock();
 						break;
 					case APP_MODE_PREFS:
 						HandleEventInPrefs();
@@ -314,8 +320,7 @@ int App::Run(void)
 		}
 		swiWaitForVBlank();
 	}
-
-	exit(0);
+	return 0;
 }
 
 void App::SetBrightness(int b)
