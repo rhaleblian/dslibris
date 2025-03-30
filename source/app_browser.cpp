@@ -12,7 +12,6 @@
 #include <nds/bios.h>
 #include <nds/arm9/input.h>
 
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "app.h"
@@ -48,8 +47,8 @@ void App::HandleEventInBrowser()
 	else if (keys & (key.left | key.l))
 	{
 		// next book.
-		int b = GetBookIndex(bookselected);
-		if (b < bookcount-1)
+		u8 b = GetBookIndex(bookselected);
+		if (b < books.size()-1)
 		{
 			b++;
 			bookselected = books[b];
@@ -131,7 +130,7 @@ void App::HandleEventInBrowser()
 			}
 		} else {
 			for(u8 i=browserstart; 
-				(i<bookcount) &&
+				(i<books.size()) &&
 				(i<browserstart+APP_BROWSER_BUTTON_COUNT);
 				i++) {
 				if (buttons[i]->EnclosesPoint(coord.py, coord.px))
@@ -150,7 +149,7 @@ void App::HandleEventInBrowser()
 void App::browser_init(void)
 {
 	u8 i;
-	for (i=0;i<bookcount;i++)
+	for (i=0;i<books.size();i++)
 	{
 		Book *book = books[i];
 		buttons.push_back(new Button());
@@ -187,7 +186,7 @@ void App::browser_init(void)
 
 void App::browser_nextpage()
 {
-	if(browserstart+APP_BROWSER_BUTTON_COUNT < bookcount)
+	if(browserstart+(u8)APP_BROWSER_BUTTON_COUNT < books.size())
 	{ 
 		browserstart += APP_BROWSER_BUTTON_COUNT;
 		bookselected = books[browserstart];
@@ -216,8 +215,8 @@ void App::browser_draw(void)
 	ts->ClearScreen();
 	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(PIXELSIZE);
-	for (int i=browserstart;
-		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
+	for (u8 i=browserstart;
+		(i<books.size()) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 		i++)
 	{
 		buttons[i]->Draw(ts->screenright,books[i]==bookselected);
@@ -225,7 +224,7 @@ void App::browser_draw(void)
 	
 	if(browserstart >= APP_BROWSER_BUTTON_COUNT)
 		buttonprev.Draw(ts->screenright,false);
-	if(bookcount > browserstart+APP_BROWSER_BUTTON_COUNT)
+	if(books.size() > browserstart+APP_BROWSER_BUTTON_COUNT)
 		buttonnext.Draw(ts->screenright,false);
 
 	buttonprefs.Draw(ts->screenright,false);
@@ -252,11 +251,11 @@ void App::browser_redraw()
 	ts->SetInvert(false);
 	ts->SetPixelSize(PIXELSIZE);
 	ts->SetStyle(TEXT_STYLE_BROWSER);
-	int b = GetBookIndex(bookselected);
+	u8 b = GetBookIndex(bookselected);
 	buttons[b]->Draw(ts->screenright,true);
 	if(b > browserstart)
 		buttons[b-1]->Draw(ts->screenright,false);
-	if(b < bookcount-1 &&
+	if(b < books.size()-1 &&
 		(b - browserstart) < APP_BROWSER_BUTTON_COUNT-1)
 		buttons[b+1]->Draw(ts->screenright,false);
 

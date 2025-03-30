@@ -96,7 +96,7 @@ int Prefs::Write()
     		app->bookdir.c_str(),
     		app->reopen);
     
-    for (u8 i = 0; i < app->bookcount; i++) {
+    for (u8 i = 0; i < app->books.size(); i++) {
         Book* book = app->books[i];
         fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\"",
                 book->GetFileName(), book->GetPosition() + 1);

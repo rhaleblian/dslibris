@@ -20,8 +20,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
-#include "app.h"
-
 #include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -32,36 +30,36 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <algorithm>   // for std::sort
 
 #include "fat.h"
-#include "nds/system.h"
 #include "nds/arm9/background.h"
 #include "nds/arm9/input.h"
+#include "nds/system.h"
 
-#include "ndsx_brightness.h"
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "book.h"
 #include "button.h"
+#include <splash.h>
 #include "text.h"
 #include "version.h"
 
-// less-than operator to compare books by title
-// static bool book_title_lessthan(Book* a, Book* b) {
-//     return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
-// }
+#include <app.h>
 
-void halt()
-{
-	while(pmMainLoop()) scanKeys();
+static bool book_title_lessthan(Book* a, Book* b) {
+	// less-than operator to compare books by title
+	return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
+}
+
+void halt() {
+	while(pmMainLoop()) swiWaitForVBlank();
 }
 
 App::App()
 {	
 	fontdir = string(FONTDIR);
 	bookdir = string(BOOKDIR);
-	bookcount = 0;
 	bookselected = NULL;
 	bookcurrent = NULL;
+	bookmaxbuttons = BOOK_BUTTON_COUNT;
 	reopen = true;
 	mode = APP_MODE_BROWSER;
 	browserstart = 0;
@@ -103,155 +101,48 @@ App::~App()
 	books.clear();
 }
 
-int App::Init(void) {
-	consoleDemoInit();
-	printf("%s dslibrOS 1.6\n", OK);
-	bool success = fatInitDefault();
-	if (!success) {
-		printf("%s no filesystem\n", FAIL);
-		swiWaitForVBlank();
-		return 1;
-	}
-	printf("%s started filesystem\n", OK);
-	swiWaitForVBlank();
-	return 0;
-#if 0
-	char msg[512];
+void App::Init()
+{
+	int error;
 
-	Log("--------------------\n");
-	Log("dslibris starting up\n");
-	console = true;
+	keysSetRepeat(60,2);
+
+	InitScreens();
+	// DrawSplashScreen();
+
+	u8 success = fatInitDefault();
 
 	// Read preferences, pass 1,
 	// to get the book folder and preferred fonts.
 
-   	if (int err = prefs->Read())
-	{
-		if(err == 255)
-		{
-			err = prefs->Write();
-			if (err) {
-				Log("could not create preferences\n");
-				return err;
-			}
-			Log("created preferences\n");
-		}
-	}
+	error = prefs->Read();
+	if(error)
+		error = prefs->Write();
 
 	// Start up typesetter.
 
    	int err = ts->Init();
-	if (err) {
-		sprintf(msg, ErrorString(err));
-		return 2;
-	}
-	sprintf(msg, "typesetter started\n");
-	Log(msg);
-
-	ts->ReportFace(TEXT_STYLE_REGULAR);
-	
-	// TODO rework for libnds2
-	// SetBrightness(brightness);
-	
 	// Look in the book directory and construct library.
 
-	sprintf(msg,"scanning '%s' for books\n",bookdir.c_str());
-	Log(msg);
-	
-	DIR *dp = opendir(bookdir.c_str());
-	if (!dp)
-	{
-		sprintf(msg,"fatal: No book directory \'%s\'.\n",
-			bookdir.c_str());
-		Log(msg);
-	}
-	
-	struct dirent *ent;
-	while ((ent = readdir(dp)))
-	{
-		char *filename = ent->d_name;
-		sprintf(msg,"%s\n", filename);
-		Log(msg);
-		if(*filename == '.') continue;
-		char *c;
-		// FIXME use std::string method
-		for (c=filename+strlen(filename)-1;
-		     c!=filename && *c!='.';
-		     c--);
-		if (!strcmp(".xht",c) || !strcmp(".xhtml",c))
-		{
-			Book *book = new Book();
-			book->SetFolderName(bookdir.c_str());
-			book->SetFileName(filename);
-			book->format = FORMAT_XHTML;
-			books.push_back(book);
-			bookcount++;
-			
-			Log("indexing '%s'\n", book->GetFileName());
+	IndexBooks();
 
-			u8 rc = book->Index();
-			if (rc)
-			{
-				sprintf(msg,"warn : indexer failed (%d)\n",
-					rc);
-			}
-			else
-			{
-				sprintf(msg, "indexed title '%s'\n",
-					book->GetTitle());
-			}
-			Log(msg);
-		}
-		else if (!strcmp(".epub",c))
-		{
-			Book *book = new Book();
-			book->SetFolderName(bookdir.c_str());
-			book->SetFileName(filename);
-			book->SetTitle(filename);
-			book->format = FORMAT_EPUB;
-			books.push_back(book);
-			bookcount++;
-			book->Index();
-		}
-	}
-	closedir(dp);
-	sprintf(msg,"%d books indexed.\n",bookcount);
-	Log(msg);
-
-	if(bookcurrent)
-	{
-		sprintf(msg,"info : currentbook = %s.\n",bookcurrent->GetTitle());
-		Log(msg);
-	}
-	swiWaitForVBlank();
-	
 	// Read preferences, pass 2, to bind preferences to books.
-	
-   	if(int parseerror = prefs->Read())
-	{
-		sprintf(msg,"warn : can't read prefs (%d).\n",parseerror);
-		Log(msg);
-	}
-	else Log("info : read prefs (books).\n");
+	int parseerror = prefs->Read();
 
 	// Sort bookmarks for each book.
-	for(u8 i = 0; i < bookcount; i++)
+	for(u8 i = 0; i < books.size(); i++)
 	{
 		books[i]->GetBookmarks()->sort();
 	}
 
 	// Set up preferences editing screen.
-	PrefsInit();
-	
+	// PrefsInit();
+
 	// Set up library browser screen.
 	std::sort(books.begin(),books.end(),&book_title_lessthan);
 	browser_init();
 
-	Log("progr: browsers populated.\n");
-
 	// Bring up displays.
-	console = false;
-	InitScreens();
 	if(orientation) lcdSwap();
 	if (prefs->swapshoulder)
 	{
@@ -261,13 +152,15 @@ int App::Init(void) {
 	}
 
 	mode = APP_MODE_BROWSER;
-	ts->PrintSplash(ts->screenleft);
 	browser_draw();
 
-	Log("progr: browser displayed.\n");
+	console = false;
 
+	// ReopenBook();
+}
+
+void App::ReopenBook() {
 	// Resume reading from the last session.
-	
 	if(reopen && bookcurrent)
 	{
 		int openerr = OpenBook();
@@ -280,15 +173,44 @@ int App::Init(void) {
 		}
 	}
 	else Log("info : not reopening previous book.\n");
+}
 
-	swiWaitForVBlank();
+void App::IndexBooks() {
+	DIR *dp = opendir(bookdir.c_str());
+	if (!dp) return;
 
-	// Start polling event loop.
-	// FIXME use interrupt driven event handling.
-	
-	keysSetRepeat(60,2);
-
-#endif
+	struct dirent *ent;
+	while ((ent = readdir(dp)))
+	{
+		char *filename = ent->d_name;
+		printf("%s\n", filename);
+		if(*filename == '.') continue;
+		char *c;
+		// FIXME use std::string method
+		for (c=filename+strlen(filename)-1;
+			c!=filename && *c!='.';
+			c--);
+		if (!strcmp(".xht",c) || !strcmp(".xhtml",c))
+		{
+			Book *book = new Book();
+			book->SetFolderName(bookdir.c_str());
+			book->SetFileName(filename);
+			book->format = FORMAT_XHTML;
+			books.push_back(book);
+			book->Index();
+		}
+		else if (!strcmp(".epub",c))
+		{
+			Book *book = new Book();
+			book->SetFolderName(bookdir.c_str());
+			book->SetFileName(filename);
+			book->SetTitle(filename);
+			book->format = FORMAT_EPUB;
+			books.push_back(book);
+			book->Index();
+		}
+	}
+	closedir(dp);
 }
 
 int App::Run(void)
@@ -325,6 +247,7 @@ int App::Run(void)
 
 void App::SetBrightness(int b)
 {
+	// TODO fix this for libnds2
 	if(b<0) brightness = 0;
 	brightness = b%4;
 	//fifoSendValue32(BACKLIGHT_FIFO,brightness);
@@ -407,7 +330,7 @@ void App::SetOrientation(bool flip)
 
 void App::Log(const char *msg)
 {
-	Log("%s",msg);
+	Log("%s", msg);
 }
 
 void App::Log(const char *format, const int value)
@@ -419,15 +342,15 @@ void App::Log(const char *format, const int value)
 
 void App::Log(const char *format, const char *msg)
 {
-	if(console)
-	{
-		char s[1024];
-		sprintf(s,format,msg);
-		iprintf(s);
-	}
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,format,msg);
-	fclose(logfile);
+	// if(console)
+	// {
+	// 	char s[1024];
+	// 	sprintf(s,format,msg);
+	// 	iprintf(s);
+	// }
+	// FILE *logfile = fopen(LOGFILEPATH,"a");
+	// fprintf(logfile,format,msg);
+	// fclose(logfile);
 }
 
 void App::Log(const std::string msg)
@@ -437,12 +360,23 @@ void App::Log(const std::string msg)
 
 void App::InitScreens()
 {
+	// A
+	
 	videoSetMode(MODE_5_2D);
 	vramSetBankA(VRAM_A_MAIN_BG);
 	bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
 	videoSetModeSub(MODE_5_2D);
 	vramSetBankC(VRAM_C_SUB_BG);
 	bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+
+	// B
+	
+	// bg3 = bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0,0);
+	// videoSetMode(MODE_5_2D);
+	// vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
+	// videoSetModeSub(MODE_5_2D);
+	// vramSetBankC(VRAM_C_SUB_BG);
+
 	ts->SetScreen(ts->screenright);
 	ts->ClearScreen();
 	ts->SetScreen(ts->screenleft);
@@ -450,12 +384,16 @@ void App::InitScreens()
 	SetOrientation(orientation);
 }
 
+void App::DrawSplashScreen() {
+	dmaCopy(splashBitmap, bgGetGfxPtr(bg3), 256*256);
+	dmaCopy(splashPal, BG_PALETTE, 256);
+}
+
 void App::Fatal(const char *msg)
 {
 	Log(msg);
 	while(1) swiWaitForVBlank();
 }
-
 
 void App::PrintStatus(const char *msg)
 {

@@ -68,6 +68,8 @@ https://github.com/rhaleblian/dslibris
 #define APP_MODE_PREFS_FONT_ITALIC 5
 #define APP_URL "http://github.com/rhaleblian/dslibris"
 
+#define BOOK_BUTTON_COUNT 7
+
 #define PREFS_BUTTON_COUNT 5
 #define PREFS_BUTTON_FONT 2
 #define PREFS_BUTTON_FONT_ITALIC 3
@@ -100,10 +102,9 @@ class App {
 	vector<Button*> buttons;
 	Button buttonprev, buttonnext, buttonprefs; //! Buttons on browser bottom.
 	//! index into book vector denoting first book visible on library screen. 
-	u8 browserstart; 
+	u8 browserstart;
 	string bookdir;  //! Search here for XHTML.
 	vector<Book*> books;
-	u8 bookcount;
 	//! which book is currently selected in browser?
 	Book* bookselected;
 	//! which book is currently being read?
@@ -129,20 +130,16 @@ class App {
 	Button* prefsButtons[PREFS_BUTTON_COUNT];
 	u8 prefsSelected;
 	
-	unsigned int fontSelected;
-	unsigned int fontPage;
+	uint8_t fontSelected;
+	uint8_t fontPage;
 	vector<Button*>fontButtons;
-
-	//BImage *image0;
-	//BScreen *bscreen0;
-	//BProgressBar *progressbar;
 
 	App();
 	~App();
 	
 	//! in App.cpp
-	int  Init(void);
 	void CycleBrightness();
+	void Init();
 	void PrintStatus(const char *msg);
 	void PrintStatus(string msg);
 	void Flip();
@@ -202,7 +199,12 @@ class App {
 	void FontButton();
 
 	private:
+	int bg3;
+	uint8_t bookmaxbuttons;  // max that fit on a screen.
+	void DrawSplashScreen();
+	void IndexBooks();
 	void InitScreens();
+	void ReopenBook();
 	void SetBrightness(int b);
 	void SetOrientation(bool flip);
 	void WifiInit();

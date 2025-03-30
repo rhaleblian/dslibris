@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "string.h"
 
 #include "app.h"
+#include <bg.h>
 #include "ft.h"
 #include "main.h"
 #include "version.h"
@@ -131,7 +132,7 @@ FT_Error Text::InitFreeTypeCache(void) {
 	error = FTC_ImageCache_New(cache.manager,&cache.image);
 	if(error) return error;
 	error = FTC_SBitCache_New(cache.manager,&cache.sbit);
-	if(error) return error;
+	if (error) return error;
 	error = FTC_CMapCache_New(cache.manager,&cache.cmap);
 	if(error) return error;
 
@@ -195,7 +196,7 @@ int Text::InitHomemadeCache(void) {
 	ClearCache();
 	InitPen();
 	initialized = true;
-	app->Log("custom cache initialized\n");
+	app->Log("[ OK ] custom cache\n");
 	return 0;
 }
 
@@ -839,7 +840,7 @@ void Text::PrintSplash(u16 *screen)
 	u16* s = GetScreen();
 	
 	SetScreen(screen);
-	drawstack(screen);
+	drawsplash(screen);
 	sprintf(msg,"%s",VERSION);
 	PrintStatusMessage(msg);
 	

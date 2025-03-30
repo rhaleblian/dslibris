@@ -18,13 +18,7 @@
  To contact the copyright holder: ray@haleblian.com
  */
 
-#ifndef _main_h_
-#define _main_h_
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include "nds.h"
-#include "splash.h"
+#pragma once
 
 #define MARGINLEFT 12
 #define MARGINRIGHT 12
@@ -48,10 +42,3 @@
 #define FONTITALICFILE "LiberationSerif-Italic.ttf"
 #define FONTBROWSERFILE "LiberationSans-Regular.ttf"
 #define FONTSPLASHFILE "LiberationSans-Regular.ttf"
-
-//! For drawing splash screen.
-int getSize(uint8_t *source, uint16_t *dest, uint32_t arg);
-uint8_t readByte(uint8_t *source);
-void drawstack(u16 *screen);
-
-#endif
