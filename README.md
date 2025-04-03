@@ -69,5 +69,5 @@ Blog: http://ray.haleblian.com/wordpress/dslibris-an-ebook-reader-for-the-ninten
 
 Development Tools: http://devkitpro.org
 
-W3C: http://idpf.org/epub
+EPUB/W3C/IDPF: [http://idpf.org](https://idpf.org/)
 
