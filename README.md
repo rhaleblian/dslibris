@@ -51,17 +51,20 @@ then
 
 `dslibris.nds` should show up in the top directory.
 
-See the Makefile for rules that apply DLDI for a few specific cases
-(R4, CycloDS Evolution, MPCF).
+## DLDI
+
+If your media does not auto-patch DLDI, .dldi for a few specific cases
+(R4, CycloDS Evolution, MPCF) are here:
+
+    etc/dldi
+
+used like e.g.
+
+    dlditool etc/dldi/r4_v2.dldi dslibris.nds
 
 ## Debugging
 
-`$DEVKITARM/bin/arm-none-eabi-gdb` and `DeSMuME`,
-using the latter's cflash image and ARM9 stub
-features.
-
-See the `gdb` Make rule for a debugging process.
-
+Copy your build to a DS and maybe `Log()` messages.  Good luck.
 
 # See Also
 
