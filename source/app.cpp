@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "nds/arm9/background.h"
 #include "nds/arm9/input.h"
 
-#include "ndsx_brightness.h"
 #include "types.h"
 #include "main.h"
 #include "parse.h"
@@ -318,16 +317,15 @@ int App::Run(void)
 	exit(0);
 }
 
-void App::SetBrightness(int b)
+void App::SetBrightness(u8 b)
 {
-	if(b<0) brightness = 0;
-	brightness = b%4;
-	fifoSendValue32(BACKLIGHT_FIFO,brightness);
+	brightness = b % 4;
+	setBrightness(3, brightness);
 }
 
 void App::CycleBrightness()
 {
-	++brightness%=4;
+	++brightness %= 4;
 	SetBrightness(brightness);
 }
 

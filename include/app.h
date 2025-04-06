@@ -85,7 +85,7 @@ https://github.com/rhaleblian/dslibris
 class App {
 	private:
 	void InitScreens();
-	void SetBrightness(int b);
+	void SetBrightness(u8 b);
 	void SetOrientation(bool flip);
 	void WifiInit();
 	bool WifiConnect();
