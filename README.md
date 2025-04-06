@@ -10,18 +10,15 @@ ebook reader for the Nintendo DS, DSi and DSi XL.
 
 ![A sample page](etc/sample/iliad.png)
 
-
 # Releases
 
 Download the zip file in the Releases section.
-
 
 # Installation
 
 See INSTALL.txt or the
 [Quickstart](https://github.com/rhaleblian/dslibris/wiki/User:-Quickstart)
 page in the Wiki.
-
 
 # Development
 
@@ -35,9 +32,11 @@ CentOS and msys2 have also worked, but haven't been checked recently.
 Ubuntu under WSL would work too, but you'll be missing mount support
 for emulator testing.
 
-The `bootstrap` script can speed up getting started after cloning the repo.
-
 Some configuration exists for using Visual Studio Code.
+
+Once `dkp-pacman` is installed, can get needed packages via
+
+    sudo dkp-pacman -S $(cat requirements.txt)
 
 ## Building
 
@@ -68,9 +67,8 @@ Copy your build to a DS and maybe `Log()` messages.  Good luck.
 
 # See Also
 
-Blog: http://ray.haleblian.com/wordpress/dslibris-an-ebook-reader-for-the-nintendo-ds/
+Blog: <http://ray.haleblian.com/wordpress/dslibris-an-ebook-reader-for-the-nintendo-ds/>
 
-Development Tools: http://devkitpro.org
+Development Tools: <http://devkitpro.org>
 
 EPUB/W3C/IDPF: [http://idpf.org](https://idpf.org/)
-
