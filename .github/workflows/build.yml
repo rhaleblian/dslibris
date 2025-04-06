@@ -1,4 +1,4 @@
-name: devkitARM build
+name: Build
 
 on:
   push:
@@ -7,14 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  build-dslibris-nds:
+  Build:
     runs-on: ubuntu-latest
     container: devkitpro/devkitarm
     steps:
     - uses: actions/checkout@v2
     - name: make
       run: make
-    # - name: make check
-    #   run: make check
-    # - name: make distcheck
-    #   run: make distcheck
