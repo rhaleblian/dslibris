@@ -17,6 +17,7 @@
 #include "app.h"
 #include "book.h"
 #include "button.h"
+#include "log.h"
 #include "text.h"
 
 //! Book-related methods for App class.
@@ -50,7 +51,7 @@ void App::HandleEventInBook()
 		prefs->Write();
 	}
 
-	uint32 keys = keysDown();
+	u32 keys = keysDown();
 
 	if(keys){
 
@@ -80,7 +81,7 @@ void App::HandleEventInBook()
 			}
 			ts->PrintSplash(ts->screenleft);
 			prefs->Write();
-			browser_draw();
+			BrowserDraw();
 		}
 
 		else if (keys & KEY_TOUCH)

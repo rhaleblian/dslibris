@@ -5,6 +5,7 @@
 #include "nds.h"
 #include "main.h"
 #include "app.h"
+#include "log.h"
 #include "prefs.h"
 #include "book.h"
 
@@ -57,9 +58,9 @@ int Prefs::Read()
 	gettimeofday(&time,NULL);
 	char msg[64];
 	sprintf(msg,"info : file timestamp %lld",st.st_mtime);
-	app->Log(msg);
+	Log(msg);
 	sprintf(msg,"info : current time %lld",time.tv_sec);
-	app->Log(msg);
+	Log(msg);
 }
 
 //! \return Error code, 0: success.

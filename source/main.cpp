@@ -21,44 +21,28 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 #include <sys/param.h>
-#include "dirent.h"
-#include "fat.h"
+#include <dirent.h>
+#include <fat.h>
+#include <nds.h>
 
 #include "app.h"
 #include "book.h"
 #include "button.h"
 #include "text.h"
 #include "expat.h"
-#include "main.h"
+#include "log.h"
 #include "parse.h"
+#include "splash.h"
 #include "types.h"
 
+#include "main.h"
+
 App *app;
-char msg[256];
-int ft_main(int argc, char **argv);
+char msg[512];
+// int ft_main(int argc, char **argv);
 
 /*---------------------------------------------------------------------------*/
 
-
-int kungheyfatcheck(void) {
-	iprintf("** kungheyfatcheck **\n");
-	iprintf("root directory:\n");
-	swiWaitForVBlank();
-
-	DIR *dp = opendir("/");
-	if (!dp) {
-		printf("[PANIC] root dir inaccessible!\n");
-		return false;
-	}
-	struct dirent *ent;
-	while ((ent = readdir(dp)))
-	{
-		iprintf("%s %d\n", ent->d_name, ent->d_type);
-	}
-	closedir(dp);
-
-	return true;
-}
 
 PrintConsole* boot_console(void) {
 	// Get a console going.
@@ -87,13 +71,6 @@ void fatal(const char *msg) {
 
 int main(void)
 {
-	if(!boot_console()) spin();
-	if(!boot_filesystem()) spin();
-
-	//kungheyfatcheck();
-	// asciiart();
-	// while(true) swiWaitForVBlank();
-
 	app = new App();
 	return app->Run();
 }
@@ -261,7 +238,7 @@ void prefs_start_hndl(	void *data,
 				
 				char msg[128];
 				sprintf(msg,"info : matched extant book '%s'.\n",bookname);
-				app->Log(msg);
+				Log(msg);
 				
 				if (current)
 				{
@@ -322,7 +299,7 @@ int unknown_hndl(void *encodingHandlerData,
 {
 	// noops!
 	strcpy(msg, "warn : encoding handler encountered, did nothing.");
-	app->Log(msg);
+	Log(msg);
 	return 0;
 }
 
@@ -333,9 +310,9 @@ void default_hndl(void *data, const XML_Char *s, int len)
 #ifdef DEBUG
 	char msg[256];
 	strncpy(msg,(const char*)s, len > 255 ? 255 : len);
-	app->Log("info : ");
-	app->Log(msg);
-	app->Log("\n");
+	Log("info : ");
+	Log(msg);
+	Log("\n");
 #endif
 
 	int advancespace = app->ts->GetAdvance(' ');
@@ -778,14 +755,14 @@ void end_hndl(void *data, const char *el)
 
 void proc_hndl(void *data, const char *target, const char *pidata)
 {
-	app->Log("called proc_hndl().\n");
+	Log("called proc_hndl().\n");
 }
 
-int getSize(uint8 *source, uint16 *dest, uint32 arg) {
-       return *(uint32*)source;
+int getSize(u8 *source, u16 *dest, u32 arg) {
+       return *(u32*)source;
 }
 
-uint8 readByte(uint8 *source) { return *source; }
+u8 readByte(u8 *source) { return *source; }
 
 void drawstack(u16 *screen) {
        TDecompressionStream decomp = {getSize, NULL, readByte};

@@ -96,6 +96,7 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->SetInvert(false);
 	ts->GetPen(&x,&y);
 
+#if 0
 	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
 
@@ -110,6 +111,7 @@ void Button::Draw(u16 *fb, bool highlight) {
 		ts->PrintString((const char *)text2.c_str(), TEXT_STYLE_BROWSER);
 		ts->SetPixelSize(ts->GetPixelSize()+1);
 	}
+#endif
 
 	ts->usebgcolor = false;
 	ts->SetPen(x,y);

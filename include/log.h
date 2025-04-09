@@ -1,3 +1,4 @@
+#pragma once
 /* 
 
 dslibris - an ebook reader for the Nintendo DS.
@@ -26,10 +27,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *      Author: rhaleblian
  */
 
-#pragma once
-
 #include <string>
+
+#define LOGFILEPATH "dslibris.log"
 
 void Log(const char *msg);
 void Log(std::string msg);
 void Log(const char *format, const char *msg);
+void Log(const char *format, const int value);

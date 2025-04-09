@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  Copyright (C) 2007-2009 Ray Haleblian (ray23@sourceforge.net)
  
@@ -17,9 +19,6 @@
  
  To contact the copyright holder: rayh23@sourceforge.net
  */
-
-#ifndef APP_H
-#define APP_H
 
 /*!
 \mainpage
@@ -44,13 +43,11 @@ https://github.com/rhaleblian/dslibris
 
 */
 
-
+#include <expat.h>
 #include <list>
 #include <sstream>
 #include <unistd.h>
 #include <vector>
-
-#include "expat.h"
 
 #include "book.h"
 #include "button.h"
@@ -67,7 +64,8 @@ https://github.com/rhaleblian/dslibris
 #define APP_MODE_PREFS_FONT 3
 #define APP_MODE_PREFS_FONT_BOLD 4
 #define APP_MODE_PREFS_FONT_ITALIC 5
-#define APP_URL "http://github.com/rhaleblian/dslibris"
+#define APP_MODE_NONE 6
+#define APP_URL "https://github.com/rhaleblian/dslibris"
 
 #define PREFS_BUTTON_COUNT 5
 #define PREFS_BUTTON_FONT 2
@@ -83,14 +81,6 @@ https://github.com/rhaleblian/dslibris
 //! interaction loop, drawing everything but text, and logging.
 
 class App {
-	private:
-	void InitScreens();
-	void SetBrightness(u8 b);
-	void SetOrientation(bool flip);
-	void WifiInit();
-	bool WifiConnect();
-	void Fatal(const char *msg);
-
 	public:
 	Text *ts;
 	Prefs myprefs;   //?
@@ -99,11 +89,12 @@ class App {
 	u8 mode; 	     //! Are we in book or browser mode?
 	string fontdir;  //! Default location to search for TTFs.
 	bool console;    //! Can we print to console at the moment?
-	
+	u16 bg[2];
+
 	//! key functions are remappable to support screen flipping.
 	struct {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
-		uint32 downrepeat;
+		u32 downrepeat;
 	} key;
 	
 	vector<Button*> buttons;
@@ -150,19 +141,16 @@ class App {
 	~App();
 	
 	//! in App.cpp
+	void ClearScreen(u16 bg);
+	void Console(const char* format, const char* msg);
 	void CycleBrightness();
+	void Flip();
 	void PrintStatus(const char *msg);
 	void PrintStatus(string msg);
-	void Flip();
+	int Run(void);
 	void SetProgress(int amount);
 	void UpdateClock();
 
-	void Log(const char*);
-	void Log(const char* format, const char *msg);
-	void Log(const std::string);
-	void Log(const char *format, const int value);
-
-	int  Run(void);
 	bool parse_in(parsedata_t *data, context_t context);
 	void parse_init(parsedata_t *data);
 	context_t parse_pop(parsedata_t *data);
@@ -171,8 +159,8 @@ class App {
 
 	//! in App_Browser.cpp
 	void HandleEventInBrowser();
-	void browser_init(void);
-	void browser_draw(void);
+	void BrowserInit(void);
+	void BrowserDraw(void);
 	void browser_nextpage(void);
 	void browser_prevpage(void);
 	void browser_redraw(void);
@@ -208,7 +196,13 @@ class App {
 	void FontNextPage();
 	void FontPreviousPage();
 	void FontButton();
+
+	private:
+	u8 Init();
+	void InitScreen();
+	void InitScreenSub();
+	void SetBrightness(u8 b);
+	void SetOrientation(bool flip);
+	// void WifiInit();
+	// bool WifiConnect();
 };
-
-#endif
-

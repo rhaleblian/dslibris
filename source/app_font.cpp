@@ -14,12 +14,12 @@
 #include <string>
 #include <vector>
 
-#include "types.h"
-#include "main.h"
-#include "parse.h"
 #include "app.h"
 #include "book.h"
 #include "button.h"
+#include "log.h"
+#include "main.h"
+#include "parse.h"
 #include "text.h"
 
 #define MIN(x,y) (x < y ? x : y)

@@ -4,6 +4,7 @@
 
 DEVKITPRO ?= /opt/devkitpro
 DEVKITARM ?= /opt/devkitpro/devkitARM
+DESMUME ?= desmume-cli
 
 GAME_TITLE := dslibris
 GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
@@ -49,7 +50,7 @@ LIBS	:= -lfat -lnds9 -lfreetype -lexpat -lz -lbz2 -lpng
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(PWD)/portlibs $(DEVKITPRO)/portlibs/nds
+LIBDIRS	:=	$(LIBNDS) $(DEVKITPRO)/calico $(PWD)/portlibs $(DEVKITPRO)/portlibs/nds
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -158,11 +159,11 @@ dldi-cycloevo: $(OUTPUT).nds
 dldi-r4: $(OUTPUT).nds
 	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
 
-run: dldi-r4
-	desmume --cflash-path test dslibris.nds
+run:
+	$(DESMUME) --cflash-path test dslibris.nds
 
-debug: dldi-r4
-	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
+debug:
+	$(DESMUME) --arm9gdb=9000 --cflash-path test dslibris.nds
 
 upload:
 # macOS only

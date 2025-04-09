@@ -21,10 +21,10 @@
 #ifndef _main_h_
 #define _main_h_
 
+#undef __APPLE__  // Do not invoke macOS patches to FreeType
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include "nds.h"
-#include "splash.h"
+#include <nds.h>
 
 #define MARGINLEFT 12
 #define MARGINRIGHT 12
@@ -40,7 +40,6 @@
 
 #define FONTDIR "Font"
 #define BOOKDIR "Book"
-#define LOGFILEPATH "dslibris.log"
 #define PREFSPATH "dslibris.xml"
 
 #define FONTREGULARFILE "LiberationSerif-Regular.ttf"
@@ -50,8 +49,8 @@
 #define FONTSPLASHFILE "LiberationSans-Regular.ttf"
 
 //! For drawing splash screen.
-int getSize(uint8 *source, uint16 *dest, uint32 arg);
-uint8 readByte(uint8 *source);
+int getSize(u8 *source, u16 *dest, u32 arg);
+u8 readByte(u8 *source);
 void drawstack(u16 *screen);
 
 #endif

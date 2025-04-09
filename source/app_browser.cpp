@@ -18,6 +18,7 @@
 #include "app.h"
 #include "book.h"
 #include "button.h"
+#include "log.h"
 #include "text.h"
 
 #define MIN(x,y) (x < y ? x : y)
@@ -25,7 +26,7 @@
 
 void App::HandleEventInBrowser()
 {
-	uint32 keys = keysDown();
+	u32 keys = keysDown();
 	
 	if (keys & (KEY_A | key.down))
 	{
@@ -55,7 +56,7 @@ void App::HandleEventInBrowser()
 			bookselected = books[b];
 			if (b >= browserstart+APP_BROWSER_BUTTON_COUNT) {
 				browser_nextpage();
-				browser_draw();
+				BrowserDraw();
 			} else {
 				browser_redraw();
 			}
@@ -72,7 +73,7 @@ void App::HandleEventInBrowser()
 			bookselected = books[b];
 			if(b < browserstart) {
 				browser_prevpage();
-				browser_draw();
+				BrowserDraw();
 			} else {
 				browser_redraw();
 			}	
@@ -112,12 +113,12 @@ void App::HandleEventInBrowser()
 		if(buttonnext.EnclosesPoint(coord.py, coord.px))
 		{
 			browser_nextpage();
-			browser_draw();
+			BrowserDraw();
 		}
 		else if(buttonprev.EnclosesPoint(coord.py, coord.px))
 		{
 			browser_prevpage();
-			browser_draw();
+			BrowserDraw();
 		}
 		else if(buttonprefs.EnclosesPoint(coord.py, coord.px))
 		{
@@ -127,7 +128,7 @@ void App::HandleEventInBrowser()
 				PrefsDraw();
 			} else {
 				mode = APP_MODE_BROWSER;
-				browser_draw();
+				BrowserDraw();
 			}
 		} else {
 			for(u8 i=browserstart; 
@@ -137,7 +138,7 @@ void App::HandleEventInBrowser()
 				if (buttons[i]->EnclosesPoint(coord.py, coord.px))
 				{
 					bookselected = books[i];
-					browser_draw();
+					BrowserDraw();
 					swiWaitForVBlank();
 					AttemptBookOpen();
 					break;
@@ -147,7 +148,7 @@ void App::HandleEventInBrowser()
 	}	
 }
 
-void App::browser_init(void)
+void App::BrowserInit(void)
 {
 	u8 i;
 	for (i=0;i<bookcount;i++)
@@ -176,13 +177,13 @@ void App::browser_init(void)
 	buttonprefs.Resize(60,16);
 	buttonprefs.Label("prefs");
 
-	if (!bookselected) {
-		browserstart = 0;
-		bookselected = books[0];
-	} else {
-	browserstart = (GetBookIndex(bookselected) / APP_BROWSER_BUTTON_COUNT)
-		* APP_BROWSER_BUTTON_COUNT;
-	}
+	// if (!bookselected) {
+	// 	browserstart = 0;
+	// 	bookselected = books[0];
+	// } else {
+	// browserstart = (GetBookIndex(bookselected) / APP_BROWSER_BUTTON_COUNT)
+	// 	* APP_BROWSER_BUTTON_COUNT;
+	// }
 }
 
 void App::browser_nextpage()
@@ -203,8 +204,13 @@ void App::browser_prevpage()
 	}
 }
 
-void App::browser_draw(void)
+void App::BrowserDraw(void)
 {
+	char msg[1024];
+	
+	u16 fb[SCREEN_HEIGHT*SCREEN_WIDTH];
+	dmaCopy(fb, ts->screenright, sizeof(fb));
+
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
@@ -216,18 +222,19 @@ void App::browser_draw(void)
 	ts->ClearScreen();
 	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(PIXELSIZE);
+
 	for (int i=browserstart;
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 		i++)
 	{
-		buttons[i]->Draw(ts->screenright,books[i]==bookselected);
+		sprintf(msg, "%d/%d", i+1, bookcount);
+		Log(msg);
+		buttons[i]->Draw(ts->screenright, books[i]==bookselected);
 	}
-	
 	if(browserstart >= APP_BROWSER_BUTTON_COUNT)
 		buttonprev.Draw(ts->screenright,false);
 	if(bookcount > browserstart+APP_BROWSER_BUTTON_COUNT)
 		buttonnext.Draw(ts->screenright,false);
-
 	buttonprefs.Draw(ts->screenright,false);
 
 	// restore state.
@@ -241,7 +248,7 @@ void App::browser_redraw()
 {
 	//! Redraw all buttons visible in the browser.
 	// only call this when incrementing or decrementing the
-	// selected book; otherwise use browser_draw().
+	// selected book; otherwise use BrowserDraw().
 
 	// save state.
 	bool invert = ts->GetInvert();
@@ -272,5 +279,5 @@ void App::AttemptBookOpen()
 		mode = APP_MODE_BOOK;
 		//UpdateClock();
 	} else
-		browser_draw();
+		BrowserDraw();
 }

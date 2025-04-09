@@ -141,7 +141,7 @@ void App::HandleEventInPrefs()
 	
 	if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
 		mode = APP_MODE_BROWSER;
-		browser_draw();
+		BrowserDraw();
 	} else if (prefsSelected > 0 && (keysDown() & (key.right | key.r))) {
 		prefsSelected--;
 		PrefsDraw(false);
@@ -170,7 +170,7 @@ void App::HandleEventInPrefs()
 		if (buttonprefs.EnclosesPoint(coord.py, coord.px)) {
 			buttonprefs.Label("prefs");
 			mode = APP_MODE_BROWSER;
-			browser_draw();
+			BrowserDraw();
 		} else {
 			for(u8 i = 0; i < PREFS_BUTTON_COUNT; i++) {
 				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))

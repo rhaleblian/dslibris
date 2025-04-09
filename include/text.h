@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 
+#undef __APPLE__
 #include "ft2build.h"
 #include FT_FREETYPE_H
 #include FT_CACHE_H
@@ -164,7 +165,7 @@ class Text {
 	u8   GetStringWidth(const char *txt, FT_Face face);
 	FT_Error InitFreeTypeCache();
 	int InitHomemadeCache();
-	void PrintChar(u32 ucs, FT_Face face);
+	u8 PrintChar(u32 ucs, FT_Face face);
 	void PrintString(const char *string, FT_Face face);
 	void ReportFace(FT_Face face);
 
@@ -204,6 +205,7 @@ public:
 	
 	u8   GetAdvance(u32 ucs);
 	u8   GetAdvance(u32 ucs, u8 style);
+	u8   GetFontCount();
 	u8   GetCharCode(const char* txt, u32* code);
 	u8   GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels);
 	FT_Face GetFace() { return face; }
@@ -219,7 +221,7 @@ public:
 	u8   GetPixelSize();
 	u16* GetScreen();
 	int  GetStringAdvance(const char *txt);
-	u8   GetStringWidth(const char *txt, u8 style);
+	u8   GetStringWidth(const char *txt, u8 style = TEXT_STYLE_REGULAR);
 	inline int GetStyle() { return style; }
 
 	void SetInvert(bool invert);
@@ -238,8 +240,8 @@ public:
 	void CopyScreen(u16 *src, u16 *dst);
 	void SwapScreens();
 
-	void PrintChar(u32 ucs);
-	void PrintChar(u32 ucs, u8 style);
+	u8 PrintChar(u32 ucs);
+	u8 PrintChar(u32 ucs, u8 style);
 	bool PrintNewLine(void);
 	void PrintStats();
 	void PrintStatusMessage(const char *msg);
