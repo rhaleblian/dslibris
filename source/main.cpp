@@ -20,13 +20,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
-#include <app.h>
-
-App *app;
+#include <nds.h>
+#include "app.h"
 
 int main(int argc, char **argv) {
 	//! Main entry point for dslibris.
-	app = new App();
+	defaultExceptionHandler();
+	// consoleDebugInit(DebugDevice_NOCASH);
+	glInit();
+	App *app = new App();
 	app->Init();
 	return app->Run();
 }

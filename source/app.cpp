@@ -20,159 +20,149 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
+#include <algorithm>   // for std::sort
 #include <errno.h>
+#include <fat.h>
+#include <nds.h>
+// #include "nds/arm9/background.h"
+// #include "nds/arm9/input.h"
+// #include "nds/system.h"
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <algorithm>   // for std::sort
-
-#include "fat.h"
-#include "nds/arm9/background.h"
-#include "nds/arm9/input.h"
-#include "nds/system.h"
-
-#include "main.h"
-#include "parse.h"
 #include "book.h"
-#include "button.h"
-#include <splash.h>
+#include "browser.h"
+#include "page.h"
+#include "parse.h"
+#include "prefs.h"
+#include "splash.h"
 #include "text.h"
 #include "version.h"
 
-#include <app.h>
-
-static bool book_title_lessthan(Book* a, Book* b) {
-	// less-than operator to compare books by title
-	return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
-}
+#include "app.h"
 
 void halt() {
-	while(pmMainLoop()) swiWaitForVBlank();
+	//! Flush video and loop indefinitely.
+	swiWaitForVBlank();
+	while(pmMainLoop()) scanKeys(); 
 }
 
 App::App()
 {	
-	fontdir = string(FONTDIR);
-	bookdir = string(BOOKDIR);
-	bookselected = NULL;
+	prefs = new Prefs(this);
+	ts = new Text(this);
+	browser = nullptr;
+
+	fontdir = std::string(FONTDIR);
+	bookdir = std::string(BOOKDIR);
 	bookcurrent = NULL;
 	bookmaxbuttons = BOOK_BUTTON_COUNT;
 	reopen = true;
 	mode = APP_MODE_BROWSER;
-	browserstart = 0;
-
 	cache = false;
-	console = false;
-	orientation = false;
-	paraspacing = 1;
-	paraindent = 0;
 	brightness = 1;
-	
-	key.down = KEY_DOWN;
-	key.up = KEY_UP;
-	key.left = KEY_LEFT;
-	key.right = KEY_RIGHT;
-	key.start = KEY_START;
-	key.select = KEY_SELECT;
-	key.l = KEY_L;
-	key.r = KEY_R;
-	key.a = KEY_A;
-	key.b = KEY_B;
-	key.x = KEY_X;
-	key.y = KEY_Y;
-	
-	prefs = &myprefs;
-	prefs->app = this;
-
-	ts = new Text();
-	ts->app = this;
+	SetControls();
 }
 
 App::~App()
 {
 	delete prefs;
 	delete ts;
-	vector<Book*>::iterator it;
+	std::vector<Book*>::iterator it;
 	for(it=books.begin();it!=books.end();it++)
 		delete *it;
 	books.clear();
 }
 
-void App::Init()
+u8 App::Init()
 {
-	int error;
+	u8 error;
 
-	keysSetRepeat(60,2);
+	error = fatInitDefault();
 
-	InitScreens();
+	videoSetMode(MODE_5_2D);
+	videoSetModeSub(MODE_5_2D);
+	videoBgEnable(3);
+	videoBgEnableSub(2);
+	vramSetBankA(VRAM_A_MAIN_BG);
+	vramSetBankC(VRAM_C_SUB_BG);
+	setBackdropColor(ARGB16(1,15,15,15));
+	setBackdropColorSub(ARGB16(1,15,15,15));
+
+	// bg[0] = bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0, 0);
 	// DrawSplashScreen();
+	bg[0] = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
+	bg[1] = bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
 
-	u8 success = fatInitDefault();
-
-	// Read preferences, pass 1,
-	// to get the book folder and preferred fonts.
-
-	error = prefs->Read();
-	if(error)
-		error = prefs->Write();
+	u16 *screen = bgGetGfxPtr(bg[1]);
+	for (int iy=0;iy<32;iy++)
+	for (int ix=0;ix<32;ix++)
+	{
+		screen[iy*SCREEN_HEIGHT+ix] = ARGB16(1, 20, 15, 10);
+	}
 
 	// Start up typesetter.
+	error = ts->Init();
 
-   	int err = ts->Init();
-	// Look in the book directory and construct library.
+	// Read preferences to get the book folder and preferred fonts.
+	error = prefs->Read();
+	if(error == PREFS_ERROR_MISSING)
+		error = prefs->Write();
 
+	// SetOrientation(orientation);
+	// if(orientation) lcdSwap();
+
+	// Traverse the book directory and construct library.
 	IndexBooks();
 
-	// Read preferences, pass 2, to bind preferences to books.
-	int parseerror = prefs->Read();
-
-	// Sort bookmarks for each book.
-	for(u8 i = 0; i < books.size(); i++)
-	{
-		books[i]->GetBookmarks()->sort();
-	}
+	// Read preferences again to apply to books.
+	error = prefs->Read();
+	// SortBooks();
+	// SortBookmarks();
 
 	// Set up preferences editing screen.
 	// PrefsInit();
 
-	// Set up library browser screen.
-	std::sort(books.begin(),books.end(),&book_title_lessthan);
-	browser_init();
+	// Set up the library browsing screen.
+	browser = new Browser(this);
+	browser->Init();
+	browser->Draw();
 
-	// Bring up displays.
-	if(orientation) lcdSwap();
-	if (prefs->swapshoulder)
-	{
-		int tmp = key.l;
-		key.l = key.r;
-		key.r = tmp;
-	}
+	return 0;
 
-	mode = APP_MODE_BROWSER;
-	browser_draw();
+	// if (prefs->swapshoulder)
+	// {
+	// 	int tmp = key.l;
+	// 	key.l = key.r;
+	// 	key.r = tmp;
+	// }
+	// keysSetRepeat(60,2);
+	// mode = APP_MODE_BROWSER;
 
-	console = false;
-
-	// ReopenBook();
+	return error;
 }
 
-void App::ReopenBook() {
-	// Resume reading from the last session.
-	if(reopen && bookcurrent)
-	{
-		int openerr = OpenBook();
-		if(openerr)
-			Log("warn : could not reopen previous book.\n");
-		else
-		{
-			Log("info : reopened previous book.\n");
-			mode = APP_MODE_BOOK;
-		}
-	}
-	else Log("info : not reopening previous book.\n");
+void App::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
+{
+	//! Must be a 16-bit background.
+	u16 src = ARGB16(1, 15, 15, 15);
+	u16* dst = bgGetGfxPtr(bg[1]);
+	// swiCopy(&color, screen), 1 | COPY_MODE_HWORD | COPY_MODE_FILL);
+
+	for (int i=0; i<SCREEN_WIDTH*SCREEN_WIDTH; i++) dst[i] = src;
+}
+
+void App::DrawSplashScreen() {
+	// Copy the splash screen to the background.
+	dmaCopy(splashBitmap, bgGetGfxPtr(bg[0]), splashBitmapLen);
+	dmaCopy(splashPal, BG_PALETTE, splashPalLen);
+	bgSetCenter(bg[0], 256, 0);
+	bgSetRotate(bg[0], -32767/4);
+	// bgSetScroll(bg[0], 31, 31);
+	bgUpdate();
 }
 
 void App::IndexBooks() {
@@ -192,7 +182,7 @@ void App::IndexBooks() {
 			c--);
 		if (!strcmp(".xht",c) || !strcmp(".xhtml",c))
 		{
-			Book *book = new Book();
+			Book *book = new Book(this);
 			book->SetFolderName(bookdir.c_str());
 			book->SetFileName(filename);
 			book->format = FORMAT_XHTML;
@@ -201,7 +191,7 @@ void App::IndexBooks() {
 		}
 		else if (!strcmp(".epub",c))
 		{
-			Book *book = new Book();
+			Book *book = new Book(this);
 			book->SetFolderName(bookdir.c_str());
 			book->SetFileName(filename);
 			book->SetTitle(filename);
@@ -217,182 +207,82 @@ int App::Run(void)
 {
 	while (pmMainLoop())
 	{
+		threadWaitForVBlank();
 		scanKeys();
-
-		key.downrepeat = keysDownRepeat();
-
-		if (key.downrepeat)
-		{
-			switch (mode){
-					case APP_MODE_BROWSER:
-						HandleEventInBrowser();
-						break;
-					case APP_MODE_BOOK:
-						HandleEventInBook();
-						break;
-					case APP_MODE_PREFS:
-						HandleEventInPrefs();
-						break;
-					case APP_MODE_PREFS_FONT:
-					case APP_MODE_PREFS_FONT_BOLD:
-					case APP_MODE_PREFS_FONT_ITALIC:
-						HandleEventInFont();
-						break;
-			}
-		}
-		swiWaitForVBlank();
+		// key.downrepeat = keysDownRepeat();
+		// if (key.downrepeat)
+		// {
+		// 	switch (mode){
+		// 			case APP_MODE_BROWSER:
+		// 				HandleEventInBrowser();
+		// 				break;
+		// 			case APP_MODE_BOOK:
+		// 				HandleEventInBook();
+		// 				break;
+		// 			case APP_MODE_PREFS:
+		// 				HandleEventInPrefs();
+		// 				break;
+		// 			case APP_MODE_PREFS_FONT:
+		// 			case APP_MODE_PREFS_FONT_BOLD:
+		// 			case APP_MODE_PREFS_FONT_ITALIC:
+		// 				HandleEventInFont();
+		// 				break;
+		// 			default:
+		// 				break;
+		// 	}
+		// }
 	}
 	return 0;
 }
 
 void App::SetBrightness(int b)
 {
-	// TODO fix this for libnds2
-	if(b<0) brightness = 0;
-	brightness = b%4;
-	//fifoSendValue32(BACKLIGHT_FIFO,brightness);
+	brightness = b % 4;
+	setBrightness(3, brightness);
 }
 
 void App::CycleBrightness()
 {
-	++brightness%=4;
+	++brightness %= 4;
 	SetBrightness(brightness);
 }
 
-void App::UpdateClock()
+void App::SetOrientation(bool flipped)
 {
-	if (mode != APP_MODE_BOOK)
-		return;
-	u16 *screen = ts->GetScreen();
-	time_t unixTime = time(NULL);
-	struct tm* timeStruct = gmtime((const time_t *)&unixTime);
-
-	char tmsg[8];
-	ts->SetScreen(ts->screenleft);
-	sprintf(tmsg, "%02d:%02d",timeStruct->tm_hour,timeStruct->tm_min );
-	u8 offset = ts->margin.left;
-	ts->ClearRect(offset, 240, offset+30, 255);
-	ts->SetPen(offset,250);
-	ts->PrintString(tmsg);
-
-	ts->SetScreen(screen);
-}
-
-void App::SetOrientation(bool flip)
-{
-	s16 s;
-	s16 c;
-	if(flip)
+	// s16 s;
+	// s16 c;
+	ts->orientation = flipped;
+	if(ts->orientation)
 	{
-		s = 1 << 8;
-		c = 0;
-		REG_BG3X = 191 << 8;
-		REG_BG3Y = 0 << 8;
-		REG_BG3X_SUB = 191 << 8;
-		REG_BG3Y_SUB = 0 << 8;
-		ts->screenleft = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenright = (u16*)BG_BMP_RAM(0);
-		orientation = true;
-		key.down = KEY_UP;
-		key.up = KEY_DOWN;
-		key.left = KEY_RIGHT;
-		key.right = KEY_LEFT;
-		key.l = KEY_R;
-		key.r = KEY_L;
+		// s = 1 << 8;
+		// c = 0;
+		// REG_BG3X = 191 << 8;
+		// REG_BG3Y = 0 << 8;
+		// REG_BG3X_SUB = 191 << 8;
+		// REG_BG3Y_SUB = 0 << 8;
+		ts->screenleft = (u16*)bgGetGfxPtr(bg[0]);
+		ts->screenright = (u16*)bgGetGfxPtr(bg[1]);
 	}
 	else
 	{
-		s = -1 << 8;
-		c = 0;
-		REG_BG3X = 0 << 8;
-		REG_BG3Y = 255 << 8;
-		REG_BG3X_SUB = 0 << 8;
-		REG_BG3Y_SUB = 255 << 8;
-		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenleft = (u16*)BG_BMP_RAM(0);
-		orientation = false;
-		key.down = KEY_DOWN;
-		key.up = KEY_UP;
-		key.left = KEY_LEFT;
-		key.right = KEY_RIGHT;
-		key.l = KEY_L;
-		key.r = KEY_R;
+		// s = -1 << 8;
+		// c = 0;
+		// REG_BG3X = 0 << 8;
+		// REG_BG3Y = 255 << 8;
+		// REG_BG3X_SUB = 0 << 8;
+		// REG_BG3Y_SUB = 255 << 8;
+		ts->screenleft = (u16*)bgGetGfxPtr(bg[1]);
+		ts->screenright = (u16*)bgGetGfxPtr(bg[0]);
 	}
-	REG_BG3PA = c;
-	REG_BG3PB = -s;
-	REG_BG3PC = s;
-	REG_BG3PD = c;
-	REG_BG3PA_SUB = c;
-	REG_BG3PB_SUB = -s;
-	REG_BG3PC_SUB = s;
-	REG_BG3PD_SUB = c;
-}
-
-void App::Log(const char *msg)
-{
-	Log("%s", msg);
-}
-
-void App::Log(const char *format, const int value)
-{
-	std::stringstream ss;
-	ss << value << std::endl;
-	Log(format, ss.str().c_str());
-}
-
-void App::Log(const char *format, const char *msg)
-{
-	// if(console)
-	// {
-	// 	char s[1024];
-	// 	sprintf(s,format,msg);
-	// 	iprintf(s);
-	// }
-	// FILE *logfile = fopen(LOGFILEPATH,"a");
-	// fprintf(logfile,format,msg);
-	// fclose(logfile);
-}
-
-void App::Log(const std::string msg)
-{
-	Log("%s",msg.c_str());
-}
-
-void App::InitScreens()
-{
-	// A
-	
-	videoSetMode(MODE_5_2D);
-	vramSetBankA(VRAM_A_MAIN_BG);
-	bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-	videoSetModeSub(MODE_5_2D);
-	vramSetBankC(VRAM_C_SUB_BG);
-	bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-
-	// B
-	
-	// bg3 = bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0,0);
-	// videoSetMode(MODE_5_2D);
-	// vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	// videoSetModeSub(MODE_5_2D);
-	// vramSetBankC(VRAM_C_SUB_BG);
-
-	ts->SetScreen(ts->screenright);
-	ts->ClearScreen();
-	ts->SetScreen(ts->screenleft);
-	ts->ClearScreen();
-	SetOrientation(orientation);
-}
-
-void App::DrawSplashScreen() {
-	dmaCopy(splashBitmap, bgGetGfxPtr(bg3), 256*256);
-	dmaCopy(splashPal, BG_PALETTE, 256);
-}
-
-void App::Fatal(const char *msg)
-{
-	Log(msg);
-	while(1) swiWaitForVBlank();
+	// REG_BG3PA = c;
+	// REG_BG3PB = -s;
+	// REG_BG3PC = s;
+	// REG_BG3PD = c;
+	// REG_BG3PA_SUB = c;
+	// REG_BG3PB_SUB = -s;
+	// REG_BG3PC_SUB = s;
+	// REG_BG3PD_SUB = c;
+	SetControls(ts->orientation);
 }
 
 void App::PrintStatus(const char *msg)
@@ -412,4 +302,574 @@ void App::PrintStatus(const char *msg)
 	ts->SetPixelSize(pixelsize);
 	ts->SetScreen(screen);
 	ts->SetInvert(invert);
+}
+
+void App::ReopenBook() {
+	// Resume reading from the last session.
+	if(reopen && bookcurrent)
+	{
+		int openerr = OpenBook(bookcurrent);
+		if(!openerr)
+			mode = APP_MODE_BOOK;
+	}
+}
+
+static bool book_title_lessthan(Book* a, Book* b) {
+	// less-than operator to compare books by title
+	return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
+}
+
+void App::SortBooks() {
+	std::sort(books.begin(), books.end(), &book_title_lessthan);
+}
+
+void App::SortBookmarks() {
+	for(u8 i = 0; i < books.size(); i++)
+	{
+		books[i]->GetBookmarks()->sort();
+	}
+}
+
+// void App::Fatal(const char *msg)
+// {
+// 	Log(msg);
+// 	swiWaitForVBlank();
+//     while(pmMainLoop()) scanKeys();
+// }
+
+u8 App::GetBookIndex(Book *b)
+{
+	if (!b) return -1;
+	int i = 0;
+	for(std::vector<Book*>::iterator it=books.begin();
+		it<books.end();it++,i++)
+	{
+		if(*it == b) return i;
+	}
+	return -1;
+}
+
+u8 App::OpenBook(Book *book)
+{
+	//! Attempt to open book indicated by bookselected.
+	if (bookcurrent == book)
+	{
+		PrintStatus("book already open");
+		return 0;
+	}
+	if (!book)
+	{
+		PrintStatus("no book selected");
+		return 255;
+	}
+	if (!book->GetFileName())
+	{
+		PrintStatus("no book filename");
+		return 255;
+	}
+	if (!book->GetFolderName())
+	{
+		PrintStatus("no book folder");
+		return 255;
+	}
+	if (bookcurrent) {
+		bookcurrent->Close();
+		bookcurrent = nullptr;
+	}
+
+	PrintStatus("opening book...");
+	swiWaitForVBlank();
+
+	const char *filename = book->GetFileName();
+	const char *c; 	// will point to the file's extension.
+	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
+	
+	if(bookcurrent) bookcurrent->Close();
+	if (int err = book->Open())
+	{
+		char msg[64];
+		sprintf(msg, "could not open book (%d)",err);
+		PrintStatus(msg);
+		return 255;
+	}
+	PrintStatus("book opened");
+	bookcurrent = book;
+	if(mode == APP_MODE_BROWSER) {
+		if(ts->orientation) lcdSwap();
+		mode = APP_MODE_BOOK;
+	}
+	if(bookcurrent->GetPosition() >= bookcurrent->GetPageCount())
+		bookcurrent->SetPosition(0);
+	bookcurrent->GetPage()->Draw(ts);
+	prefs->Write();
+	ts->PrintStats();
+	return 0;
+}
+
+void App::SetControls(bool flipped) {
+	key.a = KEY_A;
+	key.b = KEY_B;
+	key.x = KEY_X;
+	key.y = KEY_Y;
+	key.start = KEY_START;
+	key.select = KEY_SELECT;
+	if (flipped) {
+		key.down = KEY_UP;
+		key.up = KEY_DOWN;
+		key.left = KEY_RIGHT;
+		key.right = KEY_LEFT;
+		key.l = KEY_R;
+		key.r = KEY_L;
+	} else {
+		key.down = KEY_DOWN;
+		key.up = KEY_UP;
+		key.left = KEY_LEFT;
+		key.right = KEY_RIGHT;
+		key.start = KEY_START;
+		key.select = KEY_SELECT;
+		key.l = KEY_L;
+		key.r = KEY_R;
+	}
+}
+
+void App::FontInit()
+{
+	DIR *dp = opendir(fontdir.c_str());
+	if (!dp)
+	{
+		// Log("fatal: no font directory.\n");
+		swiWaitForVBlank();
+		exit(-3);
+	}
+	
+	ts->fontPage = 0;
+	ts->fontSelected = 0;
+	ts->fontButtons.clear();
+	
+	struct dirent *ent;
+	while ((ent = readdir(dp)))
+	{	
+		// Don't try folders
+		if (ent->d_type == DT_DIR)
+			continue;
+		char *filename = ent->d_name;
+		char *c;
+		for (c=filename; c != filename + strlen(filename) && *c != '.'; c++);
+		if (!strcmp(".ttf",c) || !strcmp(".otf",c) || !strcmp(".ttc",c))
+		{
+			Button *b = new Button();
+			b->Init(ts);
+			b->Move(2, (ts->fontButtons.size() % bookmaxbuttons) * 32);
+			b->Label(filename);
+ 			ts->fontButtons.push_back(b);
+		}
+	}
+	closedir(dp);
+}
+
+void App::HandleEventInFont()
+{
+	if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
+		mode = APP_MODE_PREFS;
+		FontDeinit();
+		PrefsDraw();
+	} else if (ts->fontSelected > 0 && (keysDown() & (KEY_RIGHT | KEY_R))) {
+		if (ts->fontSelected == ts->fontPage * 7) {
+			FontPreviousPage();
+			FontDraw();
+		} else {
+			ts->fontSelected--;
+			FontDraw(false);
+		}
+	} else if (ts->fontSelected < (ts->fontButtons.size() - 1) && (keysDown() & (KEY_LEFT | KEY_L))) {
+		if (ts->fontSelected == ts->fontPage * bookmaxbuttons + (bookmaxbuttons-1)) {
+			FontNextPage();
+			FontDraw();
+		} else {
+			ts->fontSelected++;
+			FontDraw(false);
+		}
+	} else if (keysDown() & KEY_A) {
+		FontButton();
+	} else if (keysDown() & KEY_TOUCH) {
+		// Log("info : font screen touched\n");
+		touchPosition touch;
+		touchRead(&touch);
+		touchPosition coord;
+
+		if(!ts->orientation)
+		{
+			coord.px = 256 - touch.px;
+			coord.py = touch.py;
+		} else {
+			coord.px = touch.px;
+			coord.py = 192 - touch.py;
+		}
+
+		if(buttonnext.EnclosesPoint(coord.py,coord.px)){
+			FontNextPage();
+			FontDraw();
+		} else if(buttonprev.EnclosesPoint(coord.py,coord.px)) {
+			FontPreviousPage();
+			FontDraw();
+		} else if(buttonprefs.EnclosesPoint(coord.py,coord.px)) {
+			mode = APP_MODE_PREFS;
+			FontDeinit();
+			PrefsDraw();
+		} else {
+			for(u8 i = ts->fontPage * 7; (i < ts->fontButtons.size()) && (i < (ts->fontPage + 1) * bookmaxbuttons); i++) {
+				// Log("info : checking button\n");
+				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
+				{
+					if (i != ts->fontSelected) {
+						ts->fontSelected = i;
+						FontDraw(false);
+					}
+					
+					FontButton();
+					break;
+				}
+			}
+		}
+	}
+}
+
+void App::FontDeinit()
+{
+	for (u8 i = 0; i < ts->fontButtons.size(); i++) {
+		if(ts->fontButtons[i]) delete ts->fontButtons[i];
+	}
+	ts->fontButtons.clear();
+}
+
+void App::FontDraw(bool redraw)
+{
+	// save state.
+	bool invert = ts->GetInvert();
+	u16* screen = ts->GetScreen();
+	int style = ts->GetStyle();
+	
+	ts->SetInvert(false);
+	ts->SetStyle(TEXT_STYLE_BROWSER);
+	if (redraw) {
+		ts->ClearScreen();
+	}
+	u8 s = ts->fontButtons.size();
+	for (u8 i = ts->fontPage * 7; (i < s) && (i < (ts->fontPage + 1) * bookmaxbuttons); i++)
+	{
+		ts->fontButtons[i]->Draw(ts->screenright, i == ts->fontSelected);
+	}
+	// buttonprefs.Label("Cancel");
+	// buttonprefs.Draw(screen, false);
+	// if(s > (ts->fontPage + 1) * bookmaxbuttons)
+	// 	buttonnext.Draw(ts->screenright, false);
+	// if(ts->fontSelected > bookmaxbuttons)
+	// 	buttonprev.Draw(ts->screenright, false);
+
+	// restore state.
+	ts->SetStyle(style);
+	ts->SetInvert(invert);
+	ts->SetScreen(screen);
+}
+
+void App::FontNextPage()
+{
+	u8 s = ts->fontButtons.size();
+	if((ts->fontPage + 1) * bookmaxbuttons < s)
+	{
+		ts->fontPage += 1;
+		ts->fontSelected = ts->fontPage * bookmaxbuttons;
+	}
+}
+
+void App::FontPreviousPage()
+{
+	if(ts->fontPage > 0)
+	{
+		ts->fontPage--;
+		ts->fontSelected = ts->fontPage * bookmaxbuttons + (bookmaxbuttons-1);
+	}
+}
+
+void App::FontButton()
+{
+	bool invert = ts->GetInvert();
+
+	ts->SetScreen(ts->screenright);
+	ts->SetInvert(false);
+	ts->ClearScreen();
+	ts->SetPen(ts->margin.left,PAGE_HEIGHT/2);
+	ts->PrintString("[saving font...]");
+	ts->SetInvert(invert);
+
+	std::string path = fontdir;
+	path.append(ts->fontButtons[ts->fontSelected]->GetLabel());
+	if (mode == APP_MODE_PREFS_FONT)
+		ts->SetFontFile(path.c_str(), TEXT_STYLE_REGULAR);
+	else if (mode == APP_MODE_PREFS_FONT_BOLD)
+		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLD);
+	else if (mode == APP_MODE_PREFS_FONT_ITALIC)
+		ts->SetFontFile(path.c_str(), TEXT_STYLE_ITALIC);
+
+	ts->Init();
+	bookcurrent = NULL; //Force repagination
+	FontDeinit();
+	mode = APP_MODE_PREFS;
+	PrefsRefreshButtonFont();
+	PrefsRefreshButtonFontBold();
+	PrefsRefreshButtonFontItalic();
+	PrefsDraw();
+	prefs->Write();
+
+	ts->SetInvert(invert);
+}
+
+void App::PrefsInit()
+{	
+	prefsButtonFont.Init(ts);
+	prefsButtonFont.Move(2, PREFS_BUTTON_FONT * 32);
+	PrefsRefreshButtonFont();
+	prefsButtons[PREFS_BUTTON_FONT] = &prefsButtonFont;
+	
+	prefsButtonFontBold.Init(ts);
+	prefsButtonFontBold.Move(2, PREFS_BUTTON_FONT_BOLD * 32);
+	PrefsRefreshButtonFontBold();
+	prefsButtons[PREFS_BUTTON_FONT_BOLD] = &prefsButtonFontBold;
+		
+	prefsButtonFontItalic.Init(ts);
+	prefsButtonFontItalic.Move(2, PREFS_BUTTON_FONT_ITALIC * 32);
+	PrefsRefreshButtonFontItalic();
+	prefsButtons[PREFS_BUTTON_FONT_ITALIC] = &prefsButtonFontItalic;
+	
+	prefsButtonFontSize.Init(ts);
+	prefsButtonFontSize.Move(2, PREFS_BUTTON_FONTSIZE * 32);
+	PrefsRefreshButtonFontSize();
+	prefsButtons[PREFS_BUTTON_FONTSIZE] = &prefsButtonFontSize;
+	
+	prefsButtonParaspacing.Init(ts);
+	prefsButtonParaspacing.Move(2, PREFS_BUTTON_PARASPACING * 32);
+	PrefsRefreshButtonParaspacing();
+	prefsButtons[PREFS_BUTTON_PARASPACING] = &prefsButtonParaspacing;
+	
+	prefsSelected = 0;
+}
+
+void App::PrefsRefreshButtonFont()
+{
+	char msg[128];
+	strcpy(msg, "");
+	sprintf((char*)msg, "Regular Font:\n %s", ts->GetFontFile(TEXT_STYLE_REGULAR).c_str());
+	prefsButtonFont.Label(msg);
+}
+
+void App::PrefsRefreshButtonFontBold()
+{
+	char msg[128];
+	strcpy(msg, "");
+	sprintf((char*)msg, "Bold Font:\n %s", ts->GetFontFile(TEXT_STYLE_BOLD).c_str());
+	prefsButtonFontBold.Label(msg);
+}
+
+void App::PrefsRefreshButtonFontItalic()
+{
+	char msg[128];
+	strcpy(msg, "");
+	sprintf((char*)msg, "Italic Font:\n %s", ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
+	prefsButtonFontItalic.Label(msg);
+}
+
+void App::PrefsRefreshButtonFontSize()
+{
+	char msg[30];
+	strcpy(msg, "");
+	if (ts->GetPixelSize() == 1)
+		sprintf((char*)msg, "Font Size:\n    [ %d >", ts->GetPixelSize());
+	else if (ts->GetPixelSize() == 255)
+		sprintf((char*)msg, "Font Size:\n    < %d ]", ts->GetPixelSize());
+	else
+		sprintf((char*)msg, "Font Size:\n    < %d >", ts->GetPixelSize());
+	prefsButtonFontSize.Label(msg);
+}
+
+void App::PrefsRefreshButtonParaspacing()
+{
+	char msg[38];
+	strcpy(msg, "");
+	if (ts->paraspacing == 0)
+		sprintf((char*)msg, "Paragraph Spacing:\n    [ %d >", ts->paraspacing);
+	else if (ts->paraspacing == 255)
+		sprintf((char*)msg, "Paragraph Spacing:\n    < %d ]", ts->paraspacing);
+	else
+		sprintf((char*)msg, "Paragraph Spacing:\n    < %d >", ts->paraspacing);
+	prefsButtonParaspacing.Label(msg);
+}
+
+void App::PrefsDraw()
+{
+	PrefsDraw(true);
+}
+
+void App::PrefsDraw(bool redraw)
+{
+	// save state.
+	bool invert = ts->GetInvert();
+	u8 size = ts->GetPixelSize();
+	u16* screen = ts->GetScreen();
+	int style = ts->GetStyle();
+	
+	ts->SetScreen(ts->screenright);
+	ts->SetInvert(false);
+	ts->SetStyle(TEXT_STYLE_BROWSER);
+	if (redraw) ts->ClearScreen();
+	ts->SetPixelSize(PIXELSIZE);
+	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
+	{
+		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
+	}
+	
+	buttonprefs.Label("return");
+	buttonprefs.Draw(ts->screenright, false);
+
+	// restore state.
+	ts->SetStyle(style);
+	ts->SetInvert(invert);
+	ts->SetPixelSize(size);
+	ts->SetScreen(screen);
+}
+
+void App::HandleEventInPrefs()
+{
+	int keys = keysDown();
+	
+	if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
+		mode = APP_MODE_BROWSER;
+		browser->Draw();
+	} else if (prefsSelected > 0 && (keysDown() & (key.right | key.r))) {
+		prefsSelected--;
+		PrefsDraw(false);
+	} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (keysDown() & (KEY_LEFT | KEY_L))) {
+		prefsSelected++;
+		PrefsDraw(false);
+	} else if (keysDown() & KEY_A) {
+		PrefsButton();
+	} else if (keys & KEY_Y) {
+		CycleBrightness();
+		prefs->Write();
+	} else if (keysDown() & KEY_TOUCH) {
+		touchPosition touch;
+		touchRead(&touch);
+		touchPosition coord;
+
+		if(!ts->orientation)
+		{
+			coord.px = 256 - touch.px;
+			coord.py = 192 - touch.py;
+		} else {
+			coord.px = touch.px;
+			coord.py = touch.py;
+		}
+		
+		if (buttonprefs.EnclosesPoint(coord.py, coord.px)) {
+			buttonprefs.Label("prefs");
+			mode = APP_MODE_BROWSER;
+			browser->Draw();
+		} else {
+			for(u8 i = 0; i < PREFS_BUTTON_COUNT; i++) {
+				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
+				{
+					if (i != prefsSelected) {
+						prefsSelected = i;
+						PrefsDraw(false);
+					}
+					
+					if (i == PREFS_BUTTON_FONTSIZE) {
+						if (coord.py < 2 + 188 / 2) {
+							PrefsIncreasePixelSize();
+						} else {
+							PrefsDecreasePixelSize();
+						}
+					} else if (i == PREFS_BUTTON_PARASPACING) {
+						if (coord.py < 2 + 188 / 2) {
+							PrefsIncreaseParaspacing();
+						} else {
+							PrefsDecreaseParaspacing();
+						}
+					} else {
+						PrefsButton();
+					}
+					
+					break;
+				}
+			}
+		}
+	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.up)) {
+		PrefsDecreasePixelSize();
+	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.down)) {
+		PrefsIncreasePixelSize();
+	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.up)) {
+		PrefsDecreaseParaspacing();
+	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.down)) {
+		PrefsIncreaseParaspacing();
+	}
+}
+
+void App::PrefsIncreasePixelSize()
+{
+	if (ts->pixelsize < 255) {
+		ts->pixelsize++;
+		PrefsRefreshButtonFontSize();
+		PrefsDraw();
+		bookcurrent = NULL;
+		prefs->Write();
+	}
+}
+
+void App::PrefsDecreasePixelSize()
+{
+	if (ts->pixelsize > 1) {
+		ts->pixelsize--;
+		PrefsRefreshButtonFontSize();
+		PrefsDraw();
+		bookcurrent = NULL;
+		prefs->Write();
+	}
+}
+
+void App::PrefsIncreaseParaspacing()
+{
+	if (ts->paraspacing < 255) {
+		ts->paraspacing++;
+		PrefsRefreshButtonParaspacing();
+		PrefsDraw();
+		bookcurrent = NULL;
+		prefs->Write();
+	}
+}
+
+void App::PrefsDecreaseParaspacing()
+{
+	if (ts->paraspacing > 0) {
+		ts->paraspacing--;
+		PrefsRefreshButtonParaspacing();
+		PrefsDraw();
+		bookcurrent = NULL;
+		prefs->Write();
+	}
+}
+
+void App::PrefsButton()
+{
+	if (prefsSelected == PREFS_BUTTON_FONT) {
+		mode = APP_MODE_PREFS_FONT;
+	} else if (prefsSelected == PREFS_BUTTON_FONT_BOLD) {
+		mode = APP_MODE_PREFS_FONT_BOLD;
+	} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
+		mode = APP_MODE_PREFS_FONT_ITALIC;
+	}
+	PrintStatus("[loading fonts...]");
+	ts->SetScreen(ts->screenright);
+	ts->ClearScreen();
+	FontInit();
+	FontDraw();
+	PrintStatus("");
 }

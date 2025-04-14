@@ -1,9 +1,8 @@
-#ifndef _EPUB_H_
-#define _EPUB_H_
+#pragma once
 
-#include "book.h"
 #include <string>
 
+class Book;
 typedef enum { PARSE_CONTAINER, PARSE_ROOTFILE, PARSE_CONTENT } epub_parse_t;
 
 // <manifest> elements
@@ -19,7 +18,7 @@ typedef struct {
 
 typedef struct {
 	epub_parse_t type;
-	vector<std::string*> ctx;
+	std::vector<std::string*> ctx;
 	std::string rootfile;
 	std::vector<epub_item*> manifest;
 	std::vector<epub_itemref*> spine;
@@ -30,5 +29,3 @@ typedef struct {
 } epub_data_t;
 
 int epub(Book *book, std::string filepath, bool metadataonly);
-
-#endif

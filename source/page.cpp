@@ -18,9 +18,14 @@
  To contact the copyright holder: rayh23@sourceforge.net
  */
 
-#include "page.h"
-#include <string.h>
+#include <nds.h>
+#include <string>
 #include <list>
+
+#include "app.h"
+#include "book.h"
+#include "page.h"
+#include "text.h"
 
 Page::Page(Book *b)
 {
@@ -51,13 +56,11 @@ void Page::Cache(FILE *fp)
 	fwrite((const char*)buf, 1, strlen((char*)buf), fp);
 }
 
-#if 0
 void Page::Draw()
 {
 	Text *ts = book->app->ts;
 	if(ts) Draw(ts);
 }
-#endif
 
 void Page::Draw(Text *ts)
 {

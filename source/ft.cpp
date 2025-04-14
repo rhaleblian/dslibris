@@ -55,7 +55,7 @@ FT_Freeables typesetter() {
   FT_Error error = FT_Init_FreeType(&library);
   if (error) {
     sprintf(msg, "error: init: %d\n", error);
-    Log(msg);
+    // Log(msg);
   }
 
   error =

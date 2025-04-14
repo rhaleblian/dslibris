@@ -1,3 +1,4 @@
+#pragma once
 /*
  Copyright (C) 2007-2009 Ray Haleblian (ray23@sourceforge.net)
  
@@ -17,66 +18,22 @@
  
  To contact the copyright holder: rayh23@sourceforge.net
  */
-
-#pragma once
-
-/*!
-\mainpage
-
-dslibris is an ebook reader for the Nintendo DS family
-of handheld game consoles.
-
-For information about prerequisites, building, and installing,
-see
-
-https://github.com/rhaleblian/dslibris/blob/master/README.md
-
-This documentation was built by running
-
-  make doc
-
-in the repo root directory. The origin Git repo is located at
-
-https://github.com/rhaleblian/dslibris
-
-\author ray haleblian
-
-*/
-
-
+#include <expat.h>
 #include <list>
 #include <sstream>
-#include <unistd.h>
 #include <vector>
-
-#include "expat.h"
-
-#include "book.h"
+#include <unistd.h>
 #include "button.h"
-#include "prefs.h"
-#include "text.h"
-#include "main.h"
-#include "parse.h"
 
-#define APP_BROWSER_BUTTON_COUNT 7
-#define APP_LOGFILE "dslibris.log"
-#define APP_MODE_BOOK 0
-#define APP_MODE_BROWSER 1
-#define APP_MODE_PREFS 2
-#define APP_MODE_PREFS_FONT 3
-#define APP_MODE_PREFS_FONT_BOLD 4
-#define APP_MODE_PREFS_FONT_ITALIC 5
-#define APP_URL "http://github.com/rhaleblian/dslibris"
+class Book;
+class Browser;
+class Text;
+class Prefs;
 
-#define BOOK_BUTTON_COUNT 7
-
-#define PREFS_BUTTON_COUNT 5
-#define PREFS_BUTTON_FONT 2
-#define PREFS_BUTTON_FONT_ITALIC 3
-#define PREFS_BUTTON_FONT_BOLD 4
-#define PREFS_BUTTON_FONTSIZE 1
-#define PREFS_BUTTON_PARASPACING 0
-
+typedef struct {
+	u16 up,down,left,right,l,r,a,b,x,y,start,select;
+	uint32_t downrepeat;
+} input_t;
 
 //! \brief Main application.
 //!
@@ -85,94 +42,24 @@ https://github.com/rhaleblian/dslibris
 
 class App {
 	public:
-	Text *ts;
-	Prefs myprefs;   //?
-	Prefs *prefs;    //?
-	u8 brightness;   //! 4 levels for the Lite.
-	u8 mode; 	     //! Are we in book or browser mode?
-	string fontdir;  //! Default location to search for TTFs.
-	bool console;    //! Can we print to console at the moment?
-	
-	//! key functions are remappable to support screen flipping.
-	struct {
-		u16 up,down,left,right,l,r,a,b,x,y,start,select;
-		uint32_t downrepeat;
-	} key;
-	
-	vector<Button*> buttons;
-	Button buttonprev, buttonnext, buttonprefs; //! Buttons on browser bottom.
-	//! index into book vector denoting first book visible on library screen. 
-	u8 browserstart;
-	string bookdir;  //! Search here for XHTML.
-	vector<Book*> books;
-	//! which book is currently selected in browser?
-	Book* bookselected;
-	//! which book is currently being read?
-	Book* bookcurrent;
-	//! reopen book from last session on startup?
-	bool reopen;
-	//! Write baked text to cache?
-	bool cache;
-	//! user data block passed to expat callbacks.
-	parsedata_t parsedata;
-	//! not used yet; will contain pagination indices for caching.
-	vector<u16> pageindices;
-	u8 orientation;
-	u8 paraspacing, paraindent;
-	
-	Button prefsButtonBooks;
-	Button prefsButtonFonts;
-	Button prefsButtonFont;
-	Button prefsButtonFontBold;
-	Button prefsButtonFontItalic;
-	Button prefsButtonFontSize;
-	Button prefsButtonParaspacing;
-	Button* prefsButtons[PREFS_BUTTON_COUNT];
-	u8 prefsSelected;
-	
-	uint8_t fontSelected;
-	uint8_t fontPage;
-	vector<Button*>fontButtons;
-
 	App();
 	~App();
-	
+	void ClearScreen(u16 *screen, u8 r, u8 g, u8 b);
+	u8 GetBookIndex(Book* book);
+	Text* GetTypesetter();
+	u8 OpenBook(Book *book);
+	void SetControls(bool flipped = false);
+
 	//! in App.cpp
 	void CycleBrightness();
-	void Init();
-	void PrintStatus(const char *msg);
-	void PrintStatus(string msg);
 	void Flip();
-	void SetProgress(int amount);
-	void UpdateClock();
-
-	void Log(const char*);
-	void Log(const char* format, const char *msg);
-	void Log(const std::string);
-	void Log(const char *format, const int value);
-
+	u8   Init();
+	void PrintStatus(const char *msg);
+	void PrintStatus(std::string msg);
 	int  Run(void);
-	bool parse_in(parsedata_t *data, context_t context);
-	void parse_init(parsedata_t *data);
-	context_t parse_pop(parsedata_t *data);
-	void parse_error(XML_ParserStruct *ps);
-	void parse_push(parsedata_t *data, context_t context);
+	void SetProgress(int amount);
 
-	//! in App_Browser.cpp
-	void HandleEventInBrowser();
-	void browser_init(void);
-	void browser_draw(void);
-	void browser_nextpage(void);
-	void browser_prevpage(void);
-	void browser_redraw(void);
-	
-	//! in App_Book.cpp
-	void HandleEventInBook();
-	int  GetBookIndex(Book*);
-	void AttemptBookOpen();
-	u8   OpenBook(void);
-	
-	//! in App_Prefs.cpps
+	//! in App_Prefs.cpp
 	void HandleEventInPrefs();
 	void PrefsInit();
 	void PrefsDraw();
@@ -192,22 +79,59 @@ class App {
 	void HandleEventInFont();
 	void FontInit();
 	void FontDeinit();
-	void FontDraw();
-	void FontDraw(bool redraw);
+	void FontDraw(bool redraw = true);
 	void FontNextPage();
 	void FontPreviousPage();
 	void FontButton();
 
-	private:
-	int bg3;
-	uint8_t bookmaxbuttons;  // max that fit on a screen.
-	void DrawSplashScreen();
-	void IndexBooks();
-	void InitScreens();
-	void ReopenBook();
 	void SetBrightness(int b);
-	void SetOrientation(bool flip);
-	void WifiInit();
-	bool WifiConnect();
+	void DrawSplashScreen();
+
+	Text* ts;		 //! Typesetter.
+	Prefs* prefs;    //! Preferences and serialization
+	Browser* browser; //! Browser view.
+	u8 brightness;   //! 4 levels for the Lite.
+	u8 mode; 	     //! Are we in book or browser or prefs mode?
+	std::string fontdir;  //! Default location to search for TTF files.
+	input_t key; 	      //! Inputs are remappable to support screen flipping.
+	std::vector<Button*> buttons;
+	std::string bookdir;  //! search path for EPUB files.
+	std::vector<Book*> books;	//! books found in {bookdir}.
+	Book* bookcurrent;		//! which book is currently being read?
+	
+	bool reopen;     //! reopen book from last session on startup?
+	bool cache;      //! save rendered glypth to a cache?
+
+	std::vector<u16> pageindices; 	//! not used yet; will contain pagination indices for caching.
+	
+	// TODO move to Prefs class.
+	Button prefsButtonBooks;
+	Button prefsButtonFonts;
+	Button prefsButtonFont;
+	Button prefsButtonFontBold;
+	Button prefsButtonFontItalic;
+	Button prefsButtonFontSize;
+	Button prefsButtonParaspacing;
+	Button* prefsButtons[PREFS_BUTTON_COUNT];
+	u8 prefsSelected;
+
+	int bg[2];
+
+	private:
 	void Fatal(const char *msg);
+	void HandleEventInBook();
+	void HandleEventInBrowser();
+
+	void IndexBooks();
+ 	void ReopenBook();
+	void SortBookmarks();
+	void SortBooks();
+
+	void SetOrientation(bool flip);
+
+	uint8_t bookmaxbuttons;  // max that fit on a screen.
+	Button buttonnext;
+	Button buttonprev;
+	Button buttonprefs;
+
 };

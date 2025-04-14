@@ -1,12 +1,10 @@
 #pragma once
 
-#ifndef _parse_h
-#define _parse_h
-
 #include <expat.h>
-#include "book.h"
-
-#define PAGEBUFSIZE 2048
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_CACHE_H
+#include "define.h"
 
 //! Symbols for known XHTML tags.
 
@@ -31,12 +29,13 @@ typedef enum {
 //! to all expat callbacks via (void*)data.
 typedef struct {
 	context_t stack[32];
-	u8 stacksize;
-	Book *book;
+	uint8_t stacksize;
+	class App *app;
+	class Book *book;
 	class Prefs *prefs;
 	int screen;
 	FT_Vector pen;
-	u8 buf[PAGEBUFSIZE];
+	uint8_t buf[PAGEBUFSIZE];
 	FILE *cachefile;
 	int buflen;
 	//! Our total parse position in terms of cooked text.
@@ -48,6 +47,13 @@ typedef struct {
 	int totalbytes;
 	int pagecount;
 } parsedata_t;
+
+bool iswhitespace(uint8_t c);
+
+bool parse_in(parsedata_t *data, context_t context);
+void parse_init(parsedata_t *data);
+context_t parse_pop(parsedata_t *data);
+void parse_push(parsedata_t *data, context_t context);
 
 //! Expat callbacks for parsing XHTML.
 
@@ -65,10 +71,3 @@ extern void prefs_end_hndl(void *data, const char *name);
 void title_start_hndl(void *data, const char *el, const char **attr);
 void title_char_hndl(void *data, const char *txt, int txtlen);
 void title_end_hndl(void *data, const char *el);
-
-bool iswhitespace(u8 c);
-
-void parse_init(parsedata_t *data);
-void parse_printerror(XML_Parser p);
-
-#endif

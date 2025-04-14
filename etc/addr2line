@@ -1,0 +1,1 @@
+arm-none-eabi-addr2line -e dslibris.elf -a $1

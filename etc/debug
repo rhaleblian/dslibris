@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+${DESMUME} --arm9gdb=9000 --cflash-image cflash.img dslibris.nds

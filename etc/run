@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+${DESMUME} --cflash-image cflash.img dslibris.nds

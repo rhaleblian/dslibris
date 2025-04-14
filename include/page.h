@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  Copyright (C) 2007-2009 Ray Haleblian
  
@@ -23,36 +25,26 @@ to render a full left and right screen of text.
 
 A Book contains a vector of Pages.
 */
-#ifndef PAGE_H
-#define PAGE_H
 
-#include <nds.h>
-#include "book.h"
-#include "text.h"
+class Book;
+class Text;
 
 class Page {
-	class Book *book;
-	void DrawNumber(Text *ts);
-
- public:
-	//! UTF-8 chars, allocated per-page at parse time, to exact length.
-	u8 *buf;
-	//! Length of buf.
-	int length;
-	//! In a book-long char buffer, where would i begin?
-	int start;
-	//! Ditto, for end char. 
-	int end;
-	Page(Book *b);
-	Page(Book *b, Text *t);
+	public:
+	Page(Book* b);
 	~Page();
+	void Cache(FILE *fp);
+	void Draw();
+	void Draw(Text *ts);
 	u8*  GetBuffer() { return buf; }
 	int  GetLength() { return length; }
-	//! Copy src to buf for len bytes.
-	u8   SetBuffer(u8 *src, u16 len); 
-	void Cache(FILE *fp);
-//	void Draw();
-	void Draw(Text *ts);
-};
+	u8   SetBuffer(u8 *src, u16 len);    //! Copy src to buf for len bytes.
+	int length;	                         //! Length of buf.
+	int start;                           //! start index in a book's char buffer.
+	int end;  	                         //! Ditto, for end char index. 
 
-#endif
+	private:
+	void DrawNumber(Text *ts);
+	Book* book;
+	u8* buf;                             //! UTF-8 chars
+};

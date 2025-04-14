@@ -1,0 +1,4 @@
+make clean
+make -j 4
+make run
+

@@ -1,9 +1,14 @@
-#ifndef _button_h
-#define _button_h
+#pragma once
 
-#include "text.h"
 #include <unistd.h>
 #include <string>
+
+#define PREFS_BUTTON_COUNT 5
+#define PREFS_BUTTON_FONT 2
+#define PREFS_BUTTON_FONT_ITALIC 3
+#define PREFS_BUTTON_FONT_BOLD 4
+#define PREFS_BUTTON_FONTSIZE 1
+#define PREFS_BUTTON_PARASPACING 0
 
 typedef struct {
 	u16 x;
@@ -18,7 +23,7 @@ class Button {
 	std::string text;
 	//! intended for the author name.
 	std::string text2;
-	Text *ts;
+	class Text *ts;
 
  public:
 	Button();
@@ -34,5 +39,3 @@ class Button {
 	void Resize(u16 x, u16 y);
 	bool EnclosesPoint(u16 x, u16 y);
 };
-
-#endif

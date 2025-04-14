@@ -1,3 +1,4 @@
+#pragma once
 /* 
 
 dslibris - an ebook reader for the Nintendo DS.
@@ -25,8 +26,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *  Created on: Jul 11, 2009
  *      Author: rhaleblian
  */
-
-#pragma once
 
 #include <string>
 

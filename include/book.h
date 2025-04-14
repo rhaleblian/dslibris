@@ -1,11 +1,13 @@
-#ifndef BOOK_H
-#define BOOK_H
+#pragma once
 
-#include "page.h"
-#include <nds.h>
 #include <string>
 #include <list>
+#include <nds.h>
 #include <vector>
+#include "parse.h"
+
+class App;
+class Page;
 
 typedef enum {FORMAT_UNDEF, FORMAT_XHTML, FORMAT_EPUB} format_t;
 
@@ -15,17 +17,9 @@ typedef enum {FORMAT_UNDEF, FORMAT_XHTML, FORMAT_EPUB} format_t;
 //! App maintains a vector of Book to represent the available library.
 
 class Book {
-	std::string filename;
-	std::string foldername;
-	std::string title;
-	std::string author;
-	int position;  //! as page index.
-	std::list<u16> bookmarks;  //! as page indices.
-	std::vector<class Page*> pages;
-public:
-	Book();
+	public:
+	Book(App *app);
 	~Book();
-	format_t format;
 	inline std::string* GetAuthor() { return &author; }
 	std::list<u16>* GetBookmarks(void);
 	int  GetNextBookmark(void);
@@ -40,6 +34,7 @@ public:
 	int  GetPosition(void);
 	int  GetPosition(int offset);
 	const char* GetTitle();
+	void HandleEvent();
 	void SetAuthor(std::string &s);
 	void SetFileName(const char *filename);
 	void SetFolderName(const char *foldername);	
@@ -57,8 +52,17 @@ public:
 	u8   Open();
 	u8   Parse(bool fulltext);
 	int  ParseHTML();
-	void Restore();
+	void Restore();	
+	App *app;
+	format_t format;
+
+	private:
+	std::string filename;
+	std::string foldername;
+	std::string title;
+	std::string author;
+	int position;  //! as page index.
+	std::list<u16> bookmarks;  //! as page indices.
+	std::vector<Page*> pages;
+	parsedata_t parsedata; 	//! user data block passed to expat callbacks.
 };
-
-#endif
-

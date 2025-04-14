@@ -1,18 +1,23 @@
-#include "book.h"
-#include "main.h"
-#include "parse.h"
-#include "epub.h"
-#include "app.h"
+#include <nds.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/param.h>
+#include "app.h"
+#include "epub.h"
+#include "page.h"
+#include "parse.h"
+#include "prefs.h"
+#include "text.h"
 
-extern App *app;
+#include "book.h"
+#include "page.h"
+
 extern bool parseFontBold;
 extern bool parseFontItalic;
 
-Book::Book()
+Book::Book(App *a)
 {
+	app = a;
 	foldername.clear();
 	filename.clear();
 	title.clear();
@@ -241,7 +246,7 @@ u8 Book::Parse(bool fulltext)
 	}
 	
 	parsedata_t parsedata;
-	app->parse_init(&parsedata);
+	parse_init(&parsedata);
 	parsedata.cachefile = fopen("/cache.dat", "w");
 	parsedata.book = this;
 	
@@ -275,7 +280,6 @@ u8 Book::Parse(bool fulltext)
 		status = XML_Parse(p, filebuf, bytes_read, (bytes_read == 0));
 		if (status == XML_STATUS_ERROR)
 		{
-			app->parse_error(p);
 			rc = 254;
 			break;
 		}
@@ -309,4 +313,160 @@ void Book::Restore()
 void Book::Close()
 {
 	pages.erase(pages.begin(), pages.end());
+}
+
+void Book::HandleEvent()
+{
+	u16 pagecurrent = GetPosition();
+	u16 pagecount = GetPageCount();
+	input_t key = app->key;
+	Text* ts = app->ts;
+
+	if (key.downrepeat & (KEY_A|key.r|key.down))
+	{
+		// page forward.
+		if (pagecurrent < pagecount-1)
+		{
+			pagecurrent++;
+			SetPosition(pagecurrent);
+			GetPage()->Draw(app->ts);
+		}
+		app->prefs->Write();
+	}
+
+	else if (key.downrepeat & (KEY_B|key.l|key.up))
+	{
+		// page back.
+		if(pagecurrent > 0)
+		{
+			pagecurrent--;
+			SetPosition(pagecurrent);
+			GetPage()->Draw(app->ts);
+		}
+		app->prefs->Write();
+	}
+
+	uint32_t keys = keysDown();
+
+	if(keys){
+
+		if (keys & KEY_X)
+		{
+			// toggle inverted text.
+			app->ts->SetInvert(!app->ts->GetInvert()); 	 
+			GetPage()->Draw(ts);
+		}
+
+		else if (keys & KEY_Y)
+		{
+			// go to next level in brightness. 
+			app->CycleBrightness();
+			app->prefs->Write();
+		}
+
+		else if (keys & KEY_START)
+		{
+			// return to browser.
+			Close();
+			app->bookcurrent = NULL;
+			if(app->mode == APP_MODE_BOOK)
+			{
+				if(ts->orientation) lcdSwap();
+				app->mode = APP_MODE_BROWSER;
+			}
+			// ts->PrintSplash(ts->screenleft);
+			app->prefs->Write();
+		}
+
+		else if (keys & KEY_TOUCH)
+		{
+			// Turn page on touch.
+			touchPosition touch;
+			touchRead(&touch);
+			if ((ts->orientation && touch.py > 95) || (touch.py < 96))
+			{
+				if (pagecurrent > 0)
+				{
+					pagecurrent--;
+					SetPosition(pagecurrent);
+					GetPage()->Draw(app->ts);
+				}
+			}
+			else
+			{
+				if (pagecurrent < pagecount-1)
+				{
+					pagecurrent++;
+					SetPosition(pagecurrent);
+					GetPage()->Draw(ts);
+				}
+			}
+			app->prefs->Write();
+		}
+
+		else if (keys & KEY_SELECT)
+		{
+			// Toggle bookmark.
+			std::list<u16>* bookmarks = GetBookmarks();
+	
+			bool found = false;
+			for (std::list<u16>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
+				if (*i == pagecurrent)
+				{
+					bookmarks->erase(i);
+					found = true;
+					break;
+				}
+			}
+	
+			if (!found)
+			{
+				bookmarks->push_back(pagecurrent);
+				bookmarks->sort();
+			}
+	
+			GetPage()->Draw(app->ts);
+		}
+		else if (keys & (key.right | key.left))
+		{
+			// Navigate bookmarks.
+			std::list<u16>* bookmarks = GetBookmarks();
+	
+			if (!bookmarks->empty())
+			{
+				//Find the bookmark just after the current page
+				if (keys & key.left)
+				{
+					std::list<u16>::iterator i;
+					for (i = bookmarks->begin(); i != bookmarks->end(); i++) {
+						if (*i > GetPosition())
+							break;
+					}
+			
+					if (i == bookmarks->end())
+						i = bookmarks->begin();
+			
+					SetPosition(*i);
+				}
+				else // KEY_OTHER by process of elimination
+				{
+					std::list<u16>::reverse_iterator i;
+					for (i = bookmarks->rbegin(); i != bookmarks->rend(); i++) {
+						if (*i < GetPosition())
+							break;
+					}
+			
+					if (i == bookmarks->rend())
+						i = bookmarks->rbegin();
+			
+					SetPosition(*i);
+				}
+		
+				GetPage()->Draw(app->ts);
+			}
+		}
+
+	}
+
+	if(keysUp()) app->prefs->Write();
 }

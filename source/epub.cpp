@@ -20,18 +20,20 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
-#include "epub.h"
-#include <nds.h>
-#include <string.h>
-#include <stdio.h>
+#include <expat.h>
 #include <iostream>
+#include <nds.h>
+#include <stdio.h>
+#include <string.h>
 #include <vector>
-#include "main.h"
-#include "parse.h"
-#include "expat.h"
-#include "zlib.h"
-#include "unzip.h"
+#include <zlib.h>
+
+#include "book.h"
 #include "log.h"
+#include "parse.h"
+#include "unzip.h"
+
+#include "epub.h"
 
 void epub_data_init(epub_data_t *d)
 {
@@ -224,15 +226,15 @@ int epub(Book *book, std::string name, bool metadataonly)
 	parsedata.ctx.clear();
 	parsedata.book = book;
 	parsedata.type = PARSE_CONTENT;
-	vector<std::string*> href;
+	std::vector<std::string*> href;
 	if(parsedata.spine.size()) {
 		// Use spine for reading order.
 		Log("progr: ordering by spine\n");
-		vector<epub_itemref*>::iterator itemref;
+		std::vector<epub_itemref*>::iterator itemref;
 		for(itemref=parsedata.spine.begin();
 			itemref!=parsedata.spine.end();
 			itemref++) {
-			vector<epub_item*>::iterator item;
+			std::vector<epub_item*>::iterator item;
 			for(item=parsedata.manifest.begin();
 				item!=parsedata.manifest.end();
 				item++) {
@@ -245,7 +247,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 	}
 	else {
 		Log("progr: ordering by manifest\n");
-		vector<epub_item*>::iterator item;
+		std::vector<epub_item*>::iterator item;
 		for(item=parsedata.manifest.begin();
 			item!=parsedata.manifest.end();
 			item++)
@@ -254,7 +256,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 	
 	Log("progr: catenating sections\n");
 	
-	vector<std::string*>::iterator it;
+	std::vector<std::string*>::iterator it;
 	for(it=href.begin();it!=href.end();it++)
 	{
 		size_t pos = (*it)->find_last_of('.');

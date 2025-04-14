@@ -1,29 +1,36 @@
 #include <stdio.h>
 #include <vector>
-#include "sys/stat.h"
-#include "sys/time.h"
-#include "nds.h"
-#include "main.h"
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <vector>
+
+#include <nds.h>
 #include "app.h"
+#include "define.h"
+#include "parse.h"
 #include "prefs.h"
 #include "book.h"
+#include "text.h"
 
-#define PARSEBUFSIZE 1024*64
-
-Prefs::Prefs() {
-	Init();
+Prefs::Prefs(App *a) {
+	app = a;
+	modtime = 0;  // fill this in with gettimeofday()
+	swapshoulder = FALSE;
 }
-Prefs::Prefs(App *parent) { Init(); app = parent; }
+
 Prefs::~Prefs() {}
+
+void Prefs::Init() {}
 
 //! \return 0: success, 255: file open failure, 254: no bytes read, 253: parse failure.
 int Prefs::Read()
 {
 	int err = 0;
 	parsedata_t pdata;
-	app->parse_init(&pdata);
+	parse_init(&pdata);
+	pdata.app = app;
 	pdata.prefs = this;
-		
+
 	FILE *fp = fopen(PREFSPATH,"r");
 	if (!fp) { err = 255; return err; }
 
@@ -41,7 +48,7 @@ int Prefs::Read()
 		enum XML_Status status = 
 			XML_ParseBuffer(p, bytes_read, bytes_read == 0);
 		if(status == XML_STATUS_ERROR) { 
-			app->parse_error(p);
+			// parse_error(p);
 			err = 253;
 			break;
 		}
@@ -51,15 +58,15 @@ int Prefs::Read()
 	fclose(fp);
 	return err;
 
-	struct stat st;
-	stat(PREFSPATH,&st);
-	struct timeval time;
-	gettimeofday(&time,NULL);
-	char msg[64];
-	sprintf(msg,"info : file timestamp %lld",st.st_mtime);
-	app->Log(msg);
-	sprintf(msg,"info : current time %lld",time.tv_sec);
-	app->Log(msg);
+	// struct stat st;
+	// stat(PREFSPATH,&st);
+	// struct timeval time;
+	// gettimeofday(&time,NULL);
+	// char msg[64];
+	// sprintf(msg,"info : file timestamp %lld",st.st_mtime);
+	// app->Log(msg);
+	// sprintf(msg,"info : current time %lld",time.tv_sec);
+	// app->Log(msg);
 }
 
 //! \return Error code, 0: success.
@@ -75,7 +82,7 @@ int Prefs::Write()
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
 		app->brightness,
 		app->ts->GetInvert(),
-		app->orientation);
+		app->ts->orientation);
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
 			app->ts->margin.top, app->ts->margin.left,
 			app->ts->margin.bottom, app->ts->margin.right);
@@ -85,8 +92,8 @@ int Prefs::Write()
 		app->ts->GetFontFile(TEXT_STYLE_BOLD).c_str(),
 		app->ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
  	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
-			app->paraindent,
-			app->paraspacing);
+			app->ts->paraindent,
+			app->ts->paraspacing);
 	/* TODO save pagination data with current book to cache it to disk.
 	   store timestamp too in order to invalidate caches.
 	vector<u16> pageindices;
@@ -118,9 +125,4 @@ int Prefs::Write()
 	fclose(fp);
 
 	return err;
-}
-
-void Prefs::Init(){
-	modtime = 0;  // fill this in with gettimeofday()
-	swapshoulder = FALSE;
 }

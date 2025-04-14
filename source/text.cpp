@@ -29,30 +29,75 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "string.h"
 
 #include "app.h"
-#include <bg.h>
 #include "ft.h"
-#include "main.h"
-#include "version.h"
+#include "splash.h"
 #include "text.h"
+#include "version.h"
 
-extern char msg[];
+char msg[1024];
 std::stringstream ss;
+
+#if 0
+class Face {
+	Cache cache;
+	FT_Face ft_face;
+	Face() {
+		ft_face = NULL;
+		cache = new Cache();
+	}
+	Face(FT_Library library, std::string path, int index) {
+		FT_New_Face( library, path.c_str(), index, &ft_face );
+		cache = new Cache();
+	}
+	~Face() {
+		if(face) FT_Done_Face(face);
+		delete cache;
+	}
+};
+
+
+//! A map of a style ID to a Face.
+
+//! Multiple styles might use the same Face.
+
+class Style {
+	u8 id;
+	Face *face;
+	int pixelsize;
+
+	Style() {
+		id = TEXT_STYLE_REGULAR;
+		face = NULL;
+		pixelsize = PIXELSIZE;
+	}
+
+	Style(int type) {
+		Style::Style();
+		id = type;
+	}
+};
+#endif
 
 void Text::CopyScreen(u16 *src, u16 *dst) {
 	memcpy(src, dst, display.width * display.height * sizeof(u16));
 }
 
-Text::Text()
+Text::Text(App *a)
 {
-	display.height = PAGE_HEIGHT;
-	display.width = PAGE_WIDTH;
+	initialized = false;
+
+	app = a;
+
+	// fonts.
 	filenames[TEXT_STYLE_REGULAR] = FONTREGULARFILE;
 	filenames[TEXT_STYLE_BOLD] = FONTBOLDFILE;
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
-	screenleft = (u16*)BG_BMP_RAM_SUB(0);
-	screenright = (u16*)BG_BMP_RAM(0);
+
+	// video.
+	display.height = PAGE_HEIGHT;
+	display.width = PAGE_WIDTH;
 	offscreen = new u16[display.width * display.height];
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
@@ -63,52 +108,63 @@ Text::Text()
 	bgcolor.b = 15;
 	usebgcolor = false;
 	invert = false;
-	justify = false;
-	linespacing = 0;
-	ftc = false;
-	initialized = false;
-	imagetype.face_id = (FTC_FaceID)&face_id;
-	imagetype.flags = FT_LOAD_DEFAULT; 
-	imagetype.height = pixelsize;
-	imagetype.width = 0;
 
-	// Rendering state.
+	// rendering state.
 	hit = false;
 	linebegan = false;
 	codeprev = 0;
 	bold = false;
-	italic = false;
 	face = NULL;
-	style = TEXT_STYLE_REGULAR;
+	italic = false;
+	justify = false;
+	linespacing = 0;
 	pixelsize = PIXELSIZE;
+	style = TEXT_STYLE_REGULAR;
 	screen = screenleft;
 
-	// Statistics.
+	// cache.
+	ftc = true;
+	imagetype.face_id = (FTC_FaceID)&face_id;
+	imagetype.flags = FT_LOAD_DEFAULT; 
+	imagetype.height = pixelsize;
+	imagetype.width = 0;
 	stats_hits = 0;
 	stats_misses = 0;
 
-	ClearScreen(offscreen, 255, 255, 255);
 	ss.clear();
 }
 
 Text::~Text()
 {
 	// framebuffers
-	free(offscreen);
+	if (offscreen) free(offscreen);
 	
 	// homemade cache
 	ClearCache();
-	for(map<FT_Face, Cache*>::iterator iter = textCache.begin();
+	for(std::map<FT_Face, Cache*>::iterator iter = textCache.begin();
 		iter != textCache.end(); iter++) {
 		delete iter->second;
 	}
 	textCache.clear();
 	
 	// FreeType
-	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+	for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		FT_Done_Face(iter->second);
 	}
 	FT_Done_FreeType(library);
+}
+
+int Text::Init()
+{
+	screenleft = bgGetGfxPtr(app->bg[0]);
+	screenright = bgGetGfxPtr(app->bg[1]);
+	// if(ftc)
+	// 	return InitFreeTypeCache();
+	// else
+	// 	return InitHomemadeCache();
+	// InitPen();
+	initialized = true;
+	return 0;
 }
 
 static FT_Error
@@ -139,7 +195,7 @@ FT_Error Text::InitFreeTypeCache(void) {
 	sprintf(face_id.file_path, "%s/%s", FONTDIR, filenames[TEXT_STYLE_REGULAR].c_str());
 	face_id.face_index = 0;
 	sprintf(msg, "%s %s %d\n", filenames[TEXT_STYLE_REGULAR].c_str(), face_id.file_path, face_id.face_index);
-	app->Log(msg);
+	// app->Log(msg);
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
 	if(error) return error;
 
@@ -148,21 +204,16 @@ FT_Error Text::InitFreeTypeCache(void) {
 //                           FTC_Scaler   scaler,
 //                           FT_Size     *asize );
 
-	ReportFace(faces[TEXT_STYLE_REGULAR]);
+	// ReportFace(faces[TEXT_STYLE_REGULAR]);
 
 	// FT_Select_Charmap(GetFace(TEXT_STYLE_REGULAR), FT_ENCODING_UNICODE);
 	// charmap_index = FT_Get_Charmap_Index(GetFace(TEXT_STYLE_REGULAR)->charmap);
-
-	screen = screenleft;
-	InitPen();
-	initialized = true;
-	app->Log("initialized freetype cache\n");
 	return 0;
 }
 
 FT_Error Text::CreateFace(int style) {
 	std::string path = std::string(FONTDIR) + "/" + filenames[style];
-	app->Log("text: creating face %s\n", path.c_str());
+	// app->Log("text: creating face %s\n", path.c_str());
 	FT_Error err = FT_New_Face(library, path.c_str(), 0, &face);
 	if (!err)
 		faces[style] = face;
@@ -189,43 +240,29 @@ int Text::InitHomemadeCache(void) {
 	std::map<u8, FT_Face>::iterator iter;
 	for (iter = faces.begin(); iter != faces.end(); iter++) {
 		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
-		textCache.insert(make_pair(iter->second, new Cache()));
+		textCache.insert(std::make_pair(iter->second, new Cache()));
 	}
 
 	screen = screenleft;
 	ClearCache();
 	InitPen();
 	initialized = true;
-	app->Log("[ OK ] custom cache\n");
+	// app->Log("[ OK ] custom cache\n");
 	return 0;
-}
-
-int Text::Init()
-{
-	if(ftc)
-		return InitFreeTypeCache();
-	else
-		return InitHomemadeCache();
 }
 
 void Text::ReportFace(FT_Face face)
 {
 	sprintf(msg, "%s\n", face->family_name);
-	app->Log(msg);
 	sprintf(msg, "%s\n", face->style_name);
-	app->Log(msg);
 	sprintf(msg, "faces %ld\n", face->num_faces);
-	app->Log(msg);
 	sprintf(msg, "glyphs %ld\n", face->num_glyphs);
-	app->Log(msg);
 	sprintf(msg, "fixed-sizes %d\n", face->num_fixed_sizes);
-	app->Log(msg);
 	for (int i=0;i<face->num_fixed_sizes;i++)
 	{
 		sprintf(msg, " w %d h %d\n",
 			face->available_sizes[i].width,
 			face->available_sizes[i].height);
-		app->Log(msg);
 	}	
 }
 
@@ -282,7 +319,7 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 	dst->bitmap_left = src->bitmap_left;
 	dst->advance = src->advance;
 	//textCache[face]->cache_ucs[textCache[face]->cachenext] = ucs;
-	textCache[face]->cacheMap.insert(make_pair(ucs, dst));
+	textCache[face]->cacheMap.insert(std::make_pair(ucs, dst));
 	//textCache[face]->cachenext++;
 	//return textCache[face]->cachenext-1;
 	return ucs;
@@ -329,7 +366,7 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 			return &textCache[face]->glyphs[i];
 #endif	
 
-	map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
+	std::map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
 	
 	if (iter != textCache[face]->cacheMap.end()) {
 		stats_hits++;
@@ -349,7 +386,7 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 
 void Text::ClearCache()
 {
-	 for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+	 for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		 ClearCache(iter->second);
 	 }
 }
@@ -362,7 +399,7 @@ void Text::ClearCache(u8 style)
 void Text::ClearCache(FT_Face face)
 {
 	//textCache[face]->cachenext = 0;
-	map<u16, FT_GlyphSlot>::iterator iter;   
+	std::map<u16, FT_GlyphSlot>::iterator iter;   
 	for(iter = textCache[face]->cacheMap.begin(); iter != textCache[face]->cacheMap.end(); iter++) {
 		delete iter->second;
 	}
@@ -372,8 +409,13 @@ void Text::ClearCache(FT_Face face)
 
 void Text::ClearScreen()
 {
-	if(invert) memset((void*)screen,0,PAGE_WIDTH*PAGE_HEIGHT*4);
-	else memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
+	u16 color;
+	if(invert)
+		color = ARGB16(1,3,3,3);
+	else
+		color = ARGB16(1,29,29,29);
+	for (int i=0; i<PAGE_WIDTH*PAGE_HEIGHT; i++)
+		screen[i] = color;
 }
 
 void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
@@ -381,11 +423,8 @@ void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 	u16 clearcolor;
 	if(invert) clearcolor = RGB15(0,0,0) | BIT(15);
 	else clearcolor = RGB15(31,31,31) | BIT(15);
-	//uint word = (clearcolor << 16) | clearcolor;
 	for(u16 y=yl; y<yh; y++) {
-//		memcpy((void*)screen[y*display.height+xl],(void*)word,xh-xl/2);
 		for(u16 x=xl; x<xh; x++) {
-			// FIXME: crashes on hw
 			screen[y*display.height+x] = clearcolor;
 		}
 	}
@@ -505,7 +544,7 @@ void Text::SetPixelSize(u8 size)
 		return;
 	}
 
-	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+	for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		if (!size)
 			FT_Set_Pixel_Sizes(iter->second, 0, PIXELSIZE);
 		else
@@ -608,10 +647,10 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 		error = FTC_ImageCache_Lookup(cache.image, &imagetype, glyph_index, &glyph, &anode);
 		if (error) {
 			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
+			// app->Log(ss.str().c_str());
 			return;
 		}
-		app->Log("ok\n");
+		// app->Log("ok\n");
 
 		FTC_SBit p = &sbit;
   		error = FTC_SBitCache_Lookup(cache.sbit,
@@ -621,10 +660,10 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
                                 &anode );
 		if (error) {
 			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
+			// app->Log(ss.str().c_str());
 			return;
 		}
-		app->Log("ok\n");
+		// app->Log("ok\n");
 
 		buffer = sbit.buffer;
 		bx = sbit.left;
@@ -637,10 +676,10 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
         	                    FT_RENDER_MODE_LCD_V); /* render mode */
 		if (error) {
 			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
+			// app->Log(ss.str().c_str());
 			return;
 		}
-		app->Log("ok\n");
+		// app->Log("ok\n");
 
 		// auto glyph = faces[TEXT_STYLE_REGULAR]->glyph;
 		// buffer = glyph->bitmap.buffer;
@@ -802,15 +841,17 @@ void Text::PrintString(const char *s, FT_Face face) {
 void Text::PrintStats() {
 	//! Tell log how well we're caching.
 	sprintf(msg, "info: %d cache hits.\n", stats_hits);
-	app->Log(msg);
+	// app->Log(msg);
 	sprintf(msg, "info: %d cache misses.\n", stats_misses);
-	app->Log(msg);
+	// app->Log(msg);
 }
 
 void Text::PrintStatusMessage(const char *msg)
 {
 	//! Render a one-liner message on the left screen.
 	u16 x,y;
+
+	// push
 	GetPen(&x,&y);
 	u16 *s = screen;
 	int ps = GetPixelSize();
@@ -822,6 +863,7 @@ void Text::PrintStatusMessage(const char *msg)
 	SetPen(16, PAGE_HEIGHT-32);
 	PrintString(msg);
 
+	// pop
 	SetInvert(invert);
 	SetPixelSize(ps);
 	screen = s;
@@ -830,7 +872,7 @@ void Text::PrintStatusMessage(const char *msg)
 
 void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 {
-	for (int i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++)
+	for (int i=0; i<PAGE_HEIGHT*PAGE_WIDTH; i++)
 		screen[i] = RGB15(r,g,b) | BIT(15);
 }
 
@@ -840,7 +882,7 @@ void Text::PrintSplash(u16 *screen)
 	u16* s = GetScreen();
 	
 	SetScreen(screen);
-	drawsplash(screen);
+	app->DrawSplashScreen();
 	sprintf(msg,"%s",VERSION);
 	PrintStatusMessage(msg);
 	
@@ -858,7 +900,7 @@ void Text::SetFontFile(const char *filename, u8 style)
 	if(initialized) ClearCache(style);
 }
 
-string Text::GetFontFile(u8 style)
+std::string Text::GetFontFile(u8 style)
 {
 	return filenames[style];
 }
@@ -883,28 +925,28 @@ FT_Face Text::GetFace(u8 style)
 }
 */
 
-int asciiart() {
-  auto ft = typesetter();
-  auto error = renderer(ft.face);
-  free_ft(ft);
-  return error;
-}
+// int asciiart() {
+//   auto ft = typesetter();
+//   auto error = renderer(ft.face);
+//   free_ft(ft);
+//   return error;
+// }
 
-const char* ErrorString(int errorcode) {
-	const char *msg[] = {
-		"no error",
-		"cannot open resource",
-		"unknown file format",
-		"broken file",
-		"invalid FreeType version",
-		"module version is too low", 
-		"invalid argument",
-		"unimplemented feature",
-		"broken table",
-		"broken offset within table",
-		"array allocation size too large",
-		"missing module",
-		"missing property"
-	};
-	return msg[errorcode];
-}
+// const char* ErrorString(int errorcode) {
+// 	const char *msg[] = {
+// 		"no error",
+// 		"cannot open resource",
+// 		"unknown file format",
+// 		"broken file",
+// 		"invalid FreeType version",
+// 		"module version is too low", 
+// 		"invalid argument",
+// 		"unimplemented feature",
+// 		"broken table",
+// 		"broken offset within table",
+// 		"array allocation size too large",
+// 		"missing module",
+// 		"missing property"
+// 	};
+// 	return msg[errorcode];
+// }
