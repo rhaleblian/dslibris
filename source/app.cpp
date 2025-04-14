@@ -260,12 +260,16 @@ int App::Run(void)
 
 	mode = APP_MODE_BROWSER;
 	ts->PrintSplash(ts->screenleft);
-	browser_draw();
+
+#if 0
+	// browser_draw();
 
 	Log("progr: browser displayed.\n");
 
 	// Resume reading from the last session.
 	
+	reopen = true;
+	bookcurrent = books[0];
 	if(reopen && bookcurrent)
 	{
 		int openerr = OpenBook();
@@ -278,6 +282,18 @@ int App::Run(void)
 		}
 	}
 	else Log("info : not reopening previous book.\n");
+#endif
+
+	ts->SetScreen(ts->screenright);
+	ts->ClearScreen();
+	ts->SetStyle(TEXT_STYLE_BROWSER);
+	ts->SetPixelSize(PIXELSIZE);
+	ts->SetInvert(false);
+	ts->SetPen(0,0);
+	
+	u32 ucs;
+	ts->GetCharCode("F", &ucs);
+	ts->PrintChar(ucs);
 
 	swiWaitForVBlank();
 

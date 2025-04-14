@@ -177,22 +177,24 @@ u8 Book::Open() {
 	int err = 0;
 
 	//	if( access( fname.c_str(), F_OK ) != -1 ) {
-	FILE *fp = fopen("/cache.dat", "r");
+	// FILE *fp = fopen("/cache.dat", "r");
+	FILE *fp = NULL;
 	if (fp && app->cache) {
 		// Restore from cache.
 		fclose(fp);
 		Restore();
 	} else {
 		if(format == FORMAT_XHTML) {
-			app->PrintStatus("opening XHTML...\n");
+			// app->PrintStatus("opening XHTML...\n");
 				err = Parse(true);
 		}
 		else if(format == FORMAT_EPUB) {
-			app->PrintStatus("opening EPUB...\n");
+			// app->PrintStatus("opening EPUB...\n");
 			std::string path;
 			path.append(GetFolderName());
 			path.append("/");
 			path.append(GetFileName());
+			app->Log(path.c_str());
 			err = epub(this,path,false);
 		} else
 			err = 255;

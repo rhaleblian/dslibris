@@ -592,93 +592,51 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	FT_Byte *buffer = NULL;
 	FT_UInt advance = 0;
 	FTC_Node anode = nullptr;
-	FT_Glyph glyph;
 
 	ss.clear();
 
-	// get metrics and glyph pointer.
-
-	if(ftc)
-	{
-		// use the FT cache.
-
-	    auto glyph_index = FTC_CMapCache_Lookup(cache.cmap, (FTC_FaceID)&face_id, -1, ucs);
-		error = FTC_ImageCache_Lookup(cache.image, &imagetype, glyph_index, &glyph, &anode);
-		if (error) {
-			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
-			return;
-		}
-		app->Log("ok\n");
-
-		FTC_SBit p = &sbit;
-  		error = FTC_SBitCache_Lookup(cache.sbit,
-                            	&imagetype,
-								glyph_index,
-                                &p,
-                                &anode );
-		if (error) {
-			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
-			return;
-		}
-		app->Log("ok\n");
-
-		buffer = sbit.buffer;
-		bx = sbit.left;
-		by = sbit.top;
-		height = sbit.height;
-		width = sbit.width;
-		advance = sbit.xadvance;
-
-		error = FT_Render_Glyph(faces[TEXT_STYLE_REGULAR]->glyph,            /* glyph slot  */
-        	                    FT_RENDER_MODE_LCD_V); /* render mode */
-		if (error) {
-			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
-			return;
-		}
-		app->Log("ok\n");
-
-		// auto glyph = faces[TEXT_STYLE_REGULAR]->glyph;
-		// buffer = glyph->bitmap.buffer;
-		// bx = glyph->bitmap_left;
-		// by = glyph->bitmap_top;
-		// width = glyph->bitmap.width;
-		// height = glyph->bitmap.rows;
-		// advance = width;
-
-		// ss.clear();
-		// ss << " err " << error 
-		//    << " glyph_index " << glyph_index  << " glyph " << glyph 
-		//    << " width " << width << " height " << height << " advance " << advance
-		//    << std::endl;
-		// app->Log(ss.str());
+	if (!face) {
+		app->Log("face is null\n");
+		return;
 	}
-	else
-	{
-		// Consult the cache for glyph data and cache it on a miss, if space is available.
-		FT_GlyphSlot glyph = GetGlyph(ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL, face);
-		
-		// ss << "ucs " << ucs << std::endl;
-		// app->Log(ss.str());
 
-		// error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-		// if (error) app->Log("boo\n");
-		// error = FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_REGULAR);
-		// if (error) app->Log("hoo\n");
-		// auto glyph = face->glyph;
-  		// error = FT_Get_Glyph( face->glyph, &glyph );
-		// if (error) app->Log("foo\n");
+	error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
+	if (error) {
+		sprintf(msg, "%s\n", FT_Error_String(error));
+		app->Log(msg);
+		return;
+	}
 
-  		// extract glyph image
-		FT_Bitmap bitmap = glyph->bitmap;
-		bx = glyph->bitmap_left;
-		by = glyph->bitmap_top;
-		width = bitmap.width;
-		height = bitmap.rows;
-		advance = glyph->advance.x >> 6;
-		buffer = bitmap.buffer;
+	error = FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
+	if (error) {
+		sprintf(msg, "%s\n", FT_Error_String(error));
+		app->Log(msg);
+		return;
+	}
+
+	// FT_Glyph glyph;
+	// error = FT_Get_Glyph( glyphslot, &glyph );
+
+	FT_GlyphSlot slot = face->glyph;
+	if (!slot) {
+		ss << "error: glyph slot is null " << ucs << std::endl;
+		app->Log(ss.str());
+		return;
+	}
+	bx = slot->bitmap_left;
+	by = slot->bitmap_top;
+	width = slot->bitmap.width;
+	height = slot->bitmap.rows;
+	buffer = slot->bitmap.buffer;	
+	// advance = glyph->advance.x >> 6;
+
+	sprintf(msg, "glyph %lu %u %u %u %u %u\n", ucs, bx, by, width, height, advance);
+	app->Log(msg);
+
+	if (!buffer) {
+		ss << "error: glyph buffer is null " << ucs << std::endl;
+		app->Log(ss.str());
+		return;
 	}
 
 #ifdef EXPERIMENTAL_KERNING
@@ -834,16 +792,17 @@ void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 
 void Text::PrintSplash(u16 *screen)
 {
-	u8 size = GetPixelSize();
 	u16* s = GetScreen();
-	
+	bool i = GetInvert();
+	u8 size = GetPixelSize();
+
 	SetScreen(screen);
 	drawstack(screen);
 	sprintf(msg,"%s",VERSION);
-	PrintStatusMessage(msg);
+	// PrintStatusMessage(msg);
 	
 	SetPixelSize(size);
-	SetInvert(invert);
+	SetInvert(i);
 	SetScreen(s);
 	
 	swiWaitForVBlank();

@@ -216,12 +216,12 @@ void App::browser_draw(void)
 	ts->ClearScreen();
 	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(PIXELSIZE);
-	for (int i=browserstart;
-		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
-		i++)
-	{
-		buttons[i]->Draw(ts->screenright,books[i]==bookselected);
-	}
+	// for (int i=browserstart;
+	// 	(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
+	// 	i++)
+	// {
+	// 	buttons[i]->Draw(ts->screenright,books[i]==bookselected);
+	// }
 	
 	if(browserstart >= APP_BROWSER_BUTTON_COUNT)
 		buttonprev.Draw(ts->screenright,false);

@@ -92,8 +92,10 @@ int main(void)
 
 	//kungheyfatcheck();
 	// asciiart();
-	// while(true) swiWaitForVBlank();
-
+	// while(pmMainLoop()) {
+	// 	scanKeys();
+	// 	swiWaitForVBlank();
+	// }
 	app = new App();
 	return app->Run();
 }

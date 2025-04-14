@@ -5,8 +5,8 @@
 DEVKITPRO ?= /opt/devkitpro
 DEVKITARM ?= /opt/devkitpro/devkitARM
 
-GAME_TITLE := dslibris
-GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
+GAME_TITLE := dslibris (dev)
+GAME_SUBTITLE1 := An EPUB reader for Nintendo DS (dev)
 GAME_SUBTITLE2 := Yoyodyne Research
 GAME_ICON := $(PWD)/gfx/icon.bmp
 
@@ -158,11 +158,11 @@ dldi-cycloevo: $(OUTPUT).nds
 dldi-r4: $(OUTPUT).nds
 	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
 
-run: dldi-r4
-	desmume --cflash-path test dslibris.nds
+run:
+	/usr/games/desmume-cli --cflash-image cflash.img dslibris.nds
 
 debug: dldi-r4
-	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
+	desmume --arm9gdb=9000 --cflash-image cflash.img dslibris.nds
 
 upload:
 # macOS only
