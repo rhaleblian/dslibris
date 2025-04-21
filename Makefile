@@ -149,19 +149,10 @@ doc:
 markdown: doc
 	node ../moxygen/bin/moxygen.js -h doc/xml
 
-dldi-mpcf: $(OUTPUT).nds
-	dlditool etc/dldi/mpcf.dldi dslibris.nds
-
-dldi-cycloevo: $(OUTPUT).nds
-	dlditool etc/dldi/CycloEvo.dldi dslibris.nds
-
-dldi-r4: $(OUTPUT).nds
-	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
-
 run:
-	/usr/games/desmume-cli --cflash-image cflash.img dslibris.nds
+	/Applications/DeSmuME.app/Contents/MacOS/DeSmuME --cflash-image cflash.img dslibris.nds
 
-debug: dldi-r4
+debug:
 	desmume --arm9gdb=9000 --cflash-image cflash.img dslibris.nds
 
 upload:

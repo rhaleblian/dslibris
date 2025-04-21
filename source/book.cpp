@@ -1,5 +1,5 @@
 #include "book.h"
-#include "main.h"
+#include "define.h"
 #include "parse.h"
 #include "epub.h"
 #include "app.h"

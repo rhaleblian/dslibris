@@ -5,27 +5,20 @@
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
-
 #include <expat.h>
-
 #include <fat.h>
-#include <nds/bios.h>
-#include <nds/arm9/input.h>
 
-#include "types.h"
-#include "main.h"
-#include "parse.h"
 #include "app.h"
 #include "book.h"
 #include "button.h"
+#include "define.h"
+#include "parse.h"
 #include "text.h"
-
-#define MIN(x,y) (x < y ? x : y)
-#define MAX(x,y) (x > y ? x : y)
+#include "types.h"
 
 void App::HandleEventInBrowser()
 {
-	uint32 keys = keysDown();
+	u32 keys = keysDown();
 	
 	if (keys & (KEY_A | key.down))
 	{
@@ -216,12 +209,10 @@ void App::browser_draw(void)
 	ts->ClearScreen();
 	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(PIXELSIZE);
-	// for (int i=browserstart;
-	// 	(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
-	// 	i++)
-	// {
-	// 	buttons[i]->Draw(ts->screenright,books[i]==bookselected);
-	// }
+	for (int i = browserstart;
+		(i < bookcount) && (i < browserstart + APP_BROWSER_BUTTON_COUNT);
+		i++)
+		buttons[i]->Draw(ts->screenright, books[i] == bookselected);
 	
 	if(browserstart >= APP_BROWSER_BUTTON_COUNT)
 		buttonprev.Draw(ts->screenright,false);
@@ -270,7 +261,6 @@ void App::AttemptBookOpen()
 {
 	if (!OpenBook()) {
 		mode = APP_MODE_BOOK;
-		//UpdateClock();
 	} else
 		browser_draw();
 }

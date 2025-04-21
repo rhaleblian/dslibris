@@ -1,3 +1,4 @@
+#pragma once
 /*
  Copyright (C) 2007-2020 Ray Haleblian
  
@@ -18,40 +19,10 @@
  To contact the copyright holder: ray@haleblian.com
  */
 
-#ifndef _main_h_
-#define _main_h_
-
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include "nds.h"
+#include <nds.h>
 #include "splash.h"
 
-#define MARGINLEFT 12
-#define MARGINRIGHT 12
-#define MARGINTOP 10
-#define MARGINBOTTOM 16
-#define LINESPACING 0
-#define PARASPACING 0
-#define PAGE_HEIGHT SCREEN_WIDTH
-#define PAGE_WIDTH SCREEN_HEIGHT
-#define BUFSIZE 1024*128
-#define SPLASH_LEFT 28
-#define SPLASH_TOP 44
-
-#define FONTDIR "Font"
-#define BOOKDIR "Book"
-#define LOGFILEPATH "dslibris.log"
-#define PREFSPATH "dslibris.xml"
-
-#define FONTREGULARFILE "LiberationSerif-Regular.ttf"
-#define FONTBOLDFILE "LiberationSerif-Bold.ttf"
-#define FONTITALICFILE "LiberationSerif-Italic.ttf"
-#define FONTBROWSERFILE "LiberationSans-Regular.ttf"
-#define FONTSPLASHFILE "LiberationSans-Regular.ttf"
-
 //! For drawing splash screen.
-int getSize(uint8 *source, uint16 *dest, uint32 arg);
-uint8 readByte(uint8 *source);
+int getSize(u8 *source, u16 *dest, u32 arg);
+u8 readByte(u8 *source);
 void drawstack(u16 *screen);
-
-#endif

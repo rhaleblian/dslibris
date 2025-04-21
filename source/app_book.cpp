@@ -5,19 +5,16 @@
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
-
 #include <expat.h>
-
 #include <fat.h>
-#include <nds/bios.h>
 
-#include "types.h"
-#include "main.h"
-#include "parse.h"
 #include "app.h"
 #include "book.h"
 #include "button.h"
+#include "define.h"
+#include "parse.h"
 #include "text.h"
+#include "types.h"
 
 //! Book-related methods for App class.
 
@@ -50,7 +47,7 @@ void App::HandleEventInBook()
 		prefs->Write();
 	}
 
-	uint32 keys = keysDown();
+	u32 keys = keysDown();
 
 	if(keys){
 
@@ -78,7 +75,7 @@ void App::HandleEventInBook()
 				if(orientation) lcdSwap();
 				mode = APP_MODE_BROWSER;
 			}
-			ts->PrintSplash(ts->screenleft);
+			ts->PrintSplash();
 			prefs->Write();
 			browser_draw();
 		}

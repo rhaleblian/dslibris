@@ -11,10 +11,10 @@
 #include <fat.h>
 #include <nds/bios.h>
 
+#include "app.h"
 #include "types.h"
 #include "main.h"
-#include "parse.h"
-#include "app.h"
+#include "define.h"
 #include "book.h"
 #include "button.h"
 #include "text.h"

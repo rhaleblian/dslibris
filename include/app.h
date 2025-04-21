@@ -1,3 +1,4 @@
+#pragma once
 /*
  Copyright (C) 2007-2009 Ray Haleblian (ray23@sourceforge.net)
  
@@ -17,9 +18,6 @@
  
  To contact the copyright holder: rayh23@sourceforge.net
  */
-
-#ifndef APP_H
-#define APP_H
 
 /*!
 \mainpage
@@ -43,36 +41,39 @@ https://github.com/rhaleblian/dslibris
 \author ray haleblian
 
 */
-
-
+#include <expat.h>
 #include <list>
 #include <sstream>
 #include <unistd.h>
 #include <vector>
 
-#include "expat.h"
-
 #include "book.h"
 #include "button.h"
+#include "define.h"
+#include "parse.h"
 #include "prefs.h"
 #include "text.h"
-#include "main.h"
-#include "parse.h"
 
 #define APP_BROWSER_BUTTON_COUNT 7
 #define APP_LOGFILE "dslibris.log"
-#define APP_MODE_BOOK 0
-#define APP_MODE_BROWSER 1
-#define APP_MODE_PREFS 2
-#define APP_MODE_PREFS_FONT 3
-#define APP_MODE_PREFS_FONT_BOLD 4
-#define APP_MODE_PREFS_FONT_ITALIC 5
+enum {
+	APP_MODE_NONE,
+	APP_MODE_BOOK,
+	APP_MODE_BROWSER,
+	APP_MODE_PREFS,
+	APP_MODE_PREFS_FONT,
+	APP_MODE_PREFS_FONT_BOLD,
+	APP_MODE_PREFS_FONT_ITALIC
+};
 #define APP_URL "http://github.com/rhaleblian/dslibris"
 
 #define PREFS_BUTTON_COUNT 5
-#define PREFS_BUTTON_FONT 2
-#define PREFS_BUTTON_FONT_ITALIC 3
-#define PREFS_BUTTON_FONT_BOLD 4
+enum {
+	PREFS_BUTTON_FONT,
+	PREFS_BUTTON_FONT_ITALIC,
+	PREFS_BUTTON_FONT_BOLD,
+	PREFS_BUTTON_FONT_BOLDITALIC		
+};
 #define PREFS_BUTTON_FONTSIZE 1
 #define PREFS_BUTTON_PARASPACING 0
 
@@ -83,18 +84,19 @@ https://github.com/rhaleblian/dslibris
 //! interaction loop, drawing everything but text, and logging.
 
 class App {
-	private:
 	void InitScreens();
 	void SetBrightness(u8 b);
 	void SetOrientation(bool flip);
 	void WifiInit();
 	bool WifiConnect();
 	void Fatal(const char *msg);
-
+	char* msg;
+	
 	public:
-	Text *ts;
-	Prefs myprefs;   //?
-	Prefs *prefs;    //?
+	Text *ts;        //? Typesetter.
+	u16* bg[2];      //? backgrounds as per bgInit().
+	Prefs *prefs;    //? Preferences model.
+
 	u8 brightness;   //! 4 levels for the Lite.
 	u8 mode; 	     //! Are we in book or browser mode?
 	string fontdir;  //! Default location to search for TTFs.
@@ -103,7 +105,7 @@ class App {
 	//! key functions are remappable to support screen flipping.
 	struct {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
-		uint32 downrepeat;
+		u32 downrepeat;
 	} key;
 	
 	vector<Button*> buttons;
@@ -208,7 +210,8 @@ class App {
 	void FontNextPage();
 	void FontPreviousPage();
 	void FontButton();
+
+	private:
+	void Spin();
+	int CheckFilesystem();
 };
-
-#endif
-

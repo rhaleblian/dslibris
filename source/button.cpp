@@ -61,14 +61,18 @@ void Button::Resize(u16 x, u16 y) {
 }
 
 void Button::Draw(u16 *fb, bool highlight) {
+	bool i = ts->GetInvert();
+	u16* s = ts->GetScreen();
+	u8 st = ts->GetStyle();
+	u16 x;
+	u16 y;
+	ts->GetPen(&x,&y);
+
 	coord_t ul, lr;
 	ul.x = origin.x;
 	ul.y = origin.y;
 	lr.x = origin.x + extent.x;
 	lr.y = origin.y + extent.y;
-
-	u16 x;
-	u16 y;
 
 	u16 bgcolor;
 	if(highlight) bgcolor = RGB15(31,31,15) | BIT(15);
@@ -79,7 +83,6 @@ void Button::Draw(u16 *fb, bool highlight) {
 		}
 	}
 
-#if 0
 	u16 bordercolor = RGB15(22,22,22) | BIT(15);
 	for (x=ul.x;x<lr.x;x++) {
 		fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
@@ -89,31 +92,31 @@ void Button::Draw(u16 *fb, bool highlight) {
 		fb[y*SCREEN_WIDTH + ul.x] = bordercolor;
 		fb[y*SCREEN_WIDTH + lr.x-1] = bordercolor;
 	}
-#endif
 
-	bool invert = ts->GetInvert();
 	ts->SetScreen(fb);
 	ts->SetInvert(false);
-	ts->GetPen(&x,&y);
+	ts->SetStyle(TEXT_STYLE_BROWSER);
 
 	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
 
 	ts->SetPixelSize(ts->GetPixelSize()+1);
-	uint8_t len = ts->GetCharCountInsideWidth(text.c_str(), TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
-	ts->PrintString((const char*)text.substr(0, len).c_str(), TEXT_STYLE_BROWSER);
+	u8 len = ts->GetCharCountInsideWidth(text.c_str(), SCREEN_HEIGHT);
+	ts->PrintString(text.substr(0, len).c_str());
 	ts->SetPixelSize(ts->GetPixelSize()-1);
 
 	if (text2.length()) {
 		ts->SetPixelSize(ts->GetPixelSize()-1);
 		ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
-		ts->PrintString((const char *)text2.c_str(), TEXT_STYLE_BROWSER);
+		ts->PrintString((const char *)text2.c_str());
 		ts->SetPixelSize(ts->GetPixelSize()+1);
 	}
 
+	ts->SetStyle(st);
+	ts->SetScreen(s);
 	ts->usebgcolor = false;
 	ts->SetPen(x,y);
-	ts->SetInvert(invert);
+	ts->SetInvert(i);
 }
 
 bool Button::EnclosesPoint(u16 x, u16 y)

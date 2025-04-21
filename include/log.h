@@ -30,6 +30,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <string>
 
+enum {
+    LOG_LEVEL_ERROR,
+    LOG_LEVEL_WARNING,
+    LOG_LEVEL_INFO,
+    LOG_LEVEL_DEBUG
+};
+
 void Log(const char *msg);
 void Log(std::string msg);
 void Log(const char *format, const char *msg);
+int SetLevel(int level);

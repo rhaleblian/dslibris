@@ -4,8 +4,11 @@
  *  Created on: Jul 11, 2009
  *      Author: rhaleblian
  */
-#include "main.h"
+#include <stdio.h>
+#include "define.h"
 #include "log.h"
+
+int level = LOG_LEVEL_INFO;
 
 void Log(const char *msg)
 {
@@ -22,4 +25,10 @@ void Log(const char *format, const char *msg)
 	FILE *logfile = fopen(LOGFILEPATH, "a");
 	fprintf(logfile,format,msg);
 	fclose(logfile);
+}
+
+int SetLevel(int _level) {
+	int previous_level = level;
+	level = _level;
+	return previous_level;
 }

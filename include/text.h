@@ -8,7 +8,11 @@
 #include FT_FREETYPE_H
 #include FT_CACHE_H
 
-using namespace std;
+#define FONTREGULARFILE "LiberationSerif-Regular.ttf"
+#define FONTBOLDFILE "LiberationSerif-Bold.ttf"
+#define FONTITALICFILE "LiberationSerif-Italic.ttf"
+#define FONTBROWSERFILE "LiberationSans-Regular.ttf"
+#define FONTSPLASHFILE "LiberationSans-Regular.ttf"
 
 //! Reference: FreeType2 online documentation
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
@@ -28,6 +32,8 @@ using namespace std;
 
 #define CACHESIZE 512
 #define PIXELSIZE 12
+
+using namespace std;
 
 class App;
 int asciiart();
@@ -113,6 +119,8 @@ class Style {
 //! The code using FreeType's cache is inoperative.
 
 class Text {
+	char msg[1024];
+	
 	FT_Library library;
 	FT_Error error;
 
@@ -205,7 +213,8 @@ public:
 	u8   GetAdvance(u32 ucs);
 	u8   GetAdvance(u32 ucs, u8 style);
 	u8   GetCharCode(const char* txt, u32* code);
-	u8   GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels);
+	u8   GetCharCountInsideWidth(const char *txt, u8 pixels);
+	const char* GetError(FT_Error error_code);
 	FT_Face GetFace() { return face; }
 	FT_Face GetFace(u8 style) { return faces[style]; }
 	string GetFontFile(u8 style);
@@ -245,8 +254,18 @@ public:
 	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
 	void PrintString(const char *string, u8 style);
-	void PrintSplash(u16 *screen);
+	void PrintSplash();
 };
+
+typedef struct {
+	FT_Face face;
+	FT_Library library;
+	FTC_Manager manager;
+  } FT_Freeables;
+  
+  FT_Freeables typesetter();
+  void free_ft(FT_Freeables f);
+  int renderer(FT_Face face);
 
 #endif
 

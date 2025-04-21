@@ -34,68 +34,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "types.h"
 
 App *app;
-char msg[256];
-int ft_main(int argc, char **argv);
-
-/*---------------------------------------------------------------------------*/
-
-
-int kungheyfatcheck(void) {
-	iprintf("** kungheyfatcheck **\n");
-	iprintf("root directory:\n");
-	swiWaitForVBlank();
-
-	DIR *dp = opendir("/");
-	if (!dp) {
-		printf("[PANIC] root dir inaccessible!\n");
-		return false;
-	}
-	struct dirent *ent;
-	while ((ent = readdir(dp)))
-	{
-		iprintf("%s %d\n", ent->d_name, ent->d_type);
-	}
-	closedir(dp);
-
-	return true;
-}
-
-PrintConsole* boot_console(void) {
-	// Get a console going.
-	auto console = consoleDemoInit();
-	if (!console) iprintf("[FAIL] console!\n");		// This, of course, won't print :D
-	else iprintf("[OK] console\n");
-	return console;
-}
-
-int boot_filesystem(void) {
-	// Start up the filesystem.
-	bool success = fatInitDefault();
-	if (!success) iprintf("[FAIL] filesystem!\n");
-	else iprintf("[OK] filesystem\n");
-	return success;
-}
-
-void spin(void) {
-	while(true) swiWaitForVBlank();
-}
-
-void fatal(const char *msg) {
-	iprintf(msg);
-	spin();
-}
 
 int main(void)
 {
-	if(!boot_console()) spin();
-	if(!boot_filesystem()) spin();
-
-	//kungheyfatcheck();
-	// asciiart();
-	// while(pmMainLoop()) {
-	// 	scanKeys();
-	// 	swiWaitForVBlank();
-	// }
 	app = new App();
 	return app->Run();
 }
@@ -323,8 +264,6 @@ int unknown_hndl(void *encodingHandlerData,
                  XML_Encoding *info)
 {
 	// noops!
-	strcpy(msg, "warn : encoding handler encountered, did nothing.");
-	app->Log(msg);
 	return 0;
 }
 
@@ -783,11 +722,11 @@ void proc_hndl(void *data, const char *target, const char *pidata)
 	app->Log("called proc_hndl().\n");
 }
 
-int getSize(uint8 *source, uint16 *dest, uint32 arg) {
-       return *(uint32*)source;
+int getSize(u8 *source, u16 *dest, u32 arg) {
+       return *(u32*)source;
 }
 
-uint8 readByte(uint8 *source) { return *source; }
+u8 readByte(u8 *source) { return *source; }
 
 void drawstack(u16 *screen) {
        TDecompressionStream decomp = {getSize, NULL, readByte};

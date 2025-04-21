@@ -1,7 +1,6 @@
-#ifndef _PREFS_H
-#define _PREFS_H
-#include "expat.h"
-#include "app.h"
+#pragma once
+
+class App;
 
 class Prefs
 {
@@ -17,5 +16,3 @@ public:
 private:
 	void Init();
 };
-
-#endif

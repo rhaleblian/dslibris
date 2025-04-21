@@ -20,8 +20,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
-#include "app.h"
-
 #include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -30,34 +28,27 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <sys/stat.h>
 #include <unistd.h>
 #include <algorithm>   // for std::sort
+#include <fat.h>
+#include <nds.h>
 
-#include "fat.h"
-#include "nds/system.h"
-#include "nds/arm9/background.h"
-#include "nds/arm9/input.h"
-
-#include "types.h"
-#include "main.h"
+#include "define.h"
 #include "parse.h"
 #include "book.h"
 #include "button.h"
 #include "text.h"
 #include "version.h"
 
-// less-than operator to compare books by title
-static bool book_title_lessthan(Book* a, Book* b) {
-    return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
-}
+#include "app.h"
 
-void halt()
-{
-	while(TRUE) swiWaitForVBlank();
-}
+// less-than operator to compare books by title
+// static bool book_title_lessthan(Book* a, Book* b) {
+//     return strcasecmp(a->GetTitle(), b->GetTitle()) < 0;
+// }
 
 App::App()
-{	
-	fontdir = string(FONTDIR);
-	bookdir = string(BOOKDIR);
+{
+	fontdir = std::string(FONTDIR);
+	bookdir = std::string(BOOKDIR);
 	bookcount = 0;
 	bookselected = NULL;
 	bookcurrent = NULL;
@@ -84,8 +75,10 @@ App::App()
 	key.b = KEY_B;
 	key.x = KEY_X;
 	key.y = KEY_Y;
-	
-	prefs = &myprefs;
+
+	msg = (char*)malloc(sizeof(char) * 1024);
+
+	prefs = new Prefs();
 	prefs->app = this;
 
 	ts = new Text();
@@ -94,76 +87,83 @@ App::App()
 
 App::~App()
 {
-	delete prefs;
-	delete ts;
-	vector<Book*>::iterator it;
-	for(it=books.begin();it!=books.end();it++)
-		delete *it;
+	for(auto book: books)
+		if (book) delete book;
 	books.clear();
+	if (msg) free(msg);
+	if (prefs) delete prefs;
+	if (ts) delete ts;
 }
 
 int App::Run(void)
 {
-	char msg[512];
-	SetBrightness(0);	
-
-	Log("--------------------\n");
-	Log("dslibris starting up\n");
+	// Get a console going.
+	consoleDemoInit();
 	console = true;
+	// consoleDebugInit(DebugDevice_NOCASH);
+	// fprintf(stderr, "[ OK ] console\n");
+	printf("[ OK ] console\n");
+	
+	#if 0
+
+	// Start up the filesystem.
+	bool success = fatInitDefault();
+	if (!success)
+		fprintf(stderr, "[FAIL] filesystem\n");
+	else
+		fprintf(stderr, "[ OK ] filesystem\n");
+	swiWaitForVBlank();
+
+	kungheyfatcheck();
+	swiWaitForVBlank();
+
+	// bool success = fatInitDefault();
+	// if (success) Log("[ OK ] filesystem\n");
+	// else Log("[FAIL] filesystem\n");
 
 	// Read preferences, pass 1,
 	// to get the book folder and preferred fonts.
-
-   	if (int err = prefs->Read())
+	
+	int err = 0;
+	err = prefs->Read();
+	if(err == 255)
 	{
-		if(err == 255)
-		{
-			err = prefs->Write();
-			if (err) {
-				Log("could not create preferences\n");
-				return err;
-			}
-			Log("created preferences\n");
+		err = prefs->Write();
+		if (err) {
+			Log("[FAIL] could not create preferences\n");
 		}
 	}
+	if (!err)
+		Log("[ OK ] preferences\n");
+	swiWaitForVBlank();
+
+	// SetBrightness(brightness);
 
 	// Start up typesetter.
 
-   	int err = ts->Init();
-	switch(err)
-	{
-		case 0:
-		sprintf(msg, "typesetter started\n");
-		break;
-		default:
-		sprintf(msg, ErrorString(err));
-		// case 1:
-		// sprintf(msg, "fatal: font file not found (%d)\n", err);
-		// break;
-		// case 2:
-		// sprintf(msg, "fatal: font file unreadable (%d)\n", err);
-		// break;
-		// default:
-		// sprintf(msg, "fatal: freetype error (%d)\n", err);
-	}
-	Log(msg);
-	if(err) while(1) swiWaitForVBlank();
-	
-	SetBrightness(brightness);
-	
-	// Look in the book directory and construct library.
+   	err = ts->Init();
+	if (err) {
+		Log("[FAIL] typesetter");
+		Log(ts->GetError(err));
+	} else
+		Log("[ OK ] typesetter\n");
+	swiWaitForVBlank();
 
-	sprintf(msg,"scanning '%s' for books\n",bookdir.c_str());
-	Log(msg);
+	// Look in the book directory and construct library.
 	
 	DIR *dp = opendir(bookdir.c_str());
 	if (!dp)
 	{
-		sprintf(msg,"fatal: No book directory \'%s\'.\n",
+		sprintf(msg,"[FAIL] No book directory \'%s\'.\n",
 			bookdir.c_str());
 		Log(msg);
+	} 
+	else
+	{
+		sprintf(msg,"[ OK ] scanning '%s'\n",bookdir.c_str());
+		Log(msg);
 	}
-	
+
 	struct dirent *ent;
 	while ((ent = readdir(dp)))
 	{
@@ -189,15 +189,11 @@ int App::Run(void)
 
 			u8 rc = book->Index();
 			if (rc)
-			{
 				sprintf(msg,"warn : indexer failed (%d)\n",
 					rc);
-			}
 			else
-			{
 				sprintf(msg, "indexed title '%s'\n",
 					book->GetTitle());
-			}
 			Log(msg);
 		}
 		else if (!strcmp(".epub",c))
@@ -213,24 +209,30 @@ int App::Run(void)
 		}
 	}
 	closedir(dp);
-	sprintf(msg,"%d books indexed.\n",bookcount);
-	Log(msg);
+	sprintf(msg,"%d books indexed.\n",bookcount); Log(msg);
 
 	if(bookcurrent)
-	{
-		sprintf(msg,"info : currentbook = %s.\n",bookcurrent->GetTitle());
-		Log(msg);
-	}
-	swiWaitForVBlank();
+		sprintf(msg, "info : currentbook is '%s'.\n",bookcurrent->GetTitle());
+	else
+		sprintf(msg, "info : no current book.\n");
+	Log(msg);
 	
 	// Read preferences, pass 2, to bind preferences to books.
 	
-   	if(int parseerror = prefs->Read())
+	int parseerror = prefs->Read();
+   	if (parseerror)
+		sprintf(msg,"warn : did not read prefs, error=%d.\n", parseerror);
+	else 
+		sprintf(msg, "info : read prefs (books).\n");
+	Log(msg);
+
+	keysSetRepeat(60,2);
+	if (prefs && prefs->swapshoulder)
 	{
-		sprintf(msg,"warn : can't read prefs (%d).\n",parseerror);
-		Log(msg);
+		int tmp = key.l;
+		key.l = key.r;
+		key.r = tmp;
 	}
-	else Log("info : read prefs (books).\n");
 
 	// Sort bookmarks for each book.
 	for(u8 i = 0; i < bookcount; i++)
@@ -241,31 +243,23 @@ int App::Run(void)
 	// Set up preferences editing screen.
 	PrefsInit();
 	
+	// Bring up displays.
+	InitScreens();
+	if(orientation) lcdSwap();	
+	ts->PrintSplash();
+
 	// Set up library browser screen.
 	std::sort(books.begin(),books.end(),&book_title_lessthan);
 	browser_init();
-
-	Log("progr: browsers populated.\n");
-
-	// Bring up displays.
-	console = false;
-	InitScreens();
-	if(orientation) lcdSwap();
-	if (prefs->swapshoulder)
-	{
-		int tmp = key.l;
-		key.l = key.r;
-		key.r = tmp;
-	}
-
 	mode = APP_MODE_BROWSER;
-	ts->PrintSplash(ts->screenleft);
 
-#if 0
-	// browser_draw();
+	Log("info : browsers populated.\n");
 
-	Log("progr: browser displayed.\n");
+	console = false;
+	browser_draw();
+	Log("info : browser displayed.\n");
 
+	#if 0
 	// Resume reading from the last session.
 	
 	reopen = true;
@@ -284,53 +278,101 @@ int App::Run(void)
 	else Log("info : not reopening previous book.\n");
 #endif
 
+#endif
+
+#if 0
+	// Check drawing on screen right.
+
 	ts->SetScreen(ts->screenright);
 	ts->ClearScreen();
+
+	u16 color = ARGB16(1,15,15,15);
+	for (int iy=20; iy<40; iy++)
+		for (int ix=20; ix<40; ix++)
+			ts->screenright[iy*LCD_WIDTH+ix] = color;
+	printf("rect?\n");
+
+	// Render a single character.
+
+	printf("preparing to draw\n");
+	u32 ucs;
 	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(PIXELSIZE);
 	ts->SetInvert(false);
-	ts->SetPen(0,0);
-	
-	u32 ucs;
 	ts->GetCharCode("F", &ucs);
+	sprintf(msg, "UTF-8 code %d is code %lu in UCS\n", 'F', ucs); Log(msg);
+	ts->SetPen(80, 80);
 	ts->PrintChar(ucs);
+	Log("did i print F?\n");
+#endif
 
-	swiWaitForVBlank();
-
-	// Start polling event loop.
-	// FIXME use interrupt driven event handling.
-	
-	keysSetRepeat(60,2);
-	while (true)
+	while (pmMainLoop())
 	{
+		swiWaitForVBlank();
 		scanKeys();
-
+		int keys = keysDown();
 		key.downrepeat = keysDownRepeat();
-
 		if (key.downrepeat)
 		{
 			switch (mode){
-					case APP_MODE_BROWSER:
-						HandleEventInBrowser();
-						break;
-					case APP_MODE_BOOK:
-						HandleEventInBook();
-						//UpdateClock();
-						break;
-					case APP_MODE_PREFS:
-						HandleEventInPrefs();
-						break;
-					case APP_MODE_PREFS_FONT:
-					case APP_MODE_PREFS_FONT_BOLD:
-					case APP_MODE_PREFS_FONT_ITALIC:
-						HandleEventInFont();
-						break;
+				case APP_MODE_NONE:
+				if (keys & KEY_Y)
+					CycleBrightness();
+				else if (keys & KEY_START)
+					// On 3DS, exit to outer shell
+					return 0;
+				break;
+				
+				case APP_MODE_BROWSER:
+				HandleEventInBrowser();
+				break;
+				
+				case APP_MODE_BOOK:
+				HandleEventInBook();
+				break;
+			
+				case APP_MODE_PREFS:
+				HandleEventInPrefs();
+				break;
+			
+				case APP_MODE_PREFS_FONT:
+				case APP_MODE_PREFS_FONT_BOLD:
+				case APP_MODE_PREFS_FONT_ITALIC:
+				HandleEventInFont();
+				break;
 			}
 		}
-		swiWaitForVBlank();
 	}
+	return 0;
+}
 
-	exit(0);
+int App::CheckFilesystem(void) {
+	iprintf("** kungheyfatcheck **\n");
+	iprintf("root directory:\n");
+	swiWaitForVBlank();
+	DIR *dp = opendir("/");
+	if (!dp) {
+		printf("[FAIL] root dir inaccessible\n");
+		swiWaitForVBlank();
+		return false;
+	}
+	struct dirent *ent;
+	while ((ent = readdir(dp)))
+		iprintf("[ OK ] %s %d\n", ent->d_name, ent->d_type);
+	closedir(dp);
+	swiWaitForVBlank();
+	return true;
+}
+
+void App::Spin(void) {
+	while(pmMainLoop()) {
+		swiWaitForVBlank();
+		scanKeys();
+		int keys = keysDown();
+		if (keys & KEY_START) {
+			// On 3DS, exit to outer shell
+		}
+	}
 }
 
 void App::SetBrightness(u8 b)
@@ -448,13 +490,15 @@ void App::InitScreens()
 {
 	videoSetMode(MODE_5_2D);
 	vramSetBankA(VRAM_A_MAIN_BG);
-	bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	bg[0] = bgGetGfxPtr(bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0));
 	videoSetModeSub(MODE_5_2D);
 	vramSetBankC(VRAM_C_SUB_BG);
-	bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-	ts->SetScreen(ts->screenright);
-	ts->ClearScreen();
+	bg[1] = bgGetGfxPtr(bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0));
+	ts->screenleft = bg[0];
+	ts->screenright = bg[1];
 	ts->SetScreen(ts->screenleft);
+	ts->ClearScreen();
+	ts->SetScreen(ts->screenright);
 	ts->ClearScreen();
 	SetOrientation(orientation);
 }
@@ -462,24 +506,25 @@ void App::InitScreens()
 void App::Fatal(const char *msg)
 {
 	Log(msg);
-	while(1) swiWaitForVBlank();
+	Spin();
 }
-
 
 void App::PrintStatus(const char *msg)
 {
+	// push
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
 	u8 pixelsize = ts->GetPixelSize();
+
 	const int top = 240;
 	ts->SetPixelSize(11);
 	ts->SetScreen(ts->screenleft);
 	ts->SetInvert(false);
-	// TODO why does this crash on hw?
-	ts->ClearRect(0,top,ts->display.width,ts->display.height);
-	ts->SetPen(10,top+10);
+	ts->ClearRect(0, top, SCREEN_WIDTH, SCREEN_HEIGHT);
+	ts->SetPen(10, top+10);
 	ts->PrintString(msg);
 
+	// pop
 	ts->SetPixelSize(pixelsize);
 	ts->SetScreen(screen);
 	ts->SetInvert(invert);
