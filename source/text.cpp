@@ -120,6 +120,8 @@ Text::Text(App *a)
 	linespacing = 0;
 	pixelsize = PIXELSIZE;
 	style = TEXT_STYLE_REGULAR;
+	screenleft = nullptr;
+	screenright = nullptr;
 	screen = screenleft;
 
 	// cache.
@@ -628,7 +630,6 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	// Draw a character for the given UCS codepoint,
 	// into the current screen buffer at the current pen position.
 
-	// static bool firsttime = true;
 	u16 bx, by, width, height = 0;
 	FT_Byte *buffer = NULL;
 	FT_UInt advance = 0;
@@ -636,7 +637,8 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	FT_Glyph glyph;
 
 	ss.clear();
-
+	return;
+	
 	// get metrics and glyph pointer.
 
 	if(ftc)
@@ -699,19 +701,15 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	else
 	{
 		// Consult the cache for glyph data and cache it on a miss, if space is available.
-		FT_GlyphSlot glyph = GetGlyph(ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL, face);
-		
-		// ss << "ucs " << ucs << std::endl;
-		// app->Log(ss.str());
+		// FT_GlyphSlot glyph = GetGlyph(ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL, face);
 
-		// error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-		// if (error) app->Log("boo\n");
-		// error = FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_REGULAR);
-		// if (error) app->Log("hoo\n");
-		// auto glyph = face->glyph;
+		error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
+		if (error) printf("boo\n");
+		error = FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
   		// error = FT_Get_Glyph( face->glyph, &glyph );
-		// if (error) app->Log("foo\n");
-
+		if (error) printf("foo\n");
+		FT_GlyphSlot glyph = face->glyph;
+		
   		// extract glyph image
 		FT_Bitmap bitmap = glyph->bitmap;
 		bx = glyph->bitmap_left;
@@ -749,33 +747,35 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	screen[pen.y*display.height+pen.x] = RGB15(0, 0, 0) | BIT(15);
 #endif
 
+	u8 a = 255;
 	u16 gx, gy;
 	for (gy=0; gy<height; gy++) {
 		for (gx=0; gx<width; gx++) {
-			u8 a = buffer[gy*width+gx];
+			// u8 a = buffer[gy*width+gx];
 			if (a) {
 				u16 sx = (pen.x+gx+bx);
 				u16 sy = (pen.y+gy-by);
-				if(usebgcolor) {
-					u32 r,g,b;
-					u8 alpha = 255-a;
-					r = (bgcolor.r * alpha);
-					g = (bgcolor.g * alpha);
-					b = (bgcolor.b * alpha);
-					screen[sy*display.height+sx]
-						= RGB15(r/256,g/256,b/256) | BIT(15);
-				} else {
-					u8 l;
-					if (invert) l = a >> 3;
-					else l = (255-a) >> 3;
+				// if(usebgcolor) {
+				// 	u32 r,g,b;
+				// 	u8 alpha = 255-a;
+				// 	r = (bgcolor.r * alpha);
+				// 	g = (bgcolor.g * alpha);
+				// 	b = (bgcolor.b * alpha);
+				// 	screen[sy*display.height+sx]
+				// 		= RGB15(r/256,g/256,b/256) | BIT(15);
+				// } else {
+					// u8 l;
+				// 	if (invert) l = a >> 3;
+				// 	else l = (255-a) >> 3;
 #ifdef DEBUG_CACHE
 					// Draw cache hits in red.
 					if(!hit)
 						screen[sy*display.height+sx] = RGB15(l,0,0) | BIT(15);
 					else
 #endif
-					screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
-				}
+				// screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
+				// }
+				screen[sy*SCREEN_WIDTH+sx] = ARGB16(1,0,0,0);
 			}
 		}
 	}

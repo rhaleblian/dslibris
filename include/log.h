@@ -32,3 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 void Log(const char *msg);
 void Log(std::string msg);
 void Log(const char *format, const char *msg);
+
+inline void debug(const char *msg) {
+	fprintf(stderr, "%s\n", msg);
+}

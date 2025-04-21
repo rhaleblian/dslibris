@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <unistd.h>
 #include "book.h"
 #include "browser.h"
+#include "log.h"
 #include "page.h"
 #include "parse.h"
 #include "prefs.h"
@@ -77,11 +78,17 @@ App::~App()
 	books.clear();
 }
 
+void drawbox(int bg, int x, int y, int w, int h, u16 color) {
+	u16 *screen = bgGetGfxPtr(bg);
+	for (int iy=y;iy<y+h;iy++)
+		for (int ix=x;ix<x+w;ix++)
+			screen[iy*SCREEN_WIDTH+ix] = ARGB16(1, 20, 15, 10);	
+}
+
 u8 App::Init()
 {
 	u8 error;
-
-	error = fatInitDefault();
+	char msg[1024];
 
 	videoSetMode(MODE_5_2D);
 	videoSetModeSub(MODE_5_2D);
@@ -91,56 +98,80 @@ u8 App::Init()
 	vramSetBankC(VRAM_C_SUB_BG);
 	setBackdropColor(ARGB16(1,15,15,15));
 	setBackdropColorSub(ARGB16(1,15,15,15));
-
-	// bg[0] = bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0, 0);
-	// DrawSplashScreen();
 	bg[0] = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
 	bg[1] = bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
 
-	u16 *screen = bgGetGfxPtr(bg[1]);
-	for (int iy=0;iy<32;iy++)
-	for (int ix=0;ix<32;ix++)
-	{
-		screen[iy*SCREEN_HEIGHT+ix] = ARGB16(1, 20, 15, 10);
-	}
+	consoleDebugInit(DebugDevice_NOCASH);
+	debug("[ OK ] TTY\n");
+
+	fs = fatInitDefault();
+	if (fs)
+		debug("[ OK ] filesystem\n");
+	else
+		debug("[FAIL] filesystem\n");
 
 	// Start up typesetter.
-	error = ts->Init();
+	if(ts) {
+		error = ts->Init();
+		if (!error) debug("[ OK ] typesetter\n");	
+		else debug("[ OK ] typesetter\n");	
+	}
 
+	// Set up the splash screen.
+	DrawSplashScreen();	
+	
 	// Read preferences to get the book folder and preferred fonts.
 	error = prefs->Read();
 	if(error == PREFS_ERROR_MISSING)
 		error = prefs->Write();
+	if (!error) debug("[ OK ] library and fonts\n");
 
 	// SetOrientation(orientation);
 	// if(orientation) lcdSwap();
 
 	// Traverse the book directory and construct library.
 	IndexBooks();
+	debug(msg);
+
+	if (!error) sprintf(msg,"[ OK ] %d books in library\n", books.size());
+	else sprintf(msg,"[FAIL] %d books in library\n", books.size());
+	debug(msg);
+
+	swiWaitForVBlank();
 
 	// Read preferences again to apply to books.
 	error = prefs->Read();
 	// SortBooks();
 	// SortBookmarks();
+	if (!error) debug("[ OK ] preferences\n");
 
 	// Set up preferences editing screen.
 	// PrefsInit();
 
 	// Set up the library browsing screen.
-	browser = new Browser(this);
+	browser = new Browser(this, bgGetGfxPtr(bg[0]));
 	browser->Init();
+
+	debug("[ OK ] browser\n");
+
 	browser->Draw();
+	swiWaitForVBlank();
 
-	return 0;
+	if (prefs->swapshoulder)
+	{
+		int tmp = key.l;
+		key.l = key.r;
+		key.r = tmp;
+	}
+	keysSetRepeat(60,2);
+	mode = APP_MODE_BROWSER;
 
-	// if (prefs->swapshoulder)
-	// {
-	// 	int tmp = key.l;
-	// 	key.l = key.r;
-	// 	key.r = tmp;
-	// }
-	// keysSetRepeat(60,2);
-	// mode = APP_MODE_BROWSER;
+	// ts->screen = bgGetGfxPtr(bg[0]);
+	// // ts->screenright = (u16*)bgGetGfxPtr(bg[1]);
+	// // ts->SetScreen(ts->screenleft);
+	// // ts->SetStyle(TEXT_STYLE_BROWSER);
+	// ts->SetPen(10, 10);
+	// // ts->PrintChar('F');
 
 	return error;
 }
@@ -173,7 +204,6 @@ void App::IndexBooks() {
 	while ((ent = readdir(dp)))
 	{
 		char *filename = ent->d_name;
-		printf("%s\n", filename);
 		if(*filename == '.') continue;
 		char *c;
 		// FIXME use std::string method
@@ -205,10 +235,30 @@ void App::IndexBooks() {
 
 int App::Run(void)
 {
+	int x = 80;
+	int y = 80;
+	int w = 40;
+	int h = 40;
 	while (pmMainLoop())
 	{
 		threadWaitForVBlank();
+		drawbox(bg[0], x, y, w, h, ARGB16(1, 31, 15, 15));
 		scanKeys();
+		auto keys = keysDown();
+		if (keys & (KEY_DOWN|KEY_UP|KEY_LEFT|KEY_RIGHT)) {
+			drawbox(bg[0], x, y, w, h, ARGB16(1, 15, 15, 15));
+			swiWaitForVBlank();
+		}
+		if (keys & KEY_DOWN) {
+			y += 2;
+		} else if (keys & KEY_UP) {
+			y += -2;
+		} else if (keys & KEY_LEFT) {
+			x += -2;
+		} else if (keys & KEY_RIGHT) {
+			x += 2;
+		}
+
 		// key.downrepeat = keysDownRepeat();
 		// if (key.downrepeat)
 		// {

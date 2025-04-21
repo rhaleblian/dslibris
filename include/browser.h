@@ -4,10 +4,11 @@
 
 class App;
 class Book;
+class Text;
 
 class Browser {
   public:
-    Browser(App* app);
+    Browser(App* app, u16* gfx);
     ~Browser();
 
     void AdvancePage();
@@ -22,7 +23,6 @@ class Browser {
   private:
     App *app;
     u16 *screen;
-    std::vector<Book*>* books;
     std::vector<Button*> buttons;
     u8 offset, maxperpage;
     Button menubutton[3];

@@ -11,7 +11,7 @@ endif
 GAME_TITLE := dslibris
 GAME_SUBTITLE1 := An EPUB book reader
 GAME_SUBTITLE2 := Yoyodyne Research
-GAME_ICON := $(PWD)/data/icon.bmp
+GAME_ICON := $(PWD)/gfx/icon.bmp
 
 ARM9GDBPORT := 9000
 PORTLIBS := $(DEVKITPRO)/portlibs/nds
@@ -29,9 +29,9 @@ include $(DEVKITARM)/ds_rules
 TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
-DATA		:=  
+DATA		:=  data
 INCLUDES	:=	include
-GRAPHICS	:=	data
+GRAPHICS	:=	gfx
 
 #---------------------------------------------------------------------------------
 # options for code generation

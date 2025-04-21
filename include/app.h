@@ -134,4 +134,6 @@ class App {
 	Button buttonprev;
 	Button buttonprefs;
 
+	private:
+	bool fs;   //? we have filesystem? 
 };
