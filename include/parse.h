@@ -1,6 +1,7 @@
 #pragma once
 
 #include <expat.h>
+#undef __APPLE__
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_CACHE_H

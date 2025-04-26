@@ -53,7 +53,8 @@ class App {
 	//! in App.cpp
 	void CycleBrightness();
 	void Flip();
-	u8   Init();
+	u8 Init();
+	u8 Init2();
 	void PrintStatus(const char *msg);
 	void PrintStatus(std::string msg);
 	int  Run(void);

@@ -89,17 +89,22 @@ Text::Text(App *a)
 	app = a;
 
 	// fonts.
+	faces.clear();
+	filenames.clear();
+	fontButtons.clear();
 	filenames[TEXT_STYLE_REGULAR] = FONTREGULARFILE;
 	filenames[TEXT_STYLE_BOLD] = FONTBOLDFILE;
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
-
+	
 	// video.
 	display.height = PAGE_HEIGHT;
 	display.width = PAGE_WIDTH;
 	// offscreen = new u16[display.width * display.height];
 	offscreen = nullptr;
+	screen = screenleft = screenright = nullptr;
+
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
 	margin.top = MARGINTOP;
@@ -155,17 +160,11 @@ Text::~Text()
 	FT_Done_FreeType(library);
 }
 
-int Text::Init()
-{
-	screenleft = bgGetGfxPtr(app->bg[0]);
-	screenright = bgGetGfxPtr(app->bg[1]);
-	// if(ftc)
-	// 	return InitFreeTypeCache();
-	// else
-	// 	return InitHomemadeCache();
-	// InitPen();
-	initialized = true;
-	return 0;
+void Text::ReportFaces() {
+	for (auto face : faces) {
+		printf("%d\n", face.first);
+		ReportFace(face.second);
+	}
 }
 
 static FT_Error
@@ -178,7 +177,7 @@ TextFaceRequester(    FTC_FaceID   face_id,
 	return FT_New_Face( library, face->file_path, face->face_index, aface );
 }
 
-FT_Error Text::InitFreeTypeCache(void) {
+int Text::Init(void) {
 	//! Use FreeType's cache manager. borken!
 
 	auto error = FT_Init_FreeType(&library);
@@ -254,22 +253,17 @@ int Text::InitHomemadeCache(void) {
 
 void Text::ReportFace(FT_Face face)
 {
-	sprintf(msg, "%s\n", face->family_name);
-	sprintf(msg, "%s\n", face->style_name);
-	sprintf(msg, "faces %ld\n", face->num_faces);
-	sprintf(msg, "glyphs %ld\n", face->num_glyphs);
-	sprintf(msg, "fixed-sizes %d\n", face->num_fixed_sizes);
+	printf("%s\n", face->family_name);
+	printf("%s\n", face->style_name);
+	printf("%ld faces\n", face->num_faces);
+	printf("%ld glyphs\n", face->num_glyphs);
+	printf("%d sizes\n", face->num_fixed_sizes);
 	for (int i=0;i<face->num_fixed_sizes;i++)
 	{
-		sprintf(msg, " w %d h %d\n",
+		printf(" %dx%d\n",
 			face->available_sizes[i].width,
 			face->available_sizes[i].height);
-	}	
-}
-
-void Text::ReportFace(int style)
-{
-	ReportFace(GetFace(style));
+	}
 }
 
 void Text::Begin()

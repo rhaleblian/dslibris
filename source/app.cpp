@@ -80,12 +80,6 @@ App::~App()
 
 u8 App::Init()
 {
-	u8 error;
-
-	// consoleDemoInit();
-
-	error = fatInitDefault();
-	
 	videoSetMode(MODE_5_2D);
 	videoBgEnable(3);
 	vramSetBankA(VRAM_A_MAIN_BG);
@@ -98,10 +92,16 @@ u8 App::Init()
 	setBackdropColorSub(ARGB16(1,15,15,15));
 	bg[1] = bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
 
-	// DrawSplashScreen();
+	u8 error = fatInitDefault();
 
-	// Start up typesetter.
-	error = ts->Init();
+	ts->screenleft = bgGetGfxPtr(bg[0]);
+	ts->screenright = bgGetGfxPtr(bg[1]);
+	ts->screen = ts->screenleft;
+	ts->Init();
+	printf("typesetter\n");
+	ts->ReportFace(TEXT_STYLE_REGULAR);
+
+	// DrawSplashScreen();
 
 	// Read preferences to get the book folder and preferred fonts.
 	error = prefs->Read();
@@ -130,16 +130,16 @@ u8 App::Init()
 
 	u16 *screen = bgGetGfxPtr(bg[1]);
 	for (int iy=-16;iy<16;iy++)
-	for (int ix=-16;ix<16;ix++)
-	{
-		screen[(SCREEN_HEIGHT/2+iy)*256 + ix+SCREEN_WIDTH/2] = ARGB16(1, 30, 30, 30);
-	}
+		for (int ix=-16;ix<16;ix++)
+			screen[(SCREEN_HEIGHT/2+iy)*256 + ix+SCREEN_WIDTH/2] = ARGB16(1, 30, 30, 30);
 	swiWaitForVBlank();
 
 	FILE* fp = fopen("/dslibris.log", "w");
-	fprintf(fp, "hi there\n");
+	auto face = ts->faces[TEXT_STYLE_BROWSER];
+	fprintf(fp, "name: %s\n", face->family_name);
+	fprintf(fp, "charmaps: %d\n", face->num_charmaps);
 	fclose(fp);
-	
+
 	return 0;
 
 	browser->Init();
@@ -157,13 +157,73 @@ u8 App::Init()
 	return error;
 }
 
+u8 App::Init2() {
+	consoleDemoInit();
+	printf("console\n");
+	for (auto name : ts->filenames)
+		printf("%d %s\n", name.first, name.second.data());
+	if (!fatInitDefault()) {
+		printf("no filesytem\n");
+		return 255;
+	}
+	printf("filesystem\n");
+
+	u8 error = ts->Init();
+	if (error)
+		printf("no typesetter\n");
+	else
+		printf("typesetter\n");
+	swiWaitForVBlank();
+	ts->ReportFace(TEXT_STYLE_REGULAR);
+	swiWaitForVBlank();
+	
+	// ts->SetStyle(TEXT_STYLE_BROWSER);
+	// printf("set browser font\n");
+	// swiWaitForVBlank();
+	
+	return 0;
+}
+
+int App::Run(void)
+{
+	Init2();
+	while (pmMainLoop())
+	{
+		threadWaitForVBlank();
+		scanKeys();
+		// key.downrepeat = keysDownRepeat();
+		// if (key.downrepeat)
+		// {
+		// 	switch (mode){
+		// 			case APP_MODE_BROWSER:
+		// 				HandleEventInBrowser();
+		// 				break;
+		// 			case APP_MODE_BOOK:
+		// 				HandleEventInBook();
+		// 				break;
+		// 			case APP_MODE_PREFS:
+		// 				HandleEventInPrefs();
+		// 				break;
+		// 			case APP_MODE_PREFS_FONT:
+		// 			case APP_MODE_PREFS_FONT_BOLD:
+		// 			case APP_MODE_PREFS_FONT_ITALIC:
+		// 				HandleEventInFont();
+		// 				break;
+		// 			default:
+		// 				break;
+		// 	}
+		// }
+	}
+	return 0;
+}
+
+
 void App::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 {
 	//! Must be a 16-bit background.
 	u16 src = ARGB16(1, 15, 15, 15);
 	u16* dst = bgGetGfxPtr(bg[1]);
 	// swiCopy(&color, screen), 1 | COPY_MODE_HWORD | COPY_MODE_FILL);
-
 	for (int i=0; i<SCREEN_WIDTH*SCREEN_WIDTH; i++) dst[i] = src;
 }
 
@@ -213,38 +273,6 @@ void App::IndexBooks() {
 		}
 	}
 	closedir(dp);
-}
-
-int App::Run(void)
-{
-	while (pmMainLoop())
-	{
-		threadWaitForVBlank();
-		scanKeys();
-		// key.downrepeat = keysDownRepeat();
-		// if (key.downrepeat)
-		// {
-		// 	switch (mode){
-		// 			case APP_MODE_BROWSER:
-		// 				HandleEventInBrowser();
-		// 				break;
-		// 			case APP_MODE_BOOK:
-		// 				HandleEventInBook();
-		// 				break;
-		// 			case APP_MODE_PREFS:
-		// 				HandleEventInPrefs();
-		// 				break;
-		// 			case APP_MODE_PREFS_FONT:
-		// 			case APP_MODE_PREFS_FONT_BOLD:
-		// 			case APP_MODE_PREFS_FONT_ITALIC:
-		// 				HandleEventInFont();
-		// 				break;
-		// 			default:
-		// 				break;
-		// 	}
-		// }
-	}
-	return 0;
 }
 
 void App::SetBrightness(int b)

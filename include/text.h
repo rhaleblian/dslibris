@@ -122,7 +122,8 @@ class Text {
 	void PrintString(const char *string);
 	void PrintString(const char *string, u8 style);
 	void PrintSplash(u16 *screen);
-	void ReportFace(int style);
+	inline void ReportFace(int style) { ReportFace(faces[style]); };
+	void ReportFaces();
 
 	App *app;
 	

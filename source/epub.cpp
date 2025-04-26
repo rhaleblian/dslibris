@@ -158,7 +158,6 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 			break;
 		}
 		len_total += len;
-		sprintf(msg,"progr: %d byte chunk\n",len); Log(msg);
 	} while (len);
 	sprintf(msg,"info : read %d bytes total\n",len_total); Log(msg);
 	XML_ParserFree(p);
@@ -166,17 +165,19 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 	return(rc);
 }
 
-int epub(Book *book, std::string name, bool metadataonly)
+int epub(Book *book, std::string filename, bool metadataonly)
 {
 	//! Parse EPUB file.
 	//! Set metadataonly to true if you only want the title and author.
 	int rc = 0;
 	static epub_data_t parsedata;
 	
-	unzFile uf = unzOpen(name.c_str());
-	rc = unzLocateFile(uf,"META-INF/container.xml",0);
+	unzFile uf = unzOpen(filename.data());
+	std::string container("META-INF/container.xml");
+	rc = unzLocateFile(uf, container.data(), 0);
 	if(rc == UNZ_OK)
 	{
+		Log("info :  "); Log(container.data()); Log("\n");
 		rc = unzOpenCurrentFile(uf);
 		epub_data_init(&parsedata);
 		parsedata.type = PARSE_CONTAINER;
@@ -184,7 +185,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 		rc = unzCloseCurrentFile(uf);
 	}
 	
-	Log("info : rootfile "); Log(parsedata.rootfile); Log("\n");
+	Log("info :  "); Log(parsedata.rootfile); Log("\n");
 	
 	// Extract any leading path for the rootfile.
 	// The manifest in the rootfile will list filenames
@@ -209,7 +210,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 
 	// Stop here if only metadata is required.
 	if(metadataonly) {
-		Log("progr: metadata only\n");
+		Log("info : metadata only\n");
 		if(parsedata.title.length()) {
 			book->SetTitle(parsedata.title.c_str());
 			if(parsedata.creator.length())
@@ -220,7 +221,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 		return rc;
 	}
 
-	Log("progr: ordering sections\n");
+	// Log("info : ordering sections\n");
 
 	// Read the XHTML in the manifest, ordering by spine if needed.
 	parsedata.ctx.clear();
@@ -229,7 +230,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 	std::vector<std::string*> href;
 	if(parsedata.spine.size()) {
 		// Use spine for reading order.
-		Log("progr: ordering by spine\n");
+		Log("info : ordering sections by spine\n");
 		std::vector<epub_itemref*>::iterator itemref;
 		for(itemref=parsedata.spine.begin();
 			itemref!=parsedata.spine.end();
@@ -246,7 +247,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 		}
 	}
 	else {
-		Log("progr: ordering by manifest\n");
+		Log("info : ordering sections by manifest\n");
 		std::vector<epub_item*>::iterator item;
 		for(item=parsedata.manifest.begin();
 			item!=parsedata.manifest.end();
@@ -266,7 +267,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 			std::string path = folder;
 			if(path.length()) path += "/";
 			path += (*it)->c_str();
-			Log("info : content "); Log(path); Log("\n");
+			Log("info :  "); Log(path); Log("\n");
 			rc = unzLocateFile(uf,path.c_str(),0);
 			if(rc == UNZ_OK)
 			{
