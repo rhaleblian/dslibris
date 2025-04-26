@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "app.h"
 #include "ft.h"
-#include "splash.h"
+// #include "splash.h"
 #include "text.h"
 #include "version.h"
 
@@ -98,7 +98,8 @@ Text::Text(App *a)
 	// video.
 	display.height = PAGE_HEIGHT;
 	display.width = PAGE_WIDTH;
-	offscreen = new u16[display.width * display.height];
+	// offscreen = new u16[display.width * display.height];
+	offscreen = nullptr;
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
 	margin.top = MARGINTOP;

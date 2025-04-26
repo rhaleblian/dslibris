@@ -25,9 +25,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 int main(int argc, char **argv) {
 	//! Main entry point for dslibris.
-	defaultExceptionHandler();
+	// defaultExceptionHandler();
 	// consoleDebugInit(DebugDevice_NOCASH);
-	glInit();
+	// glInit();
 	App *app = new App();
 	app->Init();
 	return app->Run();

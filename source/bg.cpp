@@ -1,5 +1,5 @@
 #include <nds.h>
-#include <splash.h>
+// #include <splash.h>
 #include <bg.h>
 
 void drawsplash(u16 *screen) {
@@ -15,5 +15,5 @@ void drawsplash(u16 *screen) {
 	// set up our bitmap background
 	bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
 
-	decompress(splashBitmap, BG_GFX,  LZ77Vram);
+	// decompress(splashBitmap, BG_GFX,  LZ77Vram);
 }

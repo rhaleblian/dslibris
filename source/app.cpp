@@ -38,7 +38,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "page.h"
 #include "parse.h"
 #include "prefs.h"
-#include "splash.h"
+// #include "splash.h"
 #include "text.h"
 #include "version.h"
 
@@ -63,7 +63,8 @@ App::App()
 	reopen = true;
 	mode = APP_MODE_BROWSER;
 	cache = false;
-	brightness = 1;
+	brightness = 2;
+	bg[0] = bg[1] = 0;
 	SetControls();
 }
 
@@ -81,28 +82,23 @@ u8 App::Init()
 {
 	u8 error;
 
+	// consoleDemoInit();
+
 	error = fatInitDefault();
-
+	
 	videoSetMode(MODE_5_2D);
-	videoSetModeSub(MODE_5_2D);
 	videoBgEnable(3);
-	videoBgEnableSub(2);
 	vramSetBankA(VRAM_A_MAIN_BG);
-	vramSetBankC(VRAM_C_SUB_BG);
 	setBackdropColor(ARGB16(1,15,15,15));
-	setBackdropColorSub(ARGB16(1,15,15,15));
-
-	// bg[0] = bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0, 0);
-	// DrawSplashScreen();
 	bg[0] = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
+
+	videoSetModeSub(MODE_5_2D);
+	videoBgEnableSub(2);
+	vramSetBankC(VRAM_C_SUB_BG);
+	setBackdropColorSub(ARGB16(1,15,15,15));
 	bg[1] = bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
 
-	u16 *screen = bgGetGfxPtr(bg[1]);
-	for (int iy=0;iy<32;iy++)
-	for (int ix=0;ix<32;ix++)
-	{
-		screen[iy*SCREEN_HEIGHT+ix] = ARGB16(1, 20, 15, 10);
-	}
+	// DrawSplashScreen();
 
 	// Start up typesetter.
 	error = ts->Init();
@@ -111,6 +107,7 @@ u8 App::Init()
 	error = prefs->Read();
 	if(error == PREFS_ERROR_MISSING)
 		error = prefs->Write();
+	if (error) return error;
 
 	// SetOrientation(orientation);
 	// if(orientation) lcdSwap();
@@ -120,6 +117,8 @@ u8 App::Init()
 
 	// Read preferences again to apply to books.
 	error = prefs->Read();
+	if (error) return error;
+
 	// SortBooks();
 	// SortBookmarks();
 
@@ -128,10 +127,23 @@ u8 App::Init()
 
 	// Set up the library browsing screen.
 	browser = new Browser(this);
+
+	u16 *screen = bgGetGfxPtr(bg[1]);
+	for (int iy=-16;iy<16;iy++)
+	for (int ix=-16;ix<16;ix++)
+	{
+		screen[(SCREEN_HEIGHT/2+iy)*256 + ix+SCREEN_WIDTH/2] = ARGB16(1, 30, 30, 30);
+	}
+	swiWaitForVBlank();
+
+	FILE* fp = fopen("/dslibris.log", "w");
+	fprintf(fp, "hi there\n");
+	fclose(fp);
+	
+	return 0;
+
 	browser->Init();
 	browser->Draw();
-
-	return 0;
 
 	// if (prefs->swapshoulder)
 	// {
@@ -157,12 +169,12 @@ void App::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 
 void App::DrawSplashScreen() {
 	// Copy the splash screen to the background.
-	dmaCopy(splashBitmap, bgGetGfxPtr(bg[0]), splashBitmapLen);
-	dmaCopy(splashPal, BG_PALETTE, splashPalLen);
-	bgSetCenter(bg[0], 256, 0);
-	bgSetRotate(bg[0], -32767/4);
-	// bgSetScroll(bg[0], 31, 31);
-	bgUpdate();
+	// dmaCopy(splashBitmap, bgGetGfxPtr(bg[0]), splashBitmapLen);
+	// dmaCopy(splashPal, BG_PALETTE, splashPalLen);
+	// bgSetCenter(bg[0], 256, 0);
+	// bgSetRotate(bg[0], -32767/4);
+	// // bgSetScroll(bg[0], 31, 31);
+	// bgUpdate();
 }
 
 void App::IndexBooks() {

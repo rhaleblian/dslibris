@@ -152,7 +152,7 @@ endif
 .PHONY: doc markdown
 
 cflash.img: cflash
-	/usr/sbin/mkfs.fat -C cflash.img 32767
+	/usr/sbin/mkfs.fat -C cflash.img 131068
 	mcopy -i cflash.img -s cflash/* ::/
 
 dslibris-en.zip: $(OUTPUT).nds etc/filesystem/en
