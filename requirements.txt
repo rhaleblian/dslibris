@@ -1,10 +1,10 @@
 calico
-dkp-toolchain-vars
 default-arm7
-devkitARM
+devkitARM-gdb
 devkitarm-crtls
 devkitarm-rules
 devkitpro-keyring
+dkp-toolchain-vars
 dstools
 grit
 libfat-nds
