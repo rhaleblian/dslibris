@@ -146,7 +146,7 @@ void App::FontDraw(bool redraw)
 {
 	// save state.
 	bool invert = ts->GetInvert();
-	u16* screen = ts->GetScreen();
+	uint16_t* screen = ts->GetScreen();
 	int style = ts->GetStyle();
 	
 	ts->SetInvert(false);

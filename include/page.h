@@ -49,7 +49,7 @@ class Page {
 	u8*  GetBuffer() { return buf; }
 	int  GetLength() { return length; }
 	//! Copy src to buf for len bytes.
-	u8   SetBuffer(u8 *src, u16 len); 
+	u8   SetBuffer(u8 *src, uint16_t len); 
 	void Cache(FILE *fp);
 //	void Draw();
 	void Draw(Text *ts);

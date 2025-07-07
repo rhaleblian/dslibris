@@ -56,9 +56,9 @@ class Cache {
 public:
 	//! Associates each glyph cache index (value)
 	//! with its Unicode code point (key).
-	map<u16, FT_GlyphSlot> cacheMap;
+	map<uint16_t, FT_GlyphSlot> cacheMap;
 	//! ??
-	u16 cachenext;
+	uint16_t cachenext;
 	
 	Cache() {
 		cachenext = 0;
@@ -175,9 +175,9 @@ public:
 	struct { u8 r; u8 g; u8 b; } bgcolor;
 	bool usebgcolor;
 	//! Pointers to screens and which one is current.
-	u16 *screen, *screenleft, *screenright;
+	uint16_t *screen, *screenleft, *screenright;
 	//! Offscreen buffer. Only used when OFFSCREEN defined.
-	u16 *offscreen;
+	uint16_t *offscreen;
 	struct {
 		int left, right, top, bottom;
 	} margin;
@@ -212,30 +212,30 @@ public:
 	bool GetFontName(std::string &s);
 	u8   GetHeight(void);
 	bool GetInvert();
-	void GetPen(u16 *x, u16 *y);
-	void GetPen(u16 &x, u16 &y);
+	void GetPen(uint16_t *x, uint16_t *y);
+	void GetPen(uint16_t &x, uint16_t &y);
 	u8   GetPenX();
 	u8   GetPenY();
 	u8   GetPixelSize();
-	u16* GetScreen();
+	uint16_t* GetScreen();
 	int  GetStringAdvance(const char *txt);
 	u8   GetStringWidth(const char *txt, u8 style);
 	inline int GetStyle() { return style; }
 
 	void SetInvert(bool invert);
-	void SetPen(u16 x, u16 y);
+	void SetPen(uint16_t x, uint16_t y);
 	void SetPixelSize(u8 size);
 	bool SetFace(u8 style);
 	void SetFontFile(const char *filename, u8 style);
-	void SetScreen(u16 *s);
+	void SetScreen(uint16_t *s);
 	inline void SetStyle(int astyle) { style = astyle; face = faces[style]; }
 	
 	void ClearCache();
 	void ClearCache(u8 style);
-	void ClearRect(u16 xl, u16 yl, u16 xh, u16 yh);
+	void ClearRect(uint16_t xl, uint16_t yl, uint16_t xh, uint16_t yh);
 	void ClearScreen();
-	void ClearScreen(u16*, u8, u8, u8);
-	void CopyScreen(u16 *src, u16 *dst);
+	void ClearScreen(uint16_t*, u8, u8, u8);
+	void CopyScreen(uint16_t *src, uint16_t *dst);
 	void SwapScreens();
 
 	void PrintChar(u32 ucs);
@@ -245,7 +245,7 @@ public:
 	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
 	void PrintString(const char *string, u8 style);
-	void PrintSplash(u16 *screen);
+	void PrintSplash(uint16_t *screen);
 };
 
 #endif

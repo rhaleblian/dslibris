@@ -2,8 +2,8 @@
 #define _ui_h
 
 typedef struct {
-  u16 x;
-  u16 y;
+  uint16_t x;
+  uint16_t y;
 } coord_t;
 
 typedef struct {
@@ -14,7 +14,7 @@ typedef struct {
 
   void button_init(button_t *b);
   void button_label(button_t *b, char *text);
-  void button_draw(button_t *b, u16 *fb, bool highlight);
-  void button_move(button_t *b, u16 x, u16 y);
+  void button_draw(button_t *b, uint16_t *fb, bool highlight);
+  void button_move(button_t *b, uint16_t x, uint16_t y);
 
 #endif

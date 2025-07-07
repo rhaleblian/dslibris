@@ -35,7 +35,7 @@ Page::~Page()
 	if(buf) delete buf;
 }
 
-u8 Page::SetBuffer(u8 *src, u16 len)
+u8 Page::SetBuffer(u8 *src, uint16_t len)
 {
 	//! Write to offscreen buffer. NYI
 	if(buf) delete buf;
@@ -80,7 +80,7 @@ void Page::Draw(Text *ts)
 	ts->SetScreen(ts->screenleft);
 	ts->ClearScreen();
 
-	u16 i=0;
+	uint16_t i=0;
 	while (i<length)
 	{
 		u32 c = buf[i];
@@ -156,10 +156,10 @@ void Page::DrawNumber(Text *ts)
 	
 	// Find out if the page is bookmarked or not
 	bool isBookmark = false;
-	u16 pagecurrent = book->GetPosition();
-	u16 pagecount = book->GetPageCount();
-	std::list<u16>* bookmarks = book->GetBookmarks();
-	for (std::list<u16>::iterator i = bookmarks->begin(); 
+	uint16_t pagecurrent = book->GetPosition();
+	uint16_t pagecount = book->GetPageCount();
+	std::list<uint16_t>* bookmarks = book->GetBookmarks();
+	for (std::list<uint16_t>::iterator i = bookmarks->begin(); 
 		 i != bookmarks->end(); i++) {
 		if (*i == pagecurrent)
 		{

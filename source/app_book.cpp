@@ -23,8 +23,8 @@
 
 void App::HandleEventInBook()
 {
-	u16 pagecurrent = bookcurrent->GetPosition();
-	u16 pagecount = bookcurrent->GetPageCount();
+	uint16_t pagecurrent = bookcurrent->GetPosition();
+	uint16_t pagecount = bookcurrent->GetPageCount();
 
 	if (key.downrepeat & (KEY_A|key.r|key.down))
 	{
@@ -50,7 +50,7 @@ void App::HandleEventInBook()
 		prefs->Write();
 	}
 
-	uint32 keys = keysDown();
+	uint32_t keys = keysDown();
 
 	if(keys){
 
@@ -112,10 +112,10 @@ void App::HandleEventInBook()
 		else if (keys & KEY_SELECT)
 		{
 			// Toggle bookmark.
-			std::list<u16>* bookmarks = bookcurrent->GetBookmarks();
+			std::list<uint16_t>* bookmarks = bookcurrent->GetBookmarks();
 	
 			bool found = false;
-			for (std::list<u16>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
+			for (std::list<uint16_t>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
 				if (*i == pagecurrent)
 				{
 					bookmarks->erase(i);
@@ -135,14 +135,14 @@ void App::HandleEventInBook()
 		else if (keys & (key.right | key.left))
 		{
 			// Navigate bookmarks.
-			std::list<u16>* bookmarks = bookcurrent->GetBookmarks();
+			std::list<uint16_t>* bookmarks = bookcurrent->GetBookmarks();
 	
 			if (!bookmarks->empty())
 			{
 				//Find the bookmark just after the current page
 				if (keys & key.left)
 				{
-					std::list<u16>::iterator i;
+					std::list<uint16_t>::iterator i;
 					for (i = bookmarks->begin(); i != bookmarks->end(); i++) {
 						if (*i > bookcurrent->GetPosition())
 							break;
@@ -155,7 +155,7 @@ void App::HandleEventInBook()
 				}
 				else // KEY_OTHER by process of elimination
 				{
-					std::list<u16>::reverse_iterator i;
+					std::list<uint16_t>::reverse_iterator i;
 					for (i = bookmarks->rbegin(); i != bookmarks->rend(); i++) {
 						if (*i < bookcurrent->GetPosition())
 							break;

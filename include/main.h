@@ -18,8 +18,7 @@
  To contact the copyright holder: ray@haleblian.com
  */
 
-#ifndef _main_h_
-#define _main_h_
+#pragma once
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -50,8 +49,6 @@
 #define FONTSPLASHFILE "LiberationSans-Regular.ttf"
 
 //! For drawing splash screen.
-int getSize(uint8 *source, uint16 *dest, uint32 arg);
-uint8 readByte(uint8 *source);
-void drawstack(u16 *screen);
-
-#endif
+int getSize(uint8_t *source, uint16_t *dest, uint32_t arg);
+uint8_t readByte(uint8_t *source);
+void drawstack(uint16_t *screen);

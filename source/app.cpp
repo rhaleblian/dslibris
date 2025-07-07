@@ -333,7 +333,7 @@ void App::UpdateClock()
 {
 	if (mode != APP_MODE_BOOK)
 		return;
-	u16 *screen = ts->GetScreen();
+	uint16_t *screen = ts->GetScreen();
 	time_t unixTime = time(NULL);
 	struct tm* timeStruct = gmtime((const time_t *)&unixTime);
 
@@ -360,8 +360,8 @@ void App::SetOrientation(bool flip)
 		REG_BG3Y = 0 << 8;
 		REG_BG3X_SUB = 191 << 8;
 		REG_BG3Y_SUB = 0 << 8;
-		ts->screenleft = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenright = (u16*)BG_BMP_RAM(0);
+		ts->screenleft = (uint16_t*)BG_BMP_RAM_SUB(0);
+		ts->screenright = (uint16_t*)BG_BMP_RAM(0);
 		orientation = true;
 		key.down = KEY_UP;
 		key.up = KEY_DOWN;
@@ -378,8 +378,8 @@ void App::SetOrientation(bool flip)
 		REG_BG3Y = 255 << 8;
 		REG_BG3X_SUB = 0 << 8;
 		REG_BG3Y_SUB = 255 << 8;
-		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenleft = (u16*)BG_BMP_RAM(0);
+		ts->screenright = (uint16_t*)BG_BMP_RAM_SUB(0);
+		ts->screenleft = (uint16_t*)BG_BMP_RAM(0);
 		orientation = false;
 		key.down = KEY_DOWN;
 		key.up = KEY_UP;
@@ -453,7 +453,7 @@ void App::Fatal(const char *msg)
 void App::PrintStatus(const char *msg)
 {
 	bool invert = ts->GetInvert();
-	u16* screen = ts->GetScreen();
+	uint16_t* screen = ts->GetScreen();
 	u8 pixelsize = ts->GetPixelSize();
 	const int top = 240;
 	ts->SetPixelSize(11);

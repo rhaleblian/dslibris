@@ -112,7 +112,7 @@ void App::PrefsDraw(bool redraw)
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
-	u16* screen = ts->GetScreen();
+	uint16_t* screen = ts->GetScreen();
 	int style = ts->GetStyle();
 	
 	ts->SetScreen(ts->screenright);
