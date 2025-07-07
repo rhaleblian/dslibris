@@ -140,21 +140,19 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-.PHONY: debug doc markdown check distcheck run
+dldi.bin:
+	dd if=/dev/zero of=$@ bs=1M count=2
+	mkfs.fat dldi.bin
+
+release.zip: $(OUTPUT).nds
+	dlditool etc/dldi/r4tf_v2.dldi $(OUTPUT).nds
+	zip release.zip $(OUTPUT).nds
+	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
+
+.PHONY: doc check distcheck run
 
 doc:
 	doxygen
-	echo "Documentation is located at doc/html ."
-
-markdown: doc
-	node ../moxygen/bin/moxygen.js -h doc/xml
-
-run:
-	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
-	desmume --cflash-path test dslibris.nds
-
-debug: dldi-r4
-	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
 
 check:
 	true
@@ -162,6 +160,6 @@ check:
 distcheck:
 	true
 
-release.zip: dldi-r4
-	zip release.zip dslibris.nds
-	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
+run:	$(TARGET).nds
+	dlditool etc/dldi/r4tf_v2.dldi $(TARGET).nds
+	melonDS $(OUTPUT).nds
