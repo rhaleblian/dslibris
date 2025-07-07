@@ -117,7 +117,7 @@ int App::Run(void)
 
    	if (int err = prefs->Read())
 	{
-		if(err == ERROR_PREFS_MISSING)
+		if(err == ERROR_PREFSFILE_MISSING)
 		{
 			err = prefs->Write();
 			if (err) {
