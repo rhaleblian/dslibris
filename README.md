@@ -42,7 +42,7 @@ Once `dkp-pacman` is installed, can get needed packages via
 
 To build the program, assure devkitARM is available to your shell:
 
-    . activate
+    . /opt/devkitpro/devkitarm.sh
 
 then
 
