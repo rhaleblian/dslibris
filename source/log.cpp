@@ -3,6 +3,9 @@
  *
  *  Created on: Jul 11, 2009
  *      Author: rhaleblian
+ *
+ * Functions for writing messages to dslibris.log .
+ *
  */
 #include "main.h"
 #include "log.h"
