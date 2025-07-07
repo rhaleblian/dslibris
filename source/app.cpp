@@ -36,12 +36,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "nds/arm9/background.h"
 #include "nds/arm9/input.h"
 
-#include "types.h"
-#include "main.h"
-#include "parse.h"
 #include "book.h"
 #include "button.h"
+#include "error.h"
+#include "main.h"
+#include "parse.h"
 #include "text.h"
+#include "types.h"
 #include "version.h"
 
 // less-than operator to compare books by title
@@ -116,7 +117,7 @@ int App::Run(void)
 
    	if (int err = prefs->Read())
 	{
-		if(err == 255)
+		if(err == ERROR_PREFS_MISSING)
 		{
 			err = prefs->Write();
 			if (err) {
