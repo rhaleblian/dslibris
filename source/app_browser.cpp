@@ -25,7 +25,7 @@
 
 void App::HandleEventInBrowser()
 {
-	uint32 keys = keysDown();
+	uint32_t keys = keysDown();
 	
 	if (keys & (KEY_A | key.down))
 	{
@@ -208,7 +208,7 @@ void App::browser_draw(void)
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
- 	u16 *screen = ts->GetScreen();
+ 	uint16_t *screen = ts->GetScreen();
 	int style = ts->GetStyle();
 	
 	ts->SetScreen(ts->screenright);

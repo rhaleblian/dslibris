@@ -89,8 +89,8 @@ int Prefs::Write()
 			app->paraspacing);
 	/* TODO save pagination data with current book to cache it to disk.
 	   store timestamp too in order to invalidate caches.
-	vector<u16> pageindices;
-	for(u16 i=0;i<app->pagecount;i++) {}
+	vector<uint16_t> pageindices;
+	for(uint16_t i=0;i<app->pagecount;i++) {}
 	*/
     fprintf(fp, "\t<books path=\"%s\" reopen=\"%d\">\n",
     		app->bookdir.c_str(),
@@ -102,8 +102,8 @@ int Prefs::Write()
                 book->GetFileName(), book->GetPosition() + 1);
 		if(app->bookcurrent == app->books[i]) fprintf(fp," current=\"1\"");
 		fprintf(fp,">\n");
-		std::list<u16>* bookmarks = book->GetBookmarks();
-        for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
+		std::list<uint16_t>* bookmarks = book->GetBookmarks();
+        for (std::list<uint16_t>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
             fprintf(fp, "\t\t\t<bookmark page=\"%d\" word=\"%d\" />\n",
                     *j + 1,0);
         }

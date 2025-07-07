@@ -56,7 +56,7 @@ void Book::SetFolderName(std::string &name)
 	foldername = name;
 }
 
-std::list<u16>* Book::GetBookmarks()
+std::list<uint16_t>* Book::GetBookmarks()
 {
     return &bookmarks;
 }
@@ -103,7 +103,7 @@ Page* Book::GetPage(int index)
 	return pages[index];
 }
 
-u16 Book::GetPageCount()
+uint16_t Book::GetPageCount()
 {
 	return pages.size();
 }
@@ -128,7 +128,7 @@ int Book::GetPosition()
 	return position;
 }
 
-void Book::SetPage(u16 index)
+void Book::SetPage(uint16_t index)
 {
 	position = index;
 }

@@ -50,27 +50,27 @@ void Button::SetLabel2(std::string s) {
 	text2 = s;
 }
 
-void Button::Move(u16 x, u16 y) {
+void Button::Move(uint16_t x, uint16_t y) {
 	origin.x = x;
 	origin.y = y;
 }
 
-void Button::Resize(u16 x, u16 y) {
+void Button::Resize(uint16_t x, uint16_t y) {
 	extent.x = x;
 	extent.y = y;
 }
 
-void Button::Draw(u16 *fb, bool highlight) {
+void Button::Draw(uint16_t *fb, bool highlight) {
 	coord_t ul, lr;
 	ul.x = origin.x;
 	ul.y = origin.y;
 	lr.x = origin.x + extent.x;
 	lr.y = origin.y + extent.y;
 
-	u16 x;
-	u16 y;
+	uint16_t x;
+	uint16_t y;
 
-	u16 bgcolor;
+	uint16_t bgcolor;
 	if(highlight) bgcolor = RGB15(31,31,15) | BIT(15);
 	else bgcolor = RGB15(30,30,30) | BIT(15);
 	for (y=ul.y+1;y<lr.y-1;y++) {
@@ -80,7 +80,7 @@ void Button::Draw(u16 *fb, bool highlight) {
 	}
 
 #if 0
-	u16 bordercolor = RGB15(22,22,22) | BIT(15);
+	uint16_t bordercolor = RGB15(22,22,22) | BIT(15);
 	for (x=ul.x;x<lr.x;x++) {
 		fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
 		fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
@@ -116,7 +116,7 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->SetInvert(invert);
 }
 
-bool Button::EnclosesPoint(u16 x, u16 y)
+bool Button::EnclosesPoint(uint16_t x, uint16_t y)
 {
 	if (x > origin.x && 
 		y > origin.y && 

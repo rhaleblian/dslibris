@@ -33,8 +33,8 @@ typedef struct wifid {
 
 
 /* Address of the shared CommandControl structure */
-#define wifiData ((wifidata*)((uint32)(IPC) + sizeof(TransferRegion)))
-//#define timeData ((timedata*)((uint32)(wifiData) + sizeof(wifidata)))
+#define wifiData ((wifidata*)((uint32_t)(IPC) + sizeof(TransferRegion)))
+//#define timeData ((timedata*)((uint32_t)(wifiData) + sizeof(wifidata)))
 
 char rcvdbuf[4096];
 int rcvdlen;

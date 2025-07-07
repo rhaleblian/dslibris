@@ -102,8 +102,8 @@ class App {
 	
 	//! key functions are remappable to support screen flipping.
 	struct {
-		u16 up,down,left,right,l,r,a,b,x,y,start,select;
-		uint32 downrepeat;
+		uint16_t up,down,left,right,l,r,a,b,x,y,start,select;
+		uint32_t downrepeat;
 	} key;
 	
 	vector<Button*> buttons;
@@ -124,7 +124,7 @@ class App {
 	//! user data block passed to expat callbacks.
 	parsedata_t parsedata;
 	//! not used yet; will contain pagination indices for caching.
-	vector<u16> pageindices;
+	vector<uint16_t> pageindices;
 	u8 orientation;
 	u8 paraspacing, paraindent;
 	

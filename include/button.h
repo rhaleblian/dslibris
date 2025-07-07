@@ -6,8 +6,8 @@
 #include <string>
 
 typedef struct {
-	u16 x;
-	u16 y;
+	uint16_t x;
+	uint16_t y;
 } coord_t;
 
 //! A very simple button with a text label.
@@ -29,10 +29,10 @@ class Button {
 	void SetLabel(std::string &s);
 	//! label on next line, used for author in the library screen.
 	void SetLabel2(std::string s);
-	void Draw(u16 *fb, bool highlight);
-	void Move(u16 x, u16 y);
-	void Resize(u16 x, u16 y);
-	bool EnclosesPoint(u16 x, u16 y);
+	void Draw(uint16_t *fb, bool highlight);
+	void Move(uint16_t x, uint16_t y);
+	void Resize(uint16_t x, uint16_t y);
+	bool EnclosesPoint(uint16_t x, uint16_t y);
 };
 
 #endif

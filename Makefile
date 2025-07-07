@@ -140,7 +140,7 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-.PHONY: dldi-r4 dldi-cycloevo debug doc markdown dldi-mpcf check distcheck run
+.PHONY: debug doc markdown check distcheck run
 
 doc:
 	doxygen
@@ -149,25 +149,12 @@ doc:
 markdown: doc
 	node ../moxygen/bin/moxygen.js -h doc/xml
 
-dldi-mpcf: $(OUTPUT).nds
-	dlditool etc/dldi/mpcf.dldi dslibris.nds
-
-dldi-cycloevo: $(OUTPUT).nds
-	dlditool etc/dldi/CycloEvo.dldi dslibris.nds
-
-dldi-r4: $(OUTPUT).nds
+run:
 	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
-
-run: dldi-r4
 	desmume --cflash-path test dslibris.nds
 
 debug: dldi-r4
 	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
-
-upload:
-# macOS only
-	# ftp -u ftp://${DS_HOST}:5000/dslibris.nds dslibris.nds
-	ftp -u ftp://192.168.1.231:5000/dslibris.nds  dslibris.nds
 
 check:
 	true
