@@ -1,0 +1,1 @@
+rm -rf $(grep -Ril "freetype" /opt/devkitpro/portlibs/nds/)
