@@ -1,5 +1,5 @@
 #CLEAN IF ANY
-rm -rf | grep -Ril "freetype" /opt/devkitpro/portlibs/nds/
+rm -rf $(grep -Ril "freetype" /opt/devkitpro/portlibs/nds/)
 
 #INSTALL
 pkgver=$1
