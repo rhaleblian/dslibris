@@ -29,7 +29,7 @@ INCLUDES	:=	include build
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-Wall -O2 \
-			-I./portlibs/nds/include/freetype2 \
+			-I$(PWD)/portlibs/nds/include/freetype2 \
 			-I$(DEVKITPRO)/portlibs/nds/include/freetype2 \
 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
 			-ffast-math \
