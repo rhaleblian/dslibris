@@ -1,0 +1,28 @@
+pkgver=$1
+baseurl=https://download.savannah.nongnu.org/releases/freetype/
+base=freetype-$pkgver
+prefix=${PWD}/portlibs/nds
+
+# TODO old versions are not .xz, maybe .gz
+if [! -d freetype-$pkgver ]
+then
+    wget $baseurl/freetype-$pkgver.tar.xz
+    tar xf freetype-$pkgver.tar.xz
+fi
+
+pushd freetype-$pkgver
+
+source /opt/devkitpro/devkitarm.sh
+source /opt/devkitpro/ndsvars.sh
+
+./configure --prefix=${prefix} --host=arm-none-eabi \
+--enable-freetype-config \
+--disable-shared --enable-static \
+--without-harfbuzz \
+--with-zlib \
+--with-bzip2 \
+--with-png
+
+make install
+
+popd
