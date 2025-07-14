@@ -86,7 +86,6 @@ Text::Text()
 	stats_hits = 0;
 	stats_misses = 0;
 
-	ClearScreen(offscreen, 255, 255, 255);
 	ss.clear();
 }
 
@@ -205,10 +204,7 @@ int Text::InitHomemadeCache(void) {
 
 int Text::Init()
 {
-	if(ftc)
-		return InitFreeTypeCache();
-	else
-		return InitHomemadeCache();
+	return FT_Init_FreeType(&library);
 }
 
 void Text::ReportFace(FT_Face face)

@@ -40,62 +40,9 @@ int ft_main(int argc, char **argv);
 /*---------------------------------------------------------------------------*/
 
 
-int kungheyfatcheck(void) {
-	iprintf("** kungheyfatcheck **\n");
-	iprintf("root directory:\n");
-	swiWaitForVBlank();
-
-	DIR *dp = opendir("/");
-	if (!dp) {
-		printf("[PANIC] root dir inaccessible!\n");
-		return false;
-	}
-	struct dirent *ent;
-	while ((ent = readdir(dp)))
-	{
-		iprintf("%s %d\n", ent->d_name, ent->d_type);
-	}
-	closedir(dp);
-
-	return true;
-}
-
-PrintConsole* boot_console(void) {
-	// Get a console going.
-	auto console = consoleDemoInit();
-	if (!console) iprintf("[FAIL] console!\n");		// This, of course, won't print :D
-	else iprintf("[OK] console\n");
-	return console;
-}
-
-int boot_filesystem(void) {
-	// Start up the filesystem.
-	bool success = fatInitDefault();
-	if (!success) iprintf("[FAIL] filesystem!\n");
-	else iprintf("[OK] filesystem\n");
-	return success;
-}
-
-void spin(void) {
-	while(true) swiWaitForVBlank();
-}
-
-void fatal(const char *msg) {
-	iprintf(msg);
-	spin();
-}
-
-int main(void)
+void spin(void)
 {
-	if(!boot_console()) spin();
-	if(!boot_filesystem()) spin();
-
-	//kungheyfatcheck();
-	// asciiart();
-	// while(true) swiWaitForVBlank();
-
-	app = new App();
-	return app->Run();
+	while(pmMainLoop()) swiWaitForVBlank();
 }
 
 bool iswhitespace(u8 c)
@@ -791,3 +738,49 @@ void drawstack(uint16_t *screen) {
        TDecompressionStream decomp = {getSize, NULL, readByte};
        swiDecompressLZSSVram((void*)splashBitmap, screen, 0, &decomp);
 }
+
+PrintConsole* boot_console(void)
+{
+	// Start up a demo console.
+	auto console = consoleDemoInit();
+	if(console) iprintf("[ OK ] console\n");
+	return console;
+}
+
+int boot_filesystem(void)
+{
+	// Start up libfat.
+	bool success = fatInitDefault();
+	if (!success) iprintf("[FAIL] no filesystem\n");
+	else iprintf("[ OK ] filesystem\n");
+	return success;
+}
+
+int ls(void)
+{
+	// libfat diagnostic routine.
+	DIR *dp = opendir("/");
+	if (!dp) {
+		iprintf("[FAIL] root dir inaccessible\n");
+		return false;
+	}
+	struct dirent *ent;
+	while ((ent = readdir(dp)))
+	{
+		iprintf("[ OK ] %s\n", ent->d_name);
+	}
+	closedir(dp);
+
+	return true;
+}
+
+int main(void)
+{
+	defaultExceptionHandler();
+	if(!boot_console()) spin();
+	if(!boot_filesystem()) spin();
+	app = new App();
+	if (app->Run())	spin();
+	return 0;
+}
+

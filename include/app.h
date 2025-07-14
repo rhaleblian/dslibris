@@ -76,6 +76,7 @@ https://github.com/rhaleblian/dslibris
 #define PREFS_BUTTON_FONTSIZE 1
 #define PREFS_BUTTON_PARASPACING 0
 
+void spin();
 
 //! \brief Main application.
 //!
@@ -83,14 +84,6 @@ https://github.com/rhaleblian/dslibris
 //! interaction loop, drawing everything but text, and logging.
 
 class App {
-	private:
-	void InitScreens();
-	void SetBrightness(u8 b);
-	void SetOrientation(bool flip);
-	void WifiInit();
-	bool WifiConnect();
-	void Fatal(const char *msg);
-
 	public:
 	Text *ts;
 	Prefs myprefs;   //?
@@ -208,6 +201,16 @@ class App {
 	void FontNextPage();
 	void FontPreviousPage();
 	void FontButton();
+	
+	private:
+	
+	void FindBooks();
+	void InitScreens();
+	void SetBrightness(u8 b);
+	void SetOrientation(bool flip);
+	void WifiInit();
+	bool WifiConnect();
+	void Fatal(const char *msg);
 };
 
 #endif

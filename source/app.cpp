@@ -50,15 +50,10 @@ static bool book_title_lessthan(Book* a, Book* b) {
     return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
 }
 
-void halt()
-{
-	while(TRUE) swiWaitForVBlank();
-}
-
 App::App()
 {	
 	fontdir = string(FONTDIR);
-	bookdir = string(BOOKDIR);
+	bookdir = std::string("/book");
 	bookcount = 0;
 	bookselected = NULL;
 	bookcurrent = NULL;
@@ -95,8 +90,8 @@ App::App()
 
 App::~App()
 {
-	delete prefs;
-	delete ts;
+	if (prefs) delete prefs;
+	if (ts) delete ts;
 	vector<Book*>::iterator it;
 	for(it=books.begin();it!=books.end();it++)
 		delete *it;
@@ -105,103 +100,101 @@ App::~App()
 
 int App::Run(void)
 {
-	char msg[512];
-	SetBrightness(0);	
-
-	Log("--------------------\n");
-	Log("dslibris starting up\n");
-	console = true;
-
-	// Read preferences, pass 1,
-	// to get the book folder and preferred fonts.
-
-   	if (int err = prefs->Read())
-	{
-		if(err == ERROR_PREFSFILE_MISSING)
-		{
-			err = prefs->Write();
-			if (err) {
-				Log("could not create preferences\n");
-				return err;
-			}
-			Log("created preferences\n");
-		}
-	}
-
+	int err = 0;
+	
 	// Start up typesetter.
 
-   	int err = ts->Init();
-	switch(err)
-	{
-		case 0:
-		sprintf(msg, "typesetter started\n");
-		break;
-		default:
-		sprintf(msg, ErrorString(err));
-		// case 1:
-		// sprintf(msg, "fatal: font file not found (%d)\n", err);
-		// break;
-		// case 2:
-		// sprintf(msg, "fatal: font file unreadable (%d)\n", err);
-		// break;
-		// default:
-		// sprintf(msg, "fatal: freetype error (%d)\n", err);
+   	err = ts->Init();
+	if (err) {
+		iprintf("[FAIL] no typesetter\n");
+		return err;
 	}
-	Log(msg);
-	if(err) while(1) swiWaitForVBlank();
-	
-	SetBrightness(brightness);
-	
-	// Look in the book directory and construct library.
+	iprintf("[ OK ] typesetter\n");
+			
+	// Construct library.
 
-	sprintf(msg,"scanning '%s' for books\n",bookdir.c_str());
-	Log(msg);
+	FindBooks();
+	iprintf("[ OK ] books\n");
+
+	// Read preferences.
+
+   	if (prefs->Read()) if (prefs->Write()) return err;
+	for(u8 i = 0; i < bookcount; i++)
+	{
+		books[i]->GetBookmarks()->sort();
+	}
+
+	iprintf("[ OK ] preferences\n");
 	
+	// Set up preference view.
+	
+	PrefsInit();
+	
+	// Set up browser view.
+	
+	std::sort(books.begin(),books.end(),&book_title_lessthan);
+	browser_init();
+	mode = APP_MODE_BROWSER;
+
+	iprintf("[ OK ] views\n");
+
+	// Draw initial screens.
+
+	InitScreens();
+//	if(orientation) lcdSwap();
+	ts->PrintSplash(ts->screenleft);
+	browser_draw();
+
+	keysSetRepeat(60,2);
+	
+	while (pmMainLoop())
+	{
+		swiWaitForVBlank();
+		scanKeys();
+		// TODO is this truly necessary?
+		key.downrepeat = keysDownRepeat();
+		if (key.downrepeat)
+		{
+			switch (mode)
+			{
+			      case APP_MODE_BROWSER:
+				      HandleEventInBrowser();
+				      break;
+			      case APP_MODE_BOOK:
+				      HandleEventInBook();
+				      break;
+			      case APP_MODE_PREFS:
+				      HandleEventInPrefs();
+				      break;
+			      case APP_MODE_PREFS_FONT:
+			      case APP_MODE_PREFS_FONT_BOLD:
+			      case APP_MODE_PREFS_FONT_ITALIC:
+				      HandleEventInFont();
+				      break;
+			}
+		}
+	}
+	return 0;
+}
+
+void App::FindBooks() {
 	DIR *dp = opendir(bookdir.c_str());
 	if (!dp)
 	{
-		sprintf(msg,"fatal: No book directory \'%s\'.\n",
-			bookdir.c_str());
-		Log(msg);
+		iprintf("[FAIL] no book directory\n");
+		return;
 	}
-	
 	struct dirent *ent;
 	while ((ent = readdir(dp)))
 	{
 		char *filename = ent->d_name;
-		sprintf(msg,"%s\n", filename);
-		Log(msg);
-		if(*filename == '.') continue;
+		if(*filename == '.')
+			continue;
 		char *c;
-		// FIXME use std::string method
 		for (c=filename+strlen(filename)-1;
 		     c!=filename && *c!='.';
 		     c--);
-		if (!strcmp(".xht",c) || !strcmp(".xhtml",c))
-		{
-			Book *book = new Book();
-			book->SetFolderName(bookdir.c_str());
-			book->SetFileName(filename);
-			book->format = FORMAT_XHTML;
-			books.push_back(book);
-			bookcount++;
-			
-			Log("indexing '%s'\n", book->GetFileName());
-
-			u8 rc = book->Index();
-			if (rc)
-			{
-				sprintf(msg,"warn : indexer failed (%d)\n",
-					rc);
-			}
-			else
-			{
-				sprintf(msg, "indexed title '%s'\n",
-					book->GetTitle());
-			}
-			Log(msg);
-		}
-		else if (!strcmp(".epub",c))
+		if (!strcmp(".epub",c))
 		{
 			Book *book = new Book();
 			book->SetFolderName(bookdir.c_str());
@@ -210,112 +203,10 @@ int App::Run(void)
 			book->format = FORMAT_EPUB;
 			books.push_back(book);
 			bookcount++;
-			book->Index();
+			// book->Index();
 		}
 	}
 	closedir(dp);
-	sprintf(msg,"%d books indexed.\n",bookcount);
-	Log(msg);
-
-	if(bookcurrent)
-	{
-		sprintf(msg,"info : currentbook = %s.\n",bookcurrent->GetTitle());
-		Log(msg);
-	}
-	swiWaitForVBlank();
-	
-	// Read preferences, pass 2, to bind preferences to books.
-	
-   	if(int parseerror = prefs->Read())
-	{
-		sprintf(msg,"warn : can't read prefs (%d).\n",parseerror);
-		Log(msg);
-	}
-	else Log("info : read prefs (books).\n");
-
-	// Sort bookmarks for each book.
-	for(u8 i = 0; i < bookcount; i++)
-	{
-		books[i]->GetBookmarks()->sort();
-	}
-
-	// Set up preferences editing screen.
-	PrefsInit();
-	
-	// Set up library browser screen.
-	std::sort(books.begin(),books.end(),&book_title_lessthan);
-	browser_init();
-
-	Log("progr: browsers populated.\n");
-
-	// Bring up displays.
-	console = false;
-	InitScreens();
-	if(orientation) lcdSwap();
-	if (prefs->swapshoulder)
-	{
-		int tmp = key.l;
-		key.l = key.r;
-		key.r = tmp;
-	}
-
-	mode = APP_MODE_BROWSER;
-	ts->PrintSplash(ts->screenleft);
-	browser_draw();
-
-	Log("progr: browser displayed.\n");
-
-	// Resume reading from the last session.
-	
-	if(reopen && bookcurrent)
-	{
-		int openerr = OpenBook();
-		if(openerr)
-			Log("warn : could not reopen previous book.\n");
-		else
-		{
-			Log("info : reopened previous book.\n");
-			mode = APP_MODE_BOOK;
-		}
-	}
-	else Log("info : not reopening previous book.\n");
-
-	swiWaitForVBlank();
-
-	// Start polling event loop.
-	// FIXME use interrupt driven event handling.
-	
-	keysSetRepeat(60,2);
-	while (true)
-	{
-		scanKeys();
-
-		key.downrepeat = keysDownRepeat();
-
-		if (key.downrepeat)
-		{
-			switch (mode){
-					case APP_MODE_BROWSER:
-						HandleEventInBrowser();
-						break;
-					case APP_MODE_BOOK:
-						HandleEventInBook();
-						//UpdateClock();
-						break;
-					case APP_MODE_PREFS:
-						HandleEventInPrefs();
-						break;
-					case APP_MODE_PREFS_FONT:
-					case APP_MODE_PREFS_FONT_BOLD:
-					case APP_MODE_PREFS_FONT_ITALIC:
-						HandleEventInFont();
-						break;
-			}
-		}
-		swiWaitForVBlank();
-	}
-
-	exit(0);
 }
 
 void App::SetBrightness(u8 b)

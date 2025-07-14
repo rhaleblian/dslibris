@@ -70,6 +70,7 @@ void Button::Draw(uint16_t *fb, bool highlight) {
 	uint16_t x;
 	uint16_t y;
 
+	// draw a background
 	uint16_t bgcolor;
 	if(highlight) bgcolor = RGB15(31,31,15) | BIT(15);
 	else bgcolor = RGB15(30,30,30) | BIT(15);
@@ -79,7 +80,7 @@ void Button::Draw(uint16_t *fb, bool highlight) {
 		}
 	}
 
-#if 0
+	// draw a border
 	uint16_t bordercolor = RGB15(22,22,22) | BIT(15);
 	for (x=ul.x;x<lr.x;x++) {
 		fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
@@ -89,7 +90,6 @@ void Button::Draw(uint16_t *fb, bool highlight) {
 		fb[y*SCREEN_WIDTH + ul.x] = bordercolor;
 		fb[y*SCREEN_WIDTH + lr.x-1] = bordercolor;
 	}
-#endif
 
 	bool invert = ts->GetInvert();
 	ts->SetScreen(fb);
@@ -100,7 +100,8 @@ void Button::Draw(uint16_t *fb, bool highlight) {
 	if(highlight) ts->usebgcolor = true;
 
 	ts->SetPixelSize(ts->GetPixelSize()+1);
-	uint8_t len = ts->GetCharCountInsideWidth(text.c_str(), TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
+	// uint8_t len = ts->GetCharCountInsideWidth(text.c_str(), TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
+	int len = 10;
 	ts->PrintString((const char*)text.substr(0, len).c_str(), TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(ts->GetPixelSize()-1);
 

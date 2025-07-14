@@ -1,0 +1,4 @@
+# Example of pushing a build to 3DS running FTPD
+
+tnftp dslibris.nds anonymous@192.168.1.231:5000
+
