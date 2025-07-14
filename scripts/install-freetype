@@ -1,28 +1,28 @@
+#CLEAN IF ANY
+rm -rf | grep -Ril "freetype" /opt/devkitpro/portlibs/nds/
+
+#INSTALL
 pkgver=$1
-baseurl=https://download.savannah.nongnu.org/releases/freetype/
-base=freetype-$pkgver
-prefix=${PWD}/portlibs/nds
 
-# TODO old versions are not .xz, maybe .gz
-if [! -d freetype-$pkgver ]
-then
-    wget $baseurl/freetype-$pkgver.tar.xz
-    tar xf freetype-$pkgver.tar.xz
-fi
+wget http://download.savannah.gnu.org/releases/freetype/freetype-$pkgver.tar.gz
+tar -xvf freetype-$pkgver.tar.gz
 
-pushd freetype-$pkgver
-
-source /opt/devkitpro/devkitarm.sh
+cd freetype-$pkgver
 source /opt/devkitpro/ndsvars.sh
-
-./configure --prefix=${prefix} --host=arm-none-eabi \
---enable-freetype-config \
+./configure --prefix="${PORTLIBS_PREFIX}" --host=arm-none-eabi \
 --disable-shared --enable-static \
---without-harfbuzz \
 --with-zlib \
 --with-bzip2 \
 --with-png
+make
 
-make install
 
-popd
+make DESTDIR="$pkgdir" install
+
+sed 's/\$show_static/yes/' -i "${pkgdir}/${PORTLIBS_PREFIX}/bin/freetype-config"
+
+install -Dm644 "docs/LICENSE.TXT" "${pkgdir}/${PORTLIBS_PREFIX}/licenses/${pkgname}/LICENSE.TXT"
+install -Dm644 "docs/GPLv2.TXT"   "${pkgdir}/${PORTLIBS_PREFIX}/licenses/${pkgname}/GPLv2.TXT"
+install -Dm644 "docs/FTL.TXT"     "${pkgdir}/${PORTLIBS_PREFIX}/licenses/${pkgname}/FTL.TXT"
+
+rm -r "${pkgdir}/${PORTLIBS_PREFIX}/share"
