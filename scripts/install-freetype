@@ -4,7 +4,7 @@ base=freetype-$pkgver
 prefix=${PWD}/portlibs/nds
 
 # TODO old versions are not .xz, maybe .gz
-if [! -d freetype-$pkgver ]
+if [ ! -d freetype-$pkgver ]
 then
     wget $baseurl/freetype-$pkgver.tar.xz
     tar xf freetype-$pkgver.tar.xz
