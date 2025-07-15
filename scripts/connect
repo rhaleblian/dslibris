@@ -1,0 +1,7 @@
+# Example of connecing to a 3DS running FTPD
+
+tnftp -P 5000 anon@192.168.1.231
+
+# then
+#   put dslibris.nds
+# to copy the exe up.
