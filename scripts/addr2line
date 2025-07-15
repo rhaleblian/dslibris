@@ -1,0 +1,5 @@
+# Get a source line from a Guru Medition `pc` address.
+# Thanks to the LOVEPotion project for this.
+
+address=$1
+arm-none-eabi-addr2line -aipfCe arm -e dslibris.elf $address
