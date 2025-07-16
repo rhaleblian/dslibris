@@ -29,6 +29,7 @@ INCLUDES	:=	include build
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-Wall -O2 \
+			-I$(PWD)/portlibs/nds/include/freetype2 \
 			-I$(DEVKITPRO)/portlibs/nds/include/freetype2 \
 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
 			-ffast-math \
@@ -49,7 +50,7 @@ LIBS	:= -lfat -lnds9 -lfreetype -lexpat -lz -lbz2 -lpng
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(PWD)/portlibs $(DEVKITPRO)/portlibs/nds
+LIBDIRS	:=	$(LIBNDS) $(PWD)/portlibs/nds $(DEVKITPRO)/portlibs/nds
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -140,34 +141,19 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-.PHONY: dldi-r4 dldi-cycloevo debug doc markdown dldi-mpcf check distcheck run
+dldi.bin:
+	dd if=/dev/zero of=$@ bs=1M count=2
+	mkfs.fat dldi.bin
+
+release.zip: $(OUTPUT).nds
+	dlditool etc/dldi/r4tf_v2.dldi $(OUTPUT).nds
+	zip release.zip $(OUTPUT).nds
+	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
+
+.PHONY: doc check distcheck run
 
 doc:
 	doxygen
-	echo "Documentation is located at doc/html ."
-
-markdown: doc
-	node ../moxygen/bin/moxygen.js -h doc/xml
-
-dldi-mpcf: $(OUTPUT).nds
-	dlditool etc/dldi/mpcf.dldi dslibris.nds
-
-dldi-cycloevo: $(OUTPUT).nds
-	dlditool etc/dldi/CycloEvo.dldi dslibris.nds
-
-dldi-r4: $(OUTPUT).nds
-	dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
-
-run: dldi-r4
-	desmume --cflash-path test dslibris.nds
-
-debug: dldi-r4
-	desmume --arm9gdb=9000 --cflash-path test dslibris.nds
-
-upload:
-# macOS only
-	# ftp -u ftp://${DS_HOST}:5000/dslibris.nds dslibris.nds
-	ftp -u ftp://192.168.1.231:5000/dslibris.nds  dslibris.nds
 
 check:
 	true
@@ -175,6 +161,6 @@ check:
 distcheck:
 	true
 
-release.zip: dldi-r4
-	zip release.zip dslibris.nds
-	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
+run:	$(TARGET).nds
+	dlditool etc/dldi/r4tf_v2.dldi $(TARGET).nds
+	melonDS $(OUTPUT).nds
