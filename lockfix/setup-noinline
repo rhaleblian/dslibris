@@ -1,0 +1,1 @@
+cp $(dirname $0)/lock.h /opt/devkitpro/devkitARM/arm-none-eabi/include/sys/lock.h

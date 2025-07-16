@@ -1,5 +1,5 @@
 pkgver=$1
-baseurl=https://download.savannah.nongnu.org/releases/freetype/freetype-old/
+baseurl=https://mirror.ossplanet.net/nongnu/freetype/freetype-old
 base=freetype-$pkgver
 prefix=${PWD}/portlibs/nds
 
