@@ -38,6 +38,13 @@ Once `dkp-pacman` is installed, can get needed packages via
 
     sudo dkp-pacman -S $(cat requirements.txt)
 
+Afterwards we need to install the legacy version of freetype that
+dslibris relies on.
+
+    sudo ./lockfix/setup-noinline
+    ./install-freetype 2.4.8
+    sudo ./lockfix/revert-inline
+
 ## Building
 
 To build the program, assure devkitARM is available to your shell:
