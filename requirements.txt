@@ -10,7 +10,6 @@ grit
 libfat-nds
 libnds
 nds-bzip2
-nds-freetype
 nds-libexpat
 nds-libpng
 nds-pkg-config

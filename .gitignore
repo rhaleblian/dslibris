@@ -6,7 +6,7 @@
 *.nds
 *.o
 *.img
-*.tar.gz
+*.tar.*
 #.*#
 .DS_Store
 /build
@@ -18,9 +18,10 @@
 /dslibris.lst
 /dslibris.smdh
 /mnt
+/portlibs
 /portlibs/bin
 /portlibs/include
-/portlibs/freetype-2.5.5
+/portlibs/freetype-2.4.8
 /portlibs/lib
 /portlibs/share
 /release.zip
