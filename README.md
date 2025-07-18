@@ -22,6 +22,9 @@ page in the Wiki.
 
 # Development
 
+WARNING: the `main` branch currently fatally fails to render text.
+dslibris will freeze in the book browser with no text displayed.
+
 ## Prerequisites
 
 We use devkitPro's toolchain for ARM, aka `devkitARM`.
