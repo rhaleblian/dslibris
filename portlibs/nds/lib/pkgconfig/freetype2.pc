@@ -1,0 +1,12 @@
+prefix=/home/ray/Developer/dslibris/portlibs/freetype-2.4.8/../nds
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: FreeType 2
+Description: A free, high-quality, and portable font engine.
+Version: 14.0.8
+Requires:
+Libs: -L${libdir} -lfreetype
+Libs.private:   
+Cflags: -I${includedir}/freetype2 -I${includedir}
