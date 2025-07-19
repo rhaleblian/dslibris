@@ -177,10 +177,7 @@ u8 Book::Open() {
 	int err = 0;
 
 	//	if( access( fname.c_str(), F_OK ) != -1 ) {
-	FILE *fp = fopen("/cache.dat", "r");
-	if (fp && app->cache) {
-		// Restore from cache.
-		fclose(fp);
+	if (app->cache) {
 		Restore();
 	} else {
 		if(format == FORMAT_XHTML) {
@@ -212,9 +209,9 @@ u8 Book::Index()
 		path.append(GetFolderName());
 		path.append("/");
 		path.append(GetFileName());
-		int err = epub(this,path,true);
-		return err;
-	} else return Parse(false);
+		return epub(this,path,true);
+	}
+	return Parse(false);
 }
 
 u8 Book::Parse(bool fulltext)

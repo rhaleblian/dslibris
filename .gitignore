@@ -2,6 +2,7 @@
 *.d
 *.dmg
 *.elf
+*.idx
 *.map
 *.nds
 *.o

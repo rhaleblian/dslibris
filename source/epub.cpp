@@ -126,6 +126,7 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 	parsedata_t pd;
 	char *filebuf = new char[BUFSIZE];
 	XML_Parser p = XML_ParserCreate(NULL);
+
 	if(epd->type == PARSE_CONTAINER) {
 		XML_SetUserData(p, epd);
 		XML_SetElementHandler(p, epub_container_start, NULL);
@@ -156,9 +157,9 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 			break;
 		}
 		len_total += len;
-		sprintf(msg,"progr: %d byte chunk\n",len); Log(msg);
+		iprintf("%d\n", len);
 	} while (len);
-	sprintf(msg,"info : read %d bytes total\n",len_total); Log(msg);
+	iprintf("3\n");
 	XML_ParserFree(p);
 	delete [] filebuf;
 	return(rc);
@@ -171,18 +172,22 @@ int epub(Book *book, std::string name, bool metadataonly)
 	int rc = 0;
 	static epub_data_t parsedata;
 	
+	iprintf("ok\n");
+
 	unzFile uf = unzOpen(name.c_str());
 	rc = unzLocateFile(uf,"META-INF/container.xml",0);
 	if(rc == UNZ_OK)
 	{
+	
 		rc = unzOpenCurrentFile(uf);
 		epub_data_init(&parsedata);
 		parsedata.type = PARSE_CONTAINER;
 		rc = epub_parse_currentfile(uf, &parsedata);
 		rc = unzCloseCurrentFile(uf);
 	}
-	
-	Log("info : rootfile "); Log(parsedata.rootfile); Log("\n");
+
+	// Log("info : rootfile "); Log(parsedata.rootfile); Log("\n");
+	iprintf("epub\n");
 	
 	// Extract any leading path for the rootfile.
 	// The manifest in the rootfile will list filenames
@@ -193,7 +198,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 		folder = parsedata.rootfile.substr(0,pos);
 	}
 
-	Log("progr: parsing rootfile\n");
+	// Log("progr: parsing rootfile\n");
 
 	rc = unzLocateFile(uf,parsedata.rootfile.c_str(),0);
 	if(rc == UNZ_OK)
@@ -218,7 +223,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 		return rc;
 	}
 
-	Log("progr: ordering sections\n");
+	// Log("progr: ordering sections\n");
 
 	// Read the XHTML in the manifest, ordering by spine if needed.
 	parsedata.ctx.clear();

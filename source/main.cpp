@@ -41,19 +41,15 @@ int ft_main(int argc, char **argv);
 
 
 int kungheyfatcheck(void) {
-	iprintf("** kungheyfatcheck **\n");
-	iprintf("root directory:\n");
-	swiWaitForVBlank();
-
-	DIR *dp = opendir("/");
+	DIR *dp = opendir("/font");
 	if (!dp) {
-		printf("[PANIC] root dir inaccessible!\n");
+		iprintf("[FAIL] font dir inaccessible\n");
 		return false;
 	}
 	struct dirent *ent;
 	while ((ent = readdir(dp)))
 	{
-		iprintf("%s %d\n", ent->d_name, ent->d_type);
+		iprintf("[ OK ] %s\n", ent->d_name);
 	}
 	closedir(dp);
 
@@ -62,21 +58,19 @@ int kungheyfatcheck(void) {
 
 PrintConsole* boot_console(void) {
 	// Get a console going.
-	auto console = consoleDemoInit();
-	if (!console) iprintf("[FAIL] console!\n");		// This, of course, won't print :D
-	else iprintf("[OK] console\n");
-	return console;
+	return consoleDemoInit();
 }
 
 int boot_filesystem(void) {
 	// Start up the filesystem.
 	bool success = fatInitDefault();
 	if (!success) iprintf("[FAIL] filesystem!\n");
-	else iprintf("[OK] filesystem\n");
+	else iprintf("[ OK ] filesystem\n");
 	return success;
 }
 
 void spin(void) {
+	// Halt, while assuring drawing is flushed.
 	while(true) swiWaitForVBlank();
 }
 
@@ -87,15 +81,16 @@ void fatal(const char *msg) {
 
 int main(void)
 {
+	defaultExceptionHandler();
 	if(!boot_console()) spin();
 	if(!boot_filesystem()) spin();
-
-	//kungheyfatcheck();
-	// asciiart();
-	// while(true) swiWaitForVBlank();
-
 	app = new App();
-	return app->Run();
+	auto error = app->Run();
+	if (error) {
+		printf("[FAIL] app\n");
+		while(pmMainLoop()) swiWaitForVBlank();
+	}
+	return 0;
 }
 
 bool iswhitespace(u8 c)

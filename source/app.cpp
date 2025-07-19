@@ -61,6 +61,7 @@ App::App()
 	bookcount = 0;
 	bookselected = NULL;
 	bookcurrent = NULL;
+	cache = false;
 	reopen = true;
 	mode = APP_MODE_BROWSER;
 	browserstart = 0;
@@ -105,52 +106,19 @@ App::~App()
 int App::Run(void)
 {
 	char msg[512];
-	SetBrightness(0);	
+	int err = 0;
 
 	Log("--------------------\n");
 	Log("dslibris starting up\n");
-	console = true;
-
-	// Read preferences, pass 1,
-	// to get the book folder and preferred fonts.
-
-   	if (int err = prefs->Read())
-	{
-		if(err == 255)
-		{
-			err = prefs->Write();
-			if (err) {
-				Log("could not create preferences\n");
-				return err;
-			}
-			Log("created preferences\n");
-		}
-	}
 
 	// Start up typesetter.
 
-   	int err = ts->Init();
-	switch(err)
-	{
-		case 0:
-		sprintf(msg, "typesetter started\n");
-		break;
-		default:
-		sprintf(msg, ErrorString(err));
-		// case 1:
-		// sprintf(msg, "fatal: font file not found (%d)\n", err);
-		// break;
-		// case 2:
-		// sprintf(msg, "fatal: font file unreadable (%d)\n", err);
-		// break;
-		// default:
-		// sprintf(msg, "fatal: freetype error (%d)\n", err);
+	err = ts->Init();
+	if(err) {
+		iprintf("[FAIL] typesetter\n");
+		return err;
 	}
-	Log(msg);
-	if(err) while(1) swiWaitForVBlank();
-	
-	SetBrightness(brightness);
-	
+	iprintf("[ OK ] typesetter\n");
 	// Look in the book directory and construct library.
 
 	sprintf(msg,"scanning '%s' for books\n",bookdir.c_str());
@@ -162,6 +130,8 @@ int App::Run(void)
 		sprintf(msg,"fatal: No book directory \'%s\'.\n",
 			bookdir.c_str());
 		Log(msg);
+		iprintf("[FAIL] no book directory\n");
+		return 1;
 	}
 	
 	struct dirent *ent;
@@ -215,6 +185,12 @@ int App::Run(void)
 	closedir(dp);
 	sprintf(msg,"%d books indexed.\n",bookcount);
 	Log(msg);
+	if (bookcount == 0)
+	{
+		iprintf("[FAIL] no books");
+		return 2;
+	}
+	iprintf("[ OK ] books\n");
 
 	if(bookcurrent)
 	{
@@ -223,8 +199,8 @@ int App::Run(void)
 	}
 	swiWaitForVBlank();
 	
-	// Read preferences, pass 2, to bind preferences to books.
-	
+	// Read preferences
+
    	if(int parseerror = prefs->Read())
 	{
 		sprintf(msg,"warn : can't read prefs (%d).\n",parseerror);
@@ -237,6 +213,7 @@ int App::Run(void)
 	{
 		books[i]->GetBookmarks()->sort();
 	}
+	iprintf("[ OK ] bookmarks\n");
 
 	// Set up preferences editing screen.
 	PrefsInit();
@@ -246,19 +223,11 @@ int App::Run(void)
 	browser_init();
 
 	Log("progr: browsers populated.\n");
+	iprintf("[ OK ] views\n");
 
 	// Bring up displays.
-	console = false;
 	InitScreens();
 	if(orientation) lcdSwap();
-	if (prefs->swapshoulder)
-	{
-		int tmp = key.l;
-		key.l = key.r;
-		key.r = tmp;
-	}
-
-	mode = APP_MODE_BROWSER;
 	ts->PrintSplash(ts->screenleft);
 	browser_draw();
 
@@ -266,6 +235,7 @@ int App::Run(void)
 
 	// Resume reading from the last session.
 	
+	reopen = false;
 	if(reopen && bookcurrent)
 	{
 		int openerr = OpenBook();
@@ -279,42 +249,31 @@ int App::Run(void)
 	}
 	else Log("info : not reopening previous book.\n");
 
-	swiWaitForVBlank();
-
-	// Start polling event loop.
-	// FIXME use interrupt driven event handling.
 	
 	keysSetRepeat(60,2);
-	while (true)
+	while(pmMainLoop())
 	{
-		scanKeys();
-
-		key.downrepeat = keysDownRepeat();
-
-		if (key.downrepeat)
-		{
-			switch (mode){
-					case APP_MODE_BROWSER:
-						HandleEventInBrowser();
-						break;
-					case APP_MODE_BOOK:
-						HandleEventInBook();
-						//UpdateClock();
-						break;
-					case APP_MODE_PREFS:
-						HandleEventInPrefs();
-						break;
-					case APP_MODE_PREFS_FONT:
-					case APP_MODE_PREFS_FONT_BOLD:
-					case APP_MODE_PREFS_FONT_ITALIC:
-						HandleEventInFont();
-						break;
-			}
-		}
 		swiWaitForVBlank();
+		scanKeys();
+		switch (mode)
+		{
+			case APP_MODE_BROWSER:
+				HandleEventInBrowser();
+				break;
+			case APP_MODE_BOOK:
+				HandleEventInBook();
+				break;
+			case APP_MODE_PREFS:
+				HandleEventInPrefs();
+				break;
+			case APP_MODE_PREFS_FONT:
+			case APP_MODE_PREFS_FONT_BOLD:
+			case APP_MODE_PREFS_FONT_ITALIC:
+				HandleEventInFont();
+				break;
+		}
 	}
-
-	exit(0);
+	return 0;
 }
 
 void App::SetBrightness(u8 b)
@@ -412,15 +371,11 @@ void App::Log(const char *format, const int value)
 
 void App::Log(const char *format, const char *msg)
 {
-	if(console)
-	{
-		char s[1024];
-		sprintf(s,format,msg);
-		iprintf(s);
-	}
+#ifdef LOGGING
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,format,msg);
 	fclose(logfile);
+#endif
 }
 
 void App::Log(const std::string msg)

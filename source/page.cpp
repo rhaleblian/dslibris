@@ -61,8 +61,8 @@ void Page::Draw()
 
 void Page::Draw(Text *ts)
 {
-	iprintf("hi\n");
 	//! Write to offscreen buffer, then blit to video memory, for both screens.
+
 	ts->InitPen();
 	ts->linebegan = false;
 	ts->italic = false;

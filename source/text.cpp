@@ -165,50 +165,66 @@ FT_Error Text::InitFreeTypeCache(void) {
 }
 
 FT_Error Text::CreateFace(int style) {
-	std::string path = std::string(FONTDIR) + "/" + filenames[style];
-	FT_Error err = FT_New_Face(library, path.c_str(), 0, &face);
-	if (!err)
-		faces[style] = face;
-	return err;
+	char path[256];
+	auto filename = filenames[style];
+	snprintf(path, 255, "/font/%s", filename.c_str());
+	error = FT_New_Face(library, path, 0, &faces[style]);
+	return error;
 }
 
 int Text::InitHomemadeCache(void) {
 	//! Use our own cheesey glyph cache.
-	FT_Error err;
-
-	err = FT_Init_FreeType(&library);
-	if (err) return err;
-	
-	err = CreateFace(TEXT_STYLE_BROWSER);
-	err = CreateFace(TEXT_STYLE_SPLASH);
-	err = CreateFace(TEXT_STYLE_REGULAR);
-	err = CreateFace(TEXT_STYLE_ITALIC);
-	if (err)
-		faces[TEXT_STYLE_ITALIC] = faces[TEXT_STYLE_REGULAR];
-	err = CreateFace(TEXT_STYLE_BOLD);
-	if (err)
-		faces[TEXT_STYLE_BOLD] = faces[TEXT_STYLE_REGULAR];
 
 	std::map<u8, FT_Face>::iterator iter;
-	for (iter = faces.begin(); iter != faces.end(); iter++) {
-		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
+	for (std::map<u8, FT_Face>::iterator iter = faces.begin();
+		iter != faces.end(); iter++)
 		textCache.insert(make_pair(iter->second, new Cache()));
-	}
-
-	screen = screenleft;
 	ClearCache();
-	InitPen();
-	initialized = true;
-	app->Log("custom cache initialized\n");
 	return 0;
 }
 
 int Text::Init()
 {
-	if(ftc)
-		return InitFreeTypeCache();
-	else
-		return InitHomemadeCache();
+	error = FT_Init_FreeType(&library);
+	if (error) {
+		iprintf("[FAIL] font library\n");
+		return error;
+	}
+	error = CreateFace(TEXT_STYLE_BROWSER);
+	if (error) {
+		iprintf("[FAIL] browser font\n");
+		return error;
+	}
+	error = CreateFace(TEXT_STYLE_SPLASH);
+	error = CreateFace(TEXT_STYLE_REGULAR);
+	
+	error = CreateFace(TEXT_STYLE_ITALIC);
+	if (error)
+		faces[TEXT_STYLE_ITALIC] = faces[TEXT_STYLE_REGULAR];
+	
+		error = CreateFace(TEXT_STYLE_BOLD);
+	if (error)
+		faces[TEXT_STYLE_BOLD] = faces[TEXT_STYLE_REGULAR];
+	
+	for (std::map<u8, FT_Face>::iterator iter = faces.begin();
+		iter != faces.end(); iter++)
+		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
+
+	InitHomemadeCache();
+
+	// if (!face)
+	// 	face = GetFace(TEXT_STYLE_BROWSER);
+
+	if (error == FT_Err_Ok)
+	{
+		style = TEXT_STYLE_BROWSER;
+		face = faces[style];
+		iprintf("%d\n", face);
+		// face->family_name);
+		initialized = true;
+	}
+
+	return error;
 }
 
 void Text::ReportFace(FT_Face face)

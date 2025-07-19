@@ -19,25 +19,34 @@ Prefs::~Prefs() {}
 //! \return 0: success, 255: file open failure, 254: no bytes read, 253: parse failure.
 int Prefs::Read()
 {
-	int err = 0;
 	parsedata_t pdata;
 	app->parse_init(&pdata);
 	pdata.prefs = this;
 		
 	FILE *fp = fopen(PREFSPATH,"r");
-	if (!fp) { err = 255; return err; }
+	if (!fp)
+		return 255;
 
 	XML_Parser p = XML_ParserCreate(NULL);
-	if(!p) { fclose(fp); err = 254; return err; }
+	if(!p)
+	{
+		fclose(fp);
+		return 254;
+	}
 	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
 	XML_SetStartElementHandler(p, prefs_start_hndl);
 	XML_SetEndElementHandler(p, prefs_end_hndl);
 	XML_SetUserData(p, (void *)&pdata);
-	while (true)
+	int err;
+	while(true)
 	{
 	 	void *buff = XML_GetBuffer(p, PARSEBUFSIZE);
 	 	int bytes_read = fread(buff, sizeof(char), PARSEBUFSIZE, fp);
-		if(bytes_read < 0) { err = 254; break; }
+		if(bytes_read < 0)
+		{
+			err = 254;
+			break;
+		}
 		enum XML_Status status = 
 			XML_ParseBuffer(p, bytes_read, bytes_read == 0);
 		if(status == XML_STATUS_ERROR) { 
@@ -46,25 +55,26 @@ int Prefs::Read()
 			break;
 		}
 		if (bytes_read == 0) break;
-	}
+	};
 	XML_ParserFree(p);
 	fclose(fp);
 	return err;
 
-	struct stat st;
-	stat(PREFSPATH,&st);
-	struct timeval time;
-	gettimeofday(&time,NULL);
-	char msg[64];
-	sprintf(msg,"info : file timestamp %lld",st.st_mtime);
-	app->Log(msg);
-	sprintf(msg,"info : current time %lld",time.tv_sec);
-	app->Log(msg);
+	// struct stat st;
+	// stat(PREFSPATH,&st);
+	// struct timeval time;
+	// gettimeofday(&time,NULL);
+	// char msg[64];
+	// sprintf(msg,"info : file timestamp %lld",st.st_mtime);
+	// app->Log(msg);
+	// sprintf(msg,"info : current time %lld",time.tv_sec);
+	// app->Log(msg);
 }
 
 //! \return Error code, 0: success.
 int Prefs::Write()
 {
+	return 0;
 	int err = 0;
 	FILE* fp = fopen(PREFSPATH,"w");
 	if(!fp) return 255;

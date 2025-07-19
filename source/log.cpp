@@ -19,7 +19,9 @@ void Log(std::string msg)
 
 void Log(const char *format, const char *msg)
 {
+#ifdef LOGGING
 	FILE *logfile = fopen(LOGFILEPATH, "a");
 	fprintf(logfile,format,msg);
 	fclose(logfile);
+#endif
 }
