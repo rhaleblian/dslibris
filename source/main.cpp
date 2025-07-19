@@ -504,7 +504,7 @@ void char_hndl(void *data, const XML_Char *txt, int txtlen)
 	Text *ts = app->ts;
 	int lineheight = ts->GetHeight();
 	int linespacing = ts->linespacing;
-	int spaceadvance = ts->GetAdvance((uint16_t)' ');
+	int spaceadvance = ts->GetAdvance((u16)' ');
 
 	if (p->buflen == 0)
 	{
@@ -728,13 +728,13 @@ void proc_hndl(void *data, const char *target, const char *pidata)
 	app->Log("called proc_hndl().\n");
 }
 
-int getSize(uint8_t *source, uint16_t *dest, uint32_t arg) {
-       return *(uint32_t*)source;
+int getSize(u8 *source, u16 *dest, u32 arg) {
+       return *(u32*)source;
 }
 
-uint8_t readByte(uint8_t *source) { return *source; }
+u8 readByte(u8 *source) { return *source; }
 
-void drawstack(uint16_t *screen) {
+void drawstack(u16 *screen) {
        TDecompressionStream decomp = {getSize, NULL, readByte};
        swiDecompressLZSSVram((void*)splashBitmap, screen, 0, &decomp);
 }

@@ -37,8 +37,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 extern char msg[];
 std::stringstream ss;
 
-void Text::CopyScreen(uint16_t *src, uint16_t *dst) {
-	memcpy(src, dst, display.width * display.height * sizeof(uint16_t));
+void Text::CopyScreen(u16 *src, u16 *dst) {
+	memcpy(src, dst, display.width * display.height * sizeof(u16));
 }
 
 Text::Text()
@@ -50,9 +50,9 @@ Text::Text()
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
-	screenleft = (uint16_t*)BG_BMP_RAM_SUB(0);
-	screenright = (uint16_t*)BG_BMP_RAM(0);
-	offscreen = new uint16_t[display.width * display.height];
+	screenleft = (u16*)BG_BMP_RAM_SUB(0);
+	screenright = (u16*)BG_BMP_RAM(0);
+	offscreen = new u16[display.width * display.height];
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
 	margin.top = MARGINTOP;
@@ -323,7 +323,7 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 			return &textCache[face]->glyphs[i];
 #endif	
 
-	map<uint16_t,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
+	map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
 	
 	if (iter != textCache[face]->cacheMap.end()) {
 		stats_hits++;
@@ -356,7 +356,7 @@ void Text::ClearCache(u8 style)
 void Text::ClearCache(FT_Face face)
 {
 	//textCache[face]->cachenext = 0;
-	map<uint16_t, FT_GlyphSlot>::iterator iter;   
+	map<u16, FT_GlyphSlot>::iterator iter;   
 	for(iter = textCache[face]->cacheMap.begin(); iter != textCache[face]->cacheMap.end(); iter++) {
 		delete iter->second;
 	}
@@ -370,15 +370,15 @@ void Text::ClearScreen()
 	else memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
 }
 
-void Text::ClearRect(uint16_t xl, uint16_t yl, uint16_t xh, uint16_t yh)
+void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 {
-	uint16_t clearcolor;
+	u16 clearcolor;
 	if(invert) clearcolor = RGB15(0,0,0) | BIT(15);
 	else clearcolor = RGB15(31,31,31) | BIT(15);
 	//uint word = (clearcolor << 16) | clearcolor;
-	for(uint16_t y=yl; y<yh; y++) {
+	for(u16 y=yl; y<yh; y++) {
 //		memcpy((void*)screen[y*display.height+xl],(void*)word,xh-xl/2);
-		for(uint16_t x=xl; x<xh; x++) {
+		for(u16 x=xl; x<xh; x++) {
 			// FIXME: crashes on hw
 			screen[y*display.height+x] = clearcolor;
 		}
@@ -449,17 +449,17 @@ u8 Text::GetHeight() {
 	return (GetFace(style)->size->metrics.height >> 6);
 }
 
-void Text::GetPen(uint16_t *x, uint16_t *y) {
+void Text::GetPen(u16 *x, u16 *y) {
 	*x = pen.x;
 	*y = pen.y;
 }
 
-void Text::SetPen(uint16_t x, uint16_t y) {
+void Text::SetPen(u16 x, u16 y) {
 	pen.x = x;
 	pen.y = y;
 }
 
-void Text::GetPen(uint16_t &x, uint16_t &y) {
+void Text::GetPen(u16 &x, u16 &y) {
 	x = pen.x;
 	y = pen.y;
 }
@@ -485,7 +485,7 @@ u8 Text::GetPixelSize()
 	return pixelsize;
 }
 
-uint16_t* Text::GetScreen()
+u16* Text::GetScreen()
 {
 	return screen;
 }
@@ -509,7 +509,7 @@ void Text::SetPixelSize(u8 size)
 	ClearCache();
 }
 
-void Text::SetScreen(uint16_t *inscreen)
+void Text::SetScreen(u16 *inscreen)
 {
 	screen = inscreen;
 }
@@ -584,7 +584,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	// into the current screen buffer at the current pen position.
 
 	// static bool firsttime = true;
-	uint16_t bx, by, width, height = 0;
+	u16 bx, by, width, height = 0;
 	FT_Byte *buffer = NULL;
 	FT_UInt advance = 0;
 	FTC_Node anode = nullptr;
@@ -704,13 +704,13 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	screen[pen.y*display.height+pen.x] = RGB15(0, 0, 0) | BIT(15);
 #endif
 
-	uint16_t gx, gy;
+	u16 gx, gy;
 	for (gy=0; gy<height; gy++) {
 		for (gx=0; gx<width; gx++) {
 			u8 a = buffer[gy*width+gx];
 			if (a) {
-				uint16_t sx = (pen.x+gx+bx);
-				uint16_t sy = (pen.y+gy-by);
+				u16 sx = (pen.x+gx+bx);
+				u16 sy = (pen.y+gy-by);
 				if(usebgcolor) {
 					u32 r,g,b;
 					u8 alpha = 255-a;
@@ -804,9 +804,9 @@ void Text::PrintStats() {
 void Text::PrintStatusMessage(const char *msg)
 {
 	//! Render a one-liner message on the left screen.
-	uint16_t x,y;
+	u16 x,y;
 	GetPen(&x,&y);
-	uint16_t *s = screen;
+	u16 *s = screen;
 	int ps = GetPixelSize();
 	bool invert = GetInvert();
 	
@@ -822,16 +822,16 @@ void Text::PrintStatusMessage(const char *msg)
 	SetPen(x,y);
 }
 
-void Text::ClearScreen(uint16_t *screen, u8 r, u8 g, u8 b)
+void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 {
 	for (int i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++)
 		screen[i] = RGB15(r,g,b) | BIT(15);
 }
 
-void Text::PrintSplash(uint16_t *screen)
+void Text::PrintSplash(u16 *screen)
 {
 	u8 size = GetPixelSize();
-	uint16_t* s = GetScreen();
+	u16* s = GetScreen();
 	
 	SetScreen(screen);
 	drawstack(screen);

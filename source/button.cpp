@@ -50,28 +50,28 @@ void Button::SetLabel2(std::string s) {
 	text2 = s;
 }
 
-void Button::Move(uint16_t x, uint16_t y) {
+void Button::Move(u16 x, u16 y) {
 	origin.x = x;
 	origin.y = y;
 }
 
-void Button::Resize(uint16_t x, uint16_t y) {
+void Button::Resize(u16 x, u16 y) {
 	extent.x = x;
 	extent.y = y;
 }
 
-void Button::Draw(uint16_t *fb, bool highlight) {
+void Button::Draw(u16 *fb, bool highlight) {
 	coord_t ul, lr;
 	ul.x = origin.x;
 	ul.y = origin.y;
 	lr.x = origin.x + extent.x;
 	lr.y = origin.y + extent.y;
 
-	uint16_t x;
-	uint16_t y;
+	u16 x;
+	u16 y;
 
 	// draw a background
-	uint16_t bgcolor;
+	u16 bgcolor;
 	if(highlight) bgcolor = RGB15(31,31,15) | BIT(15);
 	else bgcolor = RGB15(30,30,30) | BIT(15);
 	for (y=ul.y+1;y<lr.y-1;y++) {
@@ -81,7 +81,7 @@ void Button::Draw(uint16_t *fb, bool highlight) {
 	}
 
 	// draw a border
-	uint16_t bordercolor = RGB15(22,22,22) | BIT(15);
+	u16 bordercolor = RGB15(22,22,22) | BIT(15);
 	for (x=ul.x;x<lr.x;x++) {
 		fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
 		fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
@@ -100,7 +100,7 @@ void Button::Draw(uint16_t *fb, bool highlight) {
 	if(highlight) ts->usebgcolor = true;
 
 	ts->SetPixelSize(ts->GetPixelSize()+1);
-	// uint8_t len = ts->GetCharCountInsideWidth(text.c_str(), TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
+	// u8 len = ts->GetCharCountInsideWidth(text.c_str(), TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
 	int len = 10;
 	ts->PrintString((const char*)text.substr(0, len).c_str(), TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(ts->GetPixelSize()-1);
@@ -117,7 +117,7 @@ void Button::Draw(uint16_t *fb, bool highlight) {
 	ts->SetInvert(invert);
 }
 
-bool Button::EnclosesPoint(uint16_t x, uint16_t y)
+bool Button::EnclosesPoint(u16 x, u16 y)
 {
 	if (x > origin.x && 
 		y > origin.y && 
