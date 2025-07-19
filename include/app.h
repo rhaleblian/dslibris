@@ -69,12 +69,13 @@ https://github.com/rhaleblian/dslibris
 #define APP_MODE_PREFS_FONT_ITALIC 5
 #define APP_URL "http://github.com/rhaleblian/dslibris"
 
-#define PREFS_BUTTON_COUNT 5
+#define PREFS_BUTTON_COUNT 6
 #define PREFS_BUTTON_FONT 2
 #define PREFS_BUTTON_FONT_ITALIC 3
 #define PREFS_BUTTON_FONT_BOLD 4
 #define PREFS_BUTTON_FONTSIZE 1
 #define PREFS_BUTTON_PARASPACING 0
+#define PREFS_BUTTON_FLIPORIENTATION 5
 
 
 //! \brief Main application.
@@ -135,6 +136,7 @@ class App {
 	Button prefsButtonFontItalic;
 	Button prefsButtonFontSize;
 	Button prefsButtonParaspacing;
+	Button prefsButtonFlipOrientation;
 	Button* prefsButtons[PREFS_BUTTON_COUNT];
 	u8 prefsSelected;
 	
@@ -198,6 +200,7 @@ class App {
 	void PrefsRefreshButtonFontItalic();
 	void PrefsRefreshButtonFontSize();
 	void PrefsRefreshButtonParaspacing();
+	void PrefsRefreshButtonFlipOrientation();
 	
 	//! in App_Font.cpp
 	void HandleEventInFont();

@@ -49,6 +49,11 @@ void App::PrefsInit()
 	PrefsRefreshButtonParaspacing();
 	prefsButtons[PREFS_BUTTON_PARASPACING] = &prefsButtonParaspacing;
 	
+	prefsButtonFlipOrientation.Init(ts);
+	prefsButtonFlipOrientation.Move(2, PREFS_BUTTON_FLIPORIENTATION * 32);
+	PrefsRefreshButtonFlipOrientation();
+	prefsButtons[PREFS_BUTTON_FLIPORIENTATION] = &prefsButtonFlipOrientation;
+
 	prefsSelected = 0;
 }
 
@@ -102,6 +107,14 @@ void App::PrefsRefreshButtonParaspacing()
 	prefsButtonParaspacing.Label(msg);
 }
 
+void App::PrefsRefreshButtonFlipOrientation()
+{
+	char msg[128];
+	strcpy(msg, "");
+	sprintf((char*)msg, "DUMMY");
+	prefsButtonFlipOrientation.Label(msg);
+}
+
 void App::PrefsDraw()
 {
 	PrefsDraw(true);
@@ -142,14 +155,24 @@ void App::HandleEventInPrefs()
 	if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
 		mode = APP_MODE_BROWSER;
 		browser_draw();
-	} else if (prefsSelected > 0 && (keysDown() & (key.right | key.r))) {
+	} else if (prefsSelected > 0 && (keysDown() & (orientation ? (key.right | key.r) : (KEY_LEFT | KEY_L)))) {
 		prefsSelected--;
 		PrefsDraw(false);
-	} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (keysDown() & (KEY_LEFT | KEY_L))) {
+	} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (orientation ? (KEY_LEFT | KEY_L) : (key.right | key.r))) {
 		prefsSelected++;
 		PrefsDraw(false);
 	} else if (keysDown() & KEY_A) {
-		PrefsButton();
+		if(prefsSelected == PREFS_BUTTON_FLIPORIENTATION) {
+			ts->SetScreen(ts->screenleft);
+			ts->ClearScreen();
+			orientation = !orientation;
+			SetOrientation(orientation);
+			PrefsDraw(false);
+			ts->PrintSplash(ts->screenleft);
+		}else{
+			//TODO fix this
+			PrefsButton();
+		}
 	} else if (keys & KEY_Y) {
 		CycleBrightness();
 		prefs->Write();
