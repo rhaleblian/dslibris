@@ -29,12 +29,11 @@ INCLUDES	:=	include build
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-Wall -O2 \
-			-I$(PWD)/portlibs/nds/include/freetype2 \
-			-I$(DEVKITPRO)/portlibs/nds/include/freetype2 \
 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
 			-ffast-math \
 			$(ARCH)
-
+CFLAGS  +=  -g
+CFLAGS  +=	-I$(PWD)/portlibs/nds/include/freetype2
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
@@ -44,7 +43,7 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lfat -lnds9 -lfreetype -lexpat -lz -lbz2 -lpng
+LIBS	:= -lfat -lnds9 -lexpat -lz -lbz2 -lpng -lfreetype
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -142,7 +141,7 @@ endif
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
 dldi.bin:
-	dd if=/dev/zero of=$@ bs=1M count=2
+	dd if=/dev/zero of=$@ bs=1M count=256
 	mkfs.fat dldi.bin
 
 release.zip: $(OUTPUT).nds

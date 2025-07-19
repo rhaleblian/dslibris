@@ -1,0 +1,12 @@
+# Invoke this from _within_ the freetype source directory:
+#.   ../configure-freetype
+
+prefix="$PWD/../nds"
+
+./configure --prefix=${prefix} --host=arm-none-eabi \
+--enable-freetype-config \
+--disable-shared --enable-static \
+--without-harfbuzz \
+--with-zlib \
+--with-bzip2 \
+--with-png

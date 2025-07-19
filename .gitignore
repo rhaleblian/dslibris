@@ -18,11 +18,5 @@
 /dslibris.lst
 /dslibris.smdh
 /mnt
-/portlibs
-/portlibs/bin
-/portlibs/include
-/portlibs/freetype-2.4.8
-/portlibs/lib
-/portlibs/share
 /release.zip
 /venv
