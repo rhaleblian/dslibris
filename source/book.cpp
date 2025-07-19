@@ -182,7 +182,9 @@ u8 Book::Open() {
 		// Restore from cache.
 		fclose(fp);
 		Restore();
+		//app->Log("CACHED");
 	} else {
+		//app->Log("UNCACHED");
 		if(format == FORMAT_XHTML) {
 			app->PrintStatus("opening XHTML...\n");
 				err = Parse(true);
@@ -197,6 +199,7 @@ u8 Book::Open() {
 		} else
 			err = 255;
 		if (app->cache) Cache();
+		fclose(fp);
 	}
 	if(!err)
 		if(position > (int)pages.size()) position = pages.size()-1;
@@ -304,9 +307,17 @@ void Book::Restore()
 		fread(buf, sizeof(char), len, fp);
 		GetPage(i)->SetBuffer(buf, len);
 	}
+	fclose(fp);
 }
 
 void Book::Close()
 {
-	pages.erase(pages.begin(), pages.end());
+	std::vector<Page*>::iterator it = pages.begin();
+	while (it != pages.end()) {
+	    delete *it;
+	    *it = nullptr;
+	    ++it;
+	}
+	pages.clear();	
+	//pages.erase(pages.begin(), pages.end());
 }
