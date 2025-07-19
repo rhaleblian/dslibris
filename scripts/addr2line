@@ -1,0 +1,4 @@
+# Get a source line from a Guru Medition `pc` address.
+
+address=$1
+arm-none-eabi-addr2line -aipfCe arm -e dslibris.elf $address
