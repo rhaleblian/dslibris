@@ -111,7 +111,7 @@ void App::PrefsRefreshButtonFlipOrientation()
 {
 	char msg[128];
 	strcpy(msg, "");
-	sprintf((char*)msg, "DUMMY");
+	sprintf((char*)msg, "Flip Screen Orientation:\n%s", orientation ? "L.Hand" : "R.Hand"); //Why cant I have more text???
 	prefsButtonFlipOrientation.Label(msg);
 }
 
@@ -123,6 +123,7 @@ void App::PrefsDraw()
 void App::PrefsDraw(bool redraw)
 {
 	if(!redraw){
+		PrefsRefreshButtonFlipOrientation();
 		ts->SetScreen(ts->screenright);
 		ts->ClearScreen();
 	}
@@ -161,30 +162,42 @@ void App::HandleEventInPrefs()
 {
 	int keys = keysDown();
 	
-	if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
-		mode = APP_MODE_BROWSER;
-		browser_draw();
-	} else if (prefsSelected > 0 && (keysDown() & (key.right | key.r))) {
-		prefsSelected--;
-		PrefsDraw(true);
-	} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (KEY_LEFT | KEY_L)) {
-		prefsSelected++;
-		PrefsDraw(true);
-	} else if (keysDown() & KEY_A) {
-		if(prefsSelected == PREFS_BUTTON_FLIPORIENTATION) {
-			ts->SetScreen(ts->screenleft);
-			ts->ClearScreen();
-			orientation = !orientation;
-			SetOrientation(orientation);
-			PrefsDraw(false);
-			ts->PrintSplash(ts->screenleft);
-		}else{
-			//TODO fix this
-			PrefsButton();
+	if (!(keysDown() & KEY_TOUCH)) {
+		if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
+			mode = APP_MODE_BROWSER;
+			browser_draw();
+		} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.up)) {
+			PrefsDecreasePixelSize();
+		} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.down)) {
+			PrefsIncreasePixelSize();
+		} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.up)) {
+			PrefsDecreaseParaspacing();
+		} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.down)) {
+			PrefsIncreaseParaspacing();
+		} else if (keysDown() & (orientation ? (KEY_LEFT) : (KEY_RIGHT))) {
+			if(prefsSelected > 0) {
+				prefsSelected--;
+				PrefsDraw(true);
+			}
+		} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (orientation ? (KEY_RIGHT) : (KEY_LEFT)) && !(keysDown() & KEY_A)) {
+			//TODO Investigate why A signals key R/L 
+			prefsSelected++;
+			PrefsDraw(true);
+		} else if (keysDown() & KEY_A) {
+			if(prefsSelected == PREFS_BUTTON_FLIPORIENTATION) {
+				PrefsRefreshButtonFlipOrientation();
+				ts->SetScreen(ts->screenleft);
+				ts->ClearScreen();
+				SetOrientation(!orientation);
+				PrefsDraw(false);
+				ts->PrintSplash(ts->screenleft);
+			}else{
+				PrefsButton();
+			}
+		} else if (keys & KEY_Y) {
+			CycleBrightness();
+			prefs->Write();
 		}
-	} else if (keys & KEY_Y) {
-		CycleBrightness();
-		prefs->Write();
 	} else if (keysDown() & KEY_TOUCH) {
 		touchPosition touch;
 		touchRead(&touch);
@@ -224,6 +237,13 @@ void App::HandleEventInPrefs()
 						} else {
 							PrefsDecreaseParaspacing();
 						}
+					} else if (i == PREFS_BUTTON_FLIPORIENTATION) {
+						PrefsRefreshButtonFlipOrientation();
+						ts->SetScreen(ts->screenleft);
+						ts->ClearScreen();
+						SetOrientation(!orientation);
+						PrefsDraw(false);
+						ts->PrintSplash(ts->screenleft);
 					} else {
 						PrefsButton();
 					}
@@ -232,14 +252,6 @@ void App::HandleEventInPrefs()
 				}
 			}
 		}
-	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.up)) {
-		PrefsDecreasePixelSize();
-	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.down)) {
-		PrefsIncreasePixelSize();
-	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.up)) {
-		PrefsDecreaseParaspacing();
-	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.down)) {
-		PrefsIncreaseParaspacing();
 	}
 }
 
@@ -295,6 +307,8 @@ void App::PrefsButton()
 		mode = APP_MODE_PREFS_FONT_BOLD;
 	} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
 		mode = APP_MODE_PREFS_FONT_ITALIC;
+	}else{
+		return;
 	}
 	PrintStatus("[loading fonts...]");
 	ts->SetScreen(ts->screenright);
