@@ -91,6 +91,7 @@ class App {
 	void WifiInit();
 	bool WifiConnect();
 	void Fatal(const char *msg);
+	void FlipOrientPrefs();
 
 	public:
 	Text *ts;

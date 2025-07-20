@@ -22,6 +22,18 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 
+void App::FlipOrientPrefs()
+{
+	PrefsRefreshButtonFlipOrientation();
+	ts->SetScreen(ts->screenleft);
+	ts->ClearScreen();
+	SetOrientation(!orientation);
+	PrefsDraw(false);
+	ts->PrintSplash(ts->screenleft);
+	prefs->Write();
+
+}
+
 void App::PrefsInit()
 {	
 	prefsButtonFont.Init(ts);
@@ -162,44 +174,62 @@ void App::HandleEventInPrefs()
 {
 	int keys = keysDown();
 	
-	if (!(keysDown() & KEY_TOUCH)) {
-		if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
-			mode = APP_MODE_BROWSER;
-			browser_draw();
-		} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.up)) {
-			PrefsDecreasePixelSize();
-		} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.down)) {
-			PrefsIncreasePixelSize();
-		} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.up)) {
-			PrefsDecreaseParaspacing();
-		} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.down)) {
-			PrefsIncreaseParaspacing();
-		} else if (keysDown() & (orientation ? (KEY_LEFT) : (KEY_RIGHT))) {
-			if(prefsSelected > 0) {
-				prefsSelected--;
-				PrefsDraw(true);
-			}
-		} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (orientation ? (KEY_RIGHT) : (KEY_LEFT)) && !(keysDown() & KEY_A)) {
-			//TODO Investigate why A signals key R/L 
+	if (keys & KEY_A)
+	{
+		if(prefsSelected == PREFS_BUTTON_FLIPORIENTATION) {
+			FlipOrientPrefs();
+		}else{
+			PrefsButton();
+		}
+	}
+
+	else if (keys & KEY_Y)
+	{
+		CycleBrightness();
+		prefs->Write();
+	}
+
+	else if (keys & (KEY_START | KEY_SELECT | KEY_B))
+	{
+		buttonprefs.Label("prefs");
+		mode = APP_MODE_BROWSER;
+		browser_draw();
+	}
+
+	else if (keys & (key.left | key.l))
+	{
+		if(prefsSelected < PREFS_BUTTON_COUNT - 1) {
 			prefsSelected++;
 			PrefsDraw(true);
-		} else if (keysDown() & KEY_A) {
-			if(prefsSelected == PREFS_BUTTON_FLIPORIENTATION) {
-				PrefsRefreshButtonFlipOrientation();
-				ts->SetScreen(ts->screenleft);
-				ts->ClearScreen();
-				SetOrientation(!orientation);
-				PrefsDraw(false);
-				ts->PrintSplash(ts->screenleft);
-				prefs->Write();
-			}else{
-				PrefsButton();
-			}
-		} else if (keys & KEY_Y) {
-			CycleBrightness();
-			prefs->Write();
 		}
-	} else if (keysDown() & KEY_TOUCH) {
+	}
+
+	else if (keys & (key.right | key.r))
+	{
+		if(prefsSelected > 0) {
+			prefsSelected--;
+			PrefsDraw(true);
+		}
+	}
+
+	else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keys & key.up)) {
+		PrefsDecreasePixelSize();
+	} 
+
+	else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keys & key.down)) {
+		PrefsIncreasePixelSize();
+	} 
+
+	else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keys & key.up)) {
+		PrefsDecreaseParaspacing();
+	} 
+
+	else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keys & key.down)) {
+		PrefsIncreaseParaspacing();
+	}
+
+	else if (keysHeld() & KEY_TOUCH)
+	{
 		touchPosition touch;
 		touchRead(&touch);
 		touchPosition coord;
@@ -239,13 +269,7 @@ void App::HandleEventInPrefs()
 							PrefsDecreaseParaspacing();
 						}
 					} else if (i == PREFS_BUTTON_FLIPORIENTATION) {
-						PrefsRefreshButtonFlipOrientation();
-						ts->SetScreen(ts->screenleft);
-						ts->ClearScreen();
-						SetOrientation(!orientation);
-						PrefsDraw(false);
-						ts->PrintSplash(ts->screenleft);
-						prefs->Write();
+						FlipOrientPrefs();
 					} else {
 						PrefsButton();
 					}
