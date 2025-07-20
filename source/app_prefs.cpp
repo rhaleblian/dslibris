@@ -117,11 +117,15 @@ void App::PrefsRefreshButtonFlipOrientation()
 
 void App::PrefsDraw()
 {
-	PrefsDraw(true);
+	PrefsDraw(false);
 }
 
 void App::PrefsDraw(bool redraw)
 {
+	if(!redraw){
+		ts->SetScreen(ts->screenright);
+		ts->ClearScreen();
+	}
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
@@ -131,15 +135,20 @@ void App::PrefsDraw(bool redraw)
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->SetStyle(TEXT_STYLE_BROWSER);
-	if (redraw) ts->ClearScreen();
 	ts->SetPixelSize(PIXELSIZE);
-	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
+
+	if(redraw) for (u8 i = MAX(0, prefsSelected-1); i < MIN(prefsSelected+2,PREFS_BUTTON_COUNT); i++)
 	{
 		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
 	}
-	
-	buttonprefs.Label("return");
-	buttonprefs.Draw(ts->screenright, false);
+	else for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++){
+		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
+	}
+
+	if(!redraw){	
+		buttonprefs.Label("return");
+		buttonprefs.Draw(ts->screenright, false);
+	}
 
 	// restore state.
 	ts->SetStyle(style);
@@ -155,12 +164,12 @@ void App::HandleEventInPrefs()
 	if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
 		mode = APP_MODE_BROWSER;
 		browser_draw();
-	} else if (prefsSelected > 0 && (keysDown() & (orientation ? (key.right | key.r) : (KEY_LEFT | KEY_L)))) {
+	} else if (prefsSelected > 0 && (keysDown() & (key.right | key.r))) {
 		prefsSelected--;
-		PrefsDraw(false);
-	} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (orientation ? (KEY_LEFT | KEY_L) : (key.right | key.r))) {
+		PrefsDraw(true);
+	} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (KEY_LEFT | KEY_L)) {
 		prefsSelected++;
-		PrefsDraw(false);
+		PrefsDraw(true);
 	} else if (keysDown() & KEY_A) {
 		if(prefsSelected == PREFS_BUTTON_FLIPORIENTATION) {
 			ts->SetScreen(ts->screenleft);
