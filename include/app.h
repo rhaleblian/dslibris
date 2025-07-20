@@ -127,6 +127,7 @@ class App {
 	//! not used yet; will contain pagination indices for caching.
 	vector<u16> pageindices;
 	u8 orientation;
+	u8 invert;
 	u8 paraspacing, paraindent;
 	
 	Button prefsButtonBooks;

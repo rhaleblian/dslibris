@@ -76,7 +76,7 @@ int Prefs::Write()
 		app->brightness,
 		//TODO FIX THIS
 		0,//app->ts->GetInvert(),
-		0//app->orientation
+		app->orientation
 		);
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
 			app->ts->margin.top, app->ts->margin.left,

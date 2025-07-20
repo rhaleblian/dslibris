@@ -75,7 +75,7 @@ void App::HandleEventInBook()
 			bookcurrent = NULL;
 			if(mode == APP_MODE_BOOK)
 			{
-				if(orientation) lcdSwap();
+				//if(orientation) lcdSwap();
 				mode = APP_MODE_BROWSER;
 			}
 			ts->PrintSplash(ts->screenleft);
@@ -211,7 +211,7 @@ u8 App::OpenBook(void)
 	PrintStatus("book opened");
 	bookcurrent = bookselected;
 	if(mode == APP_MODE_BROWSER) {
-		if(orientation) lcdSwap();
+		//if(orientation) lcdSwap();
 		mode = APP_MODE_BOOK;
 	}
 	if(bookcurrent->GetPosition() >= bookcurrent->GetPageCount())
