@@ -110,7 +110,9 @@ int App::Run(void)
 		return err;
 	}
 	iprintf("[ OK ] typesetter\n");
-			
+	iprintf("[DBUG] %d\n", ts->GetFace(TEXT_STYLE_BROWSER));
+	// iprintf("[ OK ] %s\n", ts->GetFace(TEXT_STYLE_BROWSER)->family_name);
+
 	// Construct library.
 
 	FindBooks();
@@ -118,13 +120,13 @@ int App::Run(void)
 
 	// Read preferences.
 
-   	if (prefs->Read()) if (prefs->Write()) return err;
-	for(u8 i = 0; i < bookcount; i++)
-	{
-		books[i]->GetBookmarks()->sort();
-	}
+   	// if (prefs->Read()) if (prefs->Write()) return err;
+	// for(u8 i = 0; i < bookcount; i++)
+	// {
+	// 	books[i]->GetBookmarks()->sort();
+	// }
 
-	iprintf("[ OK ] preferences\n");
+	// iprintf("[ OK ] preferences\n");
 	
 	// Set up preference view.
 	

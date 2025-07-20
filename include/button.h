@@ -1,9 +1,11 @@
 #ifndef _button_h
 #define _button_h
 
-#include "text.h"
-#include <unistd.h>
 #include <string>
+#include <unistd.h>
+#include "nds.h"
+
+#include "text.h"
 
 typedef struct {
 	u16 x;

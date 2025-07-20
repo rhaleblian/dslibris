@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
-#include <nds.h>
-#include <stdio.h>
 #include "button.h"
+
+#include <stdio.h>
 
 Button::Button() {
 }
@@ -99,17 +99,17 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
 
-	ts->SetPixelSize(ts->GetPixelSize()+1);
+	// ts->SetPixelSize(ts->GetPixelSize()+1);
 	// u8 len = ts->GetCharCountInsideWidth(text.c_str(), TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
 	int len = 10;
-	ts->PrintString((const char*)text.substr(0, len).c_str(), TEXT_STYLE_BROWSER);
-	ts->SetPixelSize(ts->GetPixelSize()-1);
+	ts->PrintString((const char*)text.substr(0, len).c_str());
+	// ts->SetPixelSize(ts->GetPixelSize()-1);
 
 	if (text2.length()) {
-		ts->SetPixelSize(ts->GetPixelSize()-1);
-		ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
-		ts->PrintString((const char *)text2.c_str(), TEXT_STYLE_BROWSER);
-		ts->SetPixelSize(ts->GetPixelSize()+1);
+		// ts->SetPixelSize(ts->GetPixelSize()-1);
+		// ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
+		// ts->PrintString((const char *)text2.c_str());
+		// ts->SetPixelSize(ts->GetPixelSize()+1);
 	}
 
 	ts->usebgcolor = false;

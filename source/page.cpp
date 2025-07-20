@@ -127,16 +127,8 @@ void Page::Draw(Text *ts)
 			if (c > 127)
 				i+=ts->GetCharCode((char*)&(buf[i]),&c);
 			else
-				i++;
-			
-			// TODO: there is such a thing as bold italic.
-			if (ts->italic)
-				ts->PrintChar(c, TEXT_STYLE_ITALIC);
-			else if (ts->bold)
-				ts->PrintChar(c, TEXT_STYLE_BOLD);
-			else
-				ts->PrintChar(c, TEXT_STYLE_REGULAR);
-			
+				i++;	
+			ts->PrintChar(c);
 			ts->linebegan = true;
 		}
 	}

@@ -14,8 +14,8 @@
                 "/opt/devkitpro/libnds/include",
                 "/opt/devkitpro/libnds/include/nds",
                 "/opt/devkitpro/portlibs/nds/include",
-                "/opt/devkitpro/portlibs/nds/include/freetype2",
-                "/opt/devkitpro/portlibs/nds/include/freetype2/freetype"
+                "${workspaceFolder}/portlibs/nds/include/freetype2",
+                "${workspaceFolder}/portlibs/nds/include/freetype2/freetype"
             ]
         }
     ],

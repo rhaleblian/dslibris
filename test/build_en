@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# Create disk image for melonDS.
+# Run from repo root.
+i=test/en.img
+dd if=/dev/zero of=$i bs=1M count=4
+mformat -i $i
+mmd -i $i Book
+mmd -i $i Font
+mcopy -i $i test/en/*.ttf ::Font
+mcopy -i $i test/en/*.epub ::Book
+mdir -i $i
+mdir -i $i Book
+mdir -i $i Font

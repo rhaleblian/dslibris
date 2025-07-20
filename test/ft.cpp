@@ -212,3 +212,10 @@ int ft_main(int argc, char **argv) {
 // height = bitmap.rows;
 // advance = glyph->advance.x >> 6;
 // buffer = bitmap.buffer;
+
+int asciiart() {
+  auto ft = typesetter();
+  auto error = renderer(ft.face);
+  free_ft(ft);
+  return error;
+}

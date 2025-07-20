@@ -30,7 +30,6 @@ using namespace std;
 #define PIXELSIZE 12
 
 class App;
-int asciiart();
 const char* ErrorString(u8);
 
 typedef struct TextFaceRec_ {
@@ -163,9 +162,7 @@ class Text {
 	u8   GetAdvance(u32 ucs, FT_Face face);
 	u8   GetStringWidth(const char *txt, FT_Face face);
 	FT_Error InitFreeTypeCache();
-	int InitHomemadeCache();
-	void PrintChar(u32 ucs, FT_Face face);
-	void PrintString(const char *string, FT_Face face);
+	int  InitHomemadeCache();
 	void ReportFace(FT_Face face);
 
 public:
@@ -239,12 +236,10 @@ public:
 	void SwapScreens();
 
 	void PrintChar(u32 ucs);
-	void PrintChar(u32 ucs, u8 style);
 	bool PrintNewLine(void);
 	void PrintStats();
 	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
-	void PrintString(const char *string, u8 style);
 	void PrintSplash(u16 *screen);
 };
 

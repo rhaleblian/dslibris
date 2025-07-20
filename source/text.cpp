@@ -64,7 +64,7 @@ Text::Text()
 	invert = false;
 	justify = false;
 	linespacing = 0;
-	ftc = false;
+	ftc = true;
 	initialized = false;
 	imagetype.face_id = (FTC_FaceID)&face_id;
 	imagetype.flags = FT_LOAD_DEFAULT; 
@@ -77,8 +77,8 @@ Text::Text()
 	codeprev = 0;
 	bold = false;
 	italic = false;
-	face = NULL;
-	style = TEXT_STYLE_REGULAR;
+	style = TEXT_STYLE_BROWSER;
+	face = faces[style];
 	pixelsize = PIXELSIZE;
 	screen = screenleft;
 
@@ -124,51 +124,37 @@ FT_Error Text::InitFreeTypeCache(void) {
 
 	auto error = FT_Init_FreeType(&library);
 	if(error) return error;
-	app->Log("ok\n");
 	error = FTC_Manager_New(library,0,0,0,
 		&TextFaceRequester,NULL,&cache.manager);
 	if(error) return error;
-	app->Log("ok\n");
 	error = FTC_ImageCache_New(cache.manager,&cache.image);
 	if(error) return error;
-	app->Log("ok\n");
 	error = FTC_SBitCache_New(cache.manager,&cache.sbit);
 	if(error) return error;
-	app->Log("ok\n");
 	error = FTC_CMapCache_New(cache.manager,&cache.cmap);
 	if(error) return error;
-	app->Log("ok\n");
 
-	sprintf(face_id.file_path, "%s/%s", FONTDIR, filenames[TEXT_STYLE_REGULAR].c_str());
+	face = faces[style];
+	sprintf(face_id.file_path, "%s/%s",
+		FONTDIR, filenames[style].c_str());
 	face_id.face_index = 0;
-	sprintf(msg, "%s %s %d\n", filenames[TEXT_STYLE_REGULAR].c_str(), face_id.file_path, face_id.face_index);
-	app->Log(msg);
-	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
+
+	error =	FTC_Manager_LookupFace(cache.manager,
+		(FTC_FaceID)&face_id, &face);
+
+	iprintf("[DBUG] family=%s\n", face->family_name);
+	
 	if(error) return error;
-	app->Log("ok\n");
-	// FT_EXPORT( FT_Error )
-//   FTC_Manager_LookupSize( FTC_Manager  manager,
-//                           FTC_Scaler   scaler,
-//                           FT_Size     *asize );
 
-	ReportFace(faces[TEXT_STYLE_REGULAR]);
+	// ReportFace(face);
 
-	// FT_Select_Charmap(GetFace(TEXT_STYLE_REGULAR), FT_ENCODING_UNICODE);
-	// charmap_index = FT_Get_Charmap_Index(GetFace(TEXT_STYLE_REGULAR)->charmap);
+	FT_UInt32 codepoint = 0x46;
+	FT_UInt gindex = FTC_CMapCache_Lookup(cache.cmap,
+		(FTC_FaceID)&face_id, -1, codepoint);
 
-	screen = screenleft;
-	InitPen();
-	initialized = true;
-	app->Log("initialized freetype cache\n");
+	iprintf("[DBUG] gindex=%d\n", gindex);
+
 	return 0;
-}
-
-FT_Error Text::CreateFace(int style) {
-	std::string path = std::string(FONTDIR) + "/" + filenames[style];
-	FT_Error err = FT_New_Face(library, path.c_str(), 0, &face);
-	if (!err)
-		faces[style] = face;
-	return err;
 }
 
 int Text::InitHomemadeCache(void) {
@@ -179,6 +165,7 @@ int Text::InitHomemadeCache(void) {
 	if (err) return err;
 	
 	err = CreateFace(TEXT_STYLE_BROWSER);
+	if (err) return err;
 	err = CreateFace(TEXT_STYLE_SPLASH);
 	err = CreateFace(TEXT_STYLE_REGULAR);
 	err = CreateFace(TEXT_STYLE_ITALIC);
@@ -196,15 +183,24 @@ int Text::InitHomemadeCache(void) {
 
 	screen = screenleft;
 	ClearCache();
-	InitPen();
-	initialized = true;
-	app->Log("custom cache initialized\n");
+
 	return 0;
 }
 
 int Text::Init()
 {
-	return FT_Init_FreeType(&library);
+	error = InitFreeTypeCache();
+	screen = screenleft;
+	initialized = true;
+	return error;
+}
+
+FT_Error Text::CreateFace(int style) {
+	std::string path = std::string(FONTDIR) + "/" + filenames[style];
+	FT_Error err = FT_New_Face(library, path.c_str(), 0, &face);
+	if (!err)
+		faces[style] = face;
+	return err;
 }
 
 void Text::ReportFace(FT_Face face)
@@ -446,7 +442,9 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 }
 
 u8 Text::GetHeight() {
-	return (GetFace(style)->size->metrics.height >> 6);
+	// XXX
+	// return (GetFace(style)->size->metrics.height >> 6);
+	return pixelsize;
 }
 
 void Text::GetPen(u16 *x, u16 *y) {
@@ -570,144 +568,71 @@ void Text::InitPen(void) {
 	pen.y = margin.top + GetHeight();
 }
 
-void Text::PrintChar(u32 ucs)
-{
-	PrintChar(ucs, GetFace(style));
-}
-
-void Text::PrintChar(u32 ucs, u8 astyle) {
-	PrintChar(ucs, GetFace(astyle));
-}
-
-void Text::PrintChar(u32 ucs, FT_Face face) {
+void Text::PrintChar(u32 ucs) {
 	// Draw a character for the given UCS codepoint,
-	// into the current screen buffer at the current pen position.
+	// using the typesetter's current state.
 
-	// static bool firsttime = true;
 	u16 bx, by, width, height = 0;
-	FT_Byte *buffer = NULL;
-	FT_UInt advance = 0;
-	FTC_Node anode = nullptr;
+	FT_UInt advance;
+	FTC_Node anode;
 	FT_Glyph glyph;
 
-	ss.clear();
+	// Get the codepoint's glyph index.
+	auto glyph_index = FTC_CMapCache_Lookup(cache.cmap,
+		(FTC_FaceID)&face_id, -1, ucs);
 
-	// get metrics and glyph pointer.
+	// Is there a small bitmap?
+	// FTC_SBit p = &sbit;
+	// error = FTC_SBitCache_Lookup(cache.sbit,
+	// 						&imagetype,
+	// 						glyph_index,
+	// 						&p,
+	// 						&anode );
 
-	if(ftc)
-	{
-		// use the FT cache.
+	// No small bitmap, get the outline.
+	imagetype.face_id = (FTC_FaceID)&face_id;
+	imagetype.flags = FT_LOAD_RENDER;
+	imagetype.height = pixelsize;
+	imagetype.width = 0;
+	error = FTC_ImageCache_Lookup(cache.image,
+		&imagetype, glyph_index, &glyph, &anode);
 
-	    auto glyph_index = FTC_CMapCache_Lookup(cache.cmap, (FTC_FaceID)&face_id, -1, ucs);
-		error = FTC_ImageCache_Lookup(cache.image, &imagetype, glyph_index, &glyph, &anode);
-		if (error) {
-			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
-			return;
-		}
-		app->Log("ok\n");
+	// consoleDemoInit();
+	iprintf("error=%d\n", error);
+	iprintf("advance=%ld\n", glyph->advance.x >> 16);
 
-		FTC_SBit p = &sbit;
-  		error = FTC_SBitCache_Lookup(cache.sbit,
-                            	&imagetype,
-								glyph_index,
-                                &p,
-                                &anode );
-		if (error) {
-			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
-			return;
-		}
-		app->Log("ok\n");
+	// Create a bitmap from the outline.
+    // if ( glyph->format != FT_GLYPH_FORMAT_BITMAP ) {
+		// printf("not a bitmap\n");
+		// XXX CRASH HERE
+        // error = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, 0, 1);
+		// if (error) return;
+		// return;
+    // }
 
-		buffer = sbit.buffer;
-		bx = sbit.left;
-		by = sbit.top;
-		height = sbit.height;
-		width = sbit.width;
-		advance = sbit.xadvance;
-
-		error = FT_Render_Glyph(faces[TEXT_STYLE_REGULAR]->glyph,            /* glyph slot  */
-        	                    FT_RENDER_MODE_LCD_V); /* render mode */
-		if (error) {
-			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
-			return;
-		}
-		app->Log("ok\n");
-
-		// auto glyph = faces[TEXT_STYLE_REGULAR]->glyph;
-		// buffer = glyph->bitmap.buffer;
-		// bx = glyph->bitmap_left;
-		// by = glyph->bitmap_top;
-		// width = glyph->bitmap.width;
-		// height = glyph->bitmap.rows;
-		// advance = width;
-
-		// ss.clear();
-		// ss << " err " << error 
-		//    << " glyph_index " << glyph_index  << " glyph " << glyph 
-		//    << " width " << width << " height " << height << " advance " << advance
-		//    << std::endl;
-		// app->Log(ss.str());
-	}
-	else
-	{
-		// Consult the cache for glyph data and cache it on a miss, if space is available.
-		FT_GlyphSlot glyph = GetGlyph(ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL, face);
-		
-		// ss << "ucs " << ucs << std::endl;
-		// app->Log(ss.str());
-
-		// error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-		// if (error) app->Log("boo\n");
-		// error = FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_REGULAR);
-		// if (error) app->Log("hoo\n");
-		// auto glyph = face->glyph;
-  		// error = FT_Get_Glyph( face->glyph, &glyph );
-		// if (error) app->Log("foo\n");
-
-  		// extract glyph image
-		FT_Bitmap bitmap = glyph->bitmap;
-		bx = glyph->bitmap_left;
-		by = glyph->bitmap_top;
-		width = bitmap.width;
-		height = bitmap.rows;
-		advance = glyph->advance.x >> 6;
-		buffer = bitmap.buffer;
-	}
-
-#ifdef EXPERIMENTAL_KERNING
-	// Fetch a kerning vector.
-
-	if(codeprev) {
-		FT_Vector kerning_vector;
-		std::stringstream ss;
-		error = FT_Get_Kerning(face, codeprev, ucs, FT_KERNING_DEFAULT, &kerning_vector);
-#ifdef DEBUG
-		if(error) {
-			ss << "error: kerning lookup error: " << codeprev << " -> " << ucs << std::endl;
-		} else {
-			ss << "info : kerning lookup: " << codeprev << " -> " << ucs
-			   << " = " << kerning_vector.x << "," << kerning_vector.y << std::endl;
-			// pen.x += k.x >> 6;
-		}
-		app->Log(ss.str());
-#endif
-	}
-#endif
+	FT_BitmapGlyph bitmap_glyph = (FT_BitmapGlyph)glyph;
+	iprintf("%d %d %d %d %d\n", bitmap_glyph->left, bitmap_glyph->top,
+	bitmap_glyph->bitmap.rows, bitmap_glyph->bitmap.width,
+	bitmap_glyph->bitmap.pitch);
+	FT_Bitmap bitmap = bitmap_glyph->bitmap;
+	if (bitmap.buffer == nullptr) return;
 
 	// render to framebuffer.
 
-#ifdef DEBUG_PEN_POSITION
 	// DEBUG Mark the pen position.
-	screen[pen.y*display.height+pen.x] = RGB15(0, 0, 0) | BIT(15);
-#endif
+	screen[pen.y*display.height+pen.x] = RGB15(0, 31, 0) | BIT(15);
 
+	advance = bitmap_glyph->root.advance.x >> 16;
+	bx = bitmap_glyph->left;
+	by = bitmap_glyph->top;
+	width = bitmap_glyph->bitmap.width;
+	height = bitmap_glyph->bitmap.rows;
+	
 	u16 gx, gy;
+	u16 color;
 	for (gy=0; gy<height; gy++) {
 		for (gx=0; gx<width; gx++) {
-			u8 a = buffer[gy*width+gx];
+			u8 a = bitmap.buffer[gy*width+gx];
 			if (a) {
 				u16 sx = (pen.x+gx+bx);
 				u16 sy = (pen.y+gy-by);
@@ -717,20 +642,14 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 					r = (bgcolor.r * alpha);
 					g = (bgcolor.g * alpha);
 					b = (bgcolor.b * alpha);
-					screen[sy*display.height+sx]
-						= RGB15(r/256,g/256,b/256) | BIT(15);
+					color = RGB15(r/256,g/256,b/256) | BIT(15);
 				} else {
 					u8 l;
 					if (invert) l = a >> 3;
 					else l = (255-a) >> 3;
-#ifdef DEBUG_CACHE
-					// Draw cache hits in red.
-					if(!hit)
-						screen[sy*display.height+sx] = RGB15(l,0,0) | BIT(15);
-					else
-#endif
-					screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
+					color = RGB15(l,l,l) | BIT(15);
 				}
+				screen[sy*display.height+sx] = color;
 			}
 		}
 	}
@@ -766,19 +685,8 @@ bool Text::PrintNewLine(void) {
 }
 
 void Text::PrintString(const char *s) {
-	//! Render a character string starting at the pen position.
-	PrintString(s, TEXT_STYLE_BROWSER);
-}
+	//! Render a character string with current typesetter state.
 
-void Text::PrintString(const char *s, u8 style) {
-	//! Render a character string starting at the pen position.
-	PrintString(s, GetFace(style));
-}
-
-void Text::PrintString(const char *s, FT_Face face) {
-	//! Render a character string starting at the pen position.
-	//app->Log(s);
-	//u32 clast = 0;
 	u8 i=0;
 	while(i<strlen((char*)s)) {
 		u32 c = s[i];
@@ -787,8 +695,7 @@ void Text::PrintString(const char *s, FT_Face face) {
 			i++;
 		} else {
 			i+=GetCharCode(&(s[i]),&c);
-			PrintChar(c, face);
-			//clast = c;
+			PrintChar(c);
 		}
 	}
 }
@@ -877,13 +784,6 @@ FT_Face Text::GetFace(u8 style)
 }
 */
 
-int asciiart() {
-  auto ft = typesetter();
-  auto error = renderer(ft.face);
-  free_ft(ft);
-  return error;
-}
-
 const char* ErrorString(u8 c) {
 	switch (c) {
 		case 0:
@@ -893,18 +793,3 @@ const char* ErrorString(u8 c) {
 		return "unknown error";
 	}
 }
-
-//    "no error",
-//     "cannot open resource" ,
-//     "unknown file format" ,
-//     "broken file" ,
-//     "invalid FreeType version" 
-//     "module version is too low", 
-//     "invalid argument" 
-//     "unimplemented feature" 
-//     "broken table" 
-//     "broken offset within table" 
-//     "array allocation size too large" 
-//     "missing module" 
-//     "missing property" 
-// ]
