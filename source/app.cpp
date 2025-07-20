@@ -114,7 +114,7 @@ int App::Run(void)
 	// Construct library.
 
 	FindBooks();
-	iprintf("[ OK ] books\n");
+	iprintf("[ OK ] %d books\n", bookcount);
 
 	// Read preferences.
 
