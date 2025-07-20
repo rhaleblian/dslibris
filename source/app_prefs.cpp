@@ -191,6 +191,7 @@ void App::HandleEventInPrefs()
 				SetOrientation(!orientation);
 				PrefsDraw(false);
 				ts->PrintSplash(ts->screenleft);
+				prefs->Write();
 			}else{
 				PrefsButton();
 			}
@@ -244,6 +245,7 @@ void App::HandleEventInPrefs()
 						SetOrientation(!orientation);
 						PrefsDraw(false);
 						ts->PrintSplash(ts->screenleft);
+						prefs->Write();
 					} else {
 						PrefsButton();
 					}
