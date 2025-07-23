@@ -39,11 +39,13 @@ int ft_main(int argc, char **argv);
 
 /*---------------------------------------------------------------------------*/
 
+int list_root_directory(void)
+{
+	//! Simple libfat diagnostic.
 
-int kungheyfatcheck(void) {
-	DIR *dp = opendir("/font");
+	DIR *dp = opendir("/");
 	if (!dp) {
-		iprintf("[FAIL] font dir inaccessible\n");
+		iprintf("[FAIL] root dir inaccessible\n");
 		return false;
 	}
 	struct dirent *ent;
@@ -54,6 +56,27 @@ int kungheyfatcheck(void) {
 	closedir(dp);
 
 	return true;
+}
+
+void wait(int vblanks = -1)
+{
+	//! Wait {vblanks} vblanks, or wait forever.
+	//! Stop waiting on START key.
+
+	int timer = vblanks;
+	while(pmMainLoop()) {
+		swiWaitForVBlank();
+		scanKeys();
+		if (keysDown() & KEY_START) return;
+		if (timer == 0) return;
+		if (timer > 0) timer--;
+	}
+}
+
+void stop(const char* msg) {
+	consoleDemoInit();
+	iprintf("%s\n", msg);
+	wait(120);
 }
 
 PrintConsole* boot_console(void) {
@@ -81,14 +104,14 @@ void fatal(const char *msg) {
 
 int main(void)
 {
-	defaultExceptionHandler();
+	// defaultExceptionHandler();
 	if(!boot_console()) spin();
 	if(!boot_filesystem()) spin();
 	app = new App();
 	auto error = app->Run();
 	if (error) {
 		printf("[FAIL] app\n");
-		while(pmMainLoop()) swiWaitForVBlank();
+		wait();
 	}
 	return 0;
 }

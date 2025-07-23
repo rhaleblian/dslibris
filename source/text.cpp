@@ -191,12 +191,12 @@ int Text::Init()
 		return error;
 	}
 	error = CreateFace(TEXT_STYLE_BROWSER);
+	error |= CreateFace(TEXT_STYLE_SPLASH);
+	error |= CreateFace(TEXT_STYLE_REGULAR);
 	if (error) {
-		iprintf("[FAIL] browser font\n");
+		iprintf("[FAIL] fonts\n");
 		return error;
 	}
-	error = CreateFace(TEXT_STYLE_SPLASH);
-	error = CreateFace(TEXT_STYLE_REGULAR);
 	
 	error = CreateFace(TEXT_STYLE_ITALIC);
 	if (error)
@@ -205,24 +205,18 @@ int Text::Init()
 		error = CreateFace(TEXT_STYLE_BOLD);
 	if (error)
 		faces[TEXT_STYLE_BOLD] = faces[TEXT_STYLE_REGULAR];
-	
+	printf("[ OK ] fonts\n");
+
 	for (std::map<u8, FT_Face>::iterator iter = faces.begin();
 		iter != faces.end(); iter++)
 		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
 
 	InitHomemadeCache();
+	printf("[ OK ] type cache\n");
 
-	// if (!face)
-	// 	face = GetFace(TEXT_STYLE_BROWSER);
-
-	if (error == FT_Err_Ok)
-	{
-		style = TEXT_STYLE_BROWSER;
-		face = faces[style];
-		iprintf("%d\n", face);
-		// face->family_name);
-		initialized = true;
-	}
+	style = TEXT_STYLE_BROWSER;
+	face = GetFace(TEXT_STYLE_BROWSER);
+	initialized = true;
 
 	return error;
 }

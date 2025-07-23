@@ -119,8 +119,8 @@ int App::Run(void)
 		return err;
 	}
 	iprintf("[ OK ] typesetter\n");
-	// Look in the book directory and construct library.
 
+	// Look in the book directory and construct library.
 	sprintf(msg,"scanning '%s' for books\n",bookdir.c_str());
 	Log(msg);
 	
@@ -272,6 +272,7 @@ int App::Run(void)
 				HandleEventInFont();
 				break;
 		}
+		if (mode == APP_MODE_SHUTDOWN) break;
 	}
 	return 0;
 }
