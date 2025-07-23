@@ -6,7 +6,7 @@
 *.nds
 *.o
 *.img
-*.tar.*
+/*.tar.*
 #.*#
 .DS_Store
 /build
