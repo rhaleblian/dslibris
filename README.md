@@ -20,11 +20,6 @@ See INSTALL.txt or the
 [Quickstart](https://github.com/rhaleblian/dslibris/wiki/User:-Quickstart)
 page in the Wiki.
 
-# Development
-
-WARNING: the `main` branch currently fatally fails to render text.
-dslibris will freeze in the book browser with no text displayed.
-
 ## Prerequisites
 
 Install devkitPro's toolchain for ARM, aka `devkitARM`.
