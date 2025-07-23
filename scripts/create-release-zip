@@ -1,0 +1,5 @@
+. /opt/devkitpro/devkitarm.sh
+dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
+zip release.zip dslibris.nds
+(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
+

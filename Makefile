@@ -140,26 +140,19 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-dldi.bin:
-	dd if=/dev/zero of=$@ bs=1M count=256
-	mkfs.fat dldi.bin
-
-release.zip: $(OUTPUT).nds
-	dlditool etc/dldi/r4tf_v2.dldi $(OUTPUT).nds
-	zip release.zip $(OUTPUT).nds
-	(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
-
-.PHONY: doc check distcheck run
-
-doc:
-	doxygen
+.PHONY: abandonhope doc check distcheck distclean
 
 check:
 	true
 
+doc:
+	doxygen
+
 distcheck:
 	true
 
-run:	$(TARGET).nds
-	dlditool etc/dldi/r4tf_v2.dldi $(TARGET).nds
-	melonDS $(OUTPUT).nds
+distclean: clean
+	- rm release*.zip
+	- rm test/*.img
+
+abandonhope: distclean
