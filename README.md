@@ -20,8 +20,6 @@ See INSTALL.txt or the
 [Quickstart](https://github.com/rhaleblian/dslibris/wiki/User:-Quickstart)
 page in the Wiki.
 
-# Development
-
 ## Prerequisites
 
 Install devkitPro's toolchain for ARM, aka `devkitARM`.

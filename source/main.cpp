@@ -183,6 +183,8 @@ void prefs_start_hndl(	void *data,
 			}
 			else if(!strcmp(attr[i],"invert"))
 			{
+				
+				app->invert = atoi(attr[i+1]);
 				app->ts->SetInvert(atoi(attr[i+1]));
 			}
 			else if(!strcmp(attr[i],"flip"))

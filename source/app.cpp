@@ -56,6 +56,8 @@ void halt()
 
 App::App()
 {	
+	invert = false;
+
 	fontdir = string(FONTDIR);
 	bookdir = string(BOOKDIR);
 	bookcount = 0;
@@ -64,7 +66,6 @@ App::App()
 	reopen = true;
 	mode = APP_MODE_BROWSER;
 	browserstart = 0;
-
 	cache = false;
 	console = false;
 	orientation = false;
@@ -250,7 +251,7 @@ int App::Run(void)
 	// Bring up displays.
 	console = false;
 	InitScreens();
-	if(orientation) lcdSwap();
+	//if(orientation) lcdSwap();
 	if (prefs->swapshoulder)
 	{
 		int tmp = key.l;
@@ -360,8 +361,8 @@ void App::SetOrientation(bool flip)
 		REG_BG3Y = 0 << 8;
 		REG_BG3X_SUB = 191 << 8;
 		REG_BG3Y_SUB = 0 << 8;
-		ts->screenleft = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenright = (u16*)BG_BMP_RAM(0);
+		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
+		ts->screenleft = (u16*)BG_BMP_RAM(0);
 		orientation = true;
 		key.down = KEY_UP;
 		key.up = KEY_DOWN;
@@ -441,6 +442,9 @@ void App::InitScreens()
 	ts->SetScreen(ts->screenleft);
 	ts->ClearScreen();
 	SetOrientation(orientation);
+	if(invert) {
+		lcdSwap();
+	}
 }
 
 void App::Fatal(const char *msg)

@@ -74,8 +74,10 @@ int Prefs::Write()
 		fprintf(fp, "<option swapshoulder=\"%d\" />\n",swapshoulder);		
 	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
 		app->brightness,
-		app->ts->GetInvert(),
-		app->orientation);
+		//TODO FIX THIS
+		0,//app->ts->GetInvert(),
+		app->orientation
+		);
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
 			app->ts->margin.top, app->ts->margin.left,
 			app->ts->margin.bottom, app->ts->margin.right);
@@ -92,26 +94,26 @@ int Prefs::Write()
 	vector<u16> pageindices;
 	for(u16 i=0;i<app->pagecount;i++) {}
 	*/
-    fprintf(fp, "\t<books path=\"%s\" reopen=\"%d\">\n",
-    		app->bookdir.c_str(),
-    		app->reopen);
+	fprintf(fp, "\t<books path=\"%s\" reopen=\"%d\">\n",
+			app->bookdir.c_str(),
+			app->reopen);
     
-    for (u8 i = 0; i < app->bookcount; i++) {
-        Book* book = app->books[i];
-        fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\"",
-                book->GetFileName(), book->GetPosition() + 1);
+	for (u8 i = 0; i < app->bookcount; i++) {
+		Book* book = app->books[i];
+		fprintf(fp, "\t\t<book file=\"%s\" page=\"%d\"",
+		book->GetFileName(), book->GetPosition() + 1);
 		if(app->bookcurrent == app->books[i]) fprintf(fp," current=\"1\"");
 		fprintf(fp,">\n");
 		std::list<u16>* bookmarks = book->GetBookmarks();
-        for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
-            fprintf(fp, "\t\t\t<bookmark page=\"%d\" word=\"%d\" />\n",
-                    *j + 1,0);
-        }
+		for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
+			fprintf(fp, "\t\t\t<bookmark page=\"%d\" word=\"%d\" />\n",
+				*j + 1,0);
+		}
 
-        fprintf(fp, "\t\t</book>\n");
-    }
+		fprintf(fp, "\t\t</book>\n");
+	}
 
-    fprintf(fp, "\t</books>\n");
+	fprintf(fp, "\t</books>\n");
 	
 	fprintf(fp, "</dslibris>\n");
 	fprintf(fp, "\n");

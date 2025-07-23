@@ -22,6 +22,18 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 
+void App::FlipOrientPrefs()
+{
+	PrefsRefreshButtonFlipOrientation();
+	ts->SetScreen(ts->screenleft);
+	ts->ClearScreen();
+	SetOrientation(!orientation);
+	PrefsDraw(false);
+	ts->PrintSplash(ts->screenleft);
+	prefs->Write();
+
+}
+
 void App::PrefsInit()
 {	
 	prefsButtonFont.Init(ts);
@@ -49,6 +61,11 @@ void App::PrefsInit()
 	PrefsRefreshButtonParaspacing();
 	prefsButtons[PREFS_BUTTON_PARASPACING] = &prefsButtonParaspacing;
 	
+	prefsButtonFlipOrientation.Init(ts);
+	prefsButtonFlipOrientation.Move(2, PREFS_BUTTON_FLIPORIENTATION * 32);
+	PrefsRefreshButtonFlipOrientation();
+	prefsButtons[PREFS_BUTTON_FLIPORIENTATION] = &prefsButtonFlipOrientation;
+
 	prefsSelected = 0;
 }
 
@@ -102,13 +119,26 @@ void App::PrefsRefreshButtonParaspacing()
 	prefsButtonParaspacing.Label(msg);
 }
 
+void App::PrefsRefreshButtonFlipOrientation()
+{
+	char msg[128];
+	strcpy(msg, "");
+	sprintf((char*)msg, "Flip Screen Orientation:\n%s", orientation ? "L.Hand" : "R.Hand"); //Why cant I have more text???
+	prefsButtonFlipOrientation.Label(msg);
+}
+
 void App::PrefsDraw()
 {
-	PrefsDraw(true);
+	PrefsDraw(false);
 }
 
 void App::PrefsDraw(bool redraw)
 {
+	if(!redraw){
+		PrefsRefreshButtonFlipOrientation();
+		ts->SetScreen(ts->screenright);
+		ts->ClearScreen();
+	}
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
@@ -118,15 +148,20 @@ void App::PrefsDraw(bool redraw)
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->SetStyle(TEXT_STYLE_BROWSER);
-	if (redraw) ts->ClearScreen();
 	ts->SetPixelSize(PIXELSIZE);
-	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
+
+	if(redraw) for (u8 i = MAX(0, prefsSelected-1); i < MIN(prefsSelected+2,PREFS_BUTTON_COUNT); i++)
 	{
 		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
 	}
-	
-	buttonprefs.Label("return");
-	buttonprefs.Draw(ts->screenright, false);
+	else for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++){
+		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
+	}
+
+	if(!redraw){	
+		buttonprefs.Label("return");
+		buttonprefs.Draw(ts->screenright, false);
+	}
 
 	// restore state.
 	ts->SetStyle(style);
@@ -139,21 +174,62 @@ void App::HandleEventInPrefs()
 {
 	int keys = keysDown();
 	
-	if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
-		mode = APP_MODE_BROWSER;
-		browser_draw();
-	} else if (prefsSelected > 0 && (keysDown() & (key.right | key.r))) {
-		prefsSelected--;
-		PrefsDraw(false);
-	} else if (prefsSelected < PREFS_BUTTON_COUNT - 1 && (keysDown() & (KEY_LEFT | KEY_L))) {
-		prefsSelected++;
-		PrefsDraw(false);
-	} else if (keysDown() & KEY_A) {
-		PrefsButton();
-	} else if (keys & KEY_Y) {
+	if (keys & KEY_A)
+	{
+		if(prefsSelected == PREFS_BUTTON_FLIPORIENTATION) {
+			FlipOrientPrefs();
+		}else{
+			PrefsButton();
+		}
+	}
+
+	else if (keys & KEY_Y)
+	{
 		CycleBrightness();
 		prefs->Write();
-	} else if (keysDown() & KEY_TOUCH) {
+	}
+
+	else if (keys & (KEY_START | KEY_SELECT | KEY_B))
+	{
+		buttonprefs.Label("prefs");
+		mode = APP_MODE_BROWSER;
+		browser_draw();
+	}
+
+	else if (keys & (key.left | key.l))
+	{
+		if(prefsSelected < PREFS_BUTTON_COUNT - 1) {
+			prefsSelected++;
+			PrefsDraw(true);
+		}
+	}
+
+	else if (keys & (key.right | key.r))
+	{
+		if(prefsSelected > 0) {
+			prefsSelected--;
+			PrefsDraw(true);
+		}
+	}
+
+	else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keys & key.up)) {
+		PrefsDecreasePixelSize();
+	} 
+
+	else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keys & key.down)) {
+		PrefsIncreasePixelSize();
+	} 
+
+	else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keys & key.up)) {
+		PrefsDecreaseParaspacing();
+	} 
+
+	else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keys & key.down)) {
+		PrefsIncreaseParaspacing();
+	}
+
+	else if (keysHeld() & KEY_TOUCH)
+	{
 		touchPosition touch;
 		touchRead(&touch);
 		touchPosition coord;
@@ -192,6 +268,8 @@ void App::HandleEventInPrefs()
 						} else {
 							PrefsDecreaseParaspacing();
 						}
+					} else if (i == PREFS_BUTTON_FLIPORIENTATION) {
+						FlipOrientPrefs();
 					} else {
 						PrefsButton();
 					}
@@ -200,14 +278,6 @@ void App::HandleEventInPrefs()
 				}
 			}
 		}
-	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.up)) {
-		PrefsDecreasePixelSize();
-	} else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keysDown() & key.down)) {
-		PrefsIncreasePixelSize();
-	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.up)) {
-		PrefsDecreaseParaspacing();
-	} else if (prefsSelected == PREFS_BUTTON_PARASPACING && (keysDown() & key.down)) {
-		PrefsIncreaseParaspacing();
 	}
 }
 
@@ -263,6 +333,8 @@ void App::PrefsButton()
 		mode = APP_MODE_PREFS_FONT_BOLD;
 	} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
 		mode = APP_MODE_PREFS_FONT_ITALIC;
+	}else{
+		return;
 	}
 	PrintStatus("[loading fonts...]");
 	ts->SetScreen(ts->screenright);
