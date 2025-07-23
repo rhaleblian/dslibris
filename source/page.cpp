@@ -51,30 +51,15 @@ void Page::Cache(FILE *fp)
 	fwrite((const char*)buf, 1, strlen((char*)buf), fp);
 }
 
-#if 0
-void Page::Draw()
-{
-	Text *ts = book->app->ts;
-	if(ts) Draw(ts);
-}
-#endif
-
 void Page::Draw(Text *ts)
 {
-	iprintf("hi\n");
 	//! Write to offscreen buffer, then blit to video memory, for both screens.
 	ts->InitPen();
 	ts->linebegan = false;
 	ts->italic = false;
 	ts->bold = false;
 
-#ifdef OFFSCREEN
-	// Draw offscreen.
-	auto pushscreen = ts->screen;
-	ts->SetScreen(ts->offscreen);
-#else
 	ts->SetScreen(ts->screenleft);
-#endif
 	ts->SetScreen(ts->screenright);
 	ts->ClearScreen();
 	ts->SetScreen(ts->screenleft);
@@ -94,13 +79,7 @@ void Page::Draw(Text *ts)
 			{
 				// Move to right page
 				if(ts->GetScreen() == ts->screenleft) {
-#ifdef OFFSCREEN
-					ts->SetScreen(ts->screenleft);
-					ts->CopyScreen(ts->offscreen, ts->screen);
-					ts->SetScreen(ts->offscreen);
-#else
 					ts->SetScreen(ts->screenright);
-#endif
 					ts->ClearScreen();
 					ts->InitPen();
 					ts->linebegan = false;
@@ -134,11 +113,6 @@ void Page::Draw(Text *ts)
 	}
 
 	DrawNumber(ts);
-#ifdef OFFSCREEN
-	ts->SetScreen(ts->screenright);
-	ts->CopyScreen(ts->offscreen, ts->screen);
-	ts->SetScreen(pushscreen);
-#endif
 }
 
 void Page::DrawNumber(Text *ts)

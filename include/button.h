@@ -1,11 +1,10 @@
-#ifndef _button_h
-#define _button_h
+#pragma once
 
+#include <nds.h>
 #include <string>
 #include <unistd.h>
-#include "nds.h"
 
-#include "text.h"
+class Text;
 
 typedef struct {
 	u16 x;
@@ -22,7 +21,7 @@ class Button {
 	std::string text2;
 	Text *ts;
 
- public:
+	public:
 	Button();
 	Button(Text *typesetter);
 	inline const char* GetLabel() { return text.c_str(); };
@@ -36,5 +35,3 @@ class Button {
 	void Resize(u16 x, u16 y);
 	bool EnclosesPoint(u16 x, u16 y);
 };
-
-#endif

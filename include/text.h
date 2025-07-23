@@ -1,20 +1,24 @@
-#ifndef _text_h
-#define _text_h
+#pragma once
 
-#include <string>
-#include <map>
-
-#include "ft2build.h"
+#include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_CACHE_H
-
-using namespace std;
+#include <map>
+#include <nds.h>
+#include <string>
 
 //! Reference: FreeType2 online documentation
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 
 //! Reference: http://www.displaymate.com/psp_ds_shootout.htm
 #define DPI 110
+
+#define FONTBOLDFILE "b.ttf"
+#define FONTBOLDITALICFILE "bi.ttf"
+#define FONTBROWSERFILE "m.ttf"
+#define FONTITALICFILE "i.ttf"
+#define FONTREGULARFILE "r.ttf"
+#define FONTSPLASHFILE "s.ttf"
 
 #define TEXT_BOLD_ON 2
 #define TEXT_BOLD_OFF 3
@@ -29,14 +33,13 @@ using namespace std;
 #define CACHESIZE 512
 #define PIXELSIZE 12
 
-class App;
-const char* ErrorString(u8);
-
+//! Identifier to use as a FT_FaceID.
 typedef struct TextFaceRec_ {
 	char file_path[128];
 	int face_index;
 } TextFaceRec, *TextFace;
 
+//! FTC caches.
 typedef struct TextCache_ {
 	FTC_Manager manager;
 	FTC_CMapCache cmap;
@@ -44,93 +47,16 @@ typedef struct TextCache_ {
 	FTC_SBitCache sbit;
 } TextCache;
 
-
-//! Homemade glyph cache.
-
-//! Fetches from FreeType can be expensive,
-//! so keep advance and gylphs handy,
-//! keyed by UCS codepoint.
-
-class Cache {
-public:
-	//! Associates each glyph cache index (value)
-	//! with its Unicode code point (key).
-	map<u16, FT_GlyphSlot> cacheMap;
-	//! ??
-	u16 cachenext;
-	
-	Cache() {
-		cachenext = 0;
-	}
-};
-
-#if 0
-class Face {
-	Cache cache;
-	FT_Face ft_face;
-	Face() {
-		ft_face = NULL;
-		cache = new Cache();
-	}
-	Face(FT_Library library, std::string path, int index) {
-		FT_New_Face( library, path.c_str(), index, &ft_face );
-		cache = new Cache();
-	}
-	~Face() {
-		if(face) FT_Done_Face(face);
-		delete cache;
-	}
-};
-
-
-//! A map of a style ID to a Face.
-
-//! Multiple styles might use the same Face.
-
-class Style {
-	u8 id;
-	Face *face;
-	int pixelsize;
-
-	Style() {
-		id = TEXT_STYLE_REGULAR;
-		face = NULL;
-		pixelsize = PIXELSIZE;
-	}
-
-	Style(int type) {
-		Style::Style();
-		id = type;
-	}
-};
-#endif
-
-//! Typesetter singleton that provides all text rendering services.
-
-//! Implemented atop FreeType 2.
-//! Attempts to cache for draw performance using a homemade cache.
-//! The code using FreeType's cache is inoperative.
-
+//! Singleton that provides all text rendering services,
+//! implemented atop FreeType 2.
 class Text {
 	FT_Library library;
 	FT_Error error;
-
-	//! Use the FreeType cache?
-	bool ftc;
-
-	// A: Homemade cache
 	TextCache cache;
-	TextFaceRec face_id;
-	map<FT_Face, Cache*> textCache;
-	
-	// B: FreeType cache subsystem
 	FTC_SBitRec sbit;
 	FTC_ImageTypeRec imagetype;
 	FT_Int charmap_index;
-	
-	map<u8, FT_Face> faces;
-	map<u8, string> filenames;
-
+	TextFaceRec styles[5];
 	//! Current style, as TEXT_FONT_STYLE.
 	int style;
 	//! Current face.
@@ -145,52 +71,37 @@ class Text {
 	bool hit;
 	//! Has Init() run?
 	bool initialized;
-
 	//! It would fully justify, if it worked.
 	bool justify;
-
-	int CacheGlyph(u32 ucs);
-	int CacheGlyph(u32 ucs, u8 style);
-	int CacheGlyph(u32 ucs, FT_Face face);
-	void ClearCache(FT_Face face);
-	FT_Error CreateFace(int style);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
+	struct { u8 r; u8 g; u8 b; } bgcolor;
+	void CopyBitmap(FT_BitmapGlyph glyph);
+	FT_Face GetFace();
+	FT_Face GetFace(u8 style);
+	FT_GlyphSlot GetGlyph(u32 ucs, int flags = FT_RENDER_MODE_NORMAL);
 	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit, FTC_Node *anode=NULL);
 	FT_UInt GetGlyphIndex(u32 ucs);
 	u8   GetAdvance(u32 ucs, FT_Face face);
 	u8   GetStringWidth(const char *txt, FT_Face face);
 	FT_Error InitFreeTypeCache();
-	int  InitHomemadeCache();
 	void ReportFace(FT_Face face);
 
-public:
-	App *app;
-	int pixelsize;
-	//! Not used ... really.
-	struct { u8 r; u8 g; u8 b; } bgcolor;
-	bool usebgcolor;
+  	public:
+
+	class App *app;
+	int  pixelsize;
 	//! Pointers to screens and which one is current.
-	u16 *screen, *screenleft, *screenright;
+	u16  *screen, *screenleft, *screenright;
 	//! Offscreen buffer. Only used when OFFSCREEN defined.
-	u16 *offscreen;
+	u16  *offscreen;
 	struct {
 		int left, right, top, bottom;
 	} margin;
 	struct {
 		int width, height;
 	} display;
-	int linespacing;
+	int  linespacing;
 	bool linebegan, bold, italic;
-
-	// Keep stats to check efficiency of caching.
-
-	//! Total glyph cache hits.
-	int stats_hits;
-	//! Total glyph cache misses.
-	int stats_misses;
-
+	bool usebgcolor;
 	Text();
 	Text(class App *parent) { app = parent; }
 	~Text();
@@ -198,50 +109,38 @@ public:
 	void InitPen(void);
 	void Begin();
 	void End();
-	
-	u8   GetAdvance(u32 ucs);
-	u8   GetAdvance(u32 ucs, u8 style);
-	u8   GetCharCode(const char* txt, u32* code);
+	u8   GetAdvance(u32 charcode);
+	u8   GetAdvance(u32 charcode, u8 style);
+	u8   GetCharCode(const char* txt, u32* charcode);
 	u8   GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels);
-	FT_Face GetFace() { return face; }
-	FT_Face GetFace(u8 style) { return faces[style]; }
-	string GetFontFile(u8 style);
 	bool GetFontName(std::string &s);
-	u8   GetHeight(void);
+	inline std::string GetFontFile(u8 astyle) { return styles[astyle].file_path; }
+	u8   GetHeight();
+	u8   GetPixelSize();
+	inline int GetStyle() { return style; }
+	void SetFont(u8 style, const char *filename);
+	void SetPixelSize(u8 size);
+	inline void SetStyle(u8 astyle) { style = astyle; }
+	void ClearRect(u16 xl, u16 yl, u16 xh, u16 yh);
+	void ClearScreen();
+	void ClearScreen(u16*, u8, u8, u8);
+	void CopyScreen(u16 *src, u16 *dst);
+	u16* GetScreen();
+	void SetScreen(u16 *s);
+	void SwapScreens();
 	bool GetInvert();
 	void GetPen(u16 *x, u16 *y);
 	void GetPen(u16 &x, u16 &y);
 	u8   GetPenX();
 	u8   GetPenY();
-	u8   GetPixelSize();
-	u16* GetScreen();
 	int  GetStringAdvance(const char *txt);
 	u8   GetStringWidth(const char *txt, u8 style);
-	inline int GetStyle() { return style; }
-
-	void SetInvert(bool invert);
-	void SetPen(u16 x, u16 y);
-	void SetPixelSize(u8 size);
-	bool SetFace(u8 style);
-	void SetFontFile(const char *filename, u8 style);
-	void SetScreen(u16 *s);
-	inline void SetStyle(int astyle) { style = astyle; face = faces[style]; }
-	
-	void ClearCache();
-	void ClearCache(u8 style);
-	void ClearRect(u16 xl, u16 yl, u16 xh, u16 yh);
-	void ClearScreen();
-	void ClearScreen(u16*, u8, u8, u8);
-	void CopyScreen(u16 *src, u16 *dst);
-	void SwapScreens();
-
-	void PrintChar(u32 ucs);
-	bool PrintNewLine(void);
+	void PrintChar(u32 charcode);
+	bool PrintNewLine();
 	void PrintStats();
 	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
 	void PrintSplash(u16 *screen);
+	void SetInvert(bool invert);
+	void SetPen(u16 x, u16 y);
 };
-
-#endif
-

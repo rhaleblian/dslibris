@@ -124,18 +124,22 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 {
 	int rc = 0;
 	parsedata_t pd;
-	char *filebuf = new char[BUFSIZE];
 	XML_Parser p = XML_ParserCreate(NULL);
-	if(epd->type == PARSE_CONTAINER) {
+
+	// Assign handlers according to type of parsing.
+	if(epd->type == PARSE_CONTAINER)
+	{
 		XML_SetUserData(p, epd);
 		XML_SetElementHandler(p, epub_container_start, NULL);
 	}
-	else if(epd->type == PARSE_ROOTFILE) {
+	else if(epd->type == PARSE_ROOTFILE)
+	{
 		XML_SetUserData(p, epd);
 		XML_SetElementHandler(p, epub_rootfile_start, epub_rootfile_end);
 		XML_SetCharacterDataHandler(p, epub_rootfile_char);
 	}
-	else {
+	else if(epd->type == PARSE_CONTENT)
+	{
 		parse_init(&pd);
 		pd.book = epd->book;
 		XML_SetUserData(p, &pd);
@@ -144,33 +148,40 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 		XML_SetDefaultHandler(p, default_hndl);
 		XML_SetProcessingInstructionHandler(p, proc_hndl);
 	}
-	size_t len, len_total=0;
-	char msg[64];
-	enum XML_Status status;
-	do {
-		len = unzReadCurrentFile(uf,filebuf,BUFSIZE);
-		status = XML_Parse(p, filebuf, len, len == 0);
-		if (status == XML_STATUS_ERROR) {
-			sprintf(msg,"error: expat %d\n", status); Log(msg);
+	else
+	{
+		XML_ParserFree(p);
+		return 1;
+	}
+
+	// Parse.
+	size_t len = 0;
+	char* filebuf = new char[BUFSIZE];
+	do
+	{
+		size_t len = unzReadCurrentFile(uf, filebuf, BUFSIZE);
+		XML_Status status = XML_Parse(p, filebuf, len, len == 0);
+		if (status == XML_STATUS_ERROR)
+		{
 			rc = status;
 			break;
 		}
-		len_total += len;
-		sprintf(msg,"progr: %d byte chunk\n",len); Log(msg);
-	} while (len);
-	sprintf(msg,"info : read %d bytes total\n",len_total); Log(msg);
-	XML_ParserFree(p);
+	}
+	while (len);
 	delete [] filebuf;
-	return(rc);
+
+	XML_ParserFree(p);
+	return rc;
 }
 
-int epub(Book *book, std::string name, bool metadataonly)
+int epub(Book *book, std::string name, bool metadata_only = false)
 {
 	//! Parse EPUB file.
-	//! Set metadataonly to true if you only want the title and author.
+	//! :param metadata_only: you only want the title and author?
 	int rc = 0;
 	static epub_data_t parsedata;
 	
+	// Parse container.
 	unzFile uf = unzOpen(name.c_str());
 	rc = unzLocateFile(uf,"META-INF/container.xml",0);
 	if(rc == UNZ_OK)
@@ -181,9 +192,8 @@ int epub(Book *book, std::string name, bool metadataonly)
 		rc = epub_parse_currentfile(uf, &parsedata);
 		rc = unzCloseCurrentFile(uf);
 	}
-	
-	Log("info : rootfile "); Log(parsedata.rootfile); Log("\n");
-	
+
+	// Parse rootfile found in container.
 	// Extract any leading path for the rootfile.
 	// The manifest in the rootfile will list filenames
 	// relative to the rootfile location.
@@ -192,9 +202,6 @@ int epub(Book *book, std::string name, bool metadataonly)
 	if(pos < parsedata.rootfile.length()) {
 		folder = parsedata.rootfile.substr(0,pos);
 	}
-
-	Log("progr: parsing rootfile\n");
-
 	rc = unzLocateFile(uf,parsedata.rootfile.c_str(),0);
 	if(rc == UNZ_OK)
 	{
@@ -205,34 +212,29 @@ int epub(Book *book, std::string name, bool metadataonly)
 		rc = unzCloseCurrentFile(uf);
 	}
 
-	// Stop here if only metadata is required.
-	if(metadataonly) {
-		Log("progr: metadata only\n");
-		if(parsedata.title.length()) {
-			book->SetTitle(parsedata.title.c_str());
-			if(parsedata.creator.length())
-				book->SetAuthor(parsedata.creator);
-		}
+	if(parsedata.title.length()) {
+		book->SetTitle(parsedata.title.c_str());
+		if(parsedata.creator.length())
+			book->SetAuthor(parsedata.creator);
+	}
+
+	// Stop here if only metadata was requested.
+	if(metadata_only) {
 		unzClose(uf);
 		epub_data_delete(&parsedata);
 		return rc;
 	}
-
-	Log("progr: ordering sections\n");
-
-	// Read the XHTML in the manifest, ordering by spine if needed.
-	parsedata.ctx.clear();
-	parsedata.book = book;
-	parsedata.type = PARSE_CONTENT;
-	vector<std::string*> href;
-	if(parsedata.spine.size()) {
+	
+	// Order documents by spine if needed.
+	std::vector<std::string*> href;
+	if(parsedata.spine.size())
+	{
 		// Use spine for reading order.
-		Log("progr: ordering by spine\n");
-		vector<epub_itemref*>::iterator itemref;
+		std::vector<epub_itemref*>::iterator itemref;
 		for(itemref=parsedata.spine.begin();
 			itemref!=parsedata.spine.end();
 			itemref++) {
-			vector<epub_item*>::iterator item;
+			std::vector<epub_item*>::iterator item;
 			for(item=parsedata.manifest.begin();
 				item!=parsedata.manifest.end();
 				item++) {
@@ -243,18 +245,17 @@ int epub(Book *book, std::string name, bool metadataonly)
 			}
 		}
 	}
-	else {
-		Log("progr: ordering by manifest\n");
-		vector<epub_item*>::iterator item;
+	else
+	{
+		std::vector<epub_item*>::iterator item;
 		for(item=parsedata.manifest.begin();
 			item!=parsedata.manifest.end();
 			item++)
 			href.push_back(new std::string((*item)->href));
 	}
-	
-	Log("progr: catenating sections\n");
-	
-	vector<std::string*>::iterator it;
+
+	// Locate and parse documents.
+	std::vector<std::string*>::iterator it;
 	for(it=href.begin();it!=href.end();it++)
 	{
 		size_t pos = (*it)->find_last_of('.');
@@ -264,17 +265,26 @@ int epub(Book *book, std::string name, bool metadataonly)
 			std::string path = folder;
 			if(path.length()) path += "/";
 			path += (*it)->c_str();
-			Log("info : content "); Log(path); Log("\n");
 			rc = unzLocateFile(uf,path.c_str(),0);
 			if(rc == UNZ_OK)
 			{
 				rc = unzOpenCurrentFile(uf);
-				epub_parse_currentfile(uf, &parsedata);
-				rc = unzCloseCurrentFile(uf);
+				if (rc == UNZ_OK)
+				{
+					epub_data_init(&parsedata);
+					parsedata.ctx.clear();
+					parsedata.book = book;
+					parsedata.type = PARSE_CONTENT;
+					epub_parse_currentfile(uf, &parsedata);
+					rc = unzCloseCurrentFile(uf);
+				}
 			}
 		}
 	}
+
 	unzClose(uf);
 	epub_data_delete(&parsedata);
+	for(it=href.begin(); it!=href.end(); it++)
+		if (*it) delete *it;
 	return rc;
 }

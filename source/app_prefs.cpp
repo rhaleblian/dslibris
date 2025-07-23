@@ -1,3 +1,5 @@
+#include "app.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdlib.h>
@@ -11,10 +13,8 @@
 #include <fat.h>
 #include <nds/bios.h>
 
-#include "types.h"
 #include "main.h"
 #include "parse.h"
-#include "app.h"
 #include "book.h"
 #include "button.h"
 #include "text.h"

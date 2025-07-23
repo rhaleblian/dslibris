@@ -1,22 +1,19 @@
+#include "app.h"
+
 #include <errno.h>
-#include <stdlib.h>
+#include <expat.h>
+#include <fat.h>
+#include <nds/bios.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
 
-#include <expat.h>
-
-#include <fat.h>
-#include <nds/bios.h>
-
-#include "types.h"
-#include "main.h"
-#include "parse.h"
-#include "app.h"
 #include "book.h"
 #include "button.h"
+#include "main.h"
+#include "parse.h"
 #include "text.h"
 
 //! Book-related methods for App class.
@@ -179,7 +176,7 @@ void App::HandleEventInBook()
 int App::GetBookIndex(Book *b)
 {
 	if (!b) return -1;
-	vector<Book*>::iterator it;
+	std::vector<Book*>::iterator it;
 	int i=0;
 	for(it=books.begin(); it<books.end();it++,i++)
 	{
@@ -192,23 +189,16 @@ u8 App::OpenBook(void)
 {
 	//! Attempt to open book indicated by bookselected.
 
-	if(!bookselected) return 254;	
-	PrintStatus("opening book...");
-	swiWaitForVBlank();
-
+	if(!bookselected) return 254;
+	PrintStatus("opening book...\n");
 	const char *filename = bookselected->GetFileName();
-	const char *c; 	// will point to the file's extension.
-	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-	
 	if(bookcurrent) bookcurrent->Close();
 	if (int err = bookselected->Open())
 	{
-		char msg[64];
-		sprintf(msg, "could not open book (%d)",err);
-		PrintStatus(msg);
+		PrintStatus("could not open book\n");
 		return 255;
 	}
-	PrintStatus("book opened");
+	PrintStatus("book opened\n");
 	bookcurrent = bookselected;
 	if(mode == APP_MODE_BROWSER) {
 		if(orientation) lcdSwap();
@@ -216,9 +206,9 @@ u8 App::OpenBook(void)
 	}
 	if(bookcurrent->GetPosition() >= bookcurrent->GetPageCount())
 		bookcurrent->SetPosition(0);
+	return 0;
 	bookcurrent->GetPage()->Draw(ts);
 	prefs->Write();
-	ts->PrintStats();
 	return 0;
 }
 
@@ -229,7 +219,6 @@ void App::parse_error(XML_Parser p)
 		(int)XML_GetCurrentLineNumber(p),
 		(int)XML_GetCurrentColumnNumber(p),
 		XML_ErrorString(XML_GetErrorCode(p)));
-	Log(msg);
 	PrintStatus(msg);
 }
 

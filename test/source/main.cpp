@@ -3,20 +3,14 @@
 // portions from
 // https://www.willusher.io/sdl2%20tutorials/2013/08/17/lesson-1-hello-world
 
-#define ASCIIART // We are building under ARM without SDL
 #define D 512
 
-#ifndef ASCIIART
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_render.h"
-#endif
-#include "ft2build.h"
 #include <iostream>
 
-#include "ft.h"
-#include FT_ERRORS_H
-
-#include "log.h"
+#include "main.h"
+#include "ft2build.h"
+// #include "SDL2/SDL.h"
+// #include "SDL2/SDL_render.h"
 
 typedef struct {
   char *path;
@@ -58,8 +52,8 @@ FT_Freeables typesetter() {
     Log(msg);
   }
 
-  error =
-      FTC_Manager_New(library, 1, 1, 1000000, requester, &designator, &manager);
+  error = FTC_Manager_New(library, 1, 1, 1000000,
+        requester, &designator, &manager);
   error = FTC_ImageCache_New(manager, &cache);
   error = FTC_CMapCache_New(manager, &cmcache);
 

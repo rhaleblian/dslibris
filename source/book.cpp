@@ -174,47 +174,28 @@ void Book::Cache()
 }
 
 u8 Book::Open() {
-	int err = 0;
-
-	//	if( access( fname.c_str(), F_OK ) != -1 ) {
-	FILE *fp = fopen("/cache.dat", "r");
-	if (fp && app->cache) {
-		// Restore from cache.
-		fclose(fp);
-		Restore();
-	} else {
-		if(format == FORMAT_XHTML) {
-			app->PrintStatus("opening XHTML...\n");
-				err = Parse(true);
-		}
-		else if(format == FORMAT_EPUB) {
-			app->PrintStatus("opening EPUB...\n");
-			std::string path;
-			path.append(GetFolderName());
-			path.append("/");
-			path.append(GetFileName());
-			err = epub(this,path,false);
-		} else
-			err = 255;
-		if (app->cache) Cache();
-	}
+	std::string path;
+	path.append(GetFolderName());
+	path.append("/");
+	path.append(GetFileName());
+	app->PrintStatus("opening book...\n");
+	u8 err = epub(this, path, false);
 	if(!err)
 		if(position > (int)pages.size()) position = pages.size()-1;
-
-	return (u8)err;
+	return err;
 }
 
 u8 Book::Index()
 {
-	if(format == FORMAT_EPUB)
-	{
-		std::string path;
-		path.append(GetFolderName());
-		path.append("/");
-		path.append(GetFileName());
-		int err = epub(this,path,true);
-		return err;
-	} else return Parse(false);
+	std::string path;
+	path.append(GetFolderName());
+	path.append("/");
+	path.append(GetFileName());
+	// consoleDemoInit();
+	// iprintf("%s\n", path.c_str());
+	// while (pmMainLoop()) swiWaitForVBlank();
+	u8 err = epub(this, path, true);
+	return err;
 }
 
 u8 Book::Parse(bool fulltext)

@@ -42,7 +42,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "main.h"
 #include "parse.h"
 #include "text.h"
-#include "types.h"
 #include "version.h"
 
 // less-than operator to compare books by title
@@ -50,9 +49,17 @@ static bool book_title_lessthan(Book* a, Book* b) {
     return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
 }
 
+void pause(int ticks) {
+	int timer = ticks;
+	while (pmMainLoop() && timer) {
+		swiWaitForVBlank();
+		timer--;
+	}
+}
+
 App::App()
 {	
-	fontdir = string(FONTDIR);
+	fontdir = std::string(FONTDIR);
 	bookdir = std::string("/book");
 	bookcount = 0;
 	bookselected = NULL;
@@ -81,7 +88,7 @@ App::App()
 	key.x = KEY_X;
 	key.y = KEY_Y;
 	
-	prefs = &myprefs;
+	prefs = new Prefs();
 	prefs->app = this;
 
 	ts = new Text();
@@ -92,35 +99,33 @@ App::~App()
 {
 	if (prefs) delete prefs;
 	if (ts) delete ts;
-	vector<Book*>::iterator it;
-	for(it=books.begin();it!=books.end();it++)
+	for(std::vector<Book*>::iterator it=books.begin();
+		it!=books.end();it++)
 		delete *it;
 	books.clear();
 }
 
-int App::Run(void)
+int App::Init(void)
 {
-	int err = 0;
-	
 	// Start up typesetter.
 
-   	err = ts->Init();
+   	int err = ts->Init();
 	if (err) {
 		iprintf("[FAIL] no typesetter\n");
 		return err;
 	}
 	iprintf("[ OK ] typesetter\n");
-	iprintf("[DBUG] %d\n", ts->GetFace(TEXT_STYLE_BROWSER));
-	// iprintf("[ OK ] %s\n", ts->GetFace(TEXT_STYLE_BROWSER)->family_name);
 
 	// Construct library.
 
 	FindBooks();
-	iprintf("[ OK ] %d books\n", bookcount);
+	for (auto book : books) {
+		iprintf("[ OK ] %s\n", book->GetTitle());
+	}
 
 	// Read preferences.
 
-   	// if (prefs->Read()) if (prefs->Write()) return err;
+	// prefs->Read();
 	// for(u8 i = 0; i < bookcount; i++)
 	// {
 	// 	books[i]->GetBookmarks()->sort();
@@ -140,12 +145,18 @@ int App::Run(void)
 
 	iprintf("[ OK ] views\n");
 
-	// Draw initial screens.
+	// Update screens.
 
 	InitScreens();
-//	if(orientation) lcdSwap();
 	ts->PrintSplash(ts->screenleft);
 	browser_draw();
+
+	return err;
+}
+
+int App::Run() {
+	int error = Init();
+	if (error) return error;
 
 	keysSetRepeat(60,2);
 	
@@ -205,7 +216,7 @@ void App::FindBooks() {
 			book->format = FORMAT_EPUB;
 			books.push_back(book);
 			bookcount++;
-			// book->Index();
+			book->Index();
 		}
 	}
 	closedir(dp);
@@ -306,15 +317,11 @@ void App::Log(const char *format, const int value)
 
 void App::Log(const char *format, const char *msg)
 {
-	if(console)
-	{
-		char s[1024];
-		sprintf(s,format,msg);
-		iprintf(s);
-	}
+#if 0
 	FILE *logfile = fopen(LOGFILEPATH,"a");
 	fprintf(logfile,format,msg);
 	fclose(logfile);
+#endif
 }
 
 void App::Log(const std::string msg)

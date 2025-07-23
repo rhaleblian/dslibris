@@ -18,8 +18,7 @@
  To contact the copyright holder: rayh23@sourceforge.net
  */
 
-#ifndef APP_H
-#define APP_H
+#pragma once
 
 /*!
 \mainpage
@@ -44,23 +43,19 @@ https://github.com/rhaleblian/dslibris
 
 */
 
-
+#include <expat.h>
 #include <list>
 #include <sstream>
 #include <unistd.h>
 #include <vector>
 
-#include "expat.h"
-
-#include "book.h"
 #include "button.h"
-#include "prefs.h"
-#include "text.h"
 #include "main.h"
 #include "parse.h"
+#include "prefs.h"
+#include "text.h"
 
 #define APP_BROWSER_BUTTON_COUNT 7
-#define APP_LOGFILE "dslibris.log"
 #define APP_MODE_BOOK 0
 #define APP_MODE_BROWSER 1
 #define APP_MODE_PREFS 2
@@ -76,7 +71,7 @@ https://github.com/rhaleblian/dslibris
 #define PREFS_BUTTON_FONTSIZE 1
 #define PREFS_BUTTON_PARASPACING 0
 
-void spin();
+class Book;
 
 //! \brief Main application.
 //!
@@ -84,27 +79,26 @@ void spin();
 //! interaction loop, drawing everything but text, and logging.
 
 class App {
+
 	public:
-	Text *ts;
-	Prefs myprefs;   //?
-	Prefs *prefs;    //?
+	
+	class Text *ts;
+	Prefs *prefs;
 	u8 brightness;   //! 4 levels for the Lite.
 	u8 mode; 	     //! Are we in book or browser mode?
-	string fontdir;  //! Default location to search for TTFs.
+	std::string fontdir;  //! Default location to search for TTFs.
 	bool console;    //! Can we print to console at the moment?
-	
 	//! key functions are remappable to support screen flipping.
 	struct {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
 		u32 downrepeat;
 	} key;
-	
-	vector<Button*> buttons;
+	std::vector<Button*> buttons;
 	Button buttonprev, buttonnext, buttonprefs; //! Buttons on browser bottom.
 	//! index into book vector denoting first book visible on library screen. 
 	u8 browserstart; 
-	string bookdir;  //! Search here for XHTML.
-	vector<Book*> books;
+	std::string bookdir;  //! Search here for XHTML.
+	std::vector<Book*> books;
 	u8 bookcount;
 	//! which book is currently selected in browser?
 	Book* bookselected;
@@ -117,7 +111,7 @@ class App {
 	//! user data block passed to expat callbacks.
 	parsedata_t parsedata;
 	//! not used yet; will contain pagination indices for caching.
-	vector<u16> pageindices;
+	std::vector<u16> pageindices;
 	u8 orientation;
 	u8 paraspacing, paraindent;
 	
@@ -133,7 +127,7 @@ class App {
 	
 	unsigned int fontSelected;
 	unsigned int fontPage;
-	vector<Button*>fontButtons;
+	std::vector<Button*>fontButtons;
 
 	//BImage *image0;
 	//BScreen *bscreen0;
@@ -145,7 +139,7 @@ class App {
 	//! in App.cpp
 	void CycleBrightness();
 	void PrintStatus(const char *msg);
-	void PrintStatus(string msg);
+	void PrintStatus(std::string msg);
 	void Flip();
 	void SetProgress(int amount);
 	void UpdateClock();
@@ -203,7 +197,7 @@ class App {
 	void FontButton();
 	
 	private:
-	
+
 	void FindBooks();
 	void InitScreens();
 	void SetBrightness(u8 b);
@@ -211,7 +205,5 @@ class App {
 	void WifiInit();
 	bool WifiConnect();
 	void Fatal(const char *msg);
+	int Init();
 };
-
-#endif
-

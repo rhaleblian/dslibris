@@ -1,13 +1,13 @@
-#ifndef _parse_h
-#define _parse_h
+#pragma once
 
 #include <expat.h>
-#include "book.h"
+#include <nds.h>
+
+#include "text.h"
 
 #define PAGEBUFSIZE 2048
 
 //! Symbols for known XHTML tags.
-
 //! Not all tags here necessary affect rendering.
 typedef enum {
 	TAG_ANCHOR,
@@ -24,13 +24,12 @@ typedef enum {
 } context_t;
 
 //! Expat parsing state.
-
 //! This data structure is made available
 //! to all expat callbacks via (void*)data.
 typedef struct {
 	context_t stack[32];
 	u8 stacksize;
-	Book *book;
+	class Book *book;
 	class Prefs *prefs;
 	int screen;
 	FT_Vector pen;
@@ -45,6 +44,7 @@ typedef struct {
 	int status;
 	int totalbytes;
 	int pagecount;
+	class App *app;
 } parsedata_t;
 
 //! Expat callbacks for parsing XHTML.
@@ -68,5 +68,3 @@ bool iswhitespace(u8 c);
 
 void parse_init(parsedata_t *data);
 void parse_printerror(XML_Parser p);
-
-#endif

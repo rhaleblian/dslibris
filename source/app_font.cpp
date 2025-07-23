@@ -1,3 +1,5 @@
+#include "app.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdlib.h>
@@ -14,12 +16,10 @@
 #include <string>
 #include <vector>
 
-#include "types.h"
-#include "main.h"
-#include "parse.h"
-#include "app.h"
 #include "book.h"
 #include "button.h"
+#include "main.h"
+#include "parse.h"
 #include "text.h"
 
 #define MIN(x,y) (x < y ? x : y)
@@ -197,18 +197,18 @@ void App::FontButton()
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->ClearScreen();
-	ts->SetPen(ts->margin.left,PAGE_HEIGHT/2);
+	ts->SetPen(ts->margin.left, PAGE_HEIGHT/2);
 	ts->PrintString("[saving font...]");
 	ts->SetInvert(invert);
 
 	std::string path = fontdir;
 	path.append(fontButtons[fontSelected]->GetLabel());
 	if (mode == APP_MODE_PREFS_FONT)
-		ts->SetFontFile(path.c_str(), TEXT_STYLE_REGULAR);
+		ts->SetFont(TEXT_STYLE_REGULAR, path.c_str());
 	else if (mode == APP_MODE_PREFS_FONT_BOLD)
-		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLD);
+		ts->SetFont(TEXT_STYLE_BOLD, path.c_str());
 	else if (mode == APP_MODE_PREFS_FONT_ITALIC)
-		ts->SetFontFile(path.c_str(), TEXT_STYLE_ITALIC);
+		ts->SetFont(TEXT_STYLE_ITALIC, path.c_str());
 
 	ts->Init();
 	bookcurrent = NULL; //Force repagination

@@ -12,7 +12,6 @@
 #include <nds/bios.h>
 #include <nds/arm9/input.h>
 
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "app.h"
@@ -137,14 +136,15 @@ void App::HandleEventInBrowser()
 				if (buttons[i]->EnclosesPoint(coord.py, coord.px))
 				{
 					bookselected = books[i];
-					browser_draw();
-					swiWaitForVBlank();
-					AttemptBookOpen();
+					// browser_draw();
+					// swiWaitForVBlank();
+					// AttemptBookOpen();
+					OpenBook();
 					break;
 				}
 			}
 		}
-	}	
+	}
 }
 
 void App::browser_init(void)
@@ -270,7 +270,6 @@ void App::AttemptBookOpen()
 {
 	if (!OpenBook()) {
 		mode = APP_MODE_BOOK;
-		//UpdateClock();
 	} else
 		browser_draw();
 }

@@ -19,30 +19,80 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
+#include "main.h"
 
+#include <dirent.h>
+#include <fat.h>
 #include <sys/param.h>
-#include "dirent.h"
-#include "fat.h"
 
 #include "app.h"
 #include "book.h"
 #include "button.h"
 #include "text.h"
 #include "expat.h"
-#include "main.h"
 #include "parse.h"
-#include "types.h"
+
+char msg[256];
+
+int list_root_directory(void)
+{
+	//! Simple libfat diagnostic.
+
+	DIR *dp = opendir("/");
+	if (!dp) {
+		iprintf("[FAIL] root dir inaccessible\n");
+		return false;
+	}
+	struct dirent *ent;
+	while ((ent = readdir(dp)))
+	{
+		iprintf("[ OK ] %s\n", ent->d_name);
+	}
+	closedir(dp);
+
+	return true;
+}
+
+void wait(int vblanks = -1)
+{
+	//! Wait {vblanks} vblanks, or wait forever.
+	//! Stop waiting on START key.
+
+	int timer = vblanks;
+	while(pmMainLoop()) {
+		swiWaitForVBlank();
+		scanKeys();
+		if (keysDown() & KEY_START) return;
+		if (timer == 0) return;
+		if (timer > 0) timer--;
+	}
+}
+
+void stop(const char* msg) {
+	consoleDemoInit();
+	iprintf("%s\n", msg);
+	wait(120);
+}
 
 App *app;
-char msg[256];
-int ft_main(int argc, char **argv);
 
-/*---------------------------------------------------------------------------*/
-
-
-void spin(void)
+int main()
 {
-	while(pmMainLoop()) swiWaitForVBlank();
+	// Get a guru screen when we crash.
+	defaultExceptionHandler();
+
+	// auto console = consoleDemoInit();
+
+	bool success = fatInitDefault();
+	if (!success) iprintf("[FAIL] no filesystem\n");
+	else iprintf("[ OK ] filesystem\n");
+
+	app = new App();
+	int error = app->Run();
+	// Give time to read error messages.
+	if (error) wait(120);
+
+	return 0;
 }
 
 bool iswhitespace(u8 c)
@@ -153,14 +203,14 @@ void prefs_start_hndl(	void *data,
 			if(!strcmp(attr[i],"size"))
 				app->ts->pixelsize = atoi(attr[i+1]);
 			else if(!strcmp(attr[i],"normal"))
-				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_REGULAR);
+				app->ts->SetFont(TEXT_STYLE_REGULAR, (char *)attr[i+1]);
 			else if(!strcmp(attr[i],"bold"))
-				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_BOLD);
+				app->ts->SetFont(TEXT_STYLE_BOLD, (char *)attr[i+1]);
 			else if(!strcmp(attr[i],"italic"))
-				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_ITALIC);
+				app->ts->SetFont(TEXT_STYLE_ITALIC, (char *)attr[i+1]);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
-					app->fontdir = string(attr[i+1]);
+					app->fontdir = std::string(attr[i+1]);
 			}
 		}
 	}
@@ -173,7 +223,7 @@ void prefs_start_hndl(	void *data,
 				app->reopen = atoi(attr[i+1]);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
-					app->bookdir = string(attr[i+1]);
+					app->bookdir = std::string(attr[i+1]);
 			}
         }
 	}
@@ -197,7 +247,7 @@ void prefs_start_hndl(	void *data,
 		
 		// Find the book index for this library entry
 		// and set context for later bookmarks.
-		vector<Book*>::iterator it;
+		std::vector<Book*>::iterator it;
 		for(it = app->books.begin(); it < app->books.end(); it++)
 		{
 			const char *bookname = (*it)->GetFileName();
@@ -268,22 +318,12 @@ int unknown_hndl(void *encodingHandlerData,
                  XML_Encoding *info)
 {
 	// noops!
-	strcpy(msg, "warn : encoding handler encountered, did nothing.");
-	app->Log(msg);
 	return 0;
 }
 
 void default_hndl(void *data, const XML_Char *s, int len)
 {
-	//! Fallback callback. NYUK!
-	
-#ifdef DEBUG
-	char msg[256];
-	strncpy(msg,(const char*)s, len > 255 ? 255 : len);
-	app->Log("info : ");
-	app->Log(msg);
-	app->Log("\n");
-#endif
+	//! Handle specific HTML named entities.
 
 	int advancespace = app->ts->GetAdvance(' ');
 	parsedata_t *p = (parsedata_t*)data;
@@ -434,7 +474,7 @@ void start_hndl(void *data, const char *el, const char **attr)
 		p->buflen++;
 		p->pos++;
 		p->bold = true;
-		if (lf) linefeed(p);		
+		if (lf) linefeed(p);
 	}
 	else if (!strcmp(el,"h3")) {
 		app->parse_push(p,TAG_H3);
@@ -493,8 +533,8 @@ void start_hndl(void *data, const char *el, const char **attr)
 
 void char_hndl(void *data, const XML_Char *txt, int txtlen)
 {
-	//! reflow text on the fly, into page data structure.
-	
+	//! Reflow text on the fly into page data structure.
+	return;
 	parsedata_t *p = (parsedata_t *)data;
 	//if (p->pagecount > 3) return;
 	if (app->parse_in(p,TAG_TITLE)) return;
@@ -725,62 +765,4 @@ void end_hndl(void *data, const char *el)
 
 void proc_hndl(void *data, const char *target, const char *pidata)
 {
-	app->Log("called proc_hndl().\n");
 }
-
-int getSize(u8 *source, u16 *dest, u32 arg) {
-       return *(u32*)source;
-}
-
-u8 readByte(u8 *source) { return *source; }
-
-void drawstack(u16 *screen) {
-       TDecompressionStream decomp = {getSize, NULL, readByte};
-       swiDecompressLZSSVram((void*)splashBitmap, screen, 0, &decomp);
-}
-
-PrintConsole* boot_console(void)
-{
-	// Start up a demo console.
-	auto console = consoleDemoInit();
-	if(console) iprintf("[ OK ] console\n");
-	return console;
-}
-
-int boot_filesystem(void)
-{
-	// Start up libfat.
-	bool success = fatInitDefault();
-	if (!success) iprintf("[FAIL] no filesystem\n");
-	else iprintf("[ OK ] filesystem\n");
-	return success;
-}
-
-int ls(void)
-{
-	// libfat diagnostic routine.
-	DIR *dp = opendir("/");
-	if (!dp) {
-		iprintf("[FAIL] root dir inaccessible\n");
-		return false;
-	}
-	struct dirent *ent;
-	while ((ent = readdir(dp)))
-	{
-		iprintf("[ OK ] %s\n", ent->d_name);
-	}
-	closedir(dp);
-
-	return true;
-}
-
-int main(void)
-{
-	defaultExceptionHandler();
-	if(!boot_console()) spin();
-	if(!boot_filesystem()) spin();
-	app = new App();
-	if (app->Run())	spin();
-	return 0;
-}
-
