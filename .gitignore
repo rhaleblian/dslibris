@@ -6,6 +6,7 @@
 *.nds
 *.o
 *.img
+*.img.idx
 /*.tar.*
 #.*#
 .DS_Store

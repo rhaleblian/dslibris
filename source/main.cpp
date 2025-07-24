@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <sys/param.h>
 #include "dirent.h"
 #include "fat.h"
+#include "nds.h"
 
 #include "app.h"
 #include "book.h"
@@ -64,7 +65,7 @@ PrintConsole* boot_console(void) {
 	// Get a console going.
 	auto console = consoleDemoInit();
 	if (!console) iprintf("[FAIL] console!\n");		// This, of course, won't print :D
-	else iprintf("[OK] console\n");
+	else iprintf("[ OK ] console\n");
 	return console;
 }
 
@@ -72,28 +73,25 @@ int boot_filesystem(void) {
 	// Start up the filesystem.
 	bool success = fatInitDefault();
 	if (!success) iprintf("[FAIL] filesystem!\n");
-	else iprintf("[OK] filesystem\n");
+	else iprintf("[ OK ] filesystem\n");
 	return success;
 }
 
-void spin(void) {
-	while(true) swiWaitForVBlank();
+void halt(void) {
+	while(pmMainLoop())
+		swiWaitForVBlank();
 }
 
-void fatal(const char *msg) {
-	iprintf(msg);
-	spin();
+void halt(const char *msg) {
+	printf(msg);
+	halt();
 }
 
 int main(void)
 {
-	if(!boot_console()) spin();
-	if(!boot_filesystem()) spin();
-
-	//kungheyfatcheck();
-	// asciiart();
-	// while(true) swiWaitForVBlank();
-
+	defaultExceptionHandler();
+	if(!boot_console()) halt();
+	if(!boot_filesystem()) halt();
 	app = new App();
 	return app->Run();
 }
@@ -165,6 +163,7 @@ void prefs_start_hndl(	void *data,
 			if(!strcmp(attr[i],"modtime"))
 			   app->prefs->modtime = atoi(attr[i+1]);
 	}
+	// FIXME this will never run
 	else if (!strcmp(name,"library"))
 	{
 		for(i=0;attr[i];i+=2) {
@@ -213,6 +212,8 @@ void prefs_start_hndl(	void *data,
 				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_BOLD);
 			else if(!strcmp(attr[i],"italic"))
 				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_ITALIC);
+			else if(!strcmp(attr[i],"bolditalic"))
+				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_BOLDITALIC);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
 					app->fontdir = string(attr[i+1]);

@@ -5,9 +5,11 @@
 DEVKITPRO ?= /opt/devkitpro
 DEVKITARM ?= /opt/devkitpro/devkitARM
 
+VERSION ?= $(cat include/version.h)
+
 GAME_TITLE := dslibris
-GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
-GAME_SUBTITLE2 := Yoyodyne Research
+GAME_SUBTITLE1 := An EPUB ebook reader [$(VERSION)]
+GAME_SUBTITLE2 := https://github.com/rhaleblian/dslibris
 GAME_ICON := $(PWD)/gfx/icon.bmp
 
 include $(DEVKITARM)/ds_rules
@@ -32,7 +34,8 @@ CFLAGS	:=	-Wall -O2 \
 			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
 			-ffast-math \
 			$(ARCH)
-CFLAGS  +=  -g
+# CFLAGS  +=  -g
+CFLAGS	+=  -DMELONDS
 CFLAGS  +=	-I$(PWD)/portlibs/nds/include/freetype2
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
