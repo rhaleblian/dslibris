@@ -134,8 +134,8 @@ void App::PrefsRefreshButtonFlipOrientation()
 	prefsButtonFlipOrientation.SetLabel1(std::string("screen orientation"));
 	prefsButtonFlipOrientation.SetLabel2(
 		orientation 
-			? std::string("D-Pad on Bottom")
-			: std::string("ABXY on Bottom")
+			? std::string("ABXY on Bottom")
+			: std::string("D-Pad on Bottom")
 	);
 }
 
