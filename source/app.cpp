@@ -139,9 +139,7 @@ int App::Run(void)
 			book->format = FORMAT_EPUB;
 			books.push_back(book);
 			bookcount++;
-#ifndef MELONDS
 			book->Index();
-#endif
 		}
 	}
 	closedir(dp);
@@ -218,6 +216,7 @@ int App::Run(void)
 	
 	while (true)
 	{
+		swiWaitForVBlank();
 		scanKeys();
 
 		key.downrepeat = keysDownRepeat();
@@ -242,10 +241,9 @@ int App::Run(void)
 						break;
 			}
 		}
-		swiWaitForVBlank();
 	}
 
-	exit(0);
+	return 0;
 }
 
 void App::SetBrightness(u8 b)

@@ -27,14 +27,13 @@
 #define BPP 7  // buttons per page
 #define BUTTONHEIGHT 32
 
-void App::FontInit()
+int App::FontInit()
 {
 	DIR *dp = opendir(fontdir.c_str());
 	if (!dp)
 	{
-		Log("fatal: no font directory.\n");
-		swiWaitForVBlank();
-		exit(-3);
+		printf("[FAIL] no font directory\n");
+		return 1;
 	}
 	
 	fontPage = 0;
@@ -64,34 +63,44 @@ void App::FontInit()
 
 void App::HandleEventInFont()
 {
-	if (!(keysDown() & KEY_TOUCH)){
-		if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
-			mode = APP_MODE_PREFS;
-			FontDeinit();
-			PrefsDraw();
-		} else if (keysDown() & (orientation ? (KEY_LEFT) : (KEY_RIGHT))) {
-			if (fontSelected > 0) {
-				if (fontSelected == fontPage * 7) {
-					FontPreviousPage();
-					FontDraw();
-				} else {
-					fontSelected--;
-					FontDraw(false);
-				}
-			}
-		} else if (fontSelected < (fontButtons.size() - 1) && (orientation ? (KEY_RIGHT) : (KEY_LEFT)) && !(keysDown() & KEY_A)) {
-			if (fontSelected == fontPage * BPP + (BPP-1)) {
-				FontNextPage();
+	auto keys = keysDown();
+	
+	if (keys & (KEY_START | KEY_SELECT | KEY_B)) {
+		// Leave view
+		mode = APP_MODE_PREFS;
+		FontDeinit();
+		PrefsDraw();
+	}
+	else if (keys & (orientation ? (KEY_LEFT) : (KEY_RIGHT))) {
+		// Walk list
+		if (fontSelected > 0) {
+			if (fontSelected == fontPage * 7) {
+				FontPreviousPage();
 				FontDraw();
 			} else {
-				fontSelected++;
+				fontSelected--;
 				FontDraw(false);
 			}
-		} else if (keysDown() & KEY_A) {
-			FontButton();
 		}
-	} else if (keysDown() & KEY_TOUCH) {
-		Log("info : font screen touched\n");
+	}
+	else if (fontSelected < (fontButtons.size() - 1)
+		&& (orientation ? (KEY_RIGHT) : (KEY_LEFT))
+		&& !(keys & KEY_A)) {
+		// Go to next page
+		if (fontSelected == fontPage * BPP + (BPP-1)) {
+			FontNextPage();
+			FontDraw();
+		} else {
+			fontSelected++;
+			FontDraw(false);
+		}
+	}
+	else if (keys & KEY_A) {
+		// Use selected font
+		FontButton();
+	}
+	else if (keys & KEY_TOUCH) {
+		// Select and use font
 		touchPosition touch;
 		touchRead(&touch);
 		touchPosition coord;
@@ -116,8 +125,9 @@ void App::HandleEventInFont()
 			FontDeinit();
 			PrefsDraw();
 		} else {
-			for(u8 i = fontPage * 7; (i < fontButtons.size()) && (i < (fontPage + 1) * BPP); i++) {
-				Log("info : checking button\n");
+			for(u8 i = fontPage * 7; 
+				(i < fontButtons.size()) && (i < (fontPage + 1) * BPP);
+				i++) {
 				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
 				{
 					if (i != fontSelected) {
@@ -162,7 +172,7 @@ void App::FontDraw(bool redraw)
 	{
 		fontButtons[i]->Draw(ts->screenright, i == fontSelected);
 	}
-	buttonprefs.Label("Cancel");
+	buttonprefs.Label("cancel");
 	buttonprefs.Draw(screen, false);
 	if(fontButtons.size() > (fontPage + 1) * BPP)
 		buttonnext.Draw(ts->screenright, false);
@@ -195,7 +205,8 @@ void App::FontPreviousPage()
 
 void App::FontButton()
 {
-	Log("progr: assigning font..\n");
+	// Set the selected font
+
 	bool invert = ts->GetInvert();
 
 	ts->SetScreen(ts->screenright);
@@ -213,6 +224,8 @@ void App::FontButton()
 		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLD);
 	else if (mode == APP_MODE_PREFS_FONT_ITALIC)
 		ts->SetFontFile(path.c_str(), TEXT_STYLE_ITALIC);
+	else if (mode == APP_MODE_PREFS_FONT_BOLDITALIC)
+		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLDITALIC);
 
 	ts->Init();
 	bookcurrent = NULL; //Force repagination

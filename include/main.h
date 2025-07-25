@@ -54,8 +54,8 @@ void halt();
 void halt(const char *msg);
 
 //! For drawing splash screen.
-int getSize(uint8 *source, uint16 *dest, uint32 arg);
-uint8 readByte(uint8 *source);
+int getSize(u8 *source, u16 *dest, u32 arg);
+uint8 readByte(u8 *source);
 void drawstack(u16 *screen);
 
 #endif
