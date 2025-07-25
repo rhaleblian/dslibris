@@ -31,11 +31,16 @@ INCLUDES	:=	include build
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-Wall -O2 \
-			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
-			-ffast-math \
-			$(ARCH)
-# CFLAGS  +=  -g
-CFLAGS	+=  -DMELONDS
+		-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
+		-ffast-math \
+		$(ARCH)
+
+# symbols, for maybe getting GDB to work again
+# CFLAGS	+=	-g
+
+# elide code that borks melonDS 
+# CFLAGS	+=	-DMELONDS
+
 CFLAGS  +=	-I$(PWD)/portlibs/nds/include/freetype2
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
@@ -155,7 +160,7 @@ distcheck:
 	true
 
 distclean: clean
-	- rm release*.zip
+	- rm dslibris-*.zip
 	- rm test/*.img
 
 abandonhope: distclean
