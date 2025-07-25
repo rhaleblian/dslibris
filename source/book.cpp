@@ -183,7 +183,6 @@ u8 Book::Open() {
 	err = epub(this,path,false);
 	if(!err)
 		if(position > (int)pages.size()) position = pages.size()-1;
-
 	return (u8)err;
 }
 

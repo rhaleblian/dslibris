@@ -48,7 +48,6 @@ Text::Text()
 	filenames[TEXT_STYLE_REGULAR] = FONTREGULARFILE;
 	filenames[TEXT_STYLE_BOLD] = FONTBOLDFILE;
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
-	filenames[TEXT_STYLE_BOLDITALIC] = FONTBOLDITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
@@ -126,15 +125,20 @@ FT_Error Text::InitFreeTypeCache(void) {
 
 	auto error = FT_Init_FreeType(&library);
 	if(error) return error;
+	app->Log("ok\n");
 	error = FTC_Manager_New(library,0,0,0,
 		&TextFaceRequester,NULL,&cache.manager);
 	if(error) return error;
+	app->Log("ok\n");
 	error = FTC_ImageCache_New(cache.manager,&cache.image);
 	if(error) return error;
+	app->Log("ok\n");
 	error = FTC_SBitCache_New(cache.manager,&cache.sbit);
 	if(error) return error;
+	app->Log("ok\n");
 	error = FTC_CMapCache_New(cache.manager,&cache.cmap);
 	if(error) return error;
+	app->Log("ok\n");
 
 	sprintf(face_id.file_path, "%s/%s", FONTDIR, filenames[TEXT_STYLE_REGULAR].c_str());
 	face_id.face_index = 0;
@@ -142,12 +146,21 @@ FT_Error Text::InitFreeTypeCache(void) {
 	app->Log(msg);
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
 	if(error) return error;
+	app->Log("ok\n");
+	// FT_EXPORT( FT_Error )
+//   FTC_Manager_LookupSize( FTC_Manager  manager,
+//                           FTC_Scaler   scaler,
+//                           FT_Size     *asize );
 
 	ReportFace(faces[TEXT_STYLE_REGULAR]);
+
+	// FT_Select_Charmap(GetFace(TEXT_STYLE_REGULAR), FT_ENCODING_UNICODE);
+	// charmap_index = FT_Get_Charmap_Index(GetFace(TEXT_STYLE_REGULAR)->charmap);
 
 	screen = screenleft;
 	InitPen();
 	initialized = true;
+	app->Log("initialized freetype cache\n");
 	return 0;
 }
 
@@ -169,26 +182,24 @@ int Text::InitHomemadeCache(void) {
 	err = CreateFace(TEXT_STYLE_BROWSER);
 	err = CreateFace(TEXT_STYLE_SPLASH);
 	err = CreateFace(TEXT_STYLE_REGULAR);
-
 	err = CreateFace(TEXT_STYLE_ITALIC);
 	if (err)
 		faces[TEXT_STYLE_ITALIC] = faces[TEXT_STYLE_REGULAR];
-
 	err = CreateFace(TEXT_STYLE_BOLD);
 	if (err)
 		faces[TEXT_STYLE_BOLD] = faces[TEXT_STYLE_REGULAR];
 
-	err = CreateFace(TEXT_STYLE_BOLDITALIC);
-	if (err)
-		faces[TEXT_STYLE_BOLDITALIC] = faces[TEXT_STYLE_REGULAR];
-	
 	std::map<u8, FT_Face>::iterator iter;
 	for (iter = faces.begin(); iter != faces.end(); iter++) {
 		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
 		textCache.insert(make_pair(iter->second, new Cache()));
 	}
 
+	screen = screenleft;
+	ClearCache();
+	InitPen();
 	initialized = true;
+	app->Log("custom cache initialized\n");
 	return 0;
 }
 
@@ -436,13 +447,6 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 
 	}
 	return 0;
-}
-
-std::string Text::GetFontName(u8 style) {
-	return
-		std::string(faces[style]->family_name)
-		+ " "
-		+ std::string(faces[style]->style_name);
 }
 
 u8 Text::GetHeight() {

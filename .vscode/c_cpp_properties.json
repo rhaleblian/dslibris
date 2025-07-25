@@ -7,14 +7,15 @@
             "cStandard": "gnu11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "clang-x64",
-            "compilerArgs": ["-Wall -O2 -march=armv5te -mtune=arm946e-s -fomit-frame-pointer -ffast-math -mthumb -minterwork"],
+            "compilerArgs": ["-DEXPERIMENTAL_KERNING"],
             "includePath": [
                 "${workspaceFolder}/include",
-                "${workspaceFolder}/portlibs/nds/include/**",
-                "/opt/devkitpro/calico/include/**",
-                "/opt/devkitpro/devkitARM/include/**",
-                "/opt/devkitpro/libnds/include/**",
-                "/opt/devkitpro/portlibs/nds/include/**"
+                "/opt/devkitpro/devkitARM/include",
+                "/opt/devkitpro/libnds/include",
+                "/opt/devkitpro/libnds/include/nds",
+                "/opt/devkitpro/portlibs/nds/include",
+                "/opt/devkitpro/portlibs/nds/include/freetype2",
+                "/opt/devkitpro/portlibs/nds/include/freetype2/freetype"
             ]
         }
     ],
