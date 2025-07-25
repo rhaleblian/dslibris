@@ -49,6 +49,11 @@ static bool book_title_lessthan(Book* a, Book* b) {
     return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
 }
 
+void halt()
+{
+	while(TRUE) swiWaitForVBlank();
+}
+
 App::App()
 {	
 	invert = false;
@@ -100,37 +105,103 @@ App::~App()
 
 int App::Run(void)
 {
-	// char msg[512];
+	char msg[512];
+	SetBrightness(0);	
+
+	Log("--------------------\n");
+	Log("dslibris starting up\n");
 	console = true;
+
+	// Read preferences, pass 1,
+	// to get the book folder and preferred fonts.
+
+   	if (int err = prefs->Read())
+	{
+		if(err == 255)
+		{
+			err = prefs->Write();
+			if (err) {
+				Log("could not create preferences\n");
+				return err;
+			}
+			Log("created preferences\n");
+		}
+	}
 
 	// Start up typesetter.
 
    	int err = ts->Init();
-	if (err) {
-		printf("[FAIL] typesetter\n");
-		halt();
+	switch(err)
+	{
+		case 0:
+		sprintf(msg, "typesetter started\n");
+		break;
+		default:
+		sprintf(msg, ErrorString(err));
+		// case 1:
+		// sprintf(msg, "fatal: font file not found (%d)\n", err);
+		// break;
+		// case 2:
+		// sprintf(msg, "fatal: font file unreadable (%d)\n", err);
+		// break;
+		// default:
+		// sprintf(msg, "fatal: freetype error (%d)\n", err);
 	}
-	printf("[ OK ] typesetter\n");
+	Log(msg);
+	if(err) while(1) swiWaitForVBlank();
+	
+	SetBrightness(brightness);
 	
 	// Look in the book directory and construct library.
+
+	sprintf(msg,"scanning '%s' for books\n",bookdir.c_str());
+	Log(msg);
 	
 	DIR *dp = opendir(bookdir.c_str());
 	if (!dp)
 	{
-		printf("[FAIL] no books\n");
-		halt();
+		sprintf(msg,"fatal: No book directory \'%s\'.\n",
+			bookdir.c_str());
+		Log(msg);
 	}
+	
 	struct dirent *ent;
 	while ((ent = readdir(dp)))
 	{
 		char *filename = ent->d_name;
+		sprintf(msg,"%s\n", filename);
+		Log(msg);
 		if(*filename == '.') continue;
-		// Starting from the end, find the file extension.
 		char *c;
+		// FIXME use std::string method
 		for (c=filename+strlen(filename)-1;
 		     c!=filename && *c!='.';
 		     c--);
-		if (!strcmp(".epub",c))
+		if (!strcmp(".xht",c) || !strcmp(".xhtml",c))
+		{
+			Book *book = new Book();
+			book->SetFolderName(bookdir.c_str());
+			book->SetFileName(filename);
+			book->format = FORMAT_XHTML;
+			books.push_back(book);
+			bookcount++;
+			
+			Log("indexing '%s'\n", book->GetFileName());
+
+			u8 rc = book->Index();
+			if (rc)
+			{
+				sprintf(msg,"warn : indexer failed (%d)\n",
+					rc);
+			}
+			else
+			{
+				sprintf(msg, "indexed title '%s'\n",
+					book->GetTitle());
+			}
+			Log(msg);
+		}
+		else if (!strcmp(".epub",c))
 		{
 			Book *book = new Book();
 			book->SetFolderName(bookdir.c_str());
@@ -139,37 +210,34 @@ int App::Run(void)
 			book->format = FORMAT_EPUB;
 			books.push_back(book);
 			bookcount++;
-#ifndef MELONDS
 			book->Index();
-#endif
 		}
 	}
 	closedir(dp);
-	if (bookcount == 0) {
-		printf("[FAIL] %d books\n", bookcount);
-		halt();
-	}
-	printf("[ OK ] %d books\n", bookcount);
-	
-#ifndef MELONDS
-   	if (int err = prefs->Read())
+	sprintf(msg,"%d books indexed.\n",bookcount);
+	Log(msg);
+
+	if(bookcurrent)
 	{
-		if(err)
-		{
-			err = prefs->Write();
-		}
+		sprintf(msg,"info : currentbook = %s.\n",bookcurrent->GetTitle());
+		Log(msg);
 	}
-	if (err) {
-		printf("[FAIL] preferences\n");
-		halt();
+	swiWaitForVBlank();
+	
+	// Read preferences, pass 2, to bind preferences to books.
+	
+   	if(int parseerror = prefs->Read())
+	{
+		sprintf(msg,"warn : can't read prefs (%d).\n",parseerror);
+		Log(msg);
 	}
+	else Log("info : read prefs (books).\n");
+
 	// Sort bookmarks for each book.
 	for(u8 i = 0; i < bookcount; i++)
 	{
 		books[i]->GetBookmarks()->sort();
 	}
-	printf("[ OK ] preferences");
-#endif
 
 	// Set up preferences editing screen.
 	PrefsInit();
@@ -178,19 +246,27 @@ int App::Run(void)
 	std::sort(books.begin(),books.end(),&book_title_lessthan);
 	browser_init();
 
-	printf("[ OK ] views\n");
+	Log("progr: browsers populated.\n");
 
 	// Bring up displays.
 	console = false;
-	SetBrightness(brightness);
 	InitScreens();
+	//if(orientation) lcdSwap();
+	if (prefs->swapshoulder)
+	{
+		int tmp = key.l;
+		key.l = key.r;
+		key.r = tmp;
+	}
+
 	mode = APP_MODE_BROWSER;
 	ts->PrintSplash(ts->screenleft);
 	browser_draw();
 
+	Log("progr: browser displayed.\n");
+
 	// Resume reading from the last session.
 	
-#ifndef MELONDS
 	if(reopen && bookcurrent)
 	{
 		int openerr = OpenBook();
@@ -203,19 +279,13 @@ int App::Run(void)
 		}
 	}
 	else Log("info : not reopening previous book.\n");
-#endif
+
+	swiWaitForVBlank();
 
 	// Start polling event loop.
 	// FIXME use interrupt driven event handling.
 	
 	keysSetRepeat(60,2);
-	if (prefs->swapshoulder)
-	{
-		int tmp = key.l;
-		key.l = key.r;
-		key.r = tmp;
-	}
-	
 	while (true)
 	{
 		scanKeys();

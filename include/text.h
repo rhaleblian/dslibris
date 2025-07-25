@@ -16,19 +16,15 @@ using namespace std;
 //! Reference: http://www.displaymate.com/psp_ds_shootout.htm
 #define DPI 110
 
-// Parsing/rendering state
 #define TEXT_BOLD_ON 2
 #define TEXT_BOLD_OFF 3
 #define TEXT_ITALIC_ON 4
 #define TEXT_ITALIC_OFF 5
-
-// Indices for filename and face vectors
 #define TEXT_STYLE_REGULAR (u8)0
 #define TEXT_STYLE_BOLD (u8)1
 #define TEXT_STYLE_ITALIC (u8)2
-#define TEXT_STYLE_BOLDITALIC (u8)3
-#define TEXT_STYLE_BROWSER (u8)4
-#define TEXT_STYLE_SPLASH (u8)5
+#define TEXT_STYLE_BROWSER (u8)3
+#define TEXT_STYLE_SPLASH (u8)4
 
 #define CACHESIZE 512
 #define PIXELSIZE 12
@@ -117,9 +113,6 @@ class Style {
 //! The code using FreeType's cache is inoperative.
 
 class Text {
-
-	private:
-
 	FT_Library library;
 	FT_Error error;
 
@@ -175,8 +168,7 @@ class Text {
 	void PrintString(const char *string, FT_Face face);
 	void ReportFace(FT_Face face);
 
-	public:
-
+public:
 	App *app;
 	int pixelsize;
 	//! Not used ... really.
@@ -216,8 +208,7 @@ class Text {
 	u8   GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels);
 	FT_Face GetFace() { return face; }
 	FT_Face GetFace(u8 style) { return faces[style]; }
-	std::string GetFontFile(u8 style);
-	std::string GetFontName(u8 style);
+	string GetFontFile(u8 style);
 	bool GetFontName(std::string &s);
 	u8   GetHeight(void);
 	bool GetInvert();
