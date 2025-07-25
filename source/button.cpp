@@ -29,20 +29,22 @@ Button::Button() {
 
 void Button::Init(Text *typesetter) {
 	ts = typesetter;
+	draw_border = false;
 	origin.x = 0;
 	origin.y = 0;
 	extent.x = 192;
 	extent.y = 32;
+	style = BUTTON_STYLE_BOOK;
 	text = "";
 	text2 = "";
 }
 
 void Button::Label(const char *s) {
-	std::string str = s;	
+	std::string str = s;
 	SetLabel(str);
 }
 
-void Button::SetLabel(std::string &s) {
+void Button::SetLabel1(std::string s) {
 	text = s;
 }
 
@@ -79,17 +81,17 @@ void Button::Draw(u16 *fb, bool highlight) {
 		}
 	}
 
-#if 0
-	u16 bordercolor = RGB15(22,22,22) | BIT(15);
-	for (x=ul.x;x<lr.x;x++) {
-		fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
-		fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
+	if (draw_border) {
+		u16 bordercolor = RGB15(22,22,22) | BIT(15);
+		for (x=ul.x;x<lr.x;x++) {
+			fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
+			fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
+		}
+		for (y=ul.y;y<lr.y;y++) {
+			fb[y*SCREEN_WIDTH + ul.x] = bordercolor;
+			fb[y*SCREEN_WIDTH + lr.x-1] = bordercolor;
+		}
 	}
-	for (y=ul.y;y<lr.y;y++) {
-		fb[y*SCREEN_WIDTH + ul.x] = bordercolor;
-		fb[y*SCREEN_WIDTH + lr.x-1] = bordercolor;
-	}
-#endif
 
 	bool invert = ts->GetInvert();
 	ts->SetScreen(fb);
@@ -99,16 +101,22 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
 
-	ts->SetPixelSize(ts->GetPixelSize()+1);
-	uint8_t len = ts->GetCharCountInsideWidth(text.c_str(), TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
-	ts->PrintString((const char*)text.substr(0, len).c_str(), TEXT_STYLE_BROWSER);
-	ts->SetPixelSize(ts->GetPixelSize()-1);
+	if (text.length()) {
+		const int s1 = style ? 1 : -1;
+		ts->SetPixelSize(ts->GetPixelSize()+s1);
+		uint8_t len = ts->GetCharCountInsideWidth(text.c_str(),
+			TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
+		ts->PrintString((const char*)text.substr(0, len).c_str(),
+			TEXT_STYLE_BROWSER);
+		ts->SetPixelSize(ts->GetPixelSize()-s1);
+	}
 
 	if (text2.length()) {
-		ts->SetPixelSize(ts->GetPixelSize()-1);
+		const int s2 = style ? -1 : 0;
+		ts->SetPixelSize(ts->GetPixelSize()+s2);
 		ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
 		ts->PrintString((const char *)text2.c_str(), TEXT_STYLE_BROWSER);
-		ts->SetPixelSize(ts->GetPixelSize()+1);
+		ts->SetPixelSize(ts->GetPixelSize()-s2);
 	}
 
 	ts->usebgcolor = false;
