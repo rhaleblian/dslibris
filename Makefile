@@ -5,9 +5,11 @@
 DEVKITPRO ?= /opt/devkitpro
 DEVKITARM ?= /opt/devkitpro/devkitARM
 
+VERSION ?= $(cat include/version.h)
+
 GAME_TITLE := dslibris
-GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
-GAME_SUBTITLE2 := Yoyodyne Research
+GAME_SUBTITLE1 := An EPUB ebook reader [$(VERSION)]
+GAME_SUBTITLE2 := https://github.com/rhaleblian/dslibris
 GAME_ICON := $(PWD)/gfx/icon.bmp
 
 include $(DEVKITARM)/ds_rules
@@ -156,7 +158,7 @@ distcheck:
 	true
 
 distclean: clean
-	- rm release*.zip
+	- rm dslibris-*.zip
 	- rm test/*.img
 
 abandonhope: distclean

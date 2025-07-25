@@ -181,6 +181,29 @@ u8 Book::Open() {
 	path.append(GetFileName());
 	app->PrintStatus(path.c_str());
 	err = epub(this,path,false);
+
+	FILE *fp = fopen("/cache.dat", "r");
+	if (fp && app->cache) {
+		// Restore from cache.
+		fclose(fp);
+		Restore();
+	} else {
+		if(format == FORMAT_XHTML) {
+			app->PrintStatus("opening XHTML...\n");
+				err = Parse(true);
+		}
+		else if(format == FORMAT_EPUB) {
+			app->PrintStatus("opening EPUB...\n");
+			std::string path;
+			path.append(GetFolderName());
+			path.append("/");
+			path.append(GetFileName());
+			err = epub(this,path,false);
+		} else
+			err = 255;
+		if (app->cache) Cache();
+		fclose(fp);
+	}
 	if(!err)
 		if(position > (int)pages.size()) position = pages.size()-1;
 	return (u8)err;
