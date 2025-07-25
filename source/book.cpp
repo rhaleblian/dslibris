@@ -176,15 +176,12 @@ void Book::Cache()
 u8 Book::Open() {
 	int err = 0;
 
-	//	if( access( fname.c_str(), F_OK ) != -1 ) {
 	FILE *fp = fopen("/cache.dat", "r");
 	if (fp && app->cache) {
 		// Restore from cache.
 		fclose(fp);
 		Restore();
-		//app->Log("CACHED");
 	} else {
-		//app->Log("UNCACHED");
 		if(format == FORMAT_XHTML) {
 			app->PrintStatus("opening XHTML...\n");
 				err = Parse(true);

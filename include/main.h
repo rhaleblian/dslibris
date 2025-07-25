@@ -46,8 +46,12 @@
 #define FONTREGULARFILE "LiberationSerif-Regular.ttf"
 #define FONTBOLDFILE "LiberationSerif-Bold.ttf"
 #define FONTITALICFILE "LiberationSerif-Italic.ttf"
+#define FONTBOLDITALICFILE "LiberationSerif-BoldItalic.ttf"
 #define FONTBROWSERFILE "LiberationSans-Regular.ttf"
 #define FONTSPLASHFILE "LiberationSans-Regular.ttf"
+
+void halt();
+void halt(const char *msg);
 
 //! For drawing splash screen.
 int getSize(uint8 *source, uint16 *dest, uint32 arg);
