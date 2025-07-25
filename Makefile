@@ -5,9 +5,11 @@
 DEVKITPRO ?= /opt/devkitpro
 DEVKITARM ?= /opt/devkitpro/devkitARM
 
+VERSION ?= $(cat include/version.h)
+
 GAME_TITLE := dslibris
-GAME_SUBTITLE1 := An EPUB reader for Nintendo DS
-GAME_SUBTITLE2 := Yoyodyne Research
+GAME_SUBTITLE1 := An EPUB ebook reader [$(VERSION)]
+GAME_SUBTITLE2 := https://github.com/rhaleblian/dslibris
 GAME_ICON := $(PWD)/gfx/icon.bmp
 
 include $(DEVKITARM)/ds_rules
@@ -29,10 +31,16 @@ INCLUDES	:=	include build
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-Wall -O2 \
-			-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
-			-ffast-math \
-			$(ARCH)
-CFLAGS  +=  -g
+		-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
+		-ffast-math \
+		$(ARCH)
+
+# symbols, for maybe getting GDB to work again
+# CFLAGS	+=	-g
+
+# elide code that borks melonDS 
+# CFLAGS	+=	-DMELONDS
+
 CFLAGS  +=	-I$(PWD)/portlibs/nds/include/freetype2
 CFLAGS	+=	$(INCLUDE) -DARM9
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
@@ -152,7 +160,7 @@ distcheck:
 	true
 
 distclean: clean
-	- rm release*.zip
+	- rm dslibris-*.zip
 	- rm test/*.img
 
 abandonhope: distclean
