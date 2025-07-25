@@ -1,22 +1,5 @@
-#!/usr/bin/env bash
 . /opt/devkitpro/devkitarm.sh
-
-version=$(cat include/version.h | cut -c 17- | tr -d '"')
-zipfile=dslibris-${version}.zip
-
-rm *.zip
-make clean
-make -j 2
-if [ $? != 0 ]
-then
-	echo "BUILD FAILED"
-	return 1
-fi
-
-# This might apply for the most users,
-# as a safeguard when they forget to patch.
-dlditool etc/dldi/r4tf_v2.dldi 
-
-zip ${zipfile} dslibris.nds
-(cd etc/filesystem/en; zip -r -u ../../../${zipfile} .)
+dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
+zip release.zip dslibris.nds
+(cd etc/filesystem/en; zip -r -u ../../../release.zip .)
 
