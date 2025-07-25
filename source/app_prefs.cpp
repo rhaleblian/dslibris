@@ -134,6 +134,7 @@ void App::PrefsDraw()
 
 void App::PrefsDraw(bool redraw)
 {
+	ts->FreezeMain();
 	if(!redraw){
 		PrefsRefreshButtonFlipOrientation();
 		ts->SetScreen(ts->screenright);
@@ -168,6 +169,7 @@ void App::PrefsDraw(bool redraw)
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
+	ts->ShowMain();
 }
 
 void App::HandleEventInPrefs()

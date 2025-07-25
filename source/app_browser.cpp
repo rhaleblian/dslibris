@@ -205,6 +205,7 @@ void App::browser_prevpage()
 
 void App::browser_draw(void)
 {
+	ts->FreezeMain();
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
@@ -235,10 +236,12 @@ void App::browser_draw(void)
 	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
 	ts->SetStyle(style);
+	ts->ShowMain();
 }
 
 void App::browser_redraw()
 {
+	ts->FreezeMain();
 	//! Redraw all buttons visible in the browser.
 	// only call this when incrementing or decrementing the
 	// selected book; otherwise use browser_draw().
@@ -264,6 +267,7 @@ void App::browser_redraw()
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
 	ts->SetStyle(style);
+	ts->ShowMain();
 }
 
 void App::AttemptBookOpen()

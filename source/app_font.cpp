@@ -148,6 +148,7 @@ void App::FontDraw()
 
 void App::FontDraw(bool redraw)
 {
+	ts->FreezeMain();
 	// save state.
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
@@ -173,6 +174,7 @@ void App::FontDraw(bool redraw)
 	ts->SetStyle(style);
 	ts->SetInvert(invert);
 	ts->SetScreen(screen);
+	ts->ShowMain();
 }
 
 void App::FontNextPage()

@@ -149,6 +149,9 @@ class Text {
 
 	//! It would fully justify, if it worked.
 	bool justify;
+	
+	//! Are we on first buffer?
+	bool whichBuffer;
 
 	int CacheGlyph(u32 ucs);
 	int CacheGlyph(u32 ucs, u8 style);
@@ -176,8 +179,7 @@ public:
 	bool usebgcolor;
 	//! Pointers to screens and which one is current.
 	u16 *screen, *screenleft, *screenright;
-	//! Offscreen buffer. Only used when OFFSCREEN defined.
-	u16 *offscreen;
+	int bg_main;
 	struct {
 		int left, right, top, bottom;
 	} margin;
@@ -222,6 +224,9 @@ public:
 	u8   GetStringWidth(const char *txt, u8 style);
 	inline int GetStyle() { return style; }
 
+	void FreezeMain();
+	void ShowMain();
+	void InitScreens();
 	void SetInvert(bool invert);
 	void SetPen(u16 x, u16 y);
 	void SetPixelSize(u8 size);

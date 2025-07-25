@@ -361,8 +361,6 @@ void App::SetOrientation(bool flip)
 		REG_BG3Y = 0 << 8;
 		REG_BG3X_SUB = 191 << 8;
 		REG_BG3Y_SUB = 0 << 8;
-		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenleft = (u16*)BG_BMP_RAM(0);
 		orientation = true;
 		key.down = KEY_UP;
 		key.up = KEY_DOWN;
@@ -379,8 +377,6 @@ void App::SetOrientation(bool flip)
 		REG_BG3Y = 255 << 8;
 		REG_BG3X_SUB = 0 << 8;
 		REG_BG3Y_SUB = 255 << 8;
-		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenleft = (u16*)BG_BMP_RAM(0);
 		orientation = false;
 		key.down = KEY_DOWN;
 		key.up = KEY_UP;
@@ -431,16 +427,7 @@ void App::Log(const std::string msg)
 
 void App::InitScreens()
 {
-	videoSetMode(MODE_5_2D);
-	vramSetBankA(VRAM_A_MAIN_BG);
-	bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-	videoSetModeSub(MODE_5_2D);
-	vramSetBankC(VRAM_C_SUB_BG);
-	bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
-	ts->SetScreen(ts->screenright);
-	ts->ClearScreen();
-	ts->SetScreen(ts->screenleft);
-	ts->ClearScreen();
+	ts->InitScreens();	
 	SetOrientation(orientation);
 	if(invert) {
 		lcdSwap();

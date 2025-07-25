@@ -38,7 +38,12 @@ extern char msg[];
 std::stringstream ss;
 
 void Text::CopyScreen(u16 *src, u16 *dst) {
-	memcpy(src, dst, display.width * display.height * sizeof(u16));
+	dmaCopy(BG_BMP_RAM(0), BG_BMP_RAM(2), 64*1024);
+	for(int iy = 0; iy < 196; iy++)
+		for(int ix = 0; ix < 256; ix++)
+			dst[iy * 256 + ix] = src[iy * 256 + ix];
+
+	//memcpy(src, dst, display.width * display.height * sizeof(u16));
 }
 
 Text::Text()
@@ -50,9 +55,11 @@ Text::Text()
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
 	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
-	screenleft = (u16*)BG_BMP_RAM_SUB(0);
-	screenright = (u16*)BG_BMP_RAM(0);
-	offscreen = new u16[display.width * display.height];
+	screenleft = BG_BMP_RAM_SUB(0);
+	screenright = BG_BMP_RAM(0);
+	bg_main = 0; //Filled in on InitScreens()
+	whichBuffer = true;
+	//offscreen = new u16[display.width * display.height];
 	margin.left = MARGINLEFT;
 	margin.right = MARGINRIGHT;
 	margin.top = MARGINTOP;
@@ -86,14 +93,14 @@ Text::Text()
 	stats_hits = 0;
 	stats_misses = 0;
 
-	ClearScreen(offscreen, 255, 255, 255);
+	//ClearScreen(offscreen, 255, 255, 255);
 	ss.clear();
 }
 
 Text::~Text()
 {
 	// framebuffers
-	free(offscreen);
+	//free(offscreen);
 	
 	// homemade cache
 	ClearCache();
@@ -108,6 +115,46 @@ Text::~Text()
 		FT_Done_Face(iter->second);
 	}
 	FT_Done_FreeType(library);
+}
+
+void Text::FreezeMain() {
+	ShowMain();
+	dmaCopy(screenright, screenright + 256*256, 256*511+128);
+	//dmaCopy((void*)0x06000000, (void*)0x06020000, (u32)0x00020000);
+	//dmaCopy(BG_BMP_RAM(0), BG_BMP_RAM(4), 128 * 1024);
+}
+
+void Text::ShowMain() {
+	if(bgGetMapBase(bg_main) == 8)
+	{
+		bgSetMapBase(bg_main, 0);
+	}
+	else
+	{
+		bgSetMapBase(bg_main, 8);
+	}
+}
+
+
+void Text::InitScreens()
+{
+	//We want MAIN engine on bottom screen
+	lcdSwap();
+
+	videoSetMode(MODE_5_2D);
+	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
+	vramSetBankB(VRAM_B_MAIN_BG_0x06020000);
+	bg_main = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+
+	videoSetModeSub(MODE_5_2D);
+	vramSetBankC(VRAM_C_SUB_BG);
+	bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+
+	SetScreen(screenright);
+	ClearScreen();
+	SetScreen(screenleft);
+	ClearScreen();
+	//ShowMain();
 }
 
 static FT_Error
