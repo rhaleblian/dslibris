@@ -67,6 +67,7 @@ https://github.com/rhaleblian/dslibris
 #define APP_MODE_PREFS_FONT 3
 #define APP_MODE_PREFS_FONT_BOLD 4
 #define APP_MODE_PREFS_FONT_ITALIC 5
+#define APP_MODE_PREFS_FONT_BOLDITALIC 6
 #define APP_URL "http://github.com/rhaleblian/dslibris"
 
 #define PREFS_BUTTON_COUNT 7
@@ -106,7 +107,7 @@ class App {
 	//! key functions are remappable to support screen flipping.
 	struct {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
-		uint32 downrepeat;
+		u32 downrepeat;
 	} key;
 	
 	vector<Button*> buttons;

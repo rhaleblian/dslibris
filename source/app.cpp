@@ -139,37 +139,27 @@ int App::Run(void)
 			book->format = FORMAT_EPUB;
 			books.push_back(book);
 			bookcount++;
-#ifndef MELONDS
 			book->Index();
-#endif
 		}
 	}
 	closedir(dp);
 	if (bookcount == 0) {
-		printf("[FAIL] %d books\n", bookcount);
+		printf("[FAIL] no books\n");
 		halt();
 	}
 	printf("[ OK ] %d books\n", bookcount);
 	
-#ifndef MELONDS
-   	if (int err = prefs->Read())
-	{
-		if(err)
-		{
-			err = prefs->Write();
-		}
-	}
+   	err = prefs->Read();
 	if (err) {
 		printf("[FAIL] preferences\n");
-		halt();
-	}
+	} else 
+		printf("[ OK ] preferences\n");
+
 	// Sort bookmarks for each book.
 	for(u8 i = 0; i < bookcount; i++)
 	{
 		books[i]->GetBookmarks()->sort();
 	}
-	printf("[ OK ] preferences");
-#endif
 
 	// Set up preferences editing screen.
 	PrefsInit();
@@ -181,8 +171,7 @@ int App::Run(void)
 	printf("[ OK ] views\n");
 
 	// Bring up displays.
-	console = false;
-	SetBrightness(brightness);
+
 	InitScreens();
 	mode = APP_MODE_BROWSER;
 	ts->PrintSplash(ts->screenleft);
@@ -190,62 +179,53 @@ int App::Run(void)
 
 	// Resume reading from the last session.
 	
-#ifndef MELONDS
-	if(reopen && bookcurrent)
-	{
-		int openerr = OpenBook();
-		if(openerr)
-			Log("warn : could not reopen previous book.\n");
-		else
-		{
-			Log("info : reopened previous book.\n");
-			mode = APP_MODE_BOOK;
-		}
-	}
-	else Log("info : not reopening previous book.\n");
-#endif
+// #ifndef MELONDS
+// 	if(reopen && bookcurrent)
+// 	{
+// 		int openerr = OpenBook();
+// 		if(openerr)
+// 			Log("warn : could not reopen previous book.\n");
+// 		else
+// 		{
+// 			Log("info : reopened previous book.\n");
+// 			mode = APP_MODE_BOOK;
+// 		}
+// 	}
+// 	else Log("info : not reopening previous book.\n");
+// #endif
 
-	// Start polling event loop.
-	// FIXME use interrupt driven event handling.
-	
-	keysSetRepeat(60,2);
-	if (prefs->swapshoulder)
+	// keysSetRepeat(60,2);
+	// if (prefs->swapshoulder)
+	// {
+	// 	int tmp = key.l;
+	// 	key.l = key.r;
+	// 	key.r = tmp;
+	// }
+
+	while (pmMainLoop())
 	{
-		int tmp = key.l;
-		key.l = key.r;
-		key.r = tmp;
-	}
-	
-	while (true)
-	{
+		swiWaitForVBlank();
 		scanKeys();
 
-		key.downrepeat = keysDownRepeat();
-
-		if (key.downrepeat)
-		{
-			switch (mode){
-					case APP_MODE_BROWSER:
-						HandleEventInBrowser();
-						break;
-					case APP_MODE_BOOK:
-						HandleEventInBook();
-						//UpdateClock();
-						break;
-					case APP_MODE_PREFS:
-						HandleEventInPrefs();
-						break;
-					case APP_MODE_PREFS_FONT:
-					case APP_MODE_PREFS_FONT_BOLD:
-					case APP_MODE_PREFS_FONT_ITALIC:
-						HandleEventInFont();
-						break;
-			}
+		switch (mode) {
+			case APP_MODE_BROWSER:
+				HandleEventInBrowser();
+				break;
+			case APP_MODE_BOOK:
+				HandleEventInBook();
+				break;
+			case APP_MODE_PREFS:
+				HandleEventInPrefs();
+				break;
+			case APP_MODE_PREFS_FONT:
+			case APP_MODE_PREFS_FONT_BOLD:
+			case APP_MODE_PREFS_FONT_ITALIC:
+			case APP_MODE_PREFS_FONT_BOLDITALIC:
+				HandleEventInFont();
+				break;
 		}
-		swiWaitForVBlank();
 	}
-
-	exit(0);
+	return 0;
 }
 
 void App::SetBrightness(u8 b)
@@ -336,22 +316,22 @@ void App::Log(const char *msg)
 
 void App::Log(const char *format, const int value)
 {
-	std::stringstream ss;
-	ss << value << std::endl;
-	Log(format, ss.str().c_str());
+	// std::stringstream ss;
+	// ss << value << std::endl;
+	// Log(format, ss.str().c_str());
 }
 
 void App::Log(const char *format, const char *msg)
 {
-	if(console)
-	{
-		char s[1024];
-		sprintf(s,format,msg);
-		iprintf(s);
-	}
-	FILE *logfile = fopen(LOGFILEPATH,"a");
-	fprintf(logfile,format,msg);
-	fclose(logfile);
+	// if(console)
+	// {
+	// 	char s[1024];
+	// 	sprintf(s,format,msg);
+	// 	iprintf(s);
+	// }
+	// FILE *logfile = fopen(LOGFILEPATH,"a");
+	// fprintf(logfile,format,msg);
+	// fclose(logfile);
 }
 
 void App::Log(const std::string msg)

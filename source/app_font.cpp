@@ -32,7 +32,6 @@ void App::FontInit()
 	DIR *dp = opendir(fontdir.c_str());
 	if (!dp)
 	{
-		Log("fatal: no font directory.\n");
 		swiWaitForVBlank();
 		exit(-3);
 	}
@@ -91,7 +90,6 @@ void App::HandleEventInFont()
 			FontButton();
 		}
 	} else if (keysDown() & KEY_TOUCH) {
-		Log("info : font screen touched\n");
 		touchPosition touch;
 		touchRead(&touch);
 		touchPosition coord;
@@ -117,7 +115,6 @@ void App::HandleEventInFont()
 			PrefsDraw();
 		} else {
 			for(u8 i = fontPage * 7; (i < fontButtons.size()) && (i < (fontPage + 1) * BPP); i++) {
-				Log("info : checking button\n");
 				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
 				{
 					if (i != fontSelected) {
@@ -195,14 +192,13 @@ void App::FontPreviousPage()
 
 void App::FontButton()
 {
-	Log("progr: assigning font..\n");
 	bool invert = ts->GetInvert();
 
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->ClearScreen();
 	ts->SetPen(ts->margin.left,PAGE_HEIGHT/2);
-	ts->PrintString("[saving font...]");
+	ts->PrintStatusMessage("setting font...");
 	ts->SetInvert(invert);
 
 	std::string path = fontdir;
@@ -213,6 +209,8 @@ void App::FontButton()
 		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLD);
 	else if (mode == APP_MODE_PREFS_FONT_ITALIC)
 		ts->SetFontFile(path.c_str(), TEXT_STYLE_ITALIC);
+	else if (mode == APP_MODE_PREFS_FONT_BOLDITALIC)
+		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLDITALIC);
 
 	ts->Init();
 	bookcurrent = NULL; //Force repagination
@@ -221,6 +219,7 @@ void App::FontButton()
 	PrefsRefreshButtonFont();
 	PrefsRefreshButtonFontBold();
 	PrefsRefreshButtonFontItalic();
+	PrefsRefreshButtonFontBoldItalic();
 	PrefsDraw();
 	prefs->Write();
 

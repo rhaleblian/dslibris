@@ -89,8 +89,8 @@ void halt(const char *msg) {
 
 int main(void)
 {
-	defaultExceptionHandler();
-	if(!boot_console()) halt();
+	// defaultExceptionHandler();
+	// if(!boot_console()) halt();
 	if(!boot_filesystem()) halt();
 	app = new App();
 	return app->Run();
