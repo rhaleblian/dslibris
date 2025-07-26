@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "string.h"
 
 #include "app.h"
-#include "ft.h"
+// #include "ft.h"
 #include "main.h"
 #include "version.h"
 #include "text.h"
@@ -841,8 +841,6 @@ void Text::PrintSplash(u16 *screen)
 	SetPixelSize(size);
 	SetInvert(invert);
 	SetScreen(s);
-	
-	swiWaitForVBlank();
 }
 
 void Text::SetFontFile(const char *filename, u8 style)
@@ -863,48 +861,3 @@ bool Text::SetFace(u8 astyle)
 	face = faces[style];
 	return true;
 }
-
-/*
-FT_Face Text::GetFace(u8 style)
-{
-	return face;
-
-	map<u8, FT_Face>::iterator iter = faces.find(style);
-	if (iter != faces.end())
-		return iter->second;
-	else
-		return faces[TEXT_STYLE_REGULAR];
-}
-*/
-
-int asciiart() {
-  auto ft = typesetter();
-  auto error = renderer(ft.face);
-  free_ft(ft);
-  return error;
-}
-
-const char* ErrorString(u8 c) {
-	switch (c) {
-		case 0:
-		return "ok";
-		break;
-		default:
-		return "unknown error";
-	}
-}
-
-//    "no error",
-//     "cannot open resource" ,
-//     "unknown file format" ,
-//     "broken file" ,
-//     "invalid FreeType version" 
-//     "module version is too low", 
-//     "invalid argument" 
-//     "unimplemented feature" 
-//     "broken table" 
-//     "broken offset within table" 
-//     "array allocation size too large" 
-//     "missing module" 
-//     "missing property" 
-// ]

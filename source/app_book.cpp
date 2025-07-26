@@ -11,7 +11,6 @@
 #include <fat.h>
 #include <nds/bios.h>
 
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "app.h"

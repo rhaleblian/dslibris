@@ -30,13 +30,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <sys/stat.h>
 #include <unistd.h>
 #include <algorithm>   // for std::sort
+#include <fat.h>
 
-#include "fat.h"
-#include "nds/system.h"
-#include "nds/arm9/background.h"
-#include "nds/arm9/input.h"
-
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "book.h"
@@ -87,8 +82,7 @@ App::~App()
 {
 	delete prefs;
 	delete ts;
-	vector<Book*>::iterator it;
-	for(it=books.begin();it!=books.end();it++)
+	for(vector<Book*>::iterator it=books.begin();it!=books.end();it++)
 		delete *it;
 	books.clear();
 }
@@ -114,6 +108,8 @@ int App::Run(void)
 		halt("[FAIL] no book directory\n");
 	if (bookcount == 0)
 		halt("[FAIL] no books\n");
+
+	// Read and apply preferences.
 
 	if (prefs->Read() != ok)
 		// We do not halt!
@@ -152,12 +148,10 @@ int App::Run(void)
 		AttemptBookOpen();
 
 	keysSetRepeat(60,2);
-
 	while (pmMainLoop())
 	{
 		swiWaitForVBlank();
 		scanKeys();
-
 		switch (mode) {
 			case APP_MODE_BROWSER:
 				HandleEventInBrowser();
@@ -219,6 +213,23 @@ int App::FindBooks() {
 	}
 	closedir(dp);
 	return 0;
+}
+
+//! Just like libnds touchRead() but takes orientation into account.
+touchPosition App::TouchRead() {
+	touchPosition touch;
+	touchRead(&touch);
+	touchPosition coord;
+
+	if(!orientation)
+	{
+		coord.px = 256 - touch.px;
+		coord.py = touch.py;
+	} else {
+		coord.px = touch.px;
+		coord.py = 192 - touch.py;
+	}
+	return coord;
 }
 
 void App::UpdateClock()

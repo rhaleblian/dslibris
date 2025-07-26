@@ -100,11 +100,11 @@ class App {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
 		u32 downrepeat;
 	} key;
-	
+
 	vector<Button*> buttons;
 	Button buttonprev, buttonnext, buttonprefs; //! Buttons on browser bottom.
 	//! index into book vector denoting first book visible on library screen. 
-	u8 browserstart; 
+	u8 browserstart;
 	string bookdir;  //! Search here for XHTML.
 	vector<Book*> books;
 	u8 bookcount;
@@ -152,7 +152,9 @@ class App {
 	void PrintStatus(const char *msg);
 	void PrintStatus(string msg);
 	void Flip();
+	int  Run(void);
 	void SetProgress(int amount);
+	touchPosition TouchRead();
 	void UpdateClock();
 
 	void Log(const char*);
@@ -160,7 +162,6 @@ class App {
 	void Log(const std::string);
 	void Log(const char *format, const int value);
 
-	int  Run(void);
 	bool parse_in(parsedata_t *data, context_t context);
 	void parse_init(parsedata_t *data);
 	context_t parse_pop(parsedata_t *data);

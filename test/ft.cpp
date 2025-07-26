@@ -212,3 +212,36 @@ int ft_main(int argc, char **argv) {
 // height = bitmap.rows;
 // advance = glyph->advance.x >> 6;
 // buffer = bitmap.buffer;
+
+
+int asciiart() {
+  auto ft = typesetter();
+  auto error = renderer(ft.face);
+  free_ft(ft);
+  return error;
+}
+
+const char* ErrorString(int c) {
+	switch (c) {
+		case 0:
+		return "ok";
+		break;
+		default:
+		return "unknown error";
+	}
+}
+
+//    "no error",
+//     "cannot open resource" ,
+//     "unknown file format" ,
+//     "broken file" ,
+//     "invalid FreeType version" 
+//     "module version is too low", 
+//     "invalid argument" 
+//     "unimplemented feature" 
+//     "broken table" 
+//     "broken offset within table" 
+//     "array allocation size too large" 
+//     "missing module" 
+//     "missing property" 
+// ]

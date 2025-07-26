@@ -12,7 +12,6 @@
 #include <nds/bios.h>
 #include <nds/arm9/input.h>
 
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "app.h"

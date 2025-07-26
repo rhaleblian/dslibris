@@ -14,7 +14,6 @@
 #include <string>
 #include <vector>
 
-#include "types.h"
 #include "main.h"
 #include "parse.h"
 #include "app.h"
