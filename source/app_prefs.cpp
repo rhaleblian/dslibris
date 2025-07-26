@@ -36,95 +36,107 @@ void App::FlipOrientPrefs()
 
 void App::PrefsInit()
 {	
+	const int x = 2;
+
 	prefsButtonFont.Init(ts);
-	prefsButtonFont.Move(2, PREFS_BUTTON_FONT * 32);
+	prefsButtonFont.Move(x, PREFS_BUTTON_FONT * prefsButtonFont.GetHeight());
 	PrefsRefreshButtonFont();
 	prefsButtons[PREFS_BUTTON_FONT] = &prefsButtonFont;
 	
 	prefsButtonFontBold.Init(ts);
-	prefsButtonFontBold.Move(2, PREFS_BUTTON_FONT_BOLD * 32);
+	prefsButtonFontBold.Move(x, PREFS_BUTTON_FONT_BOLD * prefsButtonFontBold.GetHeight());
 	PrefsRefreshButtonFontBold();
 	prefsButtons[PREFS_BUTTON_FONT_BOLD] = &prefsButtonFontBold;
 		
 	prefsButtonFontItalic.Init(ts);
-	prefsButtonFontItalic.Move(2, PREFS_BUTTON_FONT_ITALIC * 32);
+	prefsButtonFontItalic.Move(x, PREFS_BUTTON_FONT_ITALIC * prefsButtonFontItalic.GetHeight());
 	PrefsRefreshButtonFontItalic();
 	prefsButtons[PREFS_BUTTON_FONT_ITALIC] = &prefsButtonFontItalic;
+
+	prefsButtonFontBoldItalic.Init(ts);
+	prefsButtonFontBoldItalic.Move(x, PREFS_BUTTON_FONT_BOLDITALIC * prefsButtonFontBoldItalic.GetHeight());
+	PrefsRefreshButtonFontBoldItalic();
+	prefsButtons[PREFS_BUTTON_FONT_BOLDITALIC] = &prefsButtonFontBoldItalic;
 	
 	prefsButtonFontSize.Init(ts);
-	prefsButtonFontSize.Move(2, PREFS_BUTTON_FONTSIZE * 32);
+	prefsButtonFontSize.Move(x, PREFS_BUTTON_FONTSIZE * prefsButtonFontSize.GetHeight());
 	PrefsRefreshButtonFontSize();
 	prefsButtons[PREFS_BUTTON_FONTSIZE] = &prefsButtonFontSize;
 	
 	prefsButtonParaspacing.Init(ts);
-	prefsButtonParaspacing.Move(2, PREFS_BUTTON_PARASPACING * 32);
+	prefsButtonParaspacing.Move(x, PREFS_BUTTON_PARASPACING * prefsButtonParaspacing.GetHeight());
 	PrefsRefreshButtonParaspacing();
 	prefsButtons[PREFS_BUTTON_PARASPACING] = &prefsButtonParaspacing;
 	
 	prefsButtonFlipOrientation.Init(ts);
-	prefsButtonFlipOrientation.Move(2, PREFS_BUTTON_FLIPORIENTATION * 32);
+	prefsButtonFlipOrientation.Move(x, PREFS_BUTTON_FLIPORIENTATION * prefsButtonFlipOrientation.GetHeight());
 	PrefsRefreshButtonFlipOrientation();
 	prefsButtons[PREFS_BUTTON_FLIPORIENTATION] = &prefsButtonFlipOrientation;
+
+	for (auto button : prefsButtons)
+		button->SetStyle(BUTTON_STYLE_SETTING);
 
 	prefsSelected = 0;
 }
 
 void App::PrefsRefreshButtonFont()
 {
-	char msg[128];
-	strcpy(msg, "");
-	sprintf((char*)msg, "Regular Font:\n %s", ts->GetFontFile(TEXT_STYLE_REGULAR).c_str());
-	prefsButtonFont.Label(msg);
+	prefsButtonFont.SetLabel1(std::string("regular font"));
+	prefsButtonFont.SetLabel2(ts->GetFontName(TEXT_STYLE_REGULAR));
 }
 
 void App::PrefsRefreshButtonFontBold()
 {
-	char msg[128];
-	strcpy(msg, "");
-	sprintf((char*)msg, "Bold Font:\n %s", ts->GetFontFile(TEXT_STYLE_BOLD).c_str());
-	prefsButtonFontBold.Label(msg);
+	prefsButtonFontBold.SetLabel1(std::string("bold font"));
+	prefsButtonFontBold.SetLabel2(ts->GetFontName(TEXT_STYLE_BOLD));
 }
 
 void App::PrefsRefreshButtonFontItalic()
 {
-	char msg[128];
-	strcpy(msg, "");
-	sprintf((char*)msg, "Italic Font:\n %s", ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
-	prefsButtonFontItalic.Label(msg);
+	prefsButtonFontItalic.SetLabel1(std::string("italic font"));
+	prefsButtonFontItalic.SetLabel2(ts->GetFontName(TEXT_STYLE_ITALIC));
+}
+
+void App::PrefsRefreshButtonFontBoldItalic()
+{
+	prefsButtonFontBoldItalic.SetLabel1(std::string("bold italic font"));
+	prefsButtonFontBoldItalic.SetLabel2(ts->GetFontName(TEXT_STYLE_BOLDITALIC));
 }
 
 void App::PrefsRefreshButtonFontSize()
 {
-	char msg[30];
-	strcpy(msg, "");
+	prefsButtonFontSize.SetLabel1(std::string("font size"));
+	char msg[64];
 	if (ts->GetPixelSize() == 1)
-		sprintf((char*)msg, "Font Size:\n    [ %d >", ts->GetPixelSize());
+		sprintf(msg, "    [ %d >", ts->GetPixelSize());
 	else if (ts->GetPixelSize() == 255)
-		sprintf((char*)msg, "Font Size:\n    < %d ]", ts->GetPixelSize());
+		sprintf(msg, "    < %d ]", ts->GetPixelSize());
 	else
-		sprintf((char*)msg, "Font Size:\n    < %d >", ts->GetPixelSize());
-	prefsButtonFontSize.Label(msg);
+		sprintf(msg, "    < %d >", ts->GetPixelSize());
+	prefsButtonFontSize.SetLabel2(std::string(msg));
 }
 
 void App::PrefsRefreshButtonParaspacing()
 {
-	char msg[38];
-	strcpy(msg, "");
+	prefsButtonParaspacing.SetLabel1(std::string("paragraph spacing"));
+	char msg[64];
 	if (paraspacing == 0)
-		sprintf((char*)msg, "Paragraph Spacing:\n    [ %d >", paraspacing);
+		sprintf(msg, "    [ %d >", paraspacing);
 	else if (paraspacing == 255)
-		sprintf((char*)msg, "Paragraph Spacing:\n    < %d ]", paraspacing);
+		sprintf(msg, "    < %d ]", paraspacing);
 	else
-		sprintf((char*)msg, "Paragraph Spacing:\n    < %d >", paraspacing);
-	prefsButtonParaspacing.Label(msg);
+		sprintf(msg, "    < %d >", paraspacing);
+	prefsButtonParaspacing.SetLabel2(std::string(msg));
 }
 
 void App::PrefsRefreshButtonFlipOrientation()
 {
-	char msg[128];
-	strcpy(msg, "");
-	sprintf((char*)msg, "Flip Screen Orientation:\n%s", orientation ? "L.Hand" : "R.Hand"); //Why cant I have more text???
-	prefsButtonFlipOrientation.Label(msg);
+	prefsButtonFlipOrientation.SetLabel1(std::string("screen orientation"));
+	prefsButtonFlipOrientation.SetLabel2(
+		orientation 
+			? std::string("ABXY on Bottom")
+			: std::string("D-Pad on Bottom")
+	);
 }
 
 void App::PrefsDraw()
@@ -140,27 +152,30 @@ void App::PrefsDraw(bool redraw)
 		ts->SetScreen(ts->screenright);
 		ts->ClearScreen();
 	}
+
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 	u16* screen = ts->GetScreen();
 	int style = ts->GetStyle();
-	
+
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(PIXELSIZE);
 
-	if(redraw) for (u8 i = MAX(0, prefsSelected-1); i < MIN(prefsSelected+2,PREFS_BUTTON_COUNT); i++)
+	if(redraw) for (u8 i = MAX(0, prefsSelected-1);
+		i < MIN(prefsSelected+2, PREFS_BUTTON_COUNT); i++)
 	{
 		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
 	}
-	else for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++){
+	else for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
+	{
 		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
 	}
 
-	if(!redraw){	
-		buttonprefs.Label("return");
+	if(!redraw){
+		buttonprefs.Label("  books");
 		buttonprefs.Draw(ts->screenright, false);
 	}
 
@@ -180,7 +195,7 @@ void App::HandleEventInPrefs()
 	{
 		if(prefsSelected == PREFS_BUTTON_FLIPORIENTATION) {
 			FlipOrientPrefs();
-		}else{
+		} else {
 			PrefsButton();
 		}
 	}
@@ -193,7 +208,7 @@ void App::HandleEventInPrefs()
 
 	else if (keys & (KEY_START | KEY_SELECT | KEY_B))
 	{
-		buttonprefs.Label("prefs");
+		buttonprefs.Label("settings");
 		mode = APP_MODE_BROWSER;
 		browser_draw();
 	}
@@ -246,7 +261,7 @@ void App::HandleEventInPrefs()
 		}
 		
 		if (buttonprefs.EnclosesPoint(coord.py, coord.px)) {
-			buttonprefs.Label("prefs");
+			buttonprefs.Label("settings");
 			mode = APP_MODE_BROWSER;
 			browser_draw();
 		} else {
