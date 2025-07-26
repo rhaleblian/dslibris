@@ -210,6 +210,8 @@ void App::HandleEventInPrefs()
 	{
 		buttonprefs.Label("settings");
 		mode = APP_MODE_BROWSER;
+		ts->SetScreen(ts->screenright);
+		ts->ClearScreen();
 		browser_draw();
 	}
 
@@ -263,6 +265,8 @@ void App::HandleEventInPrefs()
 		if (buttonprefs.EnclosesPoint(coord.py, coord.px)) {
 			buttonprefs.Label("settings");
 			mode = APP_MODE_BROWSER;
+			ts->SetScreen(ts->screenright);
+			ts->ClearScreen();
 			browser_draw();
 		} else {
 			for(u8 i = 0; i < PREFS_BUTTON_COUNT; i++) {

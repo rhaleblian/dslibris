@@ -41,6 +41,8 @@ void App::HandleEventInBrowser()
 	else if (keys & KEY_SELECT)
 	{
 		mode = APP_MODE_PREFS;
+		ts->SetScreen(ts->screenright);
+		ts->ClearScreen();
 		prefsSelected = 0;
 		PrefsDraw();
 	}
@@ -110,9 +112,13 @@ void App::HandleEventInBrowser()
 			if(mode != APP_MODE_PREFS) {
 				mode = APP_MODE_PREFS;
 				prefsSelected = 0;
+				ts->SetScreen(ts->screenright);
+				ts->ClearScreen();
 				PrefsDraw();
 			} else {
 				mode = APP_MODE_BROWSER;
+				ts->SetScreen(ts->screenright);
+				ts->ClearScreen();
 				browser_draw();
 			}
 		} else {
