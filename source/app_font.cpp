@@ -67,6 +67,8 @@ void App::HandleEventInFont()
 	if (!(keysDown() & KEY_TOUCH)){
 		if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
 			mode = APP_MODE_PREFS;
+			ts->SetScreen(ts->screenright);
+			ts->ClearScreen();
 			FontDeinit();
 			PrefsDraw();
 		} else if (keysDown() & (orientation ? (KEY_LEFT) : (KEY_RIGHT))) {
@@ -113,6 +115,8 @@ void App::HandleEventInFont()
 			FontDraw();
 		} else if(buttonprefs.EnclosesPoint(coord.py,coord.px)) {
 			mode = APP_MODE_PREFS;
+			ts->SetScreen(ts->screenright);
+			ts->ClearScreen();
 			FontDeinit();
 			PrefsDraw();
 		} else {
@@ -220,6 +224,8 @@ void App::FontButton()
 	bookcurrent = NULL; //Force repagination
 	FontDeinit();
 	mode = APP_MODE_PREFS;
+	ts->SetScreen(ts->screenright);
+	ts->ClearScreen();
 	PrefsRefreshButtonFont();
 	PrefsRefreshButtonFontBold();
 	PrefsRefreshButtonFontItalic();

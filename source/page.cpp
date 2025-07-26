@@ -129,8 +129,9 @@ void Page::Draw(Text *ts)
 			else
 				i++;
 			
-			// TODO: there is such a thing as bold italic.
-			if (ts->italic)
+			if (ts->bold && ts->italic)
+				ts->PrintChar(c, TEXT_STYLE_BOLDITALIC);
+			else if (ts->italic)
 				ts->PrintChar(c, TEXT_STYLE_ITALIC);
 			else if (ts->bold)
 				ts->PrintChar(c, TEXT_STYLE_BOLD);

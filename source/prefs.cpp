@@ -81,11 +81,13 @@ int Prefs::Write()
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
 			app->ts->margin.top, app->ts->margin.left,
 			app->ts->margin.bottom, app->ts->margin.right);
- 	fprintf(fp, "\t<font size=\"%d\" normal=\"%s\" bold=\"%s\" italic=\"%s\" />\n",
+ 	fprintf(fp, "\t<font size=\"%d\" normal=\"%s\" bold=\"%s\" italic=\"%s\" bolditalic=\"%s\" />\n",
 		app->ts->GetPixelSize(),
 		app->ts->GetFontFile(TEXT_STYLE_REGULAR).c_str(),
 		app->ts->GetFontFile(TEXT_STYLE_BOLD).c_str(),
-		app->ts->GetFontFile(TEXT_STYLE_ITALIC).c_str());
+		app->ts->GetFontFile(TEXT_STYLE_ITALIC).c_str(),
+		app->ts->GetFontFile(TEXT_STYLE_BOLDITALIC).c_str()
+	);
  	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
 			app->paraindent,
 			app->paraspacing);

@@ -1,0 +1,1 @@
+cp $(dirname "$0")/dslibris.nds /media/adrian/DS\ R4/
