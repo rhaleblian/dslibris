@@ -18,9 +18,7 @@
  To contact the copyright holder: rayh23@sourceforge.net
  */
 
-#ifndef APP_H
-#define APP_H
-
+#pragma once
 /*!
 \mainpage
 
@@ -86,16 +84,9 @@ https://github.com/rhaleblian/dslibris
 //! interaction loop, drawing everything but text, and logging.
 
 class App {
-	private:
-	void InitScreens();
-	void SetBrightness(u8 b);
-	void SetOrientation(bool flip);
-	void WifiInit();
-	bool WifiConnect();
-	void Fatal(const char *msg);
-	void FlipOrientPrefs();
 
 	public:
+
 	Text *ts;
 	Prefs myprefs;   //?
 	Prefs *prefs;    //?
@@ -217,7 +208,16 @@ class App {
 	void FontNextPage();
 	void FontPreviousPage();
 	void FontButton();
-};
 
-#endif
+	private:
+
+	int  FindBooks();
+	void InitScreens();
+	void SetBrightness(u8 b);
+	void SetOrientation(bool flipped);
+	void WifiInit();
+	bool WifiConnect();
+	void Fatal(const char *msg);
+	void FlipOrientPrefs();
+};
 

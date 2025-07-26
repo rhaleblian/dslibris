@@ -63,33 +63,44 @@ void App::FontInit()
 
 void App::HandleEventInFont()
 {
-	if (!(keysDown() & KEY_TOUCH)){
-		if (keysDown() & (KEY_START | KEY_SELECT | KEY_B)) {
-			mode = APP_MODE_PREFS;
-			FontDeinit();
-			PrefsDraw();
-		} else if (keysDown() & (orientation ? (KEY_LEFT) : (KEY_RIGHT))) {
-			if (fontSelected > 0) {
-				if (fontSelected == fontPage * 7) {
-					FontPreviousPage();
-					FontDraw();
-				} else {
-					fontSelected--;
-					FontDraw(false);
-				}
-			}
-		} else if (fontSelected < (fontButtons.size() - 1) && (orientation ? (KEY_RIGHT) : (KEY_LEFT)) && !(keysDown() & KEY_A)) {
-			if (fontSelected == fontPage * BPP + (BPP-1)) {
-				FontNextPage();
+	auto keys = keysDown();
+
+	if (keys & (KEY_START | KEY_SELECT | KEY_B))
+	{
+		mode = APP_MODE_PREFS;
+		FontDeinit();
+		PrefsDraw();
+	}
+	else if (keys & key.up)
+	{
+		// Previous page
+		if (fontSelected > 0) {
+			if (fontSelected == fontPage * 7) {
+				FontPreviousPage();
 				FontDraw();
 			} else {
-				fontSelected++;
+				fontSelected--;
 				FontDraw(false);
 			}
-		} else if (keysDown() & KEY_A) {
-			FontButton();
 		}
-	} else if (keysDown() & KEY_TOUCH) {
+	}
+	else if (keys & key.down)
+	{
+		// Next page
+		if (fontSelected == fontPage * BPP + (BPP-1)) {
+			FontNextPage();
+			FontDraw();
+		} else {
+			fontSelected++;
+			FontDraw(false);
+		}
+	}
+	else if (keys & KEY_A)
+	{
+		FontButton();
+	}
+	else if (keys & KEY_TOUCH)
+	{
 		touchPosition touch;
 		touchRead(&touch);
 		touchPosition coord;

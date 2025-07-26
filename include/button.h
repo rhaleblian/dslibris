@@ -24,6 +24,7 @@ class Button {
 	coord_t origin;
 	coord_t extent;
 	bool draw_border;
+	int pixelsize;
 	int style;
 	std::string text;
 	//! intended for the author name.

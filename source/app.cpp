@@ -44,11 +44,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "text.h"
 #include "version.h"
 
-// less-than operator to compare books by title
-static bool book_title_lessthan(Book* a, Book* b) {
-    return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
-}
-
 App::App()
 {	
 	invert = false;
@@ -98,63 +93,39 @@ App::~App()
 	books.clear();
 }
 
+// std::sort comparator: books by title
+static bool book_title_lessthan(Book* a, Book* b)
+{
+    return strcasecmp(a->GetTitle(),b->GetTitle()) < 0;
+}
+
 int App::Run(void)
 {
-	// char msg[512];
-	console = true;
+	const int ok = 0;
 
 	// Start up typesetter.
 
-   	int err = ts->Init();
-	if (err) {
-		printf("[FAIL] typesetter\n");
-		halt();
-	}
-	printf("[ OK ] typesetter\n");
+	if (ts->Init() != ok)
+		halt("[FAIL] typesetter\n");
 	
-	// Look in the book directory and construct library.
-	
-	DIR *dp = opendir(bookdir.c_str());
-	if (!dp)
-	{
-		printf("[FAIL] no books\n");
-		halt();
-	}
-	struct dirent *ent;
-	while ((ent = readdir(dp)))
-	{
-		char *filename = ent->d_name;
-		if(*filename == '.') continue;
-		// Starting from the end, find the file extension.
-		char *c;
-		for (c=filename+strlen(filename)-1;
-		     c!=filename && *c!='.';
-		     c--);
-		if (!strcmp(".epub",c))
-		{
-			Book *book = new Book();
-			book->SetFolderName(bookdir.c_str());
-			book->SetFileName(filename);
-			book->SetTitle(filename);
-			book->format = FORMAT_EPUB;
-			books.push_back(book);
-			bookcount++;
-			book->Index();
-		}
-	}
-	closedir(dp);
-	if (bookcount == 0) {
-		printf("[FAIL] no books\n");
-		halt();
-	}
-	printf("[ OK ] %d books\n", bookcount);
-	
-   	err = prefs->Read();
-	if (err) {
-		printf("[FAIL] preferences\n");
-	} else 
-		printf("[ OK ] preferences\n");
+	// Traverse the book directory and construct library.
 
+	if (FindBooks() != ok)
+		halt("[FAIL] no book directory\n");
+	if (bookcount == 0)
+		halt("[FAIL] no books\n");
+
+	if (prefs->Read() != ok)
+		// We do not halt!
+		printf("[FAIL] preferences\n");
+	else 
+		printf("[ OK ] preferences\n");
+	if (prefs->swapshoulder)
+	{
+		int tmp = key.l;
+		key.l = key.r;
+		key.r = tmp;
+	}
 	// Sort bookmarks for each book.
 	for(u8 i = 0; i < bookcount; i++)
 	{
@@ -167,40 +138,20 @@ int App::Run(void)
 	// Set up library browser screen.
 	std::sort(books.begin(),books.end(),&book_title_lessthan);
 	browser_init();
-
-	printf("[ OK ] views\n");
+	mode = APP_MODE_BROWSER;
 
 	// Bring up displays.
 
 	InitScreens();
-	mode = APP_MODE_BROWSER;
 	ts->PrintSplash(ts->screenleft);
 	browser_draw();
 
 	// Resume reading from the last session.
 	
-// #ifndef MELONDS
-// 	if(reopen && bookcurrent)
-// 	{
-// 		int openerr = OpenBook();
-// 		if(openerr)
-// 			Log("warn : could not reopen previous book.\n");
-// 		else
-// 		{
-// 			Log("info : reopened previous book.\n");
-// 			mode = APP_MODE_BOOK;
-// 		}
-// 	}
-// 	else Log("info : not reopening previous book.\n");
-// #endif
+	if(reopen && bookcurrent)
+		AttemptBookOpen();
 
-	// keysSetRepeat(60,2);
-	// if (prefs->swapshoulder)
-	// {
-	// 	int tmp = key.l;
-	// 	key.l = key.r;
-	// 	key.r = tmp;
-	// }
+	keysSetRepeat(60,2);
 
 	while (pmMainLoop())
 	{
@@ -240,6 +191,36 @@ void App::CycleBrightness()
 	SetBrightness(brightness);
 }
 
+int App::FindBooks() {
+	DIR *dp = opendir(bookdir.c_str());
+	if (!dp)
+		return 1;
+	struct dirent *ent;
+	while ((ent = readdir(dp)))
+	{
+		char *filename = ent->d_name;
+		if(*filename == '.') continue;
+		// Starting from the end, find the file extension.
+		char *c;
+		for (c=filename+strlen(filename)-1;
+		     c!=filename && *c!='.';
+		     c--);
+		if (!strcmp(".epub",c))
+		{
+			Book *book = new Book();
+			book->SetFolderName(bookdir.c_str());
+			book->SetFileName(filename);
+			book->SetTitle(filename);
+			book->format = FORMAT_EPUB;
+			books.push_back(book);
+			bookcount++;
+			book->Index();
+		}
+	}
+	closedir(dp);
+	return 0;
+}
+
 void App::UpdateClock()
 {
 	if (mode != APP_MODE_BOOK)
@@ -259,11 +240,11 @@ void App::UpdateClock()
 	ts->SetScreen(screen);
 }
 
-void App::SetOrientation(bool flip)
+void App::SetOrientation(bool flipped)
 {
 	s16 s;
 	s16 c;
-	if(flip)
+	if(flipped)
 	{
 		s = 1 << 8;
 		c = 0;
@@ -363,7 +344,6 @@ void App::Fatal(const char *msg)
 	while(1) swiWaitForVBlank();
 }
 
-
 void App::PrintStatus(const char *msg)
 {
 	bool invert = ts->GetInvert();
@@ -373,7 +353,7 @@ void App::PrintStatus(const char *msg)
 	ts->SetPixelSize(11);
 	ts->SetScreen(ts->screenleft);
 	ts->SetInvert(false);
-	// TODO why does this crash on hw?
+
 	ts->ClearRect(0,top,ts->display.width,ts->display.height);
 	ts->SetPen(10,top+10);
 	ts->PrintString(msg);

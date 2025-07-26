@@ -243,7 +243,7 @@ void App::HandleEventInPrefs()
 		PrefsIncreaseParaspacing();
 	}
 
-	else if (keysHeld() & KEY_TOUCH)
+	else if (keys & KEY_TOUCH)
 	{
 		touchPosition touch;
 		touchRead(&touch);
@@ -348,13 +348,15 @@ void App::PrefsButton()
 		mode = APP_MODE_PREFS_FONT_BOLD;
 	} else if (prefsSelected == PREFS_BUTTON_FONT_ITALIC) {
 		mode = APP_MODE_PREFS_FONT_ITALIC;
-	}else{
+	} else if (prefsSelected == PREFS_BUTTON_FONT_BOLDITALIC) {
+		mode = APP_MODE_PREFS_FONT_BOLDITALIC;
+	} else {
 		return;
 	}
-	PrintStatus("[loading fonts...]");
+	PrintStatus("loading fonts...");
 	ts->SetScreen(ts->screenright);
 	ts->ClearScreen();
 	FontInit();
 	FontDraw();
-	PrintStatus("");
+	PrintStatus("fonts loaded.");
 }

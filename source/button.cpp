@@ -34,6 +34,7 @@ void Button::Init(Text *typesetter) {
 	origin.y = 0;
 	extent.x = 192;
 	extent.y = 32;
+	pixelsize = 12;
 	style = BUTTON_STYLE_BOOK;
 	text = "";
 	text2 = "";
@@ -101,22 +102,25 @@ void Button::Draw(u16 *fb, bool highlight) {
 	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
 	if(highlight) ts->usebgcolor = true;
 
+	int p = ts->GetPixelSize();
+
 	if (text.length()) {
 		const int s1 = style ? 1 : -1;
-		ts->SetPixelSize(ts->GetPixelSize()+s1);
+		ts->SetPixelSize(pixelsize+s1);
 		uint8_t len = ts->GetCharCountInsideWidth(text.c_str(),
 			TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
 		ts->PrintString((const char*)text.substr(0, len).c_str(),
 			TEXT_STYLE_BROWSER);
-		ts->SetPixelSize(ts->GetPixelSize()-s1);
+		ts->SetPixelSize(p);
 	}
 
 	if (text2.length()) {
 		const int s2 = style ? -1 : 0;
-		ts->SetPixelSize(ts->GetPixelSize()+s2);
+		int p = ts->GetPixelSize();
+		ts->SetPixelSize(pixelsize+s2);
 		ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
 		ts->PrintString((const char *)text2.c_str(), TEXT_STYLE_BROWSER);
-		ts->SetPixelSize(ts->GetPixelSize()-s2);
+		ts->SetPixelSize(p);
 	}
 
 	ts->usebgcolor = false;
