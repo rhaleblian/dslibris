@@ -119,7 +119,7 @@ Text::~Text()
 
 void Text::FreezeMain() {
 	ShowMain();
-	dmaCopy(screenright, screenright + 256*256, 256*511+128);
+	dmaCopyAsynch(screenright, screenright + 256*256, 256*511+128);
 	//dmaCopy((void*)0x06000000, (void*)0x06020000, (u32)0x00020000);
 	//dmaCopy(BG_BMP_RAM(0), BG_BMP_RAM(4), 128 * 1024);
 }
