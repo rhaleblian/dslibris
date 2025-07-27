@@ -143,20 +143,19 @@ FT_Error Text::InitFreeTypeCache(void) {
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
 	if(error) return error;
 
-	ReportFace(faces[TEXT_STYLE_REGULAR]);
+	// ReportFace(faces[TEXT_STYLE_REGULAR]);
 
-	screen = screenleft;
-	InitPen();
 	initialized = true;
 	return 0;
 }
 
 FT_Error Text::CreateFace(int style) {
+	// TODO check for leakage
 	std::string path = std::string(FONTDIR) + "/" + filenames[style];
-	FT_Error err = FT_New_Face(library, path.c_str(), 0, &face);
-	if (!err)
-		faces[style] = face;
-	return err;
+	error = FT_New_Face(library, path.c_str(), 0, &face);
+	if (error) app->PrintStatus(path.c_str());
+	else faces[style] = face;
+	return error;
 }
 
 int Text::InitHomemadeCache(void) {
@@ -824,7 +823,7 @@ void Text::PrintStatusMessage(const char *msg)
 
 void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 {
-	for (int i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++)
+	for (int i=0;i<display.height*display.height;i++)
 		screen[i] = RGB15(r,g,b) | BIT(15);
 }
 
@@ -843,14 +842,14 @@ void Text::PrintSplash(u16 *screen)
 	SetScreen(s);
 }
 
-void Text::SetFontFile(const char *filename, u8 style)
+void Text::SetFontFile(const char *path, u8 style)
 {
-	if(!strcmp(filenames[style].c_str(),filename)) return;
-	filenames[style] = filename;
-	if(initialized) ClearCache(style);
+	if (!strcmp(filenames[style].c_str(), path)) return;
+	filenames[style] = std::string(path);
+	CreateFace(style);
 }
 
-string Text::GetFontFile(u8 style)
+std::string Text::GetFontFile(u8 style)
 {
 	return filenames[style];
 }

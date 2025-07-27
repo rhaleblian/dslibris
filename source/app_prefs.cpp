@@ -21,18 +21,6 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 
-void App::FlipOrientPrefs()
-{
-	PrefsRefreshButtonFlipOrientation();
-	ts->SetScreen(ts->screenleft);
-	ts->ClearScreen();
-	SetOrientation(!orientation);
-	PrefsDraw(false);
-	ts->PrintSplash(ts->screenleft);
-	prefs->Write();
-
-}
-
 void App::PrefsInit()
 {	
 	const int x = 2;
@@ -67,10 +55,10 @@ void App::PrefsInit()
 	PrefsRefreshButtonParaspacing();
 	prefsButtons[PREFS_BUTTON_PARASPACING] = &prefsButtonParaspacing;
 	
-	prefsButtonFlipOrientation.Init(ts);
-	prefsButtonFlipOrientation.Move(x, PREFS_BUTTON_FLIPORIENTATION * prefsButtonFlipOrientation.GetHeight());
-	PrefsRefreshButtonFlipOrientation();
-	prefsButtons[PREFS_BUTTON_FLIPORIENTATION] = &prefsButtonFlipOrientation;
+	prefsButtonOrientation.Init(ts);
+	prefsButtonOrientation.Move(x, PREFS_BUTTON_ORIENTATION * prefsButtonOrientation.GetHeight());
+	PrefsRefreshButtonOrientation();
+	prefsButtons[PREFS_BUTTON_ORIENTATION] = &prefsButtonOrientation;
 
 	for (auto button : prefsButtons)
 		button->SetStyle(BUTTON_STYLE_SETTING);
@@ -128,10 +116,10 @@ void App::PrefsRefreshButtonParaspacing()
 	prefsButtonParaspacing.SetLabel2(std::string(msg));
 }
 
-void App::PrefsRefreshButtonFlipOrientation()
+void App::PrefsRefreshButtonOrientation()
 {
-	prefsButtonFlipOrientation.SetLabel1(std::string("screen orientation"));
-	prefsButtonFlipOrientation.SetLabel2(
+	prefsButtonOrientation.SetLabel1(std::string("screen orientation"));
+	prefsButtonOrientation.SetLabel2(
 		orientation 
 			? std::string("ABXY on Bottom")
 			: std::string("D-Pad on Bottom")
@@ -140,17 +128,6 @@ void App::PrefsRefreshButtonFlipOrientation()
 
 void App::PrefsDraw()
 {
-	PrefsDraw(false);
-}
-
-void App::PrefsDraw(bool redraw)
-{
-	if(!redraw){
-		PrefsRefreshButtonFlipOrientation();
-		ts->SetScreen(ts->screenright);
-		ts->ClearScreen();
-	}
-
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
@@ -162,42 +139,33 @@ void App::PrefsDraw(bool redraw)
 	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->SetPixelSize(PIXELSIZE);
 
-	if(redraw) for (u8 i = MAX(0, prefsSelected-1);
-		i < MIN(prefsSelected+2, PREFS_BUTTON_COUNT); i++)
-	{
-		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
-	}
-	else for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
+	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
 	{
 		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
 	}
 
-	if(!redraw){
-		buttonprefs.Label("  books");
-		buttonprefs.Draw(ts->screenright, false);
-	}
+	buttonprefs.Label("  books");
+	buttonprefs.Draw(ts->screenright, false);
 
 	// restore state.
 	ts->SetStyle(style);
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
+
+	prefs_view_dirty = false;
 }
 
-void App::HandleEventInPrefs()
+void App::PrefsHandleEvent()
 {
 	int keys = keysDown();
 	
 	if (keys & KEY_A)
 	{
-		if(prefsSelected == PREFS_BUTTON_FLIPORIENTATION) {
-			FlipOrientPrefs();
-		} else {
-			PrefsButton();
-		}
+		PrefsButton();
 	}
 
-	else if (keys & KEY_Y)
+	else if (keys & KEY_X)
 	{
 		CycleBrightness();
 		prefs->Write();
@@ -214,7 +182,7 @@ void App::HandleEventInPrefs()
 	{
 		if(prefsSelected < PREFS_BUTTON_COUNT - 1) {
 			prefsSelected++;
-			PrefsDraw(true);
+			PrefsDraw();
 		}
 	}
 
@@ -222,7 +190,7 @@ void App::HandleEventInPrefs()
 	{
 		if(prefsSelected > 0) {
 			prefsSelected--;
-			PrefsDraw(true);
+			PrefsDraw();
 		}
 	}
 
@@ -260,39 +228,41 @@ void App::HandleEventInPrefs()
 		if (buttonprefs.EnclosesPoint(coord.py, coord.px)) {
 			buttonprefs.Label("settings");
 			mode = APP_MODE_BROWSER;
-			browser_draw();
-		} else {
-			for(u8 i = 0; i < PREFS_BUTTON_COUNT; i++) {
-				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
-				{
-					if (i != prefsSelected) {
-						prefsSelected = i;
-						PrefsDraw(false);
-					}
-					
-					if (i == PREFS_BUTTON_FONTSIZE) {
-						if (coord.py < 2 + 188 / 2) {
-							PrefsIncreasePixelSize();
-						} else {
-							PrefsDecreasePixelSize();
-						}
-					} else if (i == PREFS_BUTTON_PARASPACING) {
-						if (coord.py < 2 + 188 / 2) {
-							PrefsIncreaseParaspacing();
-						} else {
-							PrefsDecreaseParaspacing();
-						}
-					} else if (i == PREFS_BUTTON_FLIPORIENTATION) {
-						FlipOrientPrefs();
-					} else {
-						PrefsButton();
-					}
-					
-					break;
+			browser_view_dirty = true;
+			return;
+		}
+
+		for(u8 i = 0; i < PREFS_BUTTON_COUNT; i++) {
+			if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
+			{
+				if (i != prefsSelected) {
+					prefsSelected = i;
 				}
+				
+				if (i == PREFS_BUTTON_FONTSIZE) {
+					if (coord.py < 2 + 188 / 2) {
+						PrefsIncreasePixelSize();
+					} else {
+						PrefsDecreasePixelSize();
+					}
+				} else if (i == PREFS_BUTTON_PARASPACING) {
+					if (coord.py < 2 + 188 / 2) {
+						PrefsIncreaseParaspacing();
+					} else {
+						PrefsDecreaseParaspacing();
+					}
+				} else if (i == PREFS_BUTTON_ORIENTATION) {
+					PrefsFlipOrientation();
+				} else {
+					PrefsButton();
+				}
+				
+				break;
 			}
 		}
 	}
+
+	if (prefs_view_dirty) PrefsDraw();
 }
 
 void App::PrefsIncreasePixelSize()
@@ -339,6 +309,12 @@ void App::PrefsDecreaseParaspacing()
 	}
 }
 
+void App::PrefsFlipOrientation()
+{
+	orientation = !orientation;
+	prefs->Write();
+}
+
 void App::PrefsButton()
 {
 	if (prefsSelected == PREFS_BUTTON_FONT) {
@@ -349,9 +325,11 @@ void App::PrefsButton()
 		mode = APP_MODE_PREFS_FONT_ITALIC;
 	} else if (prefsSelected == PREFS_BUTTON_FONT_BOLDITALIC) {
 		mode = APP_MODE_PREFS_FONT_BOLDITALIC;
-	} else {
+	} else if (prefsSelected == PREFS_BUTTON_ORIENTATION) {
+		PrefsFlipOrientation();
 		return;
 	}
+
 	PrintStatus("loading fonts...");
 	ts->SetScreen(ts->screenright);
 	ts->ClearScreen();

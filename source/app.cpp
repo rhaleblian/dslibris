@@ -40,9 +40,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "version.h"
 
 App::App()
-{	
-	invert = false;
-
+{
+	melonds = false;
+	FILE *fd = fopen("/melonds.txt", "r");
+	if (fd)
+	{
+		fclose(fd);
+		melonds = true;
+	}
 	fontdir = string(FONTDIR);
 	bookdir = string(BOOKDIR);
 	bookcount = 0;
@@ -52,12 +57,12 @@ App::App()
 	mode = APP_MODE_BROWSER;
 	browserstart = 0;
 	cache = false;
-	console = false;
 	orientation = false;
 	paraspacing = 1;
 	paraindent = 0;
 	brightness = 1;
-	
+	invert = false;
+
 	key.down = KEY_DOWN;
 	key.up = KEY_UP;
 	key.left = KEY_LEFT;
@@ -70,9 +75,13 @@ App::App()
 	key.b = KEY_B;
 	key.x = KEY_X;
 	key.y = KEY_Y;
-	
+
 	prefs = &myprefs;
 	prefs->app = this;
+
+	browser_view_dirty = false;
+	prefs_view_dirty = false;
+	font_view_dirty = false;
 
 	ts = new Text();
 	ts->app = this;
@@ -144,8 +153,7 @@ int App::Run(void)
 
 	// Resume reading from the last session.
 	
-	if(reopen && bookcurrent)
-		AttemptBookOpen();
+	if(reopen && bookcurrent) if (OpenBook()) browser_draw();
 
 	keysSetRepeat(60,2);
 	while (pmMainLoop())
@@ -154,20 +162,23 @@ int App::Run(void)
 		scanKeys();
 		switch (mode) {
 			case APP_MODE_BROWSER:
-				HandleEventInBrowser();
-				break;
+			browser_handleevent();
+			if (browser_view_dirty) browser_draw();
+			break;
 			case APP_MODE_BOOK:
-				HandleEventInBook();
-				break;
+			HandleEventInBook();
+			break;
 			case APP_MODE_PREFS:
-				HandleEventInPrefs();
-				break;
+			PrefsHandleEvent();
+			if (prefs_view_dirty) PrefsDraw();
+			break;
 			case APP_MODE_PREFS_FONT:
 			case APP_MODE_PREFS_FONT_BOLD:
 			case APP_MODE_PREFS_FONT_ITALIC:
 			case APP_MODE_PREFS_FONT_BOLDITALIC:
-				HandleEventInFont();
-				break;
+			HandleEventInFont();
+			if (font_view_dirty) FontDraw();
+			break;
 		}
 	}
 	return 0;
@@ -347,12 +358,6 @@ void App::InitScreens()
 	if(invert) {
 		lcdSwap();
 	}
-}
-
-void App::Fatal(const char *msg)
-{
-	Log(msg);
-	while(1) swiWaitForVBlank();
 }
 
 void App::PrintStatus(const char *msg)

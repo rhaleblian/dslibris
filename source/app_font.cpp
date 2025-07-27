@@ -64,11 +64,11 @@ void App::HandleEventInFont()
 {
 	auto keys = keysDown();
 
-	if (keys & (KEY_START | KEY_SELECT | KEY_B))
+	if (keys & (KEY_SELECT | KEY_B))
 	{
+		// Leave without changing the font
 		mode = APP_MODE_PREFS;
-		FontDeinit();
-		PrefsDraw();
+		prefs_view_dirty = true;
 	}
 	else if (keys & key.up)
 	{
@@ -79,7 +79,7 @@ void App::HandleEventInFont()
 				FontDraw();
 			} else {
 				fontSelected--;
-				FontDraw(false);
+				font_view_dirty = true;
 			}
 		}
 	}
@@ -88,11 +88,10 @@ void App::HandleEventInFont()
 		// Next page
 		if (fontSelected == fontPage * BPP + (BPP-1)) {
 			FontNextPage();
-			FontDraw();
 		} else {
 			fontSelected++;
-			FontDraw(false);
 		}
+		font_view_dirty = true;
 	}
 	else if (keys & KEY_A)
 	{
@@ -100,41 +99,37 @@ void App::HandleEventInFont()
 	}
 	else if (keys & KEY_TOUCH)
 	{
-		touchPosition touch;
-		touchRead(&touch);
-		touchPosition coord;
+		FontHandleTouchEvent();
+	}
+}
 
-		if(!orientation)
-		{
-			coord.px = 256 - touch.px;
-			coord.py = touch.py;
-		} else {
-			coord.px = touch.px;
-			coord.py = 192 - touch.py;
-		}
+void App::FontHandleTouchEvent() {
+	touchPosition coord = TouchRead();
 
-		if(buttonnext.EnclosesPoint(coord.py,coord.px)){
-			FontNextPage();
-			FontDraw();
-		} else if(buttonprev.EnclosesPoint(coord.py,coord.px)) {
-			FontPreviousPage();
-			FontDraw();
-		} else if(buttonprefs.EnclosesPoint(coord.py,coord.px)) {
-			mode = APP_MODE_PREFS;
-			FontDeinit();
-			PrefsDraw();
-		} else {
-			for(u8 i = fontPage * 7; (i < fontButtons.size()) && (i < (fontPage + 1) * BPP); i++) {
-				if (prefsButtons[i]->EnclosesPoint(coord.py, coord.px))
-				{
-					if (i != fontSelected) {
-						fontSelected = i;
-						FontDraw(false);
-					}
-					
-					FontButton();
-					break;
-				}
+	if(buttonprefs.EnclosesPoint(coord.py,coord.px)) {
+		// Leave views
+		mode = APP_MODE_PREFS;
+		prefs_view_dirty = true;
+	}
+	else if(buttonnext.EnclosesPoint(coord.py,coord.px)){
+		FontNextPage();
+	}
+	else if(buttonprev.EnclosesPoint(coord.py,coord.px)) {
+		FontPreviousPage();
+	}
+	else
+	{
+		for(u8 i = fontPage * BPP;
+			(i < fontButtons.size()) && (i < (fontPage + 1) * BPP);
+			i++) {
+			if (fontButtons[i]->EnclosesPoint(coord.py, coord.px))
+			{
+				fontSelected = i;
+				char msg[4];
+				sprintf(msg, "%d", fontSelected);
+				PrintStatus(msg);
+				FontButton();
+				break;
 			}
 		}
 	}
@@ -150,11 +145,6 @@ void App::FontDeinit()
 
 void App::FontDraw()
 {
-	FontDraw(true);
-}
-
-void App::FontDraw(bool redraw)
-{
 	// save state.
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
@@ -162,14 +152,13 @@ void App::FontDraw(bool redraw)
 	
 	ts->SetInvert(false);
 	ts->SetStyle(TEXT_STYLE_BROWSER);
-	if (redraw) {
-		ts->ClearScreen();
-	}
+	ts->ClearScreen();
+
 	for (u8 i = fontPage * 7; (i < fontButtons.size()) && (i < (fontPage + 1) * BPP); i++)
 	{
 		fontButtons[i]->Draw(ts->screenright, i == fontSelected);
 	}
-	buttonprefs.Label("Cancel");
+	buttonprefs.Label("cancel");
 	buttonprefs.Draw(screen, false);
 	if(fontButtons.size() > (fontPage + 1) * BPP)
 		buttonnext.Draw(ts->screenright, false);
@@ -202,36 +191,38 @@ void App::FontPreviousPage()
 
 void App::FontButton()
 {
-	bool invert = ts->GetInvert();
+	const char* filename = fontButtons[fontSelected]->GetLabel();
+	if (filename == nullptr)
+	{
+		PrintStatus("error");
+		return;
+	}
+	switch (mode) {
+		case APP_MODE_PREFS_FONT:
+		ts->SetFontFile(filename, TEXT_STYLE_REGULAR);
+		PrefsRefreshButtonFont();
+		break;
 
-	ts->SetScreen(ts->screenright);
-	ts->SetInvert(false);
-	ts->ClearScreen();
-	ts->SetPen(ts->margin.left,PAGE_HEIGHT/2);
-	ts->PrintStatusMessage("setting font...");
-	ts->SetInvert(invert);
+		case APP_MODE_PREFS_FONT_BOLD:
+		ts->SetFontFile(filename, TEXT_STYLE_BOLD);
+		PrefsRefreshButtonFontBold();
+		break;
 
-	std::string path = fontdir;
-	path.append(fontButtons[fontSelected]->GetLabel());
-	if (mode == APP_MODE_PREFS_FONT)
-		ts->SetFontFile(path.c_str(), TEXT_STYLE_REGULAR);
-	else if (mode == APP_MODE_PREFS_FONT_BOLD)
-		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLD);
-	else if (mode == APP_MODE_PREFS_FONT_ITALIC)
-		ts->SetFontFile(path.c_str(), TEXT_STYLE_ITALIC);
-	else if (mode == APP_MODE_PREFS_FONT_BOLDITALIC)
-		ts->SetFontFile(path.c_str(), TEXT_STYLE_BOLDITALIC);
+		case APP_MODE_PREFS_FONT_ITALIC:
+		ts->SetFontFile(filename, TEXT_STYLE_ITALIC);
+		PrefsRefreshButtonFontItalic();
+		break;
 
+		case APP_MODE_PREFS_FONT_BOLDITALIC:
+		ts->SetFontFile(filename, TEXT_STYLE_BOLDITALIC);
+		PrefsRefreshButtonFontBoldItalic();
+		break;
+	}
+
+	// Trigger repagination
 	ts->Init();
-	bookcurrent = NULL; //Force repagination
-	FontDeinit();
+	
+	prefs_view_dirty = true;
 	mode = APP_MODE_PREFS;
-	PrefsRefreshButtonFont();
-	PrefsRefreshButtonFontBold();
-	PrefsRefreshButtonFontItalic();
-	PrefsRefreshButtonFontBoldItalic();
-	PrefsDraw();
 	prefs->Write();
-
-	ts->SetInvert(invert);
 }

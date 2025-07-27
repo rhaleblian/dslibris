@@ -75,7 +75,7 @@ https://github.com/rhaleblian/dslibris
 #define PREFS_BUTTON_FONT_BOLD 3
 #define PREFS_BUTTON_FONT_BOLDITALIC 4
 #define PREFS_BUTTON_PARASPACING 5
-#define PREFS_BUTTON_FLIPORIENTATION 6
+#define PREFS_BUTTON_ORIENTATION 6
 
 
 //! \brief Main application.
@@ -87,14 +87,17 @@ class App {
 
 	public:
 
+	App();
+	~App();
+
 	Text *ts;
-	Prefs myprefs;   //?
-	Prefs *prefs;    //?
-	u8 brightness;   //! 4 levels for the Lite.
-	u8 mode; 	     //! Are we in book or browser mode?
-	string fontdir;  //! Default location to search for TTFs.
-	bool console;    //! Can we print to console at the moment?
-	
+	Prefs myprefs;   //! User-configurable settings.
+	Prefs *prefs;	 //! User-configurable settings.
+	u8 brightness;   //! DISABLED. 4 levels for the Lite.
+	u8 mode; 	     //! Current mode (browser, prefs, book, font)
+	string fontdir;  //! Directory to search for font files
+	bool melonds;    //! Are we running in melonDS?
+
 	//! key functions are remappable to support screen flipping.
 	struct {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
@@ -132,20 +135,13 @@ class App {
 	Button prefsButtonFontBoldItalic;
 	Button prefsButtonFontSize;
 	Button prefsButtonParaspacing;
-	Button prefsButtonFlipOrientation;
+	Button prefsButtonOrientation;
 	Button* prefsButtons[PREFS_BUTTON_COUNT];
 	u8 prefsSelected;
 	
 	unsigned int fontSelected;
 	unsigned int fontPage;
 	vector<Button*>fontButtons;
-
-	//BImage *image0;
-	//BScreen *bscreen0;
-	//BProgressBar *progressbar;
-
-	App();
-	~App();
 	
 	//! in App.cpp
 	void CycleBrightness();
@@ -169,7 +165,7 @@ class App {
 	void parse_push(parsedata_t *data, context_t context);
 
 	//! in App_Browser.cpp
-	void HandleEventInBrowser();
+	void browser_handleevent();
 	void browser_init(void);
 	void browser_draw(void);
 	void browser_nextpage(void);
@@ -182,43 +178,42 @@ class App {
 	void AttemptBookOpen();
 	u8   OpenBook(void);
 	
-	//! in App_Prefs.cpps
-	void HandleEventInPrefs();
+	private:
+
+	bool browser_view_dirty;
+	bool font_view_dirty;
+	bool prefs_view_dirty;
+
+	int  FindBooks();
+	void InitScreens();
+	void SetBrightness(u8 b);
+	void SetOrientation(bool flipped);
+
+	// app_font.cpp
+	void HandleEventInFont();
+	void FontInit();
+	void FontDeinit();
+	void FontDraw();
+	void FontHandleTouchEvent();
+	void FontNextPage();
+	void FontPreviousPage();
+	void FontButton();
+
+	// app_prefs.cpp
+	void PrefsHandleEvent();
 	void PrefsInit();
 	void PrefsDraw();
-	void PrefsDraw(bool redraw);
 	void PrefsButton();
 	void PrefsIncreasePixelSize();
 	void PrefsDecreasePixelSize();
 	void PrefsIncreaseParaspacing();
 	void PrefsDecreaseParaspacing();
+	void PrefsFlipOrientation();
 	void PrefsRefreshButtonFont();
 	void PrefsRefreshButtonFontBold();
 	void PrefsRefreshButtonFontItalic();
 	void PrefsRefreshButtonFontBoldItalic();
 	void PrefsRefreshButtonFontSize();
 	void PrefsRefreshButtonParaspacing();
-	void PrefsRefreshButtonFlipOrientation();
-	
-	//! in App_Font.cpp
-	void HandleEventInFont();
-	void FontInit();
-	void FontDeinit();
-	void FontDraw();
-	void FontDraw(bool redraw);
-	void FontNextPage();
-	void FontPreviousPage();
-	void FontButton();
-
-	private:
-
-	int  FindBooks();
-	void InitScreens();
-	void SetBrightness(u8 b);
-	void SetOrientation(bool flipped);
-	void WifiInit();
-	bool WifiConnect();
-	void Fatal(const char *msg);
-	void FlipOrientPrefs();
+	void PrefsRefreshButtonOrientation();
 };
-

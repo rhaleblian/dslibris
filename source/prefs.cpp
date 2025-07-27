@@ -58,21 +58,26 @@ int Prefs::Read()
 	return err;
 }
 
-//! \return Error code, 0: success.
+//! Write settings to PREFSPATH.
+//! \return Error code.
 int Prefs::Write()
 {
-	return 0;
+	if (app->melonds) return 0;
+
 	int err = 0;
+	int invert = 0;
+
+	if (app) invert = app->ts->GetInvert();
+
 	FILE* fp = fopen(PREFSPATH, "w");
 	if(!fp) return 255;
 	
-	fprintf(fp, "<dslibris>\n");
+	fprintf(fp, "<dslibris format=\"2\">\n");
 	if(swapshoulder)
 		fprintf(fp, "<option swapshoulder=\"%d\" />\n",swapshoulder);
-	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
-		app->brightness,
+	fprintf(fp, "\t<screen invert=\"%d\" flip=\"%d\" />\n",
 		//TODO FIX THIS
-		0,//app->ts->GetInvert(),
+		invert,
 		app->orientation
 		);
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
@@ -88,8 +93,7 @@ int Prefs::Write()
  	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
 			app->paraindent,
 			app->paraspacing);
-	fprintf(fp, "\t<books path=\"%s\" reopen=\"%d\">\n",
-			app->bookdir.c_str(),
+	fprintf(fp, "\t<books reopen=\"%d\">\n",
 			app->reopen);
     
 	for (u8 i = 0; i < app->bookcount; i++) {
@@ -99,7 +103,9 @@ int Prefs::Write()
 		if(app->bookcurrent == app->books[i]) fprintf(fp," current=\"1\"");
 		fprintf(fp,">\n");
 		std::list<u16>* bookmarks = book->GetBookmarks();
-		for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
+		for (std::list<u16>::iterator j = bookmarks->begin();
+			j != bookmarks->end();
+			j++) {
 			fprintf(fp, "\t\t\t<bookmark page=\"%d\" word=\"%d\" />\n",
 				*j + 1,0);
 		}

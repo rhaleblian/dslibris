@@ -22,19 +22,13 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 
-void App::HandleEventInBrowser()
+void App::browser_handleevent()
 {
 	auto keys = keysDown();
 	
 	if (keys & (KEY_A | key.down))
 	{
-		AttemptBookOpen();
-	}
-	
-	else if (keys & KEY_Y)
-	{
-		CycleBrightness();
-		prefs->Write();
+		OpenBook();
 	}
 	
 	else if (keys & KEY_SELECT)
@@ -52,12 +46,8 @@ void App::HandleEventInBrowser()
 		{
 			b++;
 			bookselected = books[b];
-			if (b >= browserstart+APP_BROWSER_BUTTON_COUNT) {
-				browser_nextpage();
-				browser_draw();
-			} else {
-				browser_redraw();
-			}
+			browser_view_dirty = true;
+			if (b >= browserstart + APP_BROWSER_BUTTON_COUNT) browser_nextpage();
 		}
 	}
 
@@ -69,67 +59,45 @@ void App::HandleEventInBrowser()
 		{
 			b--;
 			bookselected = books[b];
-			if(b < browserstart) {
-				browser_prevpage();
-				browser_draw();
-			} else {
-				browser_redraw();
-			}	
+			// TODO does not allow highlight to update
+			browser_view_dirty = true;
+			if(b < browserstart) browser_prevpage();
 		}
 	}
 
 	else if (keys & KEY_TOUCH)
 	{
-		touchPosition touch;
-		touchRead(&touch);
-		touchPosition coord;
-
-		// Transform point according to screen orientation.
-		if(!orientation)
-		{
-			coord.px = 256 - touch.px;
-			coord.py = touch.py;
-		} else {
-			coord.px = touch.px;
-			coord.py = 192 - touch.py;
-		}
+		touchPosition coord = TouchRead();
 
 		if(buttonnext.EnclosesPoint(coord.py, coord.px))
 		{
 			browser_nextpage();
-			browser_draw();
 		}
 		else if(buttonprev.EnclosesPoint(coord.py, coord.px))
 		{
 			browser_prevpage();
-			browser_draw();
 		}
 		else if(buttonprefs.EnclosesPoint(coord.py, coord.px))
 		{
-			if(mode != APP_MODE_PREFS) {
-				mode = APP_MODE_PREFS;
-				prefsSelected = 0;
-				PrefsDraw();
-			} else {
-				mode = APP_MODE_BROWSER;
-				browser_draw();
-			}
-		} else {
+			// Move to settings view
+			prefs_view_dirty = true;  // Request a redraw
+			mode = APP_MODE_PREFS;
+		}
+		else
+		{
+			/// Open this book
 			for(u8 i=browserstart; 
-				(i<bookcount) &&
-				(i<browserstart+APP_BROWSER_BUTTON_COUNT);
+				(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 				i++) {
 				if (buttons[i]->EnclosesPoint(coord.py, coord.px))
 				{
-					bookselected = books[i];
-					browser_draw();
-					swiWaitForVBlank();
-					AttemptBookOpen();
+					bookselected = books[browserstart + i];
+					OpenBook();
 					break;
 				}
 			}
 		}
-	}	
+	}
 }
 
 void App::browser_init(void)
@@ -165,7 +133,8 @@ void App::browser_init(void)
 		browserstart = 0;
 		bookselected = books[0];
 	} else {
-	browserstart = (GetBookIndex(bookselected) / APP_BROWSER_BUTTON_COUNT)
+	browserstart = (GetBookIndex(bookselected)
+		/ APP_BROWSER_BUTTON_COUNT)
 		* APP_BROWSER_BUTTON_COUNT;
 	}
 }
@@ -176,6 +145,7 @@ void App::browser_nextpage()
 	{ 
 		browserstart += APP_BROWSER_BUTTON_COUNT;
 		bookselected = books[browserstart];
+		browser_view_dirty = true;
 	}
 }
 
@@ -185,6 +155,7 @@ void App::browser_prevpage()
 	{	
 		browserstart -= APP_BROWSER_BUTTON_COUNT;
 		bookselected = books[browserstart+APP_BROWSER_BUTTON_COUNT-1];
+		browser_view_dirty = true;
 	}
 }
 
@@ -220,6 +191,8 @@ void App::browser_draw(void)
 	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
 	ts->SetStyle(style);
+
+	browser_view_dirty = false;
 }
 
 void App::browser_redraw()
@@ -249,6 +222,8 @@ void App::browser_redraw()
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
 	ts->SetStyle(style);
+
+	browser_view_dirty = false;
 }
 
 void App::AttemptBookOpen()

@@ -118,63 +118,6 @@ class Style {
 
 class Text {
 
-	private:
-
-	FT_Library library;
-	FT_Error error;
-
-	//! Use the FreeType cache?
-	bool ftc;
-
-	// A: Homemade cache
-	TextCache cache;
-	TextFaceRec face_id;
-	map<FT_Face, Cache*> textCache;
-	
-	// B: FreeType cache subsystem
-	FTC_SBitRec sbit;
-	FTC_ImageTypeRec imagetype;
-	FT_Int charmap_index;
-	
-	map<u8, FT_Face> faces;
-	map<u8, string> filenames;
-
-	//! Current style, as TEXT_FONT_STYLE.
-	int style;
-	//! Current face.
-	FT_Face face;
-	//! Current draw position.
-	FT_Vector pen;
-	//! Draw light text on dark?
-	bool invert;
-	//! Last printed char code.
-	u32 codeprev;
-	//! Was the last glyph lookup a cache hit?
-	bool hit;
-	//! Has Init() run?
-	bool initialized;
-
-	//! It would fully justify, if it worked.
-	bool justify;
-
-	int CacheGlyph(u32 ucs);
-	int CacheGlyph(u32 ucs, u8 style);
-	int CacheGlyph(u32 ucs, FT_Face face);
-	void ClearCache(FT_Face face);
-	FT_Error CreateFace(int style);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
-	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit, FTC_Node *anode=NULL);
-	FT_UInt GetGlyphIndex(u32 ucs);
-	u8   GetAdvance(u32 ucs, FT_Face face);
-	u8   GetStringWidth(const char *txt, FT_Face face);
-	FT_Error InitFreeTypeCache();
-	int InitHomemadeCache();
-	void PrintChar(u32 ucs, FT_Face face);
-	void PrintString(const char *string, FT_Face face);
-	void ReportFace(FT_Face face);
-
 	public:
 
 	App *app;
@@ -194,13 +137,6 @@ class Text {
 	} display;
 	int linespacing;
 	bool linebegan, bold, italic;
-
-	// Keep stats to check efficiency of caching.
-
-	//! Total glyph cache hits.
-	int stats_hits;
-	//! Total glyph cache misses.
-	int stats_misses;
 
 	Text();
 	Text(class App *parent) { app = parent; }
@@ -235,7 +171,7 @@ class Text {
 	void SetPen(u16 x, u16 y);
 	void SetPixelSize(u8 size);
 	bool SetFace(u8 style);
-	void SetFontFile(const char *filename, u8 style);
+	void SetFontFile(const char *path, u8 style);
 	void SetScreen(u16 *s);
 	inline void SetStyle(int astyle) { style = astyle; face = faces[style]; }
 	
@@ -255,6 +191,70 @@ class Text {
 	void PrintString(const char *string);
 	void PrintString(const char *string, u8 style);
 	void PrintSplash(u16 *screen);
+
+	private:
+
+	FT_Library library;
+	FT_Error error;
+
+	//! Use the FreeType cache?
+	bool ftc;
+
+	// A: Homemade cache
+	TextCache cache;
+	TextFaceRec face_id;
+	map<FT_Face, Cache*> textCache;
+	
+	// B: FreeType cache subsystem
+	FTC_SBitRec sbit;
+	FTC_ImageTypeRec imagetype;
+	FT_Int charmap_index;
+	
+	map<u8, FT_Face> faces;
+	map<u8, std::string> filenames;
+
+	//! Current style, as TEXT_FONT_STYLE.
+	int style;
+	//! Current face.
+	FT_Face face;
+	//! Current draw position.
+	FT_Vector pen;
+	//! Draw light text on dark?
+	bool invert;
+	//! Last printed char code.
+	u32 codeprev;
+	//! Was the last glyph lookup a cache hit?
+	bool hit;
+	//! Has Init() run?
+	bool initialized;
+
+	//! It would fully justify, if it worked.
+	bool justify;
+
+	// Keep stats to check efficiency of caching.
+
+	//! Total glyph cache hits.
+	int stats_hits;
+	//! Total glyph cache misses.
+	int stats_misses;
+
+	int CacheGlyph(u32 ucs);
+	int CacheGlyph(u32 ucs, u8 style);
+	int CacheGlyph(u32 ucs, FT_Face face);
+	void ClearCache(FT_Face face);
+	FT_Error CreateFace(int style);
+	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
+	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
+	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
+	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit, FTC_Node *anode=NULL);
+	FT_UInt GetGlyphIndex(u32 ucs);
+	u8   GetAdvance(u32 ucs, FT_Face face);
+	u8   GetStringWidth(const char *txt, FT_Face face);
+	FT_Error InitFreeTypeCache();
+	int InitHomemadeCache();
+	void PrintChar(u32 ucs, FT_Face face);
+	void PrintString(const char *string, FT_Face face);
+	void ReportFace(FT_Face face);
 };
 
 #endif

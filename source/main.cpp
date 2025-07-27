@@ -51,23 +51,9 @@ int halt(int vblanks) {
 
 //! \param vblanks blanking intervals to wait, -1 for forever, default = -1
 int halt(const char *msg, int vblanks) {
+	consoleDemoInit();
 	printf(msg);
 	return halt(vblanks);
-}
-
-int verify_filesystem(void) {
-	printf("root directory:\n");
-	DIR *dp = opendir("/");
-	if (!dp) {
-		return 1;
-	}
-	struct dirent *ent;
-	while ((ent = readdir(dp)))
-	{
-		printf("  %s %d\n", ent->d_name, ent->d_type);
-	}
-	closedir(dp);
-	return 0;
 }
 
 int main(void)
@@ -77,9 +63,7 @@ int main(void)
 	// consoleDebugInit(DebugDevice_NOCASH);
 
 	if (!fatInitDefault())
-		halt("[FAIL] filesystem\n");	
-	// if(verify_filesystem() != 0)
-	// 	halt("[FAIL] filesystem checks\n");
+		halt("[FAIL] filesystem\n");
 
 	app = new App();
 	return app->Run();
