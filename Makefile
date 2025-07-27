@@ -36,7 +36,10 @@ CFLAGS	:= -g -Wall -O2 -ffunction-sections -fdata-sections\
 # debugging symbols
 CFLAGS	+=	-g
 
+# freetype
 CFLAGS  +=	-I$(PWD)/portlibs/nds/include/freetype2
+# zlib minizip
+CFLAGS  +=	-I$(DEVKITPRO)/portlibs/nds/include/minizip -DIOAPI_NO_64
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
