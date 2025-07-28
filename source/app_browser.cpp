@@ -25,7 +25,7 @@
 
 void App::HandleEventInBrowser()
 {
-	uint32 keys = keysDown();
+	auto keys = keysDown();
 	
 	if (keys & (KEY_A | key.down))
 	{
@@ -41,6 +41,8 @@ void App::HandleEventInBrowser()
 	else if (keys & KEY_SELECT)
 	{
 		mode = APP_MODE_PREFS;
+		ts->SetScreen(ts->screenright);
+		ts->ClearScreen();
 		prefsSelected = 0;
 		PrefsDraw();
 	}
@@ -79,21 +81,7 @@ void App::HandleEventInBrowser()
 		}
 	}
 
-	else if (keys & (KEY_START | KEY_B))
-	{
-#if 0
-		// Only back up into the last book if it
-		// wasn't closed while trying to open another one.
-		if(bookcurrent && bookcurrent->GetPage())
-		{
-			bookcurrent->GetPage()->Draw(ts);
-			mode = APP_MODE_BOOK;
-			prefs->Write();
-		}
-#endif
-	}
-
-	else if (keysHeld() & KEY_TOUCH)
+	else if (keys & KEY_TOUCH)
 	{
 		touchPosition touch;
 		touchRead(&touch);
@@ -124,9 +112,13 @@ void App::HandleEventInBrowser()
 			if(mode != APP_MODE_PREFS) {
 				mode = APP_MODE_PREFS;
 				prefsSelected = 0;
+				ts->SetScreen(ts->screenright);
+				ts->ClearScreen();
 				PrefsDraw();
 			} else {
 				mode = APP_MODE_BROWSER;
+				ts->SetScreen(ts->screenright);
+				ts->ClearScreen();
 				browser_draw();
 			}
 		} else {
@@ -174,7 +166,7 @@ void App::browser_init(void)
 	buttonprefs.Init(ts);
 	buttonprefs.Move(66,238);
 	buttonprefs.Resize(60,16);
-	buttonprefs.Label("prefs");
+	buttonprefs.Label("settings");
 
 	if (!bookselected) {
 		browserstart = 0;
