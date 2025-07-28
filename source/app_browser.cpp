@@ -162,6 +162,7 @@ void App::browser_prevpage()
 
 void App::browser_draw(void)
 {
+	ts->FreezeMain();
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
@@ -190,6 +191,8 @@ void App::browser_draw(void)
 	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
 	ts->SetStyle(style);
+	ts->ShowMain();
+
 
 	browser_view_dirty = false;
 }
