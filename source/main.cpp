@@ -58,7 +58,7 @@ int halt(const char *msg, int vblanks) {
 
 int main(void)
 {
-	// defaultExceptionHandler();
+	defaultExceptionHandler();
 	// consoleDemoInit();
 	// consoleDebugInit(DebugDevice_NOCASH);
 
