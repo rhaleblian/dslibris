@@ -393,12 +393,14 @@ void Text::ClearCache(u8 style)
 
 void Text::ClearCache(FT_Face face)
 {
-	for(std::map<u16, FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.begin();
-		iter != textCache[face]->cacheMap.end();
+	auto c = textCache[face];
+	if (!c) return;
+	for(std::map<u16, FT_GlyphSlot>::iterator iter = c->cacheMap.begin();
+		iter != c->cacheMap.end();
 		iter++) {
 		delete iter->second;
 	}
-	textCache[face]->cacheMap.clear();
+	c->cacheMap.clear();
 }
 
 void Text::ClearScreen()

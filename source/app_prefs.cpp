@@ -126,6 +126,10 @@ void App::PrefsRefreshButtonOrientation()
 
 void App::PrefsDraw()
 {
+	prefs_view_dirty = false;
+
+	ts->FreezeMain();
+
 	// save state.
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
@@ -150,7 +154,7 @@ void App::PrefsDraw()
 	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
 
-	prefs_view_dirty = false;
+	ts->ShowMain();
 }
 
 void App::PrefsHandleEvent()

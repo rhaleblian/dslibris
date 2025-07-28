@@ -136,6 +136,10 @@ void App::FontHandleTouchEvent() {
 
 void App::FontDraw()
 {
+	font_view_dirty = false;
+
+	ts->FreezeMain();
+
 	// save state.
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
@@ -160,6 +164,8 @@ void App::FontDraw()
 	ts->SetStyle(style);
 	ts->SetInvert(invert);
 	ts->SetScreen(screen);
+
+	ts->ShowMain();
 }
 
 void App::FontNextPage()
