@@ -32,66 +32,39 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "expat.h"
 #include "main.h"
 #include "parse.h"
-#include "types.h"
 
 App *app;
 char msg[256];
 int ft_main(int argc, char **argv);
 
-/*---------------------------------------------------------------------------*/
 
-
-int kungheyfatcheck(void) {
-	iprintf("** kungheyfatcheck **\n");
-	iprintf("root directory:\n");
-	swiWaitForVBlank();
-
-	DIR *dp = opendir("/");
-	if (!dp) {
-		printf("[PANIC] root dir inaccessible!\n");
-		return false;
-	}
-	struct dirent *ent;
-	while ((ent = readdir(dp)))
-	{
-		iprintf("%s %d\n", ent->d_name, ent->d_type);
-	}
-	closedir(dp);
-
-	return true;
-}
-
-PrintConsole* boot_console(void) {
-	// Get a console going.
-	auto console = consoleDemoInit();
-	if (!console) iprintf("[FAIL] console!\n");		// This, of course, won't print :D
-	else iprintf("[ OK ] console\n");
-	return console;
-}
-
-int boot_filesystem(void) {
-	// Start up the filesystem.
-	bool success = fatInitDefault();
-	if (!success) iprintf("[FAIL] filesystem!\n");
-	else iprintf("[ OK ] filesystem\n");
-	return success;
-}
-
-void halt(void) {
-	while(pmMainLoop())
+//! \param vblanks blanking intervals to wait, -1 for forever, default = -1
+int halt(int vblanks) {
+	int timer = vblanks;
+	while(pmMainLoop()) {
 		swiWaitForVBlank();
+		if (timer == 0) break;
+		else if (timer > 0) timer--;
+	}
+	return 1;
 }
 
-void halt(const char *msg) {
+//! \param vblanks blanking intervals to wait, -1 for forever, default = -1
+int halt(const char *msg, int vblanks) {
+	consoleDemoInit();
 	printf(msg);
-	halt();
+	return halt(vblanks);
 }
 
 int main(void)
 {
-	defaultExceptionHandler();
-	if(!boot_console()) halt();
-	if(!boot_filesystem()) halt();
+	// defaultExceptionHandler();
+	// consoleDemoInit();
+	// consoleDebugInit(DebugDevice_NOCASH);
+
+	if (!fatInitDefault())
+		halt("[FAIL] filesystem\n");
+
 	app = new App();
 	return app->Run();
 }
@@ -216,7 +189,7 @@ void prefs_start_hndl(	void *data,
 				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_BOLDITALIC);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
-					app->fontdir = string(attr[i+1]);
+					app->fontdir = std::string(attr[i+1]);
 			}
 		}
 	}
@@ -229,7 +202,7 @@ void prefs_start_hndl(	void *data,
 				app->reopen = atoi(attr[i+1]);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
-					app->bookdir = string(attr[i+1]);
+					app->bookdir = std::string(attr[i+1]);
 			}
         }
 	}
@@ -253,7 +226,7 @@ void prefs_start_hndl(	void *data,
 		
 		// Find the book index for this library entry
 		// and set context for later bookmarks.
-		vector<Book*>::iterator it;
+		std::vector<Book*>::iterator it;
 		for(it = app->books.begin(); it < app->books.end(); it++)
 		{
 			const char *bookname = (*it)->GetFileName();
@@ -784,11 +757,11 @@ void proc_hndl(void *data, const char *target, const char *pidata)
 	app->Log("called proc_hndl().\n");
 }
 
-int getSize(uint8 *source, uint16 *dest, uint32 arg) {
-       return *(uint32*)source;
+int getSize(u8 *source, u16 *dest, u32 arg) {
+       return *(u32*)source;
 }
 
-uint8 readByte(uint8 *source) { return *source; }
+u8 readByte(u8 *source) { return *source; }
 
 void drawstack(u16 *screen) {
        TDecompressionStream decomp = {getSize, NULL, readByte};

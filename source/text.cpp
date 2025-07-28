@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "string.h"
 
 #include "app.h"
-#include "ft.h"
+// #include "ft.h"
 #include "main.h"
 #include "version.h"
 #include "text.h"
@@ -98,14 +98,14 @@ Text::~Text()
 	
 	// homemade cache
 	ClearCache();
-	for(map<FT_Face, Cache*>::iterator iter = textCache.begin();
+	for(std::map<FT_Face, Cache*>::iterator iter = textCache.begin();
 		iter != textCache.end(); iter++) {
 		delete iter->second;
 	}
 	textCache.clear();
 	
 	// FreeType
-	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+	for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		FT_Done_Face(iter->second);
 	}
 	FT_Done_FreeType(library);
@@ -136,27 +136,26 @@ FT_Error Text::InitFreeTypeCache(void) {
 	error = FTC_CMapCache_New(cache.manager,&cache.cmap);
 	if(error) return error;
 
-	sprintf(face_id.file_path, "%s/%s", FONTDIR, filenames[TEXT_STYLE_REGULAR].c_str());
+	sprintf(face_id.file_path, "%s/%s", app->fontdir.c_str(), filenames[TEXT_STYLE_REGULAR].c_str());
 	face_id.face_index = 0;
 	sprintf(msg, "%s %s %d\n", filenames[TEXT_STYLE_REGULAR].c_str(), face_id.file_path, face_id.face_index);
 	app->Log(msg);
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
 	if(error) return error;
 
-	ReportFace(faces[TEXT_STYLE_REGULAR]);
+	// ReportFace(faces[TEXT_STYLE_REGULAR]);
 
-	screen = screenleft;
-	InitPen();
 	initialized = true;
 	return 0;
 }
 
 FT_Error Text::CreateFace(int style) {
-	std::string path = std::string(FONTDIR) + "/" + filenames[style];
-	FT_Error err = FT_New_Face(library, path.c_str(), 0, &face);
-	if (!err)
-		faces[style] = face;
-	return err;
+	// TODO check for leakage
+	std::string path = app->fontdir + "/" + filenames[style];
+	error = FT_New_Face(library, path.c_str(), 0, &face);
+	if (error) app->PrintStatus(path.c_str());
+	else faces[style] = face;
+	return error;
 }
 
 int Text::InitHomemadeCache(void) {
@@ -185,7 +184,7 @@ int Text::InitHomemadeCache(void) {
 	std::map<u8, FT_Face>::iterator iter;
 	for (iter = faces.begin(); iter != faces.end(); iter++) {
 		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
-		textCache.insert(make_pair(iter->second, new Cache()));
+		textCache.insert(std::make_pair(iter->second, new Cache()));
 	}
 
 	initialized = true;
@@ -269,7 +268,7 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 	dst->bitmap_left = src->bitmap_left;
 	dst->advance = src->advance;
 	//textCache[face]->cache_ucs[textCache[face]->cachenext] = ucs;
-	textCache[face]->cacheMap.insert(make_pair(ucs, dst));
+	textCache[face]->cacheMap.insert(std::make_pair(ucs, dst));
 	//textCache[face]->cachenext++;
 	//return textCache[face]->cachenext-1;
 	return ucs;
@@ -316,8 +315,7 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 			return &textCache[face]->glyphs[i];
 #endif	
 
-	map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
-	
+	std::map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
 	if (iter != textCache[face]->cacheMap.end()) {
 		stats_hits++;
 		hit = true;
@@ -336,7 +334,7 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 
 void Text::ClearCache()
 {
-	 for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+	 for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		 ClearCache(iter->second);
 	 }
 }
@@ -348,12 +346,11 @@ void Text::ClearCache(u8 style)
 
 void Text::ClearCache(FT_Face face)
 {
-	//textCache[face]->cachenext = 0;
-	map<u16, FT_GlyphSlot>::iterator iter;   
-	for(iter = textCache[face]->cacheMap.begin(); iter != textCache[face]->cacheMap.end(); iter++) {
+	for(std::map<u16, FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.begin();
+		iter != textCache[face]->cacheMap.end();
+		iter++) {
 		delete iter->second;
 	}
-
 	textCache[face]->cacheMap.clear();
 }
 
@@ -499,7 +496,7 @@ void Text::SetPixelSize(u8 size)
 		return;
 	}
 
-	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+	for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		if (!size)
 			FT_Set_Pixel_Sizes(iter->second, 0, PIXELSIZE);
 		else
@@ -824,7 +821,7 @@ void Text::PrintStatusMessage(const char *msg)
 
 void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 {
-	for (int i=0;i<PAGE_HEIGHT*PAGE_HEIGHT;i++)
+	for (int i=0;i<display.height*display.height;i++)
 		screen[i] = RGB15(r,g,b) | BIT(15);
 }
 
@@ -841,18 +838,16 @@ void Text::PrintSplash(u16 *screen)
 	SetPixelSize(size);
 	SetInvert(invert);
 	SetScreen(s);
-	
-	swiWaitForVBlank();
 }
 
-void Text::SetFontFile(const char *filename, u8 style)
+void Text::SetFontFile(const char *path, u8 style)
 {
-	if(!strcmp(filenames[style].c_str(),filename)) return;
-	filenames[style] = filename;
-	if(initialized) ClearCache(style);
+	if (!strcmp(filenames[style].c_str(), path)) return;
+	filenames[style] = std::string(path);
+	CreateFace(style);
 }
 
-string Text::GetFontFile(u8 style)
+std::string Text::GetFontFile(u8 style)
 {
 	return filenames[style];
 }
@@ -863,48 +858,3 @@ bool Text::SetFace(u8 astyle)
 	face = faces[style];
 	return true;
 }
-
-/*
-FT_Face Text::GetFace(u8 style)
-{
-	return face;
-
-	map<u8, FT_Face>::iterator iter = faces.find(style);
-	if (iter != faces.end())
-		return iter->second;
-	else
-		return faces[TEXT_STYLE_REGULAR];
-}
-*/
-
-int asciiart() {
-  auto ft = typesetter();
-  auto error = renderer(ft.face);
-  free_ft(ft);
-  return error;
-}
-
-const char* ErrorString(u8 c) {
-	switch (c) {
-		case 0:
-		return "ok";
-		break;
-		default:
-		return "unknown error";
-	}
-}
-
-//    "no error",
-//     "cannot open resource" ,
-//     "unknown file format" ,
-//     "broken file" ,
-//     "invalid FreeType version" 
-//     "module version is too low", 
-//     "invalid argument" 
-//     "unimplemented feature" 
-//     "broken table" 
-//     "broken offset within table" 
-//     "array allocation size too large" 
-//     "missing module" 
-//     "missing property" 
-// ]

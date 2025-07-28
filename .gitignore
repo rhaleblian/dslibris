@@ -8,6 +8,7 @@
 *.img
 *.img.idx
 /*.tar.*
+/*.txt
 /*.zip
 #.*#
 .DS_Store
@@ -18,4 +19,3 @@
 /dslibris.3dsx
 /dslibris.lst
 /dslibris.smdh
-/tmp

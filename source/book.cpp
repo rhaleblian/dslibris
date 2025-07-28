@@ -206,15 +206,12 @@ u8 Book::Open() {
 
 u8 Book::Index()
 {
-	if(format == FORMAT_EPUB)
-	{
-		std::string path;
-		path.append(GetFolderName());
-		path.append("/");
-		path.append(GetFileName());
-		int err = epub(this,path,true);
-		return err;
-	} else return Parse(false);
+	std::string path;
+	path.append(GetFolderName());
+	path.append("/");
+	path.append(GetFileName());
+	int err = epub(this,path,true);
+	return err;
 }
 
 u8 Book::Parse(bool fulltext)

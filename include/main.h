@@ -38,8 +38,6 @@
 #define SPLASH_LEFT 28
 #define SPLASH_TOP 44
 
-#define FONTDIR "Font"
-#define BOOKDIR "Book"
 #define LOGFILEPATH "dslibris.log"
 #define PREFSPATH "dslibris.xml"
 
@@ -50,12 +48,12 @@
 #define FONTBROWSERFILE "LiberationSans-Regular.ttf"
 #define FONTSPLASHFILE "LiberationSans-Regular.ttf"
 
-void halt();
-void halt(const char *msg);
+int halt(int vblanks = -1);
+int halt(const char *msg, int vblanks = -1);
 
 //! For drawing splash screen.
-int getSize(uint8 *source, uint16 *dest, uint32 arg);
-uint8 readByte(uint8 *source);
+int getSize(u8 *source, u16 *dest, u32 arg);
+u8 readByte(u8 *source);
 void drawstack(u16 *screen);
 
 #endif

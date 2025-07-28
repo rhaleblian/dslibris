@@ -24,18 +24,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <stdio.h>
 #include "button.h"
 
-Button::Button() {
-}
+Button::Button() {}
 
 void Button::Init(Text *typesetter) {
 	ts = typesetter;
-	draw_border = false;
+	draw_border = true;
 	origin.x = 0;
 	origin.y = 0;
 	extent.x = 192;
-	extent.y = 32;
+	extent.y = 34;
 	style = BUTTON_STYLE_BOOK;
-	text = "";
+	text.pixelsize = 12;
+	text.style = TEXT_STYLE_BROWSER;
+	text1 = "";
 	text2 = "";
 }
 
@@ -45,7 +46,7 @@ void Button::Label(const char *s) {
 }
 
 void Button::SetLabel1(std::string s) {
-	text = s;
+	text1 = s;
 }
 
 void Button::SetLabel2(std::string s) {
@@ -62,66 +63,71 @@ void Button::Resize(u16 x, u16 y) {
 	extent.y = y;
 }
 
-void Button::Draw(u16 *fb, bool highlight) {
+void Button::Draw(u16 *screen, bool highlight) {
+	// push state
+	int  save_pixelsize = ts->GetPixelSize();
+	bool save_invert = ts->GetInvert();
+	auto save_screen = ts->GetScreen();
+	auto save_style = ts->GetStyle();
+	auto save_usebgcolor = ts->usebgcolor;
+
+	u16 x, y;
 	coord_t ul, lr;
 	ul.x = origin.x;
 	ul.y = origin.y;
 	lr.x = origin.x + extent.x;
 	lr.y = origin.y + extent.y;
+	int w = ts->display.height;  // no really
+	// char msg[64]; sprintf(msg, "%d\n", w); app->PrintStatus(msg);
+	u16 bgcolor = RGB15(30,30,30)|BIT(15);
+	if(highlight) bgcolor = RGB15(31,31,15)|BIT(15);
+	if(highlight) ts->usebgcolor = true;
 
-	u16 x;
-	u16 y;
+	ts->SetScreen(screen);
+	ts->SetInvert(false);
+	ts->SetStyle(text.style);
 
-	u16 bgcolor;
-	if(highlight) bgcolor = RGB15(31,31,15) | BIT(15);
-	else bgcolor = RGB15(30,30,30) | BIT(15);
 	for (y=ul.y+1;y<lr.y-1;y++) {
 		for (x=ul.x+1;x<lr.x-1;x++) {
-			fb[y*SCREEN_WIDTH + x] = bgcolor;
+			screen[y*w + x] = bgcolor;
 		}
 	}
 
 	if (draw_border) {
-		u16 bordercolor = RGB15(22,22,22) | BIT(15);
-		for (x=ul.x;x<lr.x;x++) {
-			fb[ul.y*SCREEN_WIDTH + x] = bordercolor;
-			fb[lr.y*SCREEN_WIDTH + x] = bordercolor;
+		u16 bordercolor = RGB15(22,22,22)|BIT(15);
+		for (int x=ul.x;x<lr.x;x++) {
+			screen[ul.y*w + x] = bordercolor;
+			screen[lr.y*w + x] = bordercolor;
 		}
-		for (y=ul.y;y<lr.y;y++) {
-			fb[y*SCREEN_WIDTH + ul.x] = bordercolor;
-			fb[y*SCREEN_WIDTH + lr.x-1] = bordercolor;
+		for (int y=ul.y;y<lr.y;y++) {
+			screen[y*w + ul.x] = bordercolor;
+			screen[y*w + lr.x-1] = bordercolor;
 		}
 	}
 
-	bool invert = ts->GetInvert();
-	ts->SetScreen(fb);
-	ts->SetInvert(false);
-	ts->GetPen(&x,&y);
-
-	ts->SetPen(ul.x+6, ul.y + ts->GetHeight());
-	if(highlight) ts->usebgcolor = true;
-
-	if (text.length()) {
+	if (text1.length()) {
 		const int s1 = style ? 1 : -1;
-		ts->SetPixelSize(ts->GetPixelSize()+s1);
-		uint8_t len = ts->GetCharCountInsideWidth(text.c_str(),
-			TEXT_STYLE_BROWSER, SCREEN_HEIGHT);
-		ts->PrintString((const char*)text.substr(0, len).c_str(),
-			TEXT_STYLE_BROWSER);
-		ts->SetPixelSize(ts->GetPixelSize()-s1);
+		ts->SetPixelSize(text.pixelsize+s1);
+		ts->SetPen(ul.x+6, ul.y+ts->GetHeight());
+		u8 len = ts->GetCharCountInsideWidth(text1.c_str(),
+			text.style, lr.x-ul.x-4);
+		ts->PrintString(text1.substr(0, len).c_str(),
+			text.style);
 	}
 
 	if (text2.length()) {
 		const int s2 = style ? -1 : 0;
-		ts->SetPixelSize(ts->GetPixelSize()+s2);
+		ts->SetPixelSize(text.pixelsize+s2);
 		ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
-		ts->PrintString((const char *)text2.c_str(), TEXT_STYLE_BROWSER);
-		ts->SetPixelSize(ts->GetPixelSize()-s2);
+		ts->PrintString(text2.c_str(), text.style);
 	}
 
-	ts->usebgcolor = false;
-	ts->SetPen(x,y);
-	ts->SetInvert(invert);
+	// pop state
+	ts->SetInvert(save_invert);
+	ts->SetPixelSize(save_pixelsize);
+	ts->SetScreen(save_screen);
+	ts->SetStyle(save_style);
+	ts->usebgcolor = save_usebgcolor;
 }
 
 bool Button::EnclosesPoint(u16 x, u16 y)

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package version="3.0" unique-identifier="epub-id-1" prefix="ibooks: http://vocabulary.itunes.apple.com/rdf/ibooks/vocabulary-extensions-1.0/" xmlns="http://www.idpf.org/2007/opf">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:identifier id="epub-id-1">urn:uuid:a45006fc-ce6e-472f-831e-6a9c1fddeefc</dc:identifier>
+    <dc:title id="epub-title-1">Quick Start</dc:title>
+    <dc:date id="epub-date">2020-06-06T23:06:33Z</dc:date>
+    <dc:language>en-US</dc:language>
+    <dc:creator id="epub-creator-1">Ray Haleblian</dc:creator>
+    <meta refines="#epub-creator-1" property="role" scheme="marc:relators">aut</meta>
+    <meta property="dcterms:modified">2025-07-23T14:49:45Z</meta>
+    <meta name="Sigil version" content="2.6.0"/>
+  </metadata>
+  <manifest>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="style" href="styles/stylesheet1.css" media-type="text/css"/>
+    <item id="title_page_xhtml" href="text/title_page.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ch001_xhtml" href="text/ch001.xhtml" media-type="application/xhtml+xml"/>
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="title_page_xhtml" linear="yes"/>
+    <itemref idref="ch001_xhtml"/>
+  </spine>
+  <guide>
+    <reference type="toc" title="Quick Start" href="nav.xhtml"/>
+  </guide>
+</package>

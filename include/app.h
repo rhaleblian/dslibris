@@ -18,9 +18,7 @@
  To contact the copyright holder: rayh23@sourceforge.net
  */
 
-#ifndef APP_H
-#define APP_H
-
+#pragma once
 /*!
 \mainpage
 
@@ -67,6 +65,7 @@ https://github.com/rhaleblian/dslibris
 #define APP_MODE_PREFS_FONT 3
 #define APP_MODE_PREFS_FONT_BOLD 4
 #define APP_MODE_PREFS_FONT_ITALIC 5
+#define APP_MODE_PREFS_FONT_BOLDITALIC 6
 #define APP_URL "http://github.com/rhaleblian/dslibris"
 
 #define PREFS_BUTTON_COUNT 7
@@ -76,7 +75,7 @@ https://github.com/rhaleblian/dslibris
 #define PREFS_BUTTON_FONT_BOLD 3
 #define PREFS_BUTTON_FONT_BOLDITALIC 4
 #define PREFS_BUTTON_PARASPACING 5
-#define PREFS_BUTTON_FLIPORIENTATION 6
+#define PREFS_BUTTON_ORIENTATION 6
 
 
 //! \brief Main application.
@@ -85,36 +84,32 @@ https://github.com/rhaleblian/dslibris
 //! interaction loop, drawing everything but text, and logging.
 
 class App {
-	private:
-	void InitScreens();
-	void SetBrightness(u8 b);
-	void SetOrientation(bool flip);
-	void WifiInit();
-	bool WifiConnect();
-	void Fatal(const char *msg);
-	void FlipOrientPrefs();
 
 	public:
+
+	App();
+	~App();
+
 	Text *ts;
-	Prefs myprefs;   //?
-	Prefs *prefs;    //?
-	u8 brightness;   //! 4 levels for the Lite.
-	u8 mode; 	     //! Are we in book or browser mode?
-	string fontdir;  //! Default location to search for TTFs.
-	bool console;    //! Can we print to console at the moment?
-	
+	// Prefs myprefs;   //! User-configurable settings.
+	Prefs *prefs;	 //! User-configurable settings.
+	u8 brightness;   //! DISABLED. 4 levels for the Lite.
+	u8 mode; 	     //! Current mode (browser, prefs, book, font)
+	std::string fontdir;  //! Directory to search for font files
+	bool melonds;    //! Are we running in melonDS?
+
 	//! key functions are remappable to support screen flipping.
 	struct {
 		u16 up,down,left,right,l,r,a,b,x,y,start,select;
-		uint32 downrepeat;
+		u32 downrepeat;
 	} key;
-	
-	vector<Button*> buttons;
+
+	std::vector<Button*> buttons;
 	Button buttonprev, buttonnext, buttonprefs; //! Buttons on browser bottom.
 	//! index into book vector denoting first book visible on library screen. 
-	u8 browserstart; 
-	string bookdir;  //! Search here for XHTML.
-	vector<Book*> books;
+	u8 browserstart;
+	std::string bookdir;  //! Search here for XHTML.
+	std::vector<Book*> books;
 	u8 bookcount;
 	//! which book is currently selected in browser?
 	Book* bookselected;
@@ -127,7 +122,7 @@ class App {
 	//! user data block passed to expat callbacks.
 	parsedata_t parsedata;
 	//! not used yet; will contain pagination indices for caching.
-	vector<u16> pageindices;
+	std::vector<u16> pageindices;
 	u8 orientation;
 	u8 invert;
 	u8 paraspacing, paraindent;
@@ -140,27 +135,22 @@ class App {
 	Button prefsButtonFontBoldItalic;
 	Button prefsButtonFontSize;
 	Button prefsButtonParaspacing;
-	Button prefsButtonFlipOrientation;
+	Button prefsButtonOrientation;
 	Button* prefsButtons[PREFS_BUTTON_COUNT];
 	u8 prefsSelected;
 	
 	unsigned int fontSelected;
 	unsigned int fontPage;
-	vector<Button*>fontButtons;
-
-	//BImage *image0;
-	//BScreen *bscreen0;
-	//BProgressBar *progressbar;
-
-	App();
-	~App();
+	std::vector<Button*>fontButtons;
 	
-	//! in App.cpp
+	// app.cpp
 	void CycleBrightness();
 	void PrintStatus(const char *msg);
-	void PrintStatus(string msg);
+	void PrintStatus(std::string msg);
 	void Flip();
+	int  Run(void);
 	void SetProgress(int amount);
+	touchPosition TouchRead();
 	void UpdateClock();
 
 	void Log(const char*);
@@ -168,55 +158,59 @@ class App {
 	void Log(const std::string);
 	void Log(const char *format, const int value);
 
-	int  Run(void);
 	bool parse_in(parsedata_t *data, context_t context);
 	void parse_init(parsedata_t *data);
 	context_t parse_pop(parsedata_t *data);
 	void parse_error(XML_ParserStruct *ps);
 	void parse_push(parsedata_t *data, context_t context);
-
-	//! in App_Browser.cpp
-	void HandleEventInBrowser();
-	void browser_init(void);
-	void browser_draw(void);
-	void browser_nextpage(void);
-	void browser_prevpage(void);
-	void browser_redraw(void);
 	
-	//! in App_Book.cpp
+	// app_book.cpp
 	void HandleEventInBook();
 	int  GetBookIndex(Book*);
-	void AttemptBookOpen();
 	u8   OpenBook(void);
 	
-	//! in App_Prefs.cpps
-	void HandleEventInPrefs();
+	private:
+
+	bool browser_view_dirty;
+	bool font_view_dirty;
+	bool prefs_view_dirty;
+
+	int  FindBooks();
+	void InitScreens();
+	void SetBrightness(u8 b);
+	void SetOrientation(bool flipped);
+
+	// app_Browser.cpp
+	void browser_draw();
+	void browser_handleevent();
+	void browser_init();
+	void browser_nextpage();
+	void browser_prevpage();
+
+	// app_font.cpp
+	void FontButton();
+	void FontDraw();
+	void FontInit();
+	void FontHandleEvent();
+	void FontHandleTouchEvent();
+	void FontNextPage();
+	void FontPreviousPage();
+
+	// app_prefs.cpp
+	void PrefsHandleEvent();
 	void PrefsInit();
 	void PrefsDraw();
-	void PrefsDraw(bool redraw);
 	void PrefsButton();
 	void PrefsIncreasePixelSize();
 	void PrefsDecreasePixelSize();
 	void PrefsIncreaseParaspacing();
 	void PrefsDecreaseParaspacing();
+	void PrefsFlipOrientation();
 	void PrefsRefreshButtonFont();
 	void PrefsRefreshButtonFontBold();
 	void PrefsRefreshButtonFontItalic();
 	void PrefsRefreshButtonFontBoldItalic();
 	void PrefsRefreshButtonFontSize();
 	void PrefsRefreshButtonParaspacing();
-	void PrefsRefreshButtonFlipOrientation();
-	
-	//! in App_Font.cpp
-	void HandleEventInFont();
-	void FontInit();
-	void FontDeinit();
-	void FontDraw();
-	void FontDraw(bool redraw);
-	void FontNextPage();
-	void FontPreviousPage();
-	void FontButton();
+	void PrefsRefreshButtonOrientation();
 };
-
-#endif
-

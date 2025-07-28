@@ -28,21 +28,19 @@ INCLUDES	:=	include build
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-mthumb -mthumb-interwork
+ARCH	:=	-march=armv5te -mtune=arm946e-s -mthumb
 
-CFLAGS	:=	-Wall -O2 \
-		-march=armv5te -mtune=arm946e-s -fomit-frame-pointer \
-		-ffast-math \
-		$(ARCH)
+CFLAGS	:= -g -Wall -O2 -ffunction-sections -fdata-sections\
+	$(ARCH) $(INCLUDE) -DARM9
 
-# symbols, for maybe getting GDB to work again
-# CFLAGS	+=	-g
+# debugging symbols
+CFLAGS	+=	-g
 
-# elide code that borks melonDS 
-# CFLAGS	+=	-DMELONDS
-
+# freetype
 CFLAGS  +=	-I$(PWD)/portlibs/nds/include/freetype2
-CFLAGS	+=	$(INCLUDE) -DARM9
+# zlib minizip
+CFLAGS  +=	-I$(DEVKITPRO)/portlibs/nds/include/minizip -DIOAPI_NO_64
+
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ncx version="2005-1" xmlns="http://www.daisy.org/z3986/2005/ncx/">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:a45006fc-ce6e-472f-831e-6a9c1fddeefc" />
+    <meta name="dtb:depth" content="1" />
+    <meta name="dtb:totalPageCount" content="0" />
+    <meta name="dtb:maxPageNumber" content="0" />
+  </head>
+  <docTitle>
+    <text>Quick Start</text>
+  </docTitle>
+  <navMap>
+    <navPoint id="navPoint-0">
+      <navLabel>
+        <text>Quick Start</text>
+      </navLabel>
+      <content src="text/title_page.xhtml" />
+    </navPoint>
+    <navPoint id="navPoint-1">
+      <navLabel>
+        <text>Quick Start</text>
+      </navLabel>
+      <content src="text/ch001.xhtml#quick-start" />
+      <navPoint id="navPoint-2">
+        <navLabel>
+          <text>Adding Books</text>
+        </navLabel>
+        <content src="text/ch001.xhtml#adding-books" />
+      </navPoint>
+      <navPoint id="navPoint-3">
+        <navLabel>
+          <text>Navigation</text>
+        </navLabel>
+        <content src="text/ch001.xhtml#navigation" />
+      </navPoint>
+      <navPoint id="navPoint-4">
+        <navLabel>
+          <text>Adding Fonts</text>
+        </navLabel>
+        <content src="text/ch001.xhtml#adding-fonts" />
+      </navPoint>
+    </navPoint>
+  </navMap>
+</ncx>

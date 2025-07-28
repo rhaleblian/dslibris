@@ -10,22 +10,21 @@
 
 #define PARSEBUFSIZE 1024*64
 
-Prefs::Prefs() {
-	Init();
-}
-Prefs::Prefs(App *parent) { Init(); app = parent; }
+Prefs::Prefs(App *_app) { app = _app; Init(); }
 Prefs::~Prefs() {}
 
 //! \return 0: success, 255: file open failure, 254: no bytes read, 253: parse failure.
 int Prefs::Read()
 {
 	int err = 0;
+
+	FILE *fp = fopen(PREFSPATH,"r");
+	if (!fp)
+	{ err = 255; return err; }
+
 	parsedata_t pdata;
 	app->parse_init(&pdata);
 	pdata.prefs = this;
-		
-	FILE *fp = fopen(PREFSPATH,"r");
-	if (!fp) { err = 255; return err; }
 
 	XML_Parser p = XML_ParserCreate(NULL);
 	if(!p) { fclose(fp); err = 254; return err; }
@@ -41,8 +40,7 @@ int Prefs::Read()
 		enum XML_Status status = 
 			XML_ParseBuffer(p, bytes_read, bytes_read == 0);
 		if(status == XML_STATUS_ERROR) { 
-			app->parse_error(p);
-			err = 253;
+			err = XML_GetErrorCode(p);
 			break;
 		}
 		if (bytes_read == 0) break;
@@ -50,32 +48,28 @@ int Prefs::Read()
 	XML_ParserFree(p);
 	fclose(fp);
 	return err;
-
-	struct stat st;
-	stat(PREFSPATH,&st);
-	struct timeval time;
-	gettimeofday(&time,NULL);
-	char msg[64];
-	sprintf(msg,"info : file timestamp %lld",st.st_mtime);
-	app->Log(msg);
-	sprintf(msg,"info : current time %lld",time.tv_sec);
-	app->Log(msg);
 }
 
-//! \return Error code, 0: success.
+//! Write settings to PREFSPATH.
+//! \return Error code.
 int Prefs::Write()
 {
+	if (app->melonds) return 0;
+
 	int err = 0;
-	FILE* fp = fopen(PREFSPATH,"w");
+	int invert = 0;
+
+	if (app) invert = app->ts->GetInvert();
+
+	FILE* fp = fopen(PREFSPATH, "w");
 	if(!fp) return 255;
 	
-	fprintf(fp, "<dslibris>\n");
+	fprintf(fp, "<dslibris format=\"2\">\n");
 	if(swapshoulder)
-		fprintf(fp, "<option swapshoulder=\"%d\" />\n",swapshoulder);		
-	fprintf(fp, "\t<screen brightness=\"%d\" invert=\"%d\" flip=\"%d\" />\n",
-		app->brightness,
+		fprintf(fp, "<option swapshoulder=\"%d\" />\n",swapshoulder);
+	fprintf(fp, "\t<screen invert=\"%d\" flip=\"%d\" />\n",
 		//TODO FIX THIS
-		0,//app->ts->GetInvert(),
+		invert,
 		app->orientation
 		);
 	fprintf(fp,	"\t<margin top=\"%d\" left=\"%d\" bottom=\"%d\" right=\"%d\" />\n",	
@@ -91,13 +85,7 @@ int Prefs::Write()
  	fprintf(fp, "\t<paragraph indent=\"%d\" spacing=\"%d\" />\n",
 			app->paraindent,
 			app->paraspacing);
-	/* TODO save pagination data with current book to cache it to disk.
-	   store timestamp too in order to invalidate caches.
-	vector<u16> pageindices;
-	for(u16 i=0;i<app->pagecount;i++) {}
-	*/
-	fprintf(fp, "\t<books path=\"%s\" reopen=\"%d\">\n",
-			app->bookdir.c_str(),
+	fprintf(fp, "\t<books reopen=\"%d\">\n",
 			app->reopen);
     
 	for (u8 i = 0; i < app->bookcount; i++) {
@@ -107,7 +95,9 @@ int Prefs::Write()
 		if(app->bookcurrent == app->books[i]) fprintf(fp," current=\"1\"");
 		fprintf(fp,">\n");
 		std::list<u16>* bookmarks = book->GetBookmarks();
-		for (std::list<u16>::iterator j = bookmarks->begin(); j != bookmarks->end(); j++) {
+		for (std::list<u16>::iterator j = bookmarks->begin();
+			j != bookmarks->end();
+			j++) {
 			fprintf(fp, "\t\t\t<bookmark page=\"%d\" word=\"%d\" />\n",
 				*j + 1,0);
 		}
