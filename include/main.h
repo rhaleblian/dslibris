@@ -38,8 +38,6 @@
 #define SPLASH_LEFT 28
 #define SPLASH_TOP 44
 
-#define FONTDIR "Font"
-#define BOOKDIR "Book"
 #define LOGFILEPATH "dslibris.log"
 #define PREFSPATH "dslibris.xml"
 

@@ -136,7 +136,7 @@ FT_Error Text::InitFreeTypeCache(void) {
 	error = FTC_CMapCache_New(cache.manager,&cache.cmap);
 	if(error) return error;
 
-	sprintf(face_id.file_path, "%s/%s", FONTDIR, filenames[TEXT_STYLE_REGULAR].c_str());
+	sprintf(face_id.file_path, "%s/%s", app->fontdir.c_str(), filenames[TEXT_STYLE_REGULAR].c_str());
 	face_id.face_index = 0;
 	sprintf(msg, "%s %s %d\n", filenames[TEXT_STYLE_REGULAR].c_str(), face_id.file_path, face_id.face_index);
 	app->Log(msg);
@@ -151,7 +151,7 @@ FT_Error Text::InitFreeTypeCache(void) {
 
 FT_Error Text::CreateFace(int style) {
 	// TODO check for leakage
-	std::string path = std::string(FONTDIR) + "/" + filenames[style];
+	std::string path = app->fontdir + "/" + filenames[style];
 	error = FT_New_Face(library, path.c_str(), 0, &face);
 	if (error) app->PrintStatus(path.c_str());
 	else faces[style] = face;

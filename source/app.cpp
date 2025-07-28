@@ -48,8 +48,8 @@ App::App()
 		fclose(fd);
 		melonds = true;
 	}
-	fontdir = std::string(FONTDIR);
-	bookdir = std::string(BOOKDIR);
+	fontdir = std::string("font");
+	bookdir = std::string("book");
 	bookcount = 0;
 	bookselected = NULL;
 	bookcurrent = NULL;
