@@ -10,10 +10,7 @@
 
 #define PARSEBUFSIZE 1024*64
 
-Prefs::Prefs() {
-	Init();
-}
-Prefs::Prefs(App *parent) { Init(); app = parent; }
+Prefs::Prefs(App *_app) { app = _app; Init(); }
 Prefs::~Prefs() {}
 
 //! \return 0: success, 255: file open failure, 254: no bytes read, 253: parse failure.
@@ -35,22 +32,17 @@ int Prefs::Read()
 	XML_SetStartElementHandler(p, prefs_start_hndl);
 	XML_SetEndElementHandler(p, prefs_end_hndl);
 	XML_SetUserData(p, (void *)&pdata);
-	printf("yo\n");
 	while (true)
 	{
 	 	void *buff = XML_GetBuffer(p, PARSEBUFSIZE);
 	 	int bytes_read = fread(buff, sizeof(char), PARSEBUFSIZE, fp);
 		if(bytes_read < 0) { err = 254; break; }
-		printf("yo\n");
 		enum XML_Status status = 
 			XML_ParseBuffer(p, bytes_read, bytes_read == 0);
 		if(status == XML_STATUS_ERROR) { 
-			printf("no\n");
-			// app->parse_error(p);
 			err = XML_GetErrorCode(p);
 			break;
 		}
-		printf("yo\n");
 		if (bytes_read == 0) break;
 	}
 	XML_ParserFree(p);

@@ -76,7 +76,7 @@ App::App()
 	key.x = KEY_X;
 	key.y = KEY_Y;
 
-	prefs = &myprefs;
+	prefs = new Prefs(this);
 	prefs->app = this;
 
 	browser_view_dirty = false;
@@ -89,8 +89,8 @@ App::App()
 
 App::~App()
 {
-	delete prefs;
-	delete ts;
+	if (prefs) delete prefs;
+	if (ts) delete ts;
 	for(vector<Book*>::iterator it=books.begin();it!=books.end();it++)
 		delete *it;
 	books.clear();
@@ -176,7 +176,7 @@ int App::Run(void)
 			case APP_MODE_PREFS_FONT_BOLD:
 			case APP_MODE_PREFS_FONT_ITALIC:
 			case APP_MODE_PREFS_FONT_BOLDITALIC:
-			HandleEventInFont();
+			FontHandleEvent();
 			if (font_view_dirty) FontDraw();
 			break;
 		}

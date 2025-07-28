@@ -24,7 +24,6 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 #define BPP 7  // buttons per page
-#define BUTTONHEIGHT 32
 
 void App::FontInit()
 {
@@ -52,7 +51,7 @@ void App::FontInit()
 		{
 			Button *b = new Button();
 			b->Init(ts);
-			b->Move(2, (fontButtons.size() % BPP) * 32);
+			b->Move(0, (fontButtons.size() % BPP) * b->GetHeight());
 			b->Label(filename);
  			fontButtons.push_back(b);
 		}
@@ -60,7 +59,7 @@ void App::FontInit()
 	closedir(dp);
 }
 
-void App::HandleEventInFont()
+void App::FontHandleEvent()
 {
 	auto keys = keysDown();
 
@@ -133,14 +132,6 @@ void App::FontHandleTouchEvent() {
 			}
 		}
 	}
-}
-
-void App::FontDeinit()
-{
-	for (u8 i = 0; i < fontButtons.size(); i++) {
-		if(fontButtons[i]) delete fontButtons[i];
-	}
-	fontButtons.clear();
 }
 
 void App::FontDraw()

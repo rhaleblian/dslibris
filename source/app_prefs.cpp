@@ -23,40 +23,38 @@
 
 void App::PrefsInit()
 {	
-	const int x = 2;
-
 	prefsButtonFont.Init(ts);
-	prefsButtonFont.Move(x, PREFS_BUTTON_FONT * prefsButtonFont.GetHeight());
+	prefsButtonFont.Move(0, PREFS_BUTTON_FONT * prefsButtonFont.GetHeight());
 	PrefsRefreshButtonFont();
 	prefsButtons[PREFS_BUTTON_FONT] = &prefsButtonFont;
 	
 	prefsButtonFontBold.Init(ts);
-	prefsButtonFontBold.Move(x, PREFS_BUTTON_FONT_BOLD * prefsButtonFontBold.GetHeight());
+	prefsButtonFontBold.Move(0, PREFS_BUTTON_FONT_BOLD * prefsButtonFontBold.GetHeight());
 	PrefsRefreshButtonFontBold();
 	prefsButtons[PREFS_BUTTON_FONT_BOLD] = &prefsButtonFontBold;
 		
 	prefsButtonFontItalic.Init(ts);
-	prefsButtonFontItalic.Move(x, PREFS_BUTTON_FONT_ITALIC * prefsButtonFontItalic.GetHeight());
+	prefsButtonFontItalic.Move(0, PREFS_BUTTON_FONT_ITALIC * prefsButtonFontItalic.GetHeight());
 	PrefsRefreshButtonFontItalic();
 	prefsButtons[PREFS_BUTTON_FONT_ITALIC] = &prefsButtonFontItalic;
 
 	prefsButtonFontBoldItalic.Init(ts);
-	prefsButtonFontBoldItalic.Move(x, PREFS_BUTTON_FONT_BOLDITALIC * prefsButtonFontBoldItalic.GetHeight());
+	prefsButtonFontBoldItalic.Move(0, PREFS_BUTTON_FONT_BOLDITALIC * prefsButtonFontBoldItalic.GetHeight());
 	PrefsRefreshButtonFontBoldItalic();
 	prefsButtons[PREFS_BUTTON_FONT_BOLDITALIC] = &prefsButtonFontBoldItalic;
 	
 	prefsButtonFontSize.Init(ts);
-	prefsButtonFontSize.Move(x, PREFS_BUTTON_FONTSIZE * prefsButtonFontSize.GetHeight());
+	prefsButtonFontSize.Move(0, PREFS_BUTTON_FONTSIZE * prefsButtonFontSize.GetHeight());
 	PrefsRefreshButtonFontSize();
 	prefsButtons[PREFS_BUTTON_FONTSIZE] = &prefsButtonFontSize;
 	
 	prefsButtonParaspacing.Init(ts);
-	prefsButtonParaspacing.Move(x, PREFS_BUTTON_PARASPACING * prefsButtonParaspacing.GetHeight());
+	prefsButtonParaspacing.Move(0, PREFS_BUTTON_PARASPACING * prefsButtonParaspacing.GetHeight());
 	PrefsRefreshButtonParaspacing();
 	prefsButtons[PREFS_BUTTON_PARASPACING] = &prefsButtonParaspacing;
 	
 	prefsButtonOrientation.Init(ts);
-	prefsButtonOrientation.Move(x, PREFS_BUTTON_ORIENTATION * prefsButtonOrientation.GetHeight());
+	prefsButtonOrientation.Move(0, PREFS_BUTTON_ORIENTATION * prefsButtonOrientation.GetHeight());
 	PrefsRefreshButtonOrientation();
 	prefsButtons[PREFS_BUTTON_ORIENTATION] = &prefsButtonOrientation;
 
@@ -136,16 +134,15 @@ void App::PrefsDraw()
 
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
-	ts->SetStyle(TEXT_STYLE_BROWSER);
-	ts->SetPixelSize(PIXELSIZE);
 
 	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
 	{
-		prefsButtons[i]->Draw(ts->screenright, i == prefsSelected);
+		prefsButtons[i]->Draw(ts->screenright, i==prefsSelected);
 	}
 
-	buttonprefs.Label("  books");
-	buttonprefs.Draw(ts->screenright, false);
+	if (strcmp(buttonprefs.GetLabel(), "  books"))
+		buttonprefs.Label("  books");
+	buttonprefs.Draw(ts->screenright);
 
 	// restore state.
 	ts->SetStyle(style);
@@ -313,6 +310,8 @@ void App::PrefsFlipOrientation()
 {
 	orientation = !orientation;
 	prefs->Write();
+
+	prefs_view_dirty = true;
 }
 
 void App::PrefsButton()
@@ -330,10 +329,8 @@ void App::PrefsButton()
 		return;
 	}
 
-	PrintStatus("loading fonts...");
 	ts->SetScreen(ts->screenright);
 	ts->ClearScreen();
 	FontInit();
 	FontDraw();
-	PrintStatus("fonts loaded.");
 }

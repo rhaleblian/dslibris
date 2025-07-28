@@ -8,8 +8,8 @@ class Prefs
 public:
 	App *app;
 	long modtime;
-	Prefs();
-	Prefs(App *parent);
+	// Prefs();
+	Prefs(App *app);
 	~Prefs();
 	int Read();
 	int Write();

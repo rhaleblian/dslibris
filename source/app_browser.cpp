@@ -46,8 +46,8 @@ void App::browser_handleevent()
 		{
 			b++;
 			bookselected = books[b];
-			browser_view_dirty = true;
 			if (b >= browserstart + APP_BROWSER_BUTTON_COUNT) browser_nextpage();
+			browser_view_dirty = true;
 		}
 	}
 
@@ -60,8 +60,8 @@ void App::browser_handleevent()
 			b--;
 			bookselected = books[b];
 			// TODO does not allow highlight to update
-			browser_view_dirty = true;
 			if(b < browserstart) browser_prevpage();
+			browser_view_dirty = true;
 		}
 	}
 
@@ -102,20 +102,21 @@ void App::browser_handleevent()
 
 void App::browser_init(void)
 {
-	u8 i;
-	for (i=0;i<bookcount;i++)
+	for (int i=0;i<bookcount;i++)
 	{
 		Book *book = books[i];
 		buttons.push_back(new Button());
 		buttons[i]->Init(ts);
-		buttons[i]->Move(0,(i%APP_BROWSER_BUTTON_COUNT)*32);
-		if (strlen(books[i]->GetTitle()))
-			buttons[i]->Label(books[i]->GetTitle());
+		buttons[i]->Move(0,(i%APP_BROWSER_BUTTON_COUNT)*buttons[i]->GetHeight());
+		const char* title = books[i]->GetTitle();
+		if (title && strlen(title))
+			buttons[i]->SetLabel1(std::string(title));
 		else
-			buttons[i]->Label(books[i]->GetFileName());
-		if (book->GetAuthor())
-			buttons[i]->SetLabel2(*(book->GetAuthor()));
+			buttons[i]->SetLabel1(std::string(books[i]->GetFileName()));
+		if (book->GetAuthor().size())
+			buttons[i]->SetLabel2(book->GetAuthor());
 	}
+
 	buttonprev.Init(ts);
 	buttonprev.Move(2,238);
 	buttonprev.Resize(60,16);
@@ -170,8 +171,6 @@ void App::browser_draw(void)
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
 	ts->ClearScreen();
-	ts->SetStyle(TEXT_STYLE_BROWSER);
-	ts->SetPixelSize(PIXELSIZE);
 	for (int i=browserstart;
 		(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 		i++)
@@ -193,44 +192,4 @@ void App::browser_draw(void)
 	ts->SetStyle(style);
 
 	browser_view_dirty = false;
-}
-
-void App::browser_redraw()
-{
-	//! Redraw all buttons visible in the browser.
-	// only call this when incrementing or decrementing the
-	// selected book; otherwise use browser_draw().
-
-	// save state.
-	bool invert = ts->GetInvert();
-	u8 size = ts->GetPixelSize();
-	int style = ts->GetStyle();
-	
-	ts->SetScreen(ts->screenright);
-	ts->SetInvert(false);
-	ts->SetPixelSize(PIXELSIZE);
-	ts->SetStyle(TEXT_STYLE_BROWSER);
-	int b = GetBookIndex(bookselected);
-	buttons[b]->Draw(ts->screenright,true);
-	if(b > browserstart)
-		buttons[b-1]->Draw(ts->screenright,false);
-	if(b < bookcount-1 &&
-		(b - browserstart) < APP_BROWSER_BUTTON_COUNT-1)
-		buttons[b+1]->Draw(ts->screenright,false);
-
-	// restore state.
-	ts->SetInvert(invert);
-	ts->SetPixelSize(size);
-	ts->SetStyle(style);
-
-	browser_view_dirty = false;
-}
-
-void App::AttemptBookOpen()
-{
-	if (!OpenBook()) {
-		mode = APP_MODE_BOOK;
-		//UpdateClock();
-	} else
-		browser_draw();
 }

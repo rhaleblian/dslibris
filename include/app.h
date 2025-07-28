@@ -91,7 +91,7 @@ class App {
 	~App();
 
 	Text *ts;
-	Prefs myprefs;   //! User-configurable settings.
+	// Prefs myprefs;   //! User-configurable settings.
 	Prefs *prefs;	 //! User-configurable settings.
 	u8 brightness;   //! DISABLED. 4 levels for the Lite.
 	u8 mode; 	     //! Current mode (browser, prefs, book, font)
@@ -143,7 +143,7 @@ class App {
 	unsigned int fontPage;
 	vector<Button*>fontButtons;
 	
-	//! in App.cpp
+	// app.cpp
 	void CycleBrightness();
 	void PrintStatus(const char *msg);
 	void PrintStatus(string msg);
@@ -163,19 +163,10 @@ class App {
 	context_t parse_pop(parsedata_t *data);
 	void parse_error(XML_ParserStruct *ps);
 	void parse_push(parsedata_t *data, context_t context);
-
-	//! in App_Browser.cpp
-	void browser_handleevent();
-	void browser_init(void);
-	void browser_draw(void);
-	void browser_nextpage(void);
-	void browser_prevpage(void);
-	void browser_redraw(void);
 	
-	//! in App_Book.cpp
+	// app_book.cpp
 	void HandleEventInBook();
 	int  GetBookIndex(Book*);
-	void AttemptBookOpen();
 	u8   OpenBook(void);
 	
 	private:
@@ -189,15 +180,21 @@ class App {
 	void SetBrightness(u8 b);
 	void SetOrientation(bool flipped);
 
+	// app_Browser.cpp
+	void browser_draw();
+	void browser_handleevent();
+	void browser_init();
+	void browser_nextpage();
+	void browser_prevpage();
+
 	// app_font.cpp
-	void HandleEventInFont();
-	void FontInit();
-	void FontDeinit();
+	void FontButton();
 	void FontDraw();
+	void FontInit();
+	void FontHandleEvent();
 	void FontHandleTouchEvent();
 	void FontNextPage();
 	void FontPreviousPage();
-	void FontButton();
 
 	// app_prefs.cpp
 	void PrefsHandleEvent();

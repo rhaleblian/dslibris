@@ -26,7 +26,7 @@ public:
 	Book();
 	~Book();
 	format_t format;
-	inline std::string* GetAuthor() { return &author; }
+	inline std::string GetAuthor() { return author; }
 	std::list<u16>* GetBookmarks(void);
 	int  GetNextBookmark(void);
 	int  GetPreviousBookmark(void);
