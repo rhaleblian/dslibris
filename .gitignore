@@ -8,6 +8,7 @@
 *.img
 *.img.idx
 /*.tar.*
+/*.txt
 /*.zip
 #.*#
 .DS_Store

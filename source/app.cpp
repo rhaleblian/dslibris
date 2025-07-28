@@ -48,8 +48,8 @@ App::App()
 		fclose(fd);
 		melonds = true;
 	}
-	fontdir = string(FONTDIR);
-	bookdir = string(BOOKDIR);
+	fontdir = std::string(FONTDIR);
+	bookdir = std::string(BOOKDIR);
 	bookcount = 0;
 	bookselected = NULL;
 	bookcurrent = NULL;
@@ -91,7 +91,7 @@ App::~App()
 {
 	if (prefs) delete prefs;
 	if (ts) delete ts;
-	for(vector<Book*>::iterator it=books.begin();it!=books.end();it++)
+	for(std::vector<Book*>::iterator it=books.begin();it!=books.end();it++)
 		delete *it;
 	books.clear();
 }

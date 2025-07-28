@@ -167,7 +167,7 @@ void App::HandleEventInBook()
 int App::GetBookIndex(Book *b)
 {
 	if (!b) return -1;
-	vector<Book*>::iterator it;
+	std::vector<Book*>::iterator it;
 	int i=0;
 	for(it=books.begin(); it<books.end();it++,i++)
 	{

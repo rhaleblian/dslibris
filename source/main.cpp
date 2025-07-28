@@ -189,7 +189,7 @@ void prefs_start_hndl(	void *data,
 				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_BOLDITALIC);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
-					app->fontdir = string(attr[i+1]);
+					app->fontdir = std::string(attr[i+1]);
 			}
 		}
 	}
@@ -202,7 +202,7 @@ void prefs_start_hndl(	void *data,
 				app->reopen = atoi(attr[i+1]);
 			else if (!strcmp(attr[i], "path")) {
 				if (strlen(attr[i+1]))
-					app->bookdir = string(attr[i+1]);
+					app->bookdir = std::string(attr[i+1]);
 			}
         }
 	}
@@ -226,7 +226,7 @@ void prefs_start_hndl(	void *data,
 		
 		// Find the book index for this library entry
 		// and set context for later bookmarks.
-		vector<Book*>::iterator it;
+		std::vector<Book*>::iterator it;
 		for(it = app->books.begin(); it < app->books.end(); it++)
 		{
 			const char *bookname = (*it)->GetFileName();

@@ -95,7 +95,7 @@ class App {
 	Prefs *prefs;	 //! User-configurable settings.
 	u8 brightness;   //! DISABLED. 4 levels for the Lite.
 	u8 mode; 	     //! Current mode (browser, prefs, book, font)
-	string fontdir;  //! Directory to search for font files
+	std::string fontdir;  //! Directory to search for font files
 	bool melonds;    //! Are we running in melonDS?
 
 	//! key functions are remappable to support screen flipping.
@@ -104,12 +104,12 @@ class App {
 		u32 downrepeat;
 	} key;
 
-	vector<Button*> buttons;
+	std::vector<Button*> buttons;
 	Button buttonprev, buttonnext, buttonprefs; //! Buttons on browser bottom.
 	//! index into book vector denoting first book visible on library screen. 
 	u8 browserstart;
-	string bookdir;  //! Search here for XHTML.
-	vector<Book*> books;
+	std::string bookdir;  //! Search here for XHTML.
+	std::vector<Book*> books;
 	u8 bookcount;
 	//! which book is currently selected in browser?
 	Book* bookselected;
@@ -122,7 +122,7 @@ class App {
 	//! user data block passed to expat callbacks.
 	parsedata_t parsedata;
 	//! not used yet; will contain pagination indices for caching.
-	vector<u16> pageindices;
+	std::vector<u16> pageindices;
 	u8 orientation;
 	u8 invert;
 	u8 paraspacing, paraindent;
@@ -141,12 +141,12 @@ class App {
 	
 	unsigned int fontSelected;
 	unsigned int fontPage;
-	vector<Button*>fontButtons;
+	std::vector<Button*>fontButtons;
 	
 	// app.cpp
 	void CycleBrightness();
 	void PrintStatus(const char *msg);
-	void PrintStatus(string msg);
+	void PrintStatus(std::string msg);
 	void Flip();
 	int  Run(void);
 	void SetProgress(int amount);

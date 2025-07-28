@@ -98,14 +98,14 @@ Text::~Text()
 	
 	// homemade cache
 	ClearCache();
-	for(map<FT_Face, Cache*>::iterator iter = textCache.begin();
+	for(std::map<FT_Face, Cache*>::iterator iter = textCache.begin();
 		iter != textCache.end(); iter++) {
 		delete iter->second;
 	}
 	textCache.clear();
 	
 	// FreeType
-	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+	for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		FT_Done_Face(iter->second);
 	}
 	FT_Done_FreeType(library);
@@ -184,7 +184,7 @@ int Text::InitHomemadeCache(void) {
 	std::map<u8, FT_Face>::iterator iter;
 	for (iter = faces.begin(); iter != faces.end(); iter++) {
 		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
-		textCache.insert(make_pair(iter->second, new Cache()));
+		textCache.insert(std::make_pair(iter->second, new Cache()));
 	}
 
 	initialized = true;
@@ -268,7 +268,7 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 	dst->bitmap_left = src->bitmap_left;
 	dst->advance = src->advance;
 	//textCache[face]->cache_ucs[textCache[face]->cachenext] = ucs;
-	textCache[face]->cacheMap.insert(make_pair(ucs, dst));
+	textCache[face]->cacheMap.insert(std::make_pair(ucs, dst));
 	//textCache[face]->cachenext++;
 	//return textCache[face]->cachenext-1;
 	return ucs;
@@ -315,8 +315,7 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 			return &textCache[face]->glyphs[i];
 #endif	
 
-	map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
-	
+	std::map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
 	if (iter != textCache[face]->cacheMap.end()) {
 		stats_hits++;
 		hit = true;
@@ -335,7 +334,7 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 
 void Text::ClearCache()
 {
-	 for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+	 for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		 ClearCache(iter->second);
 	 }
 }
@@ -347,12 +346,11 @@ void Text::ClearCache(u8 style)
 
 void Text::ClearCache(FT_Face face)
 {
-	//textCache[face]->cachenext = 0;
-	map<u16, FT_GlyphSlot>::iterator iter;   
-	for(iter = textCache[face]->cacheMap.begin(); iter != textCache[face]->cacheMap.end(); iter++) {
+	for(std::map<u16, FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.begin();
+		iter != textCache[face]->cacheMap.end();
+		iter++) {
 		delete iter->second;
 	}
-
 	textCache[face]->cacheMap.clear();
 }
 
@@ -498,7 +496,7 @@ void Text::SetPixelSize(u8 size)
 		return;
 	}
 
-	for (map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
+	for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
 		if (!size)
 			FT_Set_Pixel_Sizes(iter->second, 0, PIXELSIZE);
 		else

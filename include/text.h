@@ -8,8 +8,6 @@
 #include FT_FREETYPE_H
 #include FT_CACHE_H
 
-using namespace std;
-
 //! Reference: FreeType2 online documentation
 #define EMTOPIXEL (float)(POINTSIZE * DPI/72.0)
 
@@ -60,7 +58,7 @@ class Cache {
 public:
 	//! Associates each glyph cache index (value)
 	//! with its Unicode code point (key).
-	map<u16, FT_GlyphSlot> cacheMap;
+	std::map<u16, FT_GlyphSlot> cacheMap;
 	//! ??
 	u16 cachenext;
 	
@@ -203,15 +201,15 @@ class Text {
 	// A: Homemade cache
 	TextCache cache;
 	TextFaceRec face_id;
-	map<FT_Face, Cache*> textCache;
+	std::map<FT_Face, Cache*> textCache;
 	
 	// B: FreeType cache subsystem
 	FTC_SBitRec sbit;
 	FTC_ImageTypeRec imagetype;
 	FT_Int charmap_index;
 	
-	map<u8, FT_Face> faces;
-	map<u8, std::string> filenames;
+	std::map<u8, FT_Face> faces;
+	std::map<u8, std::string> filenames;
 
 	//! Current style, as TEXT_FONT_STYLE.
 	int style;

@@ -217,14 +217,14 @@ int epub(Book *book, std::string name, bool metadataonly)
 	parsedata.ctx.clear();
 	parsedata.book = book;
 	parsedata.type = PARSE_CONTENT;
-	vector<std::string*> href;
+	std::vector<std::string*> href;
 	if(parsedata.spine.size()) {
 		// Use spine for reading order.
-		vector<epub_itemref*>::iterator itemref;
+		std::vector<epub_itemref*>::iterator itemref;
 		for(itemref=parsedata.spine.begin();
 			itemref!=parsedata.spine.end();
 			itemref++) {
-			vector<epub_item*>::iterator item;
+			std::vector<epub_item*>::iterator item;
 			for(item=parsedata.manifest.begin();
 				item!=parsedata.manifest.end();
 				item++) {
@@ -236,14 +236,14 @@ int epub(Book *book, std::string name, bool metadataonly)
 		}
 	}
 	else {
-		vector<epub_item*>::iterator item;
+		std::vector<epub_item*>::iterator item;
 		for(item=parsedata.manifest.begin();
 			item!=parsedata.manifest.end();
 			item++)
 			href.push_back(new std::string((*item)->href));
 	}
 		
-	vector<std::string*>::iterator it;
+	std::vector<std::string*>::iterator it;
 	for(it=href.begin();it!=href.end();it++)
 	{
 		size_t pos = (*it)->find_last_of('.');
