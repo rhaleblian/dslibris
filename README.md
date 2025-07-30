@@ -16,16 +16,18 @@ Download the zip file in the Releases section.
 
 # Installation
 
-See INSTALL.txt or the
+See the
 [Quickstart](https://github.com/rhaleblian/dslibris/wiki/User:-Quickstart)
 page in the Wiki.
+
+# Development
 
 ## Prerequisites
 
 Install devkitPro's toolchain for ARM, aka `devkitARM`.
 Then install the required devkitARM packages:
 
-    sudo dkp-pacman -S $(cat requirements.txt)
+    sudo dkp-pacman -S $(cat pacman.txt)
 
 ## Building
 

@@ -86,6 +86,10 @@ App::App()
 	prefsSelected = -1;
 	prefs_view_dirty = false;
 
+	browser_view_dirty = false;
+	prefs_view_dirty = false;
+	font_view_dirty = false;
+
 	ts = new Text();
 	ts->app = this;
 }

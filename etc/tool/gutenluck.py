@@ -19,7 +19,7 @@ if len(sys.argv) > 2:
 
 # For local files, infile remains unchanged. Nice.
 (infile,headers) = urllib.urlretrieve(infile)
-print 'infile: ' + infile
+print('infile: ' + infile)
 
 p1 = Popen([path_gut_program_root + "GutenMark",
             "--config=" + path_gut_config_root,

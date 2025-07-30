@@ -168,6 +168,8 @@ void App::PrefsHandleTouch() {
 			break;
 		}
 	}
+
+	if (prefs_view_dirty) PrefsDraw();
 }
 
 void App::PrefsIncreasePixelSize()

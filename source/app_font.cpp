@@ -148,6 +148,8 @@ void App::FontDraw()
 	u16* screen = ts->GetScreen();
 	int style = ts->GetStyle();
 	
+	ts->SetInvert(false);
+	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->ClearScreen();
 
 	for (u8 i = fontPage * 7; (i < fontButtons.size()) && (i < (fontPage + 1) * BPP); i++)
