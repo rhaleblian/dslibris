@@ -1,3 +1,5 @@
+#include "app.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdlib.h>
@@ -14,7 +16,6 @@
 
 #include "main.h"
 #include "parse.h"
-#include "app.h"
 #include "book.h"
 #include "button.h"
 #include "text.h"

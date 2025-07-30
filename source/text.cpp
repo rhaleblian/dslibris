@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 */
 
+#include "text.h"
+
 #include <iostream>
 #include <sstream>
 #include <sys/param.h>
@@ -29,10 +31,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "string.h"
 
 #include "app.h"
-// #include "ft.h"
 #include "main.h"
 #include "version.h"
-#include "text.h"
 
 extern char msg[];
 std::stringstream ss;

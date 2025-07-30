@@ -1,5 +1,4 @@
-#ifndef BOOK_H
-#define BOOK_H
+#pragma once
 
 #include "page.h"
 #include <nds.h>
@@ -59,6 +58,3 @@ public:
 	int  ParseHTML();
 	void Restore();
 };
-
-#endif
-

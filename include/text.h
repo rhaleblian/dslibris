@@ -1,8 +1,8 @@
-#ifndef _text_h
-#define _text_h
+#pragma once
 
-#include <string>
 #include <map>
+#include <nds.h>
+#include <string>
 
 #include "ft2build.h"
 #include FT_FREETYPE_H
@@ -67,47 +67,6 @@ public:
 	}
 };
 
-#if 0
-class Face {
-	Cache cache;
-	FT_Face ft_face;
-	Face() {
-		ft_face = NULL;
-		cache = new Cache();
-	}
-	Face(FT_Library library, std::string path, int index) {
-		FT_New_Face( library, path.c_str(), index, &ft_face );
-		cache = new Cache();
-	}
-	~Face() {
-		if(face) FT_Done_Face(face);
-		delete cache;
-	}
-};
-
-
-//! A map of a style ID to a Face.
-
-//! Multiple styles might use the same Face.
-
-class Style {
-	u8 id;
-	Face *face;
-	int pixelsize;
-
-	Style() {
-		id = TEXT_STYLE_REGULAR;
-		face = NULL;
-		pixelsize = PIXELSIZE;
-	}
-
-	Style(int type) {
-		Style::Style();
-		id = type;
-	}
-};
-#endif
-
 //! Typesetter singleton that provides all text rendering services.
 
 //! Implemented atop FreeType 2.
@@ -120,7 +79,6 @@ class Text {
 
 	App *app;
 	int pixelsize;
-	//! Not used ... really.
 	struct { u8 r; u8 g; u8 b; } bgcolor;
 	bool usebgcolor;
 	//! Pointers to screens and which one is current.
@@ -252,6 +210,3 @@ class Text {
 	void PrintString(const char *string, FT_Face face);
 	void ReportFace(FT_Face face);
 };
-
-#endif
-

@@ -1,3 +1,5 @@
+#include "prefs.h"
+
 #include <stdio.h>
 #include <vector>
 #include "sys/stat.h"
@@ -5,7 +7,6 @@
 #include "nds.h"
 #include "main.h"
 #include "app.h"
-#include "prefs.h"
 #include "book.h"
 
 #define PARSEBUFSIZE 1024*64

@@ -23,8 +23,7 @@ to render a full left and right screen of text.
 
 A Book contains a vector of Pages.
 */
-#ifndef PAGE_H
-#define PAGE_H
+#pragma once
 
 #include <nds.h>
 #include "book.h"
@@ -54,5 +53,3 @@ class Page {
 //	void Draw();
 	void Draw(Text *ts);
 };
-
-#endif

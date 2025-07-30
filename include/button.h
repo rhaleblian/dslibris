@@ -1,5 +1,4 @@
-#ifndef _button_h
-#define _button_h
+#pragma once
 
 #include "text.h"
 #include <unistd.h>
@@ -54,5 +53,3 @@ class Button {
 	void Resize(u16 x, u16 y);
 	bool EnclosesPoint(u16 x, u16 y);
 };
-
-#endif

@@ -18,8 +18,7 @@
  To contact the copyright holder: ray@haleblian.com
  */
 
-#ifndef _main_h_
-#define _main_h_
+#pragma once
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -55,5 +54,3 @@ int halt(const char *msg, int vblanks = -1);
 int getSize(u8 *source, u16 *dest, u32 arg);
 u8 readByte(u8 *source);
 void drawstack(u16 *screen);
-
-#endif
