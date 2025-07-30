@@ -64,10 +64,9 @@ void App::HandleEventInBook()
 	}
 	else if (keys & KEY_TOUCH)
 	{
-		// Turn page on touch.
-		touchPosition touch;
-		touchRead(&touch);
-		if ((orientation && touch.py > 95) || (touch.py < 96))
+		// Turn page.
+		touchPosition coord = TouchRead();
+		if (coord.py < 95)
 		{
 			if (pagecurrent > 0)
 			{
