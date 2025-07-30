@@ -58,7 +58,6 @@ https://github.com/rhaleblian/dslibris
 #include "parse.h"
 
 #define APP_BROWSER_BUTTON_COUNT 7
-#define APP_LOGFILE "dslibris.log"
 #define APP_URL "http://github.com/rhaleblian/dslibris"
 
 #define APP_MODE_BOOK 0
@@ -144,11 +143,6 @@ class App {
 	void SetProgress(int amount);
 	touchPosition TouchRead();
 	void UpdateClock();
-
-	void Log(const char*);
-	void Log(const char* format, const char *msg);
-	void Log(const std::string);
-	void Log(const char *format, const int value);
 
 	bool parse_in(parsedata_t *data, context_t context);
 	void parse_init(parsedata_t *data);

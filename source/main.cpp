@@ -234,11 +234,7 @@ void prefs_start_hndl(	void *data,
 			{
 				// bookmark tags will refer to this.
 				p->book = *it;
-				
-				char msg[128];
-				sprintf(msg,"info : matched extant book '%s'.\n",bookname);
-				app->Log(msg);
-				
+								
 				if (current)
 				{
 					// Set this book as current.
@@ -296,23 +292,12 @@ int unknown_hndl(void *encodingHandlerData,
                  const XML_Char *name,
                  XML_Encoding *info)
 {
-	// noops!
-	strcpy(msg, "warn : encoding handler encountered, did nothing.");
-	app->Log(msg);
 	return 0;
 }
 
 void default_hndl(void *data, const XML_Char *s, int len)
 {
-	//! Fallback callback. NYUK!
-	
-#ifdef DEBUG
-	char msg[256];
-	strncpy(msg,(const char*)s, len > 255 ? 255 : len);
-	app->Log("info : ");
-	app->Log(msg);
-	app->Log("\n");
-#endif
+	// Handles HTML entities in body text.
 
 	int advancespace = app->ts->GetAdvance(' ');
 	parsedata_t *p = (parsedata_t*)data;
@@ -754,7 +739,6 @@ void end_hndl(void *data, const char *el)
 
 void proc_hndl(void *data, const char *target, const char *pidata)
 {
-	app->Log("called proc_hndl().\n");
 }
 
 int getSize(u8 *source, u16 *dest, u32 arg) {
