@@ -59,6 +59,8 @@ https://github.com/rhaleblian/dslibris
 
 #define APP_BROWSER_BUTTON_COUNT 7
 #define APP_LOGFILE "dslibris.log"
+#define APP_URL "http://github.com/rhaleblian/dslibris"
+
 #define APP_MODE_BOOK 0
 #define APP_MODE_BROWSER 1
 #define APP_MODE_PREFS 2
@@ -66,17 +68,18 @@ https://github.com/rhaleblian/dslibris
 #define APP_MODE_PREFS_FONT_BOLD 4
 #define APP_MODE_PREFS_FONT_ITALIC 5
 #define APP_MODE_PREFS_FONT_BOLDITALIC 6
-#define APP_URL "http://github.com/rhaleblian/dslibris"
+#define APP_MODE_QUIT 7
 
-#define PREFS_BUTTON_COUNT 7
-#define PREFS_BUTTON_FONTSIZE 0
-#define PREFS_BUTTON_FONT 1
-#define PREFS_BUTTON_FONT_ITALIC 2
-#define PREFS_BUTTON_FONT_BOLD 3
-#define PREFS_BUTTON_FONT_BOLDITALIC 4
-#define PREFS_BUTTON_PARASPACING 5
-#define PREFS_BUTTON_ORIENTATION 6
-
+enum prefsbuttonindex {
+	PREFS_BUTTON_FONT,
+	PREFS_BUTTON_FONT_ITALIC,
+	PREFS_BUTTON_FONT_BOLD,
+	PREFS_BUTTON_FONT_BOLDITALIC,
+	PREFS_BUTTON_FONTSIZE,
+	PREFS_BUTTON_PARASPACING,
+	PREFS_BUTTON_ORIENTATION,
+	PREFS_BUTTON_COUNT
+};
 
 //! \brief Main application.
 //!
@@ -121,22 +124,11 @@ class App {
 	bool cache;
 	//! user data block passed to expat callbacks.
 	parsedata_t parsedata;
-	//! not used yet; will contain pagination indices for caching.
-	std::vector<u16> pageindices;
 	u8 orientation;
 	u8 invert;
 	u8 paraspacing, paraindent;
 	
-	Button prefsButtonBooks;
-	Button prefsButtonFonts;
-	Button prefsButtonFont;
-	Button prefsButtonFontBold;
-	Button prefsButtonFontItalic;
-	Button prefsButtonFontBoldItalic;
-	Button prefsButtonFontSize;
-	Button prefsButtonParaspacing;
-	Button prefsButtonOrientation;
-	Button* prefsButtons[PREFS_BUTTON_COUNT];
+	Button prefsButtons[PREFS_BUTTON_COUNT];
 	u8 prefsSelected;
 	
 	unsigned int fontSelected;
@@ -165,14 +157,17 @@ class App {
 	void parse_push(parsedata_t *data, context_t context);
 	
 	// app_book.cpp
-	void HandleEventInBook();
+	void CloseBook();
 	int  GetBookIndex(Book*);
-	u8   OpenBook(void);
-	
+	void HandleEventInBook();
+	u8   OpenBook();
+	void ToggleBookmark();
+
 	private:
 
 	bool browser_view_dirty;
 	bool font_view_dirty;
+	bool font_view_initialized;
 	bool prefs_view_dirty;
 
 	int  FindBooks();
@@ -197,20 +192,19 @@ class App {
 	void FontPreviousPage();
 
 	// app_prefs.cpp
-	void PrefsHandleEvent();
-	void PrefsInit();
 	void PrefsDraw();
-	void PrefsButton();
+	void PrefsHandleEvent();
+	void PrefsHandlePress();
+	void PrefsHandleTouch();
+	void PrefsInit();
 	void PrefsIncreasePixelSize();
 	void PrefsDecreasePixelSize();
 	void PrefsIncreaseParaspacing();
 	void PrefsDecreaseParaspacing();
 	void PrefsFlipOrientation();
+	void PrefsRefreshButton(int index);
 	void PrefsRefreshButtonFont();
 	void PrefsRefreshButtonFontBold();
 	void PrefsRefreshButtonFontItalic();
 	void PrefsRefreshButtonFontBoldItalic();
-	void PrefsRefreshButtonFontSize();
-	void PrefsRefreshButtonParaspacing();
-	void PrefsRefreshButtonOrientation();
 };

@@ -48,6 +48,7 @@ App::App()
 		fclose(fd);
 		melonds = true;
 	}
+
 	fontdir = std::string("font");
 	bookdir = std::string("book");
 	bookcount = 0;
@@ -57,7 +58,7 @@ App::App()
 	mode = APP_MODE_BROWSER;
 	browserstart = 0;
 	cache = false;
-	orientation = false;
+	orientation = false;  //! turned right?
 	paraspacing = 1;
 	paraindent = 0;
 	brightness = 1;
@@ -76,8 +77,14 @@ App::App()
 	key.x = KEY_X;
 	key.y = KEY_Y;
 
+	browser_view_dirty = false;
+	
+	font_view_dirty = false;
+	font_view_initialized = false;
+
 	prefs = new Prefs(this);
-	prefs->app = this;
+	prefsSelected = -1;
+	prefs_view_dirty = false;
 
 	browser_view_dirty = false;
 	prefs_view_dirty = false;
@@ -117,38 +124,30 @@ int App::Run(void)
 		halt("[FAIL] no book directory\n");
 	if (bookcount == 0)
 		halt("[FAIL] no books\n");
+	std::sort(books.begin(),books.end(),&book_title_lessthan);
 
 	// Read and apply preferences.
 
-	if (prefs->Read() != ok)
-		// We do not halt!
-		printf("[FAIL] preferences\n");
-	else 
-		printf("[ OK ] preferences\n");
-	if (prefs->swapshoulder)
-	{
-		int tmp = key.l;
-		key.l = key.r;
-		key.r = tmp;
-	}
+	prefs->Read();
+	prefs->Apply();
+
 	// Sort bookmarks for each book.
 	for(u8 i = 0; i < bookcount; i++)
 	{
 		books[i]->GetBookmarks()->sort();
 	}
 
-	// Set up preferences editing screen.
+	// Set up settings screen.
 	PrefsInit();
 	
-	// Set up library browser screen.
-	std::sort(books.begin(),books.end(),&book_title_lessthan);
+	// Set up library screen.
 	browser_init();
-	mode = APP_MODE_BROWSER;
 
 	// Bring up displays.
 
 	InitScreens();
 	ts->PrintSplash(ts->screenleft);
+	mode = APP_MODE_BROWSER;
 	browser_draw();
 
 	// Resume reading from the last session.
@@ -160,18 +159,27 @@ int App::Run(void)
 	{
 		swiWaitForVBlank();
 		scanKeys();
+
 		switch (mode) {
+			case APP_MODE_BOOK:
+			HandleEventInBook();
+			break;
+
 			case APP_MODE_BROWSER:
 			browser_handleevent();
 			if (browser_view_dirty) browser_draw();
 			break;
-			case APP_MODE_BOOK:
-			HandleEventInBook();
+
+			case APP_MODE_QUIT:
+			prefs->Write();
+			return 0;
 			break;
+
 			case APP_MODE_PREFS:
 			PrefsHandleEvent();
 			if (prefs_view_dirty) PrefsDraw();
 			break;
+
 			case APP_MODE_PREFS_FONT:
 			case APP_MODE_PREFS_FONT_BOLD:
 			case APP_MODE_PREFS_FONT_ITALIC:

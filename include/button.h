@@ -23,7 +23,6 @@ class Button {
 
 	coord_t origin;
 	coord_t extent;
-	bool draw_border;
 	struct {
 		int pixelsize;
 		int style;
@@ -38,6 +37,7 @@ class Button {
     public:
 
 	Button();
+	Button(Text *typesetter);
 	void Init(Text *typesetter);
 	inline int GetHeight() { return extent.y; };
 	inline const char* GetLabel() { return text1.c_str(); };

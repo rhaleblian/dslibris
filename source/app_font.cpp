@@ -27,12 +27,10 @@
 
 void App::FontInit()
 {
+	if (font_view_initialized) return;
+	
 	DIR *dp = opendir(fontdir.c_str());
-	if (!dp)
-	{
-		swiWaitForVBlank();
-		exit(-3);
-	}
+	// if (!dp) return;
 	
 	fontPage = 0;
 	fontSelected = 0;
@@ -42,8 +40,8 @@ void App::FontInit()
 	while ((ent = readdir(dp)))
 	{	
 		// Don't try folders
-		if (ent->d_type == DT_DIR)
-			continue;
+		if (ent->d_type == DT_DIR) continue;
+
 		char *filename = ent->d_name;
 		char *c;
 		for (c=filename; c != filename + strlen(filename) && *c != '.'; c++);
@@ -52,11 +50,14 @@ void App::FontInit()
 			Button *b = new Button();
 			b->Init(ts);
 			b->Move(0, (fontButtons.size() % BPP) * b->GetHeight());
-			b->Label(filename);
+			b->SetLabel1(std::string(filename));
  			fontButtons.push_back(b);
 		}
 	}
 	closedir(dp);
+
+	PrintStatus("yeah");
+	font_view_initialized = true;
 }
 
 void App::FontHandleEvent()
@@ -100,13 +101,17 @@ void App::FontHandleEvent()
 	{
 		FontHandleTouchEvent();
 	}
+	else if (keys & KEY_START)
+	{
+		mode = APP_MODE_QUIT;
+	}
 }
 
 void App::FontHandleTouchEvent() {
 	touchPosition coord = TouchRead();
 
 	if(buttonprefs.EnclosesPoint(coord.py,coord.px)) {
-		// Leave views
+		// return to settings view.
 		mode = APP_MODE_PREFS;
 		prefs_view_dirty = true;
 	}
@@ -136,6 +141,8 @@ void App::FontHandleTouchEvent() {
 
 void App::FontDraw()
 {
+	font_view_dirty = false;
+
 	// save state.
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
@@ -149,6 +156,7 @@ void App::FontDraw()
 	{
 		fontButtons[i]->Draw(ts->screenright, i == fontSelected);
 	}
+
 	buttonprefs.Label("cancel");
 	buttonprefs.Draw(screen, false);
 	if(fontButtons.size() > (fontPage + 1) * BPP)
@@ -168,6 +176,7 @@ void App::FontNextPage()
 	{
 		fontPage += 1;
 		fontSelected = fontPage * BPP;
+		font_view_dirty = true;
 	}
 }
 
@@ -177,43 +186,47 @@ void App::FontPreviousPage()
 	{
 		fontPage--;
 		fontSelected = fontPage * BPP + (BPP-1);
+		font_view_dirty = true;
 	}
 }
 
 void App::FontButton()
 {
 	const char* filename = fontButtons[fontSelected]->GetLabel();
-	if (filename == nullptr)
+	if (!filename)
 	{
 		PrintStatus("error");
 		return;
 	}
-	switch (mode) {
+
+	switch (mode)
+	{
 		case APP_MODE_PREFS_FONT:
 		ts->SetFontFile(filename, TEXT_STYLE_REGULAR);
-		PrefsRefreshButtonFont();
+		PrefsRefreshButton(PREFS_BUTTON_FONT);
 		break;
 
 		case APP_MODE_PREFS_FONT_BOLD:
 		ts->SetFontFile(filename, TEXT_STYLE_BOLD);
-		PrefsRefreshButtonFontBold();
+		PrefsRefreshButton(PREFS_BUTTON_FONT_BOLD);
 		break;
 
 		case APP_MODE_PREFS_FONT_ITALIC:
 		ts->SetFontFile(filename, TEXT_STYLE_ITALIC);
-		PrefsRefreshButtonFontItalic();
+		PrefsRefreshButton(PREFS_BUTTON_FONT_ITALIC);
 		break;
 
 		case APP_MODE_PREFS_FONT_BOLDITALIC:
 		ts->SetFontFile(filename, TEXT_STYLE_BOLDITALIC);
-		PrefsRefreshButtonFontBoldItalic();
+		PrefsRefreshButton(PREFS_BUTTON_FONT_BOLDITALIC);
 		break;
 	}
 
-	// Trigger repagination
+	// Re-read fonts.
 	ts->Init();
-	
-	prefs_view_dirty = true;
+
 	mode = APP_MODE_PREFS;
+	prefs_view_dirty = true;
+
 	prefs->Write();
 }

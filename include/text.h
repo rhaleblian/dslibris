@@ -184,8 +184,6 @@ class Text {
 	void PrintChar(u32 ucs);
 	void PrintChar(u32 ucs, u8 style);
 	bool PrintNewLine(void);
-	void PrintStats();
-	void PrintStatusMessage(const char *msg);
 	void PrintString(const char *string);
 	void PrintString(const char *string, u8 style);
 	void PrintSplash(u16 *screen);

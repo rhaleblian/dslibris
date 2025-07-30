@@ -50,6 +50,16 @@ int Prefs::Read()
 	return err;
 }
 
+void Prefs::Apply() {
+	//! After Read().
+	if (swapshoulder)
+	{
+		int tmp = app->key.l;
+		app->key.l = app->key.r;
+		app->key.r = tmp;
+	}
+}
+
 //! Write settings to PREFSPATH.
 //! \return Error code.
 int Prefs::Write()

@@ -52,28 +52,15 @@ void App::HandleEventInBook()
 	else if (keys & KEY_X)
 	{
 		// toggle inverted text.
-		ts->SetInvert(!ts->GetInvert()); 	 
+		ts->SetInvert(!ts->GetInvert());
 		bookcurrent->GetPage()->Draw(ts);
 	}
 	else if (keys & KEY_Y)
 	{
-		// go to next level in brightness. 
-		CycleBrightness();
-		prefs->Write();
+		ToggleBookmark();
 	}
 	else if (keys & KEY_START)
 	{
-		// return to browser.
-		bookcurrent->Close();
-		bookcurrent = NULL;
-		if(mode == APP_MODE_BOOK)
-		{
-			if(orientation) lcdSwap();
-			mode = APP_MODE_BROWSER;
-		}
-		ts->PrintSplash(ts->screenleft);
-		prefs->Write();
-		browser_draw();
 	}
 	else if (keys & KEY_TOUCH)
 	{
@@ -102,26 +89,15 @@ void App::HandleEventInBook()
 	}
 	else if (keys & KEY_SELECT)
 	{
-		// Toggle bookmark.
-		std::list<u16>* bookmarks = bookcurrent->GetBookmarks();
-
-		bool found = false;
-		for (std::list<u16>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
-			if (*i == pagecurrent)
-			{
-				bookmarks->erase(i);
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			bookmarks->push_back(pagecurrent);
-			bookmarks->sort();
-		}
-
-		bookcurrent->GetPage()->Draw(ts);
+		// return to browser.
+		bookcurrent->Close();
+		bookcurrent = NULL;
+		// TODO why?
+		if(orientation) lcdSwap();
+		mode = APP_MODE_BROWSER;
+		ts->PrintSplash(ts->screenleft);
+		browser_draw();
+		prefs->Write();
 	}
 	else if (keys & (key.right | key.left))
 	{
@@ -160,8 +136,37 @@ void App::HandleEventInBook()
 			bookcurrent->GetPage()->Draw(ts);
 		}
 	}
+}
 
-	// if(keysUp()) prefs->Write();
+void App::ToggleBookmark() {
+	// Toggle bookmark for the current page.
+	std::list<u16>* bookmarks = bookcurrent->GetBookmarks();
+	u16 pagecurrent = bookcurrent->GetPosition();
+
+	bool found = false;
+	for (std::list<u16>::iterator i = bookmarks->begin(); i != bookmarks->end(); i++) {
+		if (*i == pagecurrent)
+		{
+			bookmarks->erase(i);
+			found = true;
+			break;
+		}
+	}
+
+	if (!found)
+	{
+		bookmarks->push_back(pagecurrent);
+		bookmarks->sort();
+	}
+
+	bookcurrent->GetPage()->Draw(ts);
+}
+
+void App::CloseBook()
+{
+	if (!bookcurrent) return;
+	bookcurrent->Close();
+	bookcurrent = NULL;
 }
 
 int App::GetBookIndex(Book *b)
@@ -180,23 +185,21 @@ u8 App::OpenBook(void)
 {
 	//! Attempt to open book indicated by bookselected.
 
-	if(!bookselected) return 254;	
-	PrintStatus("opening book...");
-	swiWaitForVBlank();
+	if(!bookselected) return 254;
+	PrintStatus("opening book ...");
 
-	const char *filename = bookselected->GetFileName();
-	const char *c; 	// will point to the file's extension.
-	for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
+	// const char *filename = bookselected->GetFileName();
+	// const char *c; 	// will point to the file's extension.
+	// for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
 	
 	if(bookcurrent) bookcurrent->Close();
 	if (int err = bookselected->Open())
 	{
 		char msg[64];
-		sprintf(msg, "could not open book (%d)",err);
+		sprintf(msg, "error (%d)", err);
 		PrintStatus(msg);
-		return 255;
+		return err;
 	}
-	PrintStatus("book opened");
 	bookcurrent = bookselected;
 	if(mode == APP_MODE_BROWSER) {
 		if(orientation) lcdSwap();
@@ -206,7 +209,7 @@ u8 App::OpenBook(void)
 		bookcurrent->SetPosition(0);
 	bookcurrent->GetPage()->Draw(ts);
 	prefs->Write();
-	ts->PrintStats();
+	PrintStatus("");
 	return 0;
 }
 
