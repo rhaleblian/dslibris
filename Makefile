@@ -37,7 +37,7 @@ CFLAGS	:= -g -Wall -O2 -ffunction-sections -fdata-sections\
 CFLAGS	+=	-g
 
 # freetype
-CFLAGS  +=	-I$(PWD)/portlibs/nds/include/freetype2
+CFLAGS  +=	-I$(DEVKITPRO)/portlibs/nds/include/freetype2
 # zlib minizip
 CFLAGS  +=	-I$(DEVKITPRO)/portlibs/nds/include/minizip -DIOAPI_NO_64
 
@@ -49,13 +49,13 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lfat -lnds9 -lexpat -lz -lbz2 -lpng -lfreetype
+LIBS	:= -lfat -lnds9 -lexpat  -lfreetype -lz -lbz2 -lpng
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) $(PWD)/portlibs/nds $(DEVKITPRO)/portlibs/nds
+LIBDIRS	:=	$(LIBNDS) $(DEVKITPRO)/portlibs/nds
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
