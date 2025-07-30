@@ -320,36 +320,6 @@ void App::SetOrientation(bool flipped)
 	REG_BG3PD_SUB = c;
 }
 
-void App::Log(const char *msg)
-{
-	Log("%s",msg);
-}
-
-void App::Log(const char *format, const int value)
-{
-	// std::stringstream ss;
-	// ss << value << std::endl;
-	// Log(format, ss.str().c_str());
-}
-
-void App::Log(const char *format, const char *msg)
-{
-	// if(console)
-	// {
-	// 	char s[1024];
-	// 	sprintf(s,format,msg);
-	// 	iprintf(s);
-	// }
-	// FILE *logfile = fopen(LOGFILEPATH,"a");
-	// fprintf(logfile,format,msg);
-	// fclose(logfile);
-}
-
-void App::Log(const std::string msg)
-{
-	Log("%s",msg.c_str());
-}
-
 void App::InitScreens()
 {
 	videoSetMode(MODE_5_2D);

@@ -138,12 +138,8 @@ FT_Error Text::InitFreeTypeCache(void) {
 
 	sprintf(face_id.file_path, "%s/%s", app->fontdir.c_str(), filenames[TEXT_STYLE_REGULAR].c_str());
 	face_id.face_index = 0;
-	sprintf(msg, "%s %s %d\n", filenames[TEXT_STYLE_REGULAR].c_str(), face_id.file_path, face_id.face_index);
-	app->Log(msg);
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
 	if(error) return error;
-
-	// ReportFace(faces[TEXT_STYLE_REGULAR]);
 
 	initialized = true;
 	return 0;
@@ -203,22 +199,16 @@ int Text::Init()
 
 void Text::ReportFace(FT_Face face)
 {
-	sprintf(msg, "%s\n", face->family_name);
-	app->Log(msg);
-	sprintf(msg, "%s\n", face->style_name);
-	app->Log(msg);
-	sprintf(msg, "faces %ld\n", face->num_faces);
-	app->Log(msg);
-	sprintf(msg, "glyphs %ld\n", face->num_glyphs);
-	app->Log(msg);
-	sprintf(msg, "fixed-sizes %d\n", face->num_fixed_sizes);
-	app->Log(msg);
+	printf("%s\n", face->family_name);
+	printf("%s\n", face->style_name);
+	printf("faces %ld\n", face->num_faces);
+	printf("glyphs %ld\n", face->num_glyphs);
+	printf("fixed-sizes %d\n", face->num_fixed_sizes);
 	for (int i=0;i<face->num_fixed_sizes;i++)
 	{
-		sprintf(msg, " w %d h %d\n",
+		printf(" w %d h %d\n",
 			face->available_sizes[i].width,
 			face->available_sizes[i].height);
-		app->Log(msg);
 	}	
 }
 
