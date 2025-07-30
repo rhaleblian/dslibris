@@ -28,19 +28,13 @@ void App::browser_handleevent()
 	
 	if (keys & (KEY_A | key.down))
 	{
+		// Open selected book.
 		OpenBook();
-	}
-	
-	else if (keys & KEY_SELECT)
-	{
-		mode = APP_MODE_PREFS;
-		prefsSelected = 0;
-		PrefsDraw();
 	}
 	
 	else if (keys & (key.left | key.l))
 	{
-		// next book.
+		// Select next book.
 		int b = GetBookIndex(bookselected);
 		if (b < bookcount-1)
 		{
@@ -53,7 +47,7 @@ void App::browser_handleevent()
 
 	else if (keys & (key.right | key.r))
 	{
-		// previous book.
+		// Select previous book.
 		int b = GetBookIndex(bookselected);
 		if (b > 0)
 		{
@@ -65,10 +59,25 @@ void App::browser_handleevent()
 		}
 	}
 
+	else if (keys & KEY_SELECT)
+	{
+		// Go to settings.
+		mode = APP_MODE_PREFS;
+		prefsSelected = 0;
+		prefs_view_dirty = true;
+	}
+
+	else if (keys & KEY_START)
+	{
+		// Exit game.
+		mode = APP_MODE_QUIT;
+	}
+
 	else if (keys & KEY_TOUCH)
 	{
 		touchPosition coord = TouchRead();
 
+		// TODO why are coords switched?
 		if(buttonnext.EnclosesPoint(coord.py, coord.px))
 		{
 			browser_nextpage();
@@ -79,19 +88,23 @@ void App::browser_handleevent()
 		}
 		else if(buttonprefs.EnclosesPoint(coord.py, coord.px))
 		{
-			// Move to settings view
+			// Go to settings.
 			prefs_view_dirty = true;  // Request a redraw
 			mode = APP_MODE_PREFS;
 		}
 		else
 		{
-			/// Open this book
+			// Select this book and open it.
 			for(u8 i=browserstart; 
 				(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 				i++) {
 				if (buttons[i]->EnclosesPoint(coord.py, coord.px))
 				{
+					int b = GetBookIndex(bookselected);
+					buttons[b]->Draw(ts->screen, false);
 					bookselected = books[browserstart + i];
+					buttons[i]->Draw(ts->screen, true);
+					
 					OpenBook();
 					break;
 				}
@@ -119,15 +132,15 @@ void App::browser_init(void)
 
 	buttonprev.Init(ts);
 	buttonprev.Move(2,238);
-	buttonprev.Resize(60,16);
+	buttonprev.Resize(60,18);
 	buttonprev.Label("prev");
 	buttonnext.Init(ts);
 	buttonnext.Move(130,238);
-	buttonnext.Resize(60,16);
+	buttonnext.Resize(60,18);
 	buttonnext.Label("next");
 	buttonprefs.Init(ts);
 	buttonprefs.Move(66,238);
-	buttonprefs.Resize(60,16);
+	buttonprefs.Resize(60,18);
 	buttonprefs.Label("settings");
 
 	if (!bookselected) {

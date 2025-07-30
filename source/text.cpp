@@ -58,8 +58,8 @@ Text::Text()
 	margin.right = MARGINRIGHT;
 	margin.top = MARGINTOP;
 	margin.bottom = MARGINBOTTOM;
-	bgcolor.r = 31;
-	bgcolor.g = 31;
+	bgcolor.r = 15;
+	bgcolor.g = 15;
 	bgcolor.b = 15;
 	usebgcolor = false;
 	invert = false;
@@ -153,8 +153,10 @@ FT_Error Text::CreateFace(int style) {
 	// TODO check for leakage
 	std::string path = app->fontdir + "/" + filenames[style];
 	error = FT_New_Face(library, path.c_str(), 0, &face);
-	if (error) app->PrintStatus(path.c_str());
-	else faces[style] = face;
+	if (!error) {
+		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
+		faces[style] = face;
+	}
 	return error;
 }
 
@@ -277,20 +279,21 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 FT_UInt Text::GetGlyphIndex(u32 ucs)
 {
 	//! Given a UCS codepoint, return where it is in the charmap, by index.
-	
-	//! Only has effect when FT cache mode is enabled,
-	//! and FT cache mode is borken.
-	if(!ftc) return ucs;
-	return FTC_CMapCache_Lookup(cache.cmap,(FTC_FaceID)&face_id,
-		charmap_index,ucs);
+	if (ftc)
+		return FTC_CMapCache_Lookup(cache.cmap,
+			(FTC_FaceID)&face_id, -1, ucs);
+	else
+		return FT_Get_Char_Index(faces[style], ucs);	
 }
 
 int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit, FTC_Node *anode)
 {
 	//! Given a UCS code, fills sbit and anode.
-	
 	//! Returns nonzero on error.
-	imagetype.flags = FT_LOAD_DEFAULT|FT_LOAD_RENDER;
+	if (!ftc) return 1;
+	imagetype.face_id = (FTC_FaceID)&face_id;
+	imagetype.height = pixelsize;
+	imagetype.flags = FT_LOAD_RENDER;
 	return FTC_SBitCache_Lookup(cache.sbit,&imagetype,
 		GetGlyphIndex(ucs),sbit,anode);
 }
@@ -309,12 +312,6 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 {
 	if(ftc) return NULL;
 
-#if 0
-	for(int i=0;i<textCache[face]->cachenext;i++)
-		if(textCache[face]->cache_ucs[i] == ucs)
-			return &textCache[face]->glyphs[i];
-#endif	
-
 	std::map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
 	if (iter != textCache[face]->cacheMap.end()) {
 		stats_hits++;
@@ -322,10 +319,11 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 		return iter->second;
 	}
 	
-	stats_misses++;
 	hit = false;
+	stats_misses++;
+
 	int i = CacheGlyph(ucs, face);
-	if (i > -1)
+	if (i >= 0)
 		return textCache[face]->cacheMap[ucs];
 
 	FT_Load_Char(face, ucs, flags);
@@ -357,7 +355,12 @@ void Text::ClearCache(FT_Face face)
 void Text::ClearScreen()
 {
 	if(invert) memset((void*)screen,0,PAGE_WIDTH*PAGE_HEIGHT*4);
-	else memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
+	else {
+		// memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
+		const int run = display.height*display.height;
+		const u16 pixel = RGB15(29,29,29)|BIT(15);
+		for (int i=0; i<run; i++) screen[i] = pixel;
+	}
 }
 
 void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
@@ -365,11 +368,8 @@ void Text::ClearRect(u16 xl, u16 yl, u16 xh, u16 yh)
 	u16 clearcolor;
 	if(invert) clearcolor = RGB15(0,0,0) | BIT(15);
 	else clearcolor = RGB15(31,31,31) | BIT(15);
-	//uint word = (clearcolor << 16) | clearcolor;
 	for(u16 y=yl; y<yh; y++) {
-//		memcpy((void*)screen[y*display.height+xl],(void*)word,xh-xl/2);
 		for(u16 x=xl; x<xh; x++) {
-			// FIXME: crashes on hw
 			screen[y*display.height+x] = clearcolor;
 		}
 	}
@@ -522,26 +522,26 @@ u8 Text::GetAdvance(u32 ucs, u8 astyle) {
 u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 	//! Return glyph advance in pixels.
 	//! All other flavours of GetAdvance() call this one.
-
-//	FT_Fixed padvance;
-//	error = FT_Get_Advance(face, GetGlyphIndex(ucs), NULL, &padvance);
-//	return padvance >> 6;
 	
-	if(!ftc)
-		// Caches this glyph if possible.
+
+	if (ftc) {
+		imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;
+
+		// error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
+		// 	GetGlyphIndex(ucs),&sbit,NULL);
+		// return sbit->xadvance;
+
+		FT_Glyph glyph;
+		FTC_ImageType type = &imagetype;
+		error = FTC_ImageCache_Lookup(cache.image,type,GetGlyphIndex(ucs),&glyph,NULL);
+
+		return (glyph->advance).x;
+	}
+	else
+	{
+		// Also caches this glyph.
 		return GetGlyph(ucs, FT_LOAD_DEFAULT, face)->advance.x >> 6;
-
-	imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;
-
-#if 0
-	error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
-		GetGlyphIndex(ucs),&sbit,NULL);
-	return sbit->xadvance;
-#endif
-	FT_Glyph glyph;
-	FTC_ImageType type = &imagetype;
-	error = FTC_ImageCache_Lookup(cache.image,type,GetGlyphIndex(ucs),&glyph,NULL);
-	return (glyph->advance).x;
+	}
 }
 
 int Text::GetStringAdvance(const char *s) {
@@ -587,22 +587,10 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	FTC_Node anode = nullptr;
 	FT_Glyph glyph;
 
-	ss.clear();
-
-	// get metrics and glyph pointer.
-
 	if(ftc)
 	{
-		// use the FT cache.
-
 	    auto glyph_index = FTC_CMapCache_Lookup(cache.cmap, (FTC_FaceID)&face_id, -1, ucs);
-		error = FTC_ImageCache_Lookup(cache.image, &imagetype, glyph_index, &glyph, &anode);
-		if (error) {
-			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
-			return;
-		}
-		app->Log("ok\n");
+		// TODO set imagetype here
 
 		FTC_SBit p = &sbit;
   		error = FTC_SBitCache_Lookup(cache.sbit,
@@ -610,12 +598,15 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 								glyph_index,
                                 &p,
                                 &anode );
-		if (error) {
-			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
-			return;
+		if (error) return;
+
+		// there will typically be no bitmap, only an outline
+		if (!p)
+		{
+			error = FTC_ImageCache_Lookup(cache.image, &imagetype, glyph_index, &glyph, &anode);
+			if (error) return;
 		}
-		app->Log("ok\n");
+		// TODO rasterize bitmap
 
 		buffer = sbit.buffer;
 		bx = sbit.left;
@@ -623,46 +614,11 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 		height = sbit.height;
 		width = sbit.width;
 		advance = sbit.xadvance;
-
-		error = FT_Render_Glyph(faces[TEXT_STYLE_REGULAR]->glyph,            /* glyph slot  */
-        	                    FT_RENDER_MODE_LCD_V); /* render mode */
-		if (error) {
-			ss << "error " << error << std::endl;
-			app->Log(ss.str().c_str());
-			return;
-		}
-		app->Log("ok\n");
-
-		// auto glyph = faces[TEXT_STYLE_REGULAR]->glyph;
-		// buffer = glyph->bitmap.buffer;
-		// bx = glyph->bitmap_left;
-		// by = glyph->bitmap_top;
-		// width = glyph->bitmap.width;
-		// height = glyph->bitmap.rows;
-		// advance = width;
-
-		// ss.clear();
-		// ss << " err " << error 
-		//    << " glyph_index " << glyph_index  << " glyph " << glyph 
-		//    << " width " << width << " height " << height << " advance " << advance
-		//    << std::endl;
-		// app->Log(ss.str());
 	}
 	else
 	{
 		// Consult the cache for glyph data and cache it on a miss, if space is available.
 		FT_GlyphSlot glyph = GetGlyph(ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL, face);
-		
-		// ss << "ucs " << ucs << std::endl;
-		// app->Log(ss.str());
-
-		// error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-		// if (error) app->Log("boo\n");
-		// error = FT_Load_Char(face, ucs, FT_LOAD_RENDER|FT_LOAD_TARGET_REGULAR);
-		// if (error) app->Log("hoo\n");
-		// auto glyph = face->glyph;
-  		// error = FT_Get_Glyph( face->glyph, &glyph );
-		// if (error) app->Log("foo\n");
 
   		// extract glyph image
 		FT_Bitmap bitmap = glyph->bitmap;
@@ -676,66 +632,38 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 
 #ifdef EXPERIMENTAL_KERNING
 	// Fetch a kerning vector.
-
 	if(codeprev) {
 		FT_Vector kerning_vector;
-		std::stringstream ss;
 		error = FT_Get_Kerning(face, codeprev, ucs, FT_KERNING_DEFAULT, &kerning_vector);
-#ifdef DEBUG
-		if(error) {
-			ss << "error: kerning lookup error: " << codeprev << " -> " << ucs << std::endl;
-		} else {
-			ss << "info : kerning lookup: " << codeprev << " -> " << ucs
-			   << " = " << kerning_vector.x << "," << kerning_vector.y << std::endl;
-			// pen.x += k.x >> 6;
-		}
-		app->Log(ss.str());
-#endif
 	}
 #endif
 
-	// render to framebuffer.
+	// Render to framebuffer.
 
-#ifdef DEBUG_PEN_POSITION
-	// DEBUG Mark the pen position.
+#ifdef DRAW_PEN_POSITION
+	// Mark the pen position.
 	screen[pen.y*display.height+pen.x] = RGB15(0, 0, 0) | BIT(15);
 #endif
 
 	u16 gx, gy;
-	for (gy=0; gy<height; gy++) {
-		for (gx=0; gx<width; gx++) {
+	for (gy=0; gy<height; gy++)
+	{
+		for (gx=0; gx<width; gx++)
+		{
 			u8 a = buffer[gy*width+gx];
-			if (a) {
-				u16 sx = (pen.x+gx+bx);
-				u16 sy = (pen.y+gy-by);
-				if(usebgcolor) {
-					u32 r,g,b;
-					u8 alpha = 255-a;
-					r = (bgcolor.r * alpha);
-					g = (bgcolor.g * alpha);
-					b = (bgcolor.b * alpha);
-					screen[sy*display.height+sx]
-						= RGB15(r/256,g/256,b/256) | BIT(15);
-				} else {
-					u8 l;
-					if (invert) l = a >> 3;
-					else l = (255-a) >> 3;
-#ifdef DEBUG_CACHE
-					// Draw cache hits in red.
-					if(!hit)
-						screen[sy*display.height+sx] = RGB15(l,0,0) | BIT(15);
-					else
-#endif
-					screen[sy*display.height+sx] = RGB15(l,l,l) | BIT(15);
-				}
-			}
+			if (!a) continue;
+			if (!invert) a = 256 - a;
+			u16 pixel = RGB15(a>>3,a>>3,a>>3)|BIT(15);
+			// if(!hit) pixel = RGB15(r,0,0) | BIT(15);
+			u16 sx = (pen.x+gx+bx);
+			u16 sy = (pen.y+gy-by);
+			screen[sy*display.height+sx] = pixel;
 		}
 	}
 
 	pen.x += advance;
 	codeprev = ucs;
 
-	// Release the glyph storage.
 	if (ftc && anode)
 		FTC_Node_Unref(anode, cache.manager);
 }
@@ -790,35 +718,6 @@ void Text::PrintString(const char *s, FT_Face face) {
 	}
 }
 
-void Text::PrintStats() {
-	//! Tell log how well we're caching.
-	sprintf(msg, "info: %d cache hits.\n", stats_hits);
-	app->Log(msg);
-	sprintf(msg, "info: %d cache misses.\n", stats_misses);
-	app->Log(msg);
-}
-
-void Text::PrintStatusMessage(const char *msg)
-{
-	//! Render a one-liner message on the left screen.
-	u16 x,y;
-	GetPen(&x,&y);
-	u16 *s = screen;
-	int ps = GetPixelSize();
-	bool invert = GetInvert();
-	
-	screen = screenleft;
-	SetInvert(invert);
-	SetPixelSize(10);
-	SetPen(16, PAGE_HEIGHT-32);
-	PrintString(msg);
-
-	SetInvert(invert);
-	SetPixelSize(ps);
-	screen = s;
-	SetPen(x,y);
-}
-
 void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 {
 	for (int i=0;i<display.height*display.height;i++)
@@ -827,16 +726,20 @@ void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 
 void Text::PrintSplash(u16 *screen)
 {
-	u8 size = GetPixelSize();
-	u16* s = GetScreen();
-	
+	// push.
+	auto s = GetScreen();
+	auto z = GetPixelSize();
+	auto i = GetInvert();
+
 	SetScreen(screen);
 	drawstack(screen);
-	sprintf(msg,"%s",VERSION);
-	PrintStatusMessage(msg);
-	
-	SetPixelSize(size);
-	SetInvert(invert);
+	SetPen(20, 20);
+	sprintf(msg, "%s", VERSION);
+	PrintString(msg);
+
+	// pop.
+	SetInvert(i);
+	SetPixelSize(z);
 	SetScreen(s);
 }
 
