@@ -2,12 +2,12 @@
     "configurations": [
         {
             "name": "Linux",
-            "defines": [],
+            "defines": ["ARM9"],
             "compilerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc",
             "cStandard": "gnu11",
             "cppStandard": "gnu++14",
-            "intelliSenseMode": "clang-x64",
-            "compilerArgs": ["-Wall -O2 -march=armv5te -mtune=arm946e-s -fomit-frame-pointer -ffast-math -mthumb -minterwork"],
+            "intelliSenseMode": "linux-gcc-arm",
+            "compilerArgs": ["-Wall -O2 -ffunction-sections -fdata-sections -march=armv5te -mtune=arm946e-s -ffast-math -mthumb"],
             "includePath": [
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/portlibs/nds/include/**",
