@@ -155,11 +155,11 @@ class Text {
 	bool ftc;
 
 	// A: Homemade cache
-	TextCache cache;
-	TextFaceRec face_id;
 	std::map<FT_Face, Cache*> textCache;
 	
 	// B: FreeType cache subsystem
+	TextCache cache;
+	TextFaceRec face_id;
 	FTC_SBitRec sbit;
 	FTC_ImageTypeRec imagetype;
 	FT_Int charmap_index;

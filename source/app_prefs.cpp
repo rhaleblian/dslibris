@@ -44,14 +44,13 @@ void App::PrefsInit()
 		prefsButtons[i].Move(0, i * prefsButtons[i].GetHeight());
 	}
 
-	if (prefsSelected == -1) prefsSelected = PREFS_BUTTON_FONTSIZE;
+	prefsSelected = PREFS_BUTTON_FONTSIZE;
 }
 
 void App::PrefsDraw()
 {
 	// save state
 	bool invert = ts->GetInvert();
-	u8 size = ts->GetPixelSize();
 	u16* screen = ts->GetScreen();
 	int style = ts->GetStyle();
 
@@ -67,7 +66,6 @@ void App::PrefsDraw()
 	// restore state
 	ts->SetStyle(style);
 	ts->SetInvert(invert);
-	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
 
 	prefs_view_dirty = false;

@@ -1,5 +1,5 @@
 en.img:
-	dd if=/dev/zero of=$@ bs=1M count=64
+	dd if=/dev/zero of=$@ bs=1M count=128
 	mformat -i $@
 	mmd -i $@ Book
 	mmd -i $@ Font

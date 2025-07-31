@@ -93,7 +93,6 @@ class App {
 	~App();
 
 	Text *ts;
-	// Prefs myprefs;   //! User-configurable settings.
 	Prefs *prefs;	 //! User-configurable settings.
 	u8 brightness;   //! DISABLED. 4 levels for the Lite.
 	u8 mode; 	     //! Current mode (browser, prefs, book, font)
@@ -138,7 +137,6 @@ class App {
 	void CycleBrightness();
 	void PrintStatus(const char *msg);
 	void PrintStatus(std::string msg);
-	void Flip();
 	int  Run(void);
 	void SetProgress(int amount);
 	touchPosition TouchRead();
@@ -187,7 +185,6 @@ class App {
 	void FontHandleTouchEvent();
 	void FontNextPage();
 	void FontPreviousPage();
-	void FontReturnToSettings();
 	void FontSelectNext();
 	void FontSelectPrevious();
 

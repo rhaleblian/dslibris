@@ -226,7 +226,7 @@ void Text::End() {}
 
 int Text::CacheGlyph(u32 ucs)
 {
-	return CacheGlyph(ucs, TEXT_STYLE_REGULAR);
+	return CacheGlyph(ucs, style);
 }
 
 int Text::CacheGlyph(u32 ucs, u8 style)
@@ -243,12 +243,9 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 
 	if(textCache[face]->cacheMap.size() == CACHESIZE) return -1;
 
-	FT_Select_Charmap(GetFace(TEXT_STYLE_REGULAR), FT_ENCODING_UNICODE);
 	FT_Load_Char(face, ucs,
 		FT_LOAD_RENDER|FT_LOAD_TARGET_NORMAL);
 	FT_GlyphSlot src = face->glyph;
-	// TODO - why?
-	//FT_GlyphSlot dst = &textCache[face]->glyphs[textCache[face]->cachenext];
 	FT_GlyphSlot dst = new FT_GlyphSlotRec;
 	int x = src->bitmap.rows;
 	int y = src->bitmap.width;
@@ -259,10 +256,7 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 	dst->bitmap_top = src->bitmap_top;
 	dst->bitmap_left = src->bitmap_left;
 	dst->advance = src->advance;
-	//textCache[face]->cache_ucs[textCache[face]->cachenext] = ucs;
 	textCache[face]->cacheMap.insert(std::make_pair(ucs, dst));
-	//textCache[face]->cachenext++;
-	//return textCache[face]->cachenext-1;
 	return ucs;
 }
 
@@ -481,21 +475,22 @@ u16* Text::GetScreen()
 
 void Text::SetPixelSize(u8 size)
 {
-	if(ftc) {
-		imagetype.height = size;
-		imagetype.width = size;
-		pixelsize = size;
-		return;
+	if (size == pixelsize) return;
+	pixelsize = size;
+	if (ftc)
+	{
+		imagetype.height = pixelsize;
+		imagetype.width = pixelsize;
+		pixelsize = pixelsize;
 	}
-
-	for (std::map<u8, FT_Face>::iterator iter = faces.begin(); iter != faces.end(); iter++) {
-		if (!size)
-			FT_Set_Pixel_Sizes(iter->second, 0, PIXELSIZE);
-		else
-			FT_Set_Pixel_Sizes(iter->second, 0, size);
+	else
+	{
+		for (auto iter = faces.begin(); iter != faces.end(); iter++)
+		{
+			FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
+			ClearCache(face);
+		}
 	}
-	
-	ClearCache();
 }
 
 void Text::SetScreen(u16 *inscreen)
@@ -533,6 +528,10 @@ u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 	{
 		// Also caches this glyph.
 		return GetGlyph(ucs, FT_LOAD_DEFAULT, face)->advance.x >> 6;
+
+		// auto gindex = FT_Get_Char_Index(face, ucs);
+		// FT_Load_Glyph(face, gindex, FT_LOAD_DEFAULT);
+		// return face->glyph->advance.x >> 16;
 	}
 }
 
@@ -545,7 +544,7 @@ int Text::GetStringAdvance(const char *s) {
 }
 
 bool Text::GetFontName(std::string &s) {
-	const char *name = FT_Get_Postscript_Name(GetFace(TEXT_STYLE_REGULAR));
+	const char *name = FT_Get_Postscript_Name(GetFace(style));
 	if(!name)
 		return false;
 	else {
@@ -572,7 +571,6 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 	// Draw a character for the given UCS codepoint,
 	// into the current screen buffer at the current pen position.
 
-	// static bool firsttime = true;
 	u16 bx, by, width, height = 0;
 	FT_Byte *buffer = NULL;
 	FT_UInt advance = 0;
@@ -646,7 +644,7 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 			if (!a) continue;
 			if (!invert) a = 256 - a;
 			u16 pixel = RGB15(a>>3,a>>3,a>>3)|BIT(15);
-			// if(!hit) pixel = RGB15(r,0,0) | BIT(15);
+			if(!hit) pixel = RGB15(a>>3,0,0) | BIT(15);
 			u16 sx = (pen.x+gx+bx);
 			u16 sy = (pen.y+gy-by);
 			screen[sy*display.height+sx] = pixel;
@@ -684,7 +682,7 @@ bool Text::PrintNewLine(void) {
 
 void Text::PrintString(const char *s) {
 	//! Render a character string starting at the pen position.
-	PrintString(s, TEXT_STYLE_BROWSER);
+	PrintString(s, style);
 }
 
 void Text::PrintString(const char *s, u8 style) {
@@ -694,8 +692,6 @@ void Text::PrintString(const char *s, u8 style) {
 
 void Text::PrintString(const char *s, FT_Face face) {
 	//! Render a character string starting at the pen position.
-	//app->Log(s);
-	//u32 clast = 0;
 	u8 i=0;
 	while(i<strlen((char*)s)) {
 		u32 c = s[i];
@@ -705,7 +701,6 @@ void Text::PrintString(const char *s, FT_Face face) {
 		} else {
 			i+=GetCharCode(&(s[i]),&c);
 			PrintChar(c, face);
-			//clast = c;
 		}
 	}
 }
@@ -725,7 +720,7 @@ void Text::PrintSplash(u16 *screen)
 
 	SetScreen(screen);
 	drawstack(screen);
-	SetPen(display.width-44, display.height-170);
+	SetPen(display.width-44, display.height-40);
 	PrintString(VERSION);
 
 	// pop

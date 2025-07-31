@@ -31,7 +31,7 @@ void App::FontInit()
 	if (font_view_initialized) return;
 	
 	DIR *dp = opendir(fontdir.c_str());
-	// if (!dp) return;
+	if (!dp) return;
 	
 	fontPage = 0;
 	fontSelected = 0;
@@ -67,8 +67,8 @@ void App::FontHandleEvent()
 	// warning: d-pad keys are in pre-rotation space
 	if (keys & (KEY_SELECT | KEY_B))
 	{
-		// leave without changing the font
-		FontReturnToSettings();
+		// cancel
+		ShowSettingsView();
 	}
 	else if (keys & (key.r|key.right))
 	{
@@ -114,7 +114,7 @@ void App::FontHandleTouchEvent() {
 	touchPosition coord = TouchRead();
 
 	if(buttonprefs.EnclosesPoint(coord.py,coord.px)) {
-		FontReturnToSettings();
+		ShowSettingsView();
 	}
 	else if(buttonnext.EnclosesPoint(coord.py,coord.px)){
 		FontNextPage();
@@ -199,12 +199,6 @@ void App::FontPreviousPage()
 		fontSelected = fontPage * BPP + (BPP-1);
 		font_view_dirty = true;
 	}
-}
-
-void App::FontReturnToSettings()
-{
-	mode = APP_MODE_PREFS;
-	prefs_view_dirty = true;
 }
 
 void App::FontSelectPrevious()

@@ -69,7 +69,7 @@ void Button::Resize(u16 x, u16 y) {
 
 void Button::Draw(u16 *screen, bool highlight) {
 	// push state
-	int  save_pixelsize = ts->GetPixelSize();
+	// int  save_pixelsize = ts->GetPixelSize();
 	bool save_invert = ts->GetInvert();
 	auto save_screen = ts->GetScreen();
 	auto save_style = ts->GetStyle();
@@ -108,9 +108,12 @@ void Button::Draw(u16 *screen, bool highlight) {
 		}
 	}
 
+	// Pixel size changes trash the text cache,
+	// so they are suppressed.
+	
 	if (text1.length()) {
-		const int s1 = style ? 1 : -1;
-		ts->SetPixelSize(text.pixelsize+s1);
+		// const int s1 = style ? 1 : -1;
+		// ts->SetPixelSize(text.pixelsize+s1);
 		ts->SetPen(ul.x+6, ul.y+ts->GetHeight());
 		u8 len = ts->GetCharCountInsideWidth(text1.c_str(),
 			text.style, lr.x-ul.x-4);
@@ -119,15 +122,15 @@ void Button::Draw(u16 *screen, bool highlight) {
 	}
 
 	if (text2.length()) {
-		const int s2 = style ? -1 : 0;
-		ts->SetPixelSize(text.pixelsize+s2);
+		// const int s2 = style ? -1 : 0;
+		// ts->SetPixelSize(text.pixelsize+s2);
 		ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
 		ts->PrintString(text2.c_str(), text.style);
 	}
 
 	// pop state
 	ts->SetInvert(save_invert);
-	ts->SetPixelSize(save_pixelsize);
+	// ts->SetPixelSize(save_pixelsize);
 	ts->SetScreen(save_screen);
 	ts->SetStyle(save_style);
 	ts->usebgcolor = save_usebgcolor;
