@@ -644,7 +644,9 @@ void Text::PrintChar(u32 ucs, FT_Face face) {
 			if (!a) continue;
 			if (!invert) a = 256 - a;
 			u16 pixel = RGB15(a>>3,a>>3,a>>3)|BIT(15);
-			if(!hit) pixel = RGB15(a>>3,0,0) | BIT(15);
+#ifdef DRAW_CACHE_MISSES
+			// if(!hit) pixel = RGB15(a>>3,0,0) | BIT(15);
+#endif
 			u16 sx = (pen.x+gx+bx);
 			u16 sy = (pen.y+gy-by);
 			screen[sy*display.height+sx] = pixel;
@@ -720,7 +722,7 @@ void Text::PrintSplash(u16 *screen)
 
 	SetScreen(screen);
 	drawstack(screen);
-	SetPen(display.width-44, display.height-40);
+	SetPen(display.width-44, display.height-200);
 	PrintString(VERSION);
 
 	// pop
