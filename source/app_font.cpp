@@ -57,7 +57,6 @@ void App::FontInit()
 	}
 	closedir(dp);
 
-	PrintStatus("yeah");
 	font_view_initialized = true;
 }
 
@@ -65,34 +64,37 @@ void App::FontHandleEvent()
 {
 	auto keys = keysDown();
 
+	// warning: d-pad keys are in pre-rotation space
 	if (keys & (KEY_SELECT | KEY_B))
 	{
-		// Leave without changing the font
-		mode = APP_MODE_PREFS;
-		prefs_view_dirty = true;
+		// leave without changing the font
+		FontReturnToSettings();
 	}
-	else if (keys & key.up)
+	else if (keys & (key.r|key.right))
 	{
-		// Previous page
-		if (fontSelected > 0) {
-			if (fontSelected == fontPage * 7) {
+		// previous font or page
+		if (fontSelected > 0)
+		{
+			if (fontSelected == fontPage * 7)
+			{
 				FontPreviousPage();
-				FontDraw();
-			} else {
-				fontSelected--;
-				font_view_dirty = true;
+			} else
+			{
+				FontSelectPrevious();
 			}
 		}
 	}
-	else if (keys & key.down)
+	else if (keys & (key.l|key.left))
 	{
-		// Next page
-		if (fontSelected == fontPage * BPP + (BPP-1)) {
+		// next font or page
+		if (fontSelected == fontPage * BPP + (BPP-1))
+		{
 			FontNextPage();
-		} else {
-			fontSelected++;
 		}
-		font_view_dirty = true;
+		else
+		{
+			FontSelectNext();
+		}
 	}
 	else if (keys & KEY_A)
 	{
@@ -112,9 +114,7 @@ void App::FontHandleTouchEvent() {
 	touchPosition coord = TouchRead();
 
 	if(buttonprefs.EnclosesPoint(coord.py,coord.px)) {
-		// return to settings view.
-		mode = APP_MODE_PREFS;
-		prefs_view_dirty = true;
+		FontReturnToSettings();
 	}
 	else if(buttonnext.EnclosesPoint(coord.py,coord.px)){
 		FontNextPage();
@@ -130,9 +130,6 @@ void App::FontHandleTouchEvent() {
 			if (fontButtons[i]->EnclosesPoint(coord.py, coord.px))
 			{
 				fontSelected = i;
-				char msg[4];
-				sprintf(msg, "%d", fontSelected);
-				PrintStatus(msg);
 				FontButton();
 				break;
 			}
@@ -150,25 +147,38 @@ void App::FontDraw()
 	int style = ts->GetStyle();
 	
 	ts->SetInvert(false);
-	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->ClearScreen();
 
-	for (u8 i = fontPage * 7; (i < fontButtons.size()) && (i < (fontPage + 1) * BPP); i++)
+	for (u8 i = fontPage * BPP;
+		(i < fontButtons.size()) && (i < (fontPage + 1) * BPP);
+		i++)
 	{
 		fontButtons[i]->Draw(ts->screenright, i == fontSelected);
 	}
 
 	buttonprefs.Label("cancel");
 	buttonprefs.Draw(screen, false);
-	if(fontButtons.size() > (fontPage + 1) * BPP)
-		buttonnext.Draw(ts->screenright, false);
-	if(fontSelected > BPP)
-		buttonprev.Draw(ts->screenright, false);
+	if (fontButtons.size() > BPP)
+	{
+		if(fontSelected < fontButtons.size() - BPP)
+			buttonnext.Draw(ts->screenright, false);
+		if(fontSelected >= BPP)
+			buttonprev.Draw(ts->screenright, false);
+	}
 
 	// restore state.
 	ts->SetStyle(style);
 	ts->SetInvert(invert);
 	ts->SetScreen(screen);
+}
+
+void App::FontSelectNext()
+{
+	if (fontSelected < fontButtons.size() - 1)
+	{
+		fontSelected++;
+		font_view_dirty = true;
+	}
 }
 
 void App::FontNextPage()
@@ -187,6 +197,21 @@ void App::FontPreviousPage()
 	{
 		fontPage--;
 		fontSelected = fontPage * BPP + (BPP-1);
+		font_view_dirty = true;
+	}
+}
+
+void App::FontReturnToSettings()
+{
+	mode = APP_MODE_PREFS;
+	prefs_view_dirty = true;
+}
+
+void App::FontSelectPrevious()
+{
+	if (fontSelected > 0)
+	{
+		fontSelected--;
 		font_view_dirty = true;
 	}
 }

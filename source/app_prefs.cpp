@@ -49,7 +49,7 @@ void App::PrefsInit()
 
 void App::PrefsDraw()
 {
-	// save state.
+	// save state
 	bool invert = ts->GetInvert();
 	u8 size = ts->GetPixelSize();
 	u16* screen = ts->GetScreen();
@@ -57,17 +57,14 @@ void App::PrefsDraw()
 
 	ts->SetScreen(ts->screenright);
 	ts->SetInvert(false);
+	ts->ClearScreen();
 
-	for (u8 i = 0; i < PREFS_BUTTON_COUNT; i++)
-	{
+	for (int i=0; i<PREFS_BUTTON_COUNT; i++)
 		prefsButtons[i].Draw(ts->screenright, i==prefsSelected);
-	}
 
-	if (strcmp(buttonprefs.GetLabel(), "  books"))
-		buttonprefs.Label("  books");
 	buttonprefs.Draw(ts->screenright);
 
-	// restore state.
+	// restore state
 	ts->SetStyle(style);
 	ts->SetInvert(invert);
 	ts->SetPixelSize(size);
@@ -86,9 +83,7 @@ void App::PrefsHandleEvent()
 	}
 	else if (keys & (KEY_SELECT | KEY_B))
 	{
-		buttonprefs.Label("settings");
-		mode = APP_MODE_BROWSER;
-		browser_draw();
+		ShowLibraryView();
 	}
 	else if (keys & (key.left | key.l))
 	{
@@ -135,9 +130,7 @@ void App::PrefsHandleTouch() {
 	touchPosition coord = TouchRead();
 	
 	if (buttonprefs.EnclosesPoint(coord.py, coord.px)) {
-		buttonprefs.Label("settings");
-		mode = APP_MODE_BROWSER;
-		browser_view_dirty = true;
+		ShowLibraryView();
 		return;
 	}
 

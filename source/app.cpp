@@ -234,7 +234,8 @@ int App::FindBooks() {
 	return 0;
 }
 
-//! Just like libnds touchRead() but takes orientation into account.
+//! libnds touchRead() that takes orientation into account.
+//! TODO the coordspace is stil not userspace.
 touchPosition App::TouchRead() {
 	touchPosition touch;
 	touchRead(&touch);
@@ -249,6 +250,27 @@ touchPosition App::TouchRead() {
 		coord.py = 192 - touch.py;
 	}
 	return coord;
+}
+
+void App::ShowFontView(int app_mode)
+{
+	mode = app_mode;
+	font_view_dirty = true;
+	buttonprefs.Label("cancel");
+}
+
+void App::ShowLibraryView()
+{
+	mode = APP_MODE_BROWSER;
+	browser_view_dirty = true;
+	buttonprefs.Label("settings");
+}
+
+void App::ShowSettingsView()
+{
+	mode = APP_MODE_PREFS;
+	prefs_view_dirty = true;
+	buttonprefs.Label(" library");
 }
 
 void App::UpdateClock()
@@ -270,11 +292,11 @@ void App::UpdateClock()
 	ts->SetScreen(screen);
 }
 
-void App::SetOrientation(bool flipped)
+void App::SetOrientation(bool turned_right)
 {
 	s16 s;
 	s16 c;
-	if(flipped)
+	if(turned_right)
 	{
 		s = 1 << 8;
 		c = 0;
@@ -285,6 +307,7 @@ void App::SetOrientation(bool flipped)
 		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
 		ts->screenleft = (u16*)BG_BMP_RAM(0);
 		orientation = true;
+		// TODO put this in user coords
 		key.down = KEY_UP;
 		key.up = KEY_DOWN;
 		key.left = KEY_RIGHT;
@@ -303,6 +326,7 @@ void App::SetOrientation(bool flipped)
 		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
 		ts->screenleft = (u16*)BG_BMP_RAM(0);
 		orientation = false;
+		// TODO put this in user coords
 		key.down = KEY_DOWN;
 		key.up = KEY_UP;
 		key.left = KEY_LEFT;

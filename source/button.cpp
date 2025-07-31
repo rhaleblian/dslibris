@@ -82,7 +82,9 @@ void Button::Draw(u16 *screen, bool highlight) {
 	lr.x = origin.x + extent.x;
 	lr.y = origin.y + extent.y;
 	int w = ts->display.height;  // no really
-	
+
+	if (screen == nullptr) screen = ts->screen;
+
 	ts->SetScreen(screen);
 	ts->SetInvert(false);
 	ts->SetStyle(text.style);

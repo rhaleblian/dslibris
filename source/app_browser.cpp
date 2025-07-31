@@ -62,15 +62,12 @@ void App::browser_handleevent()
 
 	else if (keys & KEY_SELECT)
 	{
-		// Go to settings.
-		mode = APP_MODE_PREFS;
-		prefsSelected = 0;
-		prefs_view_dirty = true;
+		ShowSettingsView();
 	}
 
 	else if (keys & KEY_START)
 	{
-		// Exit game.
+		// exit game.
 		mode = APP_MODE_QUIT;
 	}
 
@@ -89,13 +86,11 @@ void App::browser_handleevent()
 		}
 		else if(buttonprefs.EnclosesPoint(coord.py, coord.px))
 		{
-			// Go to settings.
-			prefs_view_dirty = true;  // Request a redraw
-			mode = APP_MODE_PREFS;
+			ShowSettingsView();
 		}
 		else
 		{
-			// Select this book and open it.
+			// select this book and open it.
 			for(u8 i=browserstart; 
 				(i<bookcount) && (i<browserstart+APP_BROWSER_BUTTON_COUNT);
 				i++) {

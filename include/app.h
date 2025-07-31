@@ -168,6 +168,9 @@ class App {
 	void InitScreens();
 	void SetBrightness(u8 b);
 	void SetOrientation(bool flipped);
+	void ShowFontView(int app_mode);
+	void ShowLibraryView();
+	void ShowSettingsView();
 
 	// app_Browser.cpp
 	void browser_draw();
@@ -184,6 +187,9 @@ class App {
 	void FontHandleTouchEvent();
 	void FontNextPage();
 	void FontPreviousPage();
+	void FontReturnToSettings();
+	void FontSelectNext();
+	void FontSelectPrevious();
 
 	// app_prefs.cpp
 	void PrefsDraw();

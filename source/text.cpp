@@ -344,12 +344,14 @@ void Text::ClearCache(FT_Face face)
 
 void Text::ClearScreen()
 {
-	if(invert) memset((void*)screen,0,PAGE_WIDTH*PAGE_HEIGHT*4);
+	const int pixelcount = display.width*display.height;
+	if(invert) memset((void*)screen,0,pixelcount*4);
 	else {
-		// memset((void*)screen,255,PAGE_WIDTH*PAGE_HEIGHT*4);
-		const int run = display.height*display.height;
-		const u16 pixel = RGB15(29,29,29)|BIT(15);
-		for (int i=0; i<run; i++) screen[i] = pixel;
+		memset((void*)screen,255,pixelcount*4);
+		
+		// alternately, off-white...
+		// const u16 pixel = RGB15(29,29,29)|BIT(15);
+		// for (int i=0; i<pixelcount; i++) screen[i] = pixel;
 	}
 }
 
@@ -716,18 +718,17 @@ void Text::ClearScreen(u16 *screen, u8 r, u8 g, u8 b)
 
 void Text::PrintSplash(u16 *screen)
 {
-	// push.
+	// push
 	auto s = GetScreen();
 	auto z = GetPixelSize();
 	auto i = GetInvert();
 
 	SetScreen(screen);
 	drawstack(screen);
-	SetPen(20, 20);
-	sprintf(msg, "%s", VERSION);
-	PrintString(msg);
+	SetPen(display.width-44, display.height-170);
+	PrintString(VERSION);
 
-	// pop.
+	// pop
 	SetInvert(i);
 	SetPixelSize(z);
 	SetScreen(s);

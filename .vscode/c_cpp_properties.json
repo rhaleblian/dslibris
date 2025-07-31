@@ -2,7 +2,7 @@
     "configurations": [
         {
             "name": "Linux",
-            "defines": ["ARM9"],
+            "defines": ["ARM9", "IRQ_VBLANK", "__NDS__"],
             "compilerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc",
             "cStandard": "gnu11",
             "cppStandard": "gnu++14",
