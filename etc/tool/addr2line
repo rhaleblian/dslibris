@@ -1,4 +1,0 @@
-#!/bin/sh
-# run from the project root dir.
-arm-eabi-addr2line -e arm9/dslibris.arm9.elf $1
-

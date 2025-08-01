@@ -58,7 +58,8 @@ https://github.com/rhaleblian/dslibris
 #include "parse.h"
 
 #define APP_BROWSER_BUTTON_COUNT 7
-#define APP_LOGFILE "dslibris.log"
+#define APP_URL "http://github.com/rhaleblian/dslibris"
+
 #define APP_MODE_BOOK 0
 #define APP_MODE_BROWSER 1
 #define APP_MODE_PREFS 2
@@ -66,17 +67,18 @@ https://github.com/rhaleblian/dslibris
 #define APP_MODE_PREFS_FONT_BOLD 4
 #define APP_MODE_PREFS_FONT_ITALIC 5
 #define APP_MODE_PREFS_FONT_BOLDITALIC 6
-#define APP_URL "http://github.com/rhaleblian/dslibris"
+#define APP_MODE_QUIT 7
 
-#define PREFS_BUTTON_COUNT 7
-#define PREFS_BUTTON_FONTSIZE 0
-#define PREFS_BUTTON_FONT 1
-#define PREFS_BUTTON_FONT_ITALIC 2
-#define PREFS_BUTTON_FONT_BOLD 3
-#define PREFS_BUTTON_FONT_BOLDITALIC 4
-#define PREFS_BUTTON_PARASPACING 5
-#define PREFS_BUTTON_ORIENTATION 6
-
+enum prefsbuttonindex {
+	PREFS_BUTTON_FONT,
+	PREFS_BUTTON_FONT_ITALIC,
+	PREFS_BUTTON_FONT_BOLD,
+	PREFS_BUTTON_FONT_BOLDITALIC,
+	PREFS_BUTTON_FONTSIZE,
+	PREFS_BUTTON_PARASPACING,
+	PREFS_BUTTON_ORIENTATION,
+	PREFS_BUTTON_COUNT
+};
 
 //! \brief Main application.
 //!
@@ -91,7 +93,6 @@ class App {
 	~App();
 
 	Text *ts;
-	// Prefs myprefs;   //! User-configurable settings.
 	Prefs *prefs;	 //! User-configurable settings.
 	u8 brightness;   //! DISABLED. 4 levels for the Lite.
 	u8 mode; 	     //! Current mode (browser, prefs, book, font)
@@ -121,22 +122,11 @@ class App {
 	bool cache;
 	//! user data block passed to expat callbacks.
 	parsedata_t parsedata;
-	//! not used yet; will contain pagination indices for caching.
-	std::vector<u16> pageindices;
 	u8 orientation;
 	u8 invert;
 	u8 paraspacing, paraindent;
 	
-	Button prefsButtonBooks;
-	Button prefsButtonFonts;
-	Button prefsButtonFont;
-	Button prefsButtonFontBold;
-	Button prefsButtonFontItalic;
-	Button prefsButtonFontBoldItalic;
-	Button prefsButtonFontSize;
-	Button prefsButtonParaspacing;
-	Button prefsButtonOrientation;
-	Button* prefsButtons[PREFS_BUTTON_COUNT];
+	Button prefsButtons[PREFS_BUTTON_COUNT];
 	u8 prefsSelected;
 	
 	unsigned int fontSelected;
@@ -147,16 +137,10 @@ class App {
 	void CycleBrightness();
 	void PrintStatus(const char *msg);
 	void PrintStatus(std::string msg);
-	void Flip();
 	int  Run(void);
 	void SetProgress(int amount);
 	touchPosition TouchRead();
 	void UpdateClock();
-
-	void Log(const char*);
-	void Log(const char* format, const char *msg);
-	void Log(const std::string);
-	void Log(const char *format, const int value);
 
 	bool parse_in(parsedata_t *data, context_t context);
 	void parse_init(parsedata_t *data);
@@ -165,20 +149,26 @@ class App {
 	void parse_push(parsedata_t *data, context_t context);
 	
 	// app_book.cpp
-	void HandleEventInBook();
+	void CloseBook();
 	int  GetBookIndex(Book*);
-	u8   OpenBook(void);
-	
+	void HandleEventInBook();
+	u8   OpenBook();
+	void ToggleBookmark();
+
 	private:
 
 	bool browser_view_dirty;
 	bool font_view_dirty;
+	bool font_view_initialized;
 	bool prefs_view_dirty;
 
 	int  FindBooks();
 	void InitScreens();
 	void SetBrightness(u8 b);
 	void SetOrientation(bool flipped);
+	void ShowFontView(int app_mode);
+	void ShowLibraryView();
+	void ShowSettingsView();
 
 	// app_Browser.cpp
 	void browser_draw();
@@ -195,22 +185,23 @@ class App {
 	void FontHandleTouchEvent();
 	void FontNextPage();
 	void FontPreviousPage();
+	void FontSelectNext();
+	void FontSelectPrevious();
 
 	// app_prefs.cpp
-	void PrefsHandleEvent();
-	void PrefsInit();
 	void PrefsDraw();
-	void PrefsButton();
+	void PrefsHandleEvent();
+	void PrefsHandlePress();
+	void PrefsHandleTouch();
+	void PrefsInit();
 	void PrefsIncreasePixelSize();
 	void PrefsDecreasePixelSize();
 	void PrefsIncreaseParaspacing();
 	void PrefsDecreaseParaspacing();
 	void PrefsFlipOrientation();
+	void PrefsRefreshButton(int index);
 	void PrefsRefreshButtonFont();
 	void PrefsRefreshButtonFontBold();
 	void PrefsRefreshButtonFontItalic();
 	void PrefsRefreshButtonFontBoldItalic();
-	void PrefsRefreshButtonFontSize();
-	void PrefsRefreshButtonParaspacing();
-	void PrefsRefreshButtonOrientation();
 };

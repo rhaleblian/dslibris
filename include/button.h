@@ -1,5 +1,4 @@
-#ifndef _button_h
-#define _button_h
+#pragma once
 
 #include "text.h"
 #include <unistd.h>
@@ -23,7 +22,6 @@ class Button {
 
 	coord_t origin;
 	coord_t extent;
-	bool draw_border;
 	struct {
 		int pixelsize;
 		int style;
@@ -38,6 +36,7 @@ class Button {
     public:
 
 	Button();
+	Button(Text *typesetter);
 	void Init(Text *typesetter);
 	inline int GetHeight() { return extent.y; };
 	inline const char* GetLabel() { return text1.c_str(); };
@@ -49,10 +48,8 @@ class Button {
 	//! label on second line, used for author in the library screen.
 	void SetLabel2(std::string s);
 	inline void SetStyle(int astyle) { style = astyle; };
-	void Draw(u16 *fb, bool highlight = false);
+	void Draw(u16 *fb = nullptr, bool highlight = false);
 	void Move(u16 x, u16 y);
 	void Resize(u16 x, u16 y);
 	bool EnclosesPoint(u16 x, u16 y);
 };
-
-#endif

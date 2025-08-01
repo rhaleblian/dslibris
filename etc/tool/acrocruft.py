@@ -10,6 +10,6 @@ p = re.compile('<BR>')
 buffer = p.sub(' ',buffer)
 p = re.compile('</?SPAN[^>]*>')
 buffer = p.sub(' ',buffer)
-print buffer
+print(buffer)
 fp.close()
 

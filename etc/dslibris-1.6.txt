@@ -1,0 +1,16 @@
+This release changes input controls and adds a few long-requested features.
+
+Controls:
+* START exits dslibris.
+  On DS this shuts down, and in 3DS menu systems you should return to that menu.
+* SELECT now returns from a book to the library view.
+* Y toggles a bookmark on the current page.
+
+Settings:
+* The preferences screen is now called "settings";
+* New controls for screen orientation and bold italic font;
+* Bold italic text is now rendered as a distinct style.
+
+Installation remains the same: Download the zip file, unzip it,
+patch dslibris.nds if you need,
+and copy dslibris.nds, Book and Font to your root folder.

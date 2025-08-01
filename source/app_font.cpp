@@ -1,3 +1,5 @@
+#include "app.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stdlib.h>
@@ -16,7 +18,6 @@
 
 #include "main.h"
 #include "parse.h"
-#include "app.h"
 #include "book.h"
 #include "button.h"
 #include "text.h"
@@ -27,12 +28,10 @@
 
 void App::FontInit()
 {
+	if (font_view_initialized) return;
+	
 	DIR *dp = opendir(fontdir.c_str());
-	if (!dp)
-	{
-		swiWaitForVBlank();
-		exit(-3);
-	}
+	if (!dp) return;
 	
 	fontPage = 0;
 	fontSelected = 0;
@@ -42,8 +41,8 @@ void App::FontInit()
 	while ((ent = readdir(dp)))
 	{	
 		// Don't try folders
-		if (ent->d_type == DT_DIR)
-			continue;
+		if (ent->d_type == DT_DIR) continue;
+
 		char *filename = ent->d_name;
 		char *c;
 		for (c=filename; c != filename + strlen(filename) && *c != '.'; c++);
@@ -52,45 +51,50 @@ void App::FontInit()
 			Button *b = new Button();
 			b->Init(ts);
 			b->Move(0, (fontButtons.size() % BPP) * b->GetHeight());
-			b->Label(filename);
+			b->SetLabel1(std::string(filename));
  			fontButtons.push_back(b);
 		}
 	}
 	closedir(dp);
+
+	font_view_initialized = true;
 }
 
 void App::FontHandleEvent()
 {
 	auto keys = keysDown();
 
+	// warning: d-pad keys are in pre-rotation space
 	if (keys & (KEY_SELECT | KEY_B))
 	{
-		// Leave without changing the font
-		mode = APP_MODE_PREFS;
-		prefs_view_dirty = true;
+		// cancel
+		ShowSettingsView();
 	}
-	else if (keys & key.up)
+	else if (keys & (key.r|key.right))
 	{
-		// Previous page
-		if (fontSelected > 0) {
-			if (fontSelected == fontPage * 7) {
+		// previous font or page
+		if (fontSelected > 0)
+		{
+			if (fontSelected == fontPage * 7)
+			{
 				FontPreviousPage();
-				FontDraw();
-			} else {
-				fontSelected--;
-				font_view_dirty = true;
+			} else
+			{
+				FontSelectPrevious();
 			}
 		}
 	}
-	else if (keys & key.down)
+	else if (keys & (key.l|key.left))
 	{
-		// Next page
-		if (fontSelected == fontPage * BPP + (BPP-1)) {
+		// next font or page
+		if (fontSelected == fontPage * BPP + (BPP-1))
+		{
 			FontNextPage();
-		} else {
-			fontSelected++;
 		}
-		font_view_dirty = true;
+		else
+		{
+			FontSelectNext();
+		}
 	}
 	else if (keys & KEY_A)
 	{
@@ -100,15 +104,17 @@ void App::FontHandleEvent()
 	{
 		FontHandleTouchEvent();
 	}
+	else if (keys & KEY_START)
+	{
+		mode = APP_MODE_QUIT;
+	}
 }
 
 void App::FontHandleTouchEvent() {
 	touchPosition coord = TouchRead();
 
 	if(buttonprefs.EnclosesPoint(coord.py,coord.px)) {
-		// Leave views
-		mode = APP_MODE_PREFS;
-		prefs_view_dirty = true;
+		ShowSettingsView();
 	}
 	else if(buttonnext.EnclosesPoint(coord.py,coord.px)){
 		FontNextPage();
@@ -124,9 +130,6 @@ void App::FontHandleTouchEvent() {
 			if (fontButtons[i]->EnclosesPoint(coord.py, coord.px))
 			{
 				fontSelected = i;
-				char msg[4];
-				sprintf(msg, "%d", fontSelected);
-				PrintStatus(msg);
 				FontButton();
 				break;
 			}
@@ -146,19 +149,24 @@ void App::FontDraw()
 	int style = ts->GetStyle();
 	
 	ts->SetInvert(false);
-	ts->SetStyle(TEXT_STYLE_BROWSER);
 	ts->ClearScreen();
 
-	for (u8 i = fontPage * 7; (i < fontButtons.size()) && (i < (fontPage + 1) * BPP); i++)
+	for (u8 i = fontPage * BPP;
+		(i < fontButtons.size()) && (i < (fontPage + 1) * BPP);
+		i++)
 	{
 		fontButtons[i]->Draw(ts->screenright, i == fontSelected);
 	}
+
 	buttonprefs.Label("cancel");
 	buttonprefs.Draw(screen, false);
-	if(fontButtons.size() > (fontPage + 1) * BPP)
-		buttonnext.Draw(ts->screenright, false);
-	if(fontSelected > BPP)
-		buttonprev.Draw(ts->screenright, false);
+	if (fontButtons.size() > BPP)
+	{
+		if(fontSelected < fontButtons.size() - BPP)
+			buttonnext.Draw(ts->screenright, false);
+		if(fontSelected >= BPP)
+			buttonprev.Draw(ts->screenright, false);
+	}
 
 	// restore state.
 	ts->SetStyle(style);
@@ -168,12 +176,22 @@ void App::FontDraw()
 	ts->ShowMain();
 }
 
+void App::FontSelectNext()
+{
+	if (fontSelected < fontButtons.size() - 1)
+	{
+		fontSelected++;
+		font_view_dirty = true;
+	}
+}
+
 void App::FontNextPage()
 {
 	if((fontPage + 1) * BPP < fontButtons.size())
 	{
 		fontPage += 1;
 		fontSelected = fontPage * BPP;
+		font_view_dirty = true;
 	}
 }
 
@@ -183,43 +201,56 @@ void App::FontPreviousPage()
 	{
 		fontPage--;
 		fontSelected = fontPage * BPP + (BPP-1);
+		font_view_dirty = true;
+	}
+}
+
+void App::FontSelectPrevious()
+{
+	if (fontSelected > 0)
+	{
+		fontSelected--;
+		font_view_dirty = true;
 	}
 }
 
 void App::FontButton()
 {
 	const char* filename = fontButtons[fontSelected]->GetLabel();
-	if (filename == nullptr)
+	if (!filename)
 	{
 		PrintStatus("error");
 		return;
 	}
-	switch (mode) {
+
+	switch (mode)
+	{
 		case APP_MODE_PREFS_FONT:
 		ts->SetFontFile(filename, TEXT_STYLE_REGULAR);
-		PrefsRefreshButtonFont();
+		PrefsRefreshButton(PREFS_BUTTON_FONT);
 		break;
 
 		case APP_MODE_PREFS_FONT_BOLD:
 		ts->SetFontFile(filename, TEXT_STYLE_BOLD);
-		PrefsRefreshButtonFontBold();
+		PrefsRefreshButton(PREFS_BUTTON_FONT_BOLD);
 		break;
 
 		case APP_MODE_PREFS_FONT_ITALIC:
 		ts->SetFontFile(filename, TEXT_STYLE_ITALIC);
-		PrefsRefreshButtonFontItalic();
+		PrefsRefreshButton(PREFS_BUTTON_FONT_ITALIC);
 		break;
 
 		case APP_MODE_PREFS_FONT_BOLDITALIC:
 		ts->SetFontFile(filename, TEXT_STYLE_BOLDITALIC);
-		PrefsRefreshButtonFontBoldItalic();
+		PrefsRefreshButton(PREFS_BUTTON_FONT_BOLDITALIC);
 		break;
 	}
 
-	// Trigger repagination
+	// Re-read fonts.
 	ts->Init();
-	
-	prefs_view_dirty = true;
+
 	mode = APP_MODE_PREFS;
+	prefs_view_dirty = true;
+
 	prefs->Write();
 }

@@ -1,21 +1,20 @@
-#ifndef _PREFS_H
-#define _PREFS_H
+#pragma once
+
 #include "expat.h"
 #include "app.h"
 
 class Prefs
 {
-public:
-	App *app;
-	long modtime;
-	// Prefs();
+	public:
 	Prefs(App *app);
 	~Prefs();
+	void Apply();
 	int Read();
 	int Write();
+	long modtime;
 	bool swapshoulder;
-private:
+
+	private:
+	App *app;
 	void Init();
 };
-
-#endif

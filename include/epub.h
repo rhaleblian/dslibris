@@ -1,5 +1,4 @@
-#ifndef _EPUB_H_
-#define _EPUB_H_
+#pragma once
 
 #include "book.h"
 #include <string>
@@ -30,5 +29,3 @@ typedef struct {
 } epub_data_t;
 
 int epub(Book *book, std::string filepath, bool metadataonly);
-
-#endif

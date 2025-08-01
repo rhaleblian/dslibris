@@ -26,9 +26,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 Button::Button() {}
 
+Button::Button(Text *t)
+{
+	Init(t);
+}
+
 void Button::Init(Text *typesetter) {
-	ts = typesetter;
-	draw_border = true;
 	origin.x = 0;
 	origin.y = 0;
 	extent.x = 192;
@@ -38,6 +41,7 @@ void Button::Init(Text *typesetter) {
 	text.style = TEXT_STYLE_BROWSER;
 	text1 = "";
 	text2 = "";
+	ts = typesetter;
 }
 
 void Button::Label(const char *s) {
@@ -65,7 +69,7 @@ void Button::Resize(u16 x, u16 y) {
 
 void Button::Draw(u16 *screen, bool highlight) {
 	// push state
-	int  save_pixelsize = ts->GetPixelSize();
+	// int  save_pixelsize = ts->GetPixelSize();
 	bool save_invert = ts->GetInvert();
 	auto save_screen = ts->GetScreen();
 	auto save_style = ts->GetStyle();
@@ -78,26 +82,25 @@ void Button::Draw(u16 *screen, bool highlight) {
 	lr.x = origin.x + extent.x;
 	lr.y = origin.y + extent.y;
 	int w = ts->display.height;  // no really
-	// char msg[64]; sprintf(msg, "%d\n", w); app->PrintStatus(msg);
-	u16 bgcolor = RGB15(30,30,30)|BIT(15);
-	if(highlight) bgcolor = RGB15(31,31,15)|BIT(15);
-	if(highlight) ts->usebgcolor = true;
+
+	if (screen == nullptr) screen = ts->screen;
 
 	ts->SetScreen(screen);
 	ts->SetInvert(false);
 	ts->SetStyle(text.style);
 
-	for (y=ul.y+1;y<lr.y-1;y++) {
-		for (x=ul.x+1;x<lr.x-1;x++) {
+	u16 bgcolor = RGB15(31,31,31)|BIT(15);
+	for (y=ul.y;y<lr.y;y++) {
+		for (x=ul.x;x<lr.x;x++) {
 			screen[y*w + x] = bgcolor;
 		}
 	}
 
-	if (draw_border) {
+	if (highlight) {
 		u16 bordercolor = RGB15(22,22,22)|BIT(15);
 		for (int x=ul.x;x<lr.x;x++) {
 			screen[ul.y*w + x] = bordercolor;
-			screen[lr.y*w + x] = bordercolor;
+			screen[(lr.y-1)*w + x] = bordercolor;
 		}
 		for (int y=ul.y;y<lr.y;y++) {
 			screen[y*w + ul.x] = bordercolor;
@@ -105,9 +108,12 @@ void Button::Draw(u16 *screen, bool highlight) {
 		}
 	}
 
+	// Pixel size changes trash the text cache,
+	// so they are suppressed.
+	
 	if (text1.length()) {
-		const int s1 = style ? 1 : -1;
-		ts->SetPixelSize(text.pixelsize+s1);
+		// const int s1 = style ? 1 : -1;
+		// ts->SetPixelSize(text.pixelsize+s1);
 		ts->SetPen(ul.x+6, ul.y+ts->GetHeight());
 		u8 len = ts->GetCharCountInsideWidth(text1.c_str(),
 			text.style, lr.x-ul.x-4);
@@ -116,15 +122,15 @@ void Button::Draw(u16 *screen, bool highlight) {
 	}
 
 	if (text2.length()) {
-		const int s2 = style ? -1 : 0;
-		ts->SetPixelSize(text.pixelsize+s2);
+		// const int s2 = style ? -1 : 0;
+		// ts->SetPixelSize(text.pixelsize+s2);
 		ts->SetPen(ul.x+6, ts->GetPenY()+ts->GetHeight());
 		ts->PrintString(text2.c_str(), text.style);
 	}
 
 	// pop state
 	ts->SetInvert(save_invert);
-	ts->SetPixelSize(save_pixelsize);
+	// ts->SetPixelSize(save_pixelsize);
 	ts->SetScreen(save_screen);
 	ts->SetStyle(save_style);
 	ts->usebgcolor = save_usebgcolor;

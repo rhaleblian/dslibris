@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 #include "epub.h"
+
 #include <nds.h>
 #include <string.h>
 #include <stdio.h>
@@ -31,7 +32,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "expat.h"
 #include "zlib.h"
 #include "unzip.h"
-#include "log.h"
 
 void epub_data_init(epub_data_t *d)
 {

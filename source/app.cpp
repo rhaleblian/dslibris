@@ -48,6 +48,7 @@ App::App()
 		fclose(fd);
 		melonds = true;
 	}
+
 	fontdir = std::string("font");
 	bookdir = std::string("book");
 	bookcount = 0;
@@ -57,7 +58,7 @@ App::App()
 	mode = APP_MODE_BROWSER;
 	browserstart = 0;
 	cache = false;
-	orientation = false;
+	orientation = false;  //! turned right?
 	paraspacing = 1;
 	paraindent = 0;
 	brightness = 1;
@@ -76,8 +77,14 @@ App::App()
 	key.x = KEY_X;
 	key.y = KEY_Y;
 
+	browser_view_dirty = false;
+	
+	font_view_dirty = false;
+	font_view_initialized = false;
+
 	prefs = new Prefs(this);
-	prefs->app = this;
+	prefsSelected = -1;
+	prefs_view_dirty = false;
 
 	browser_view_dirty = false;
 	prefs_view_dirty = false;
@@ -117,38 +124,30 @@ int App::Run(void)
 		halt("[FAIL] no book directory\n");
 	if (bookcount == 0)
 		halt("[FAIL] no books\n");
+	std::sort(books.begin(),books.end(),&book_title_lessthan);
 
 	// Read and apply preferences.
 
-	if (prefs->Read() != ok)
-		// We do not halt!
-		printf("[FAIL] preferences\n");
-	else 
-		printf("[ OK ] preferences\n");
-	if (prefs->swapshoulder)
-	{
-		int tmp = key.l;
-		key.l = key.r;
-		key.r = tmp;
-	}
+	prefs->Read();
+	prefs->Apply();
+
 	// Sort bookmarks for each book.
 	for(u8 i = 0; i < bookcount; i++)
 	{
 		books[i]->GetBookmarks()->sort();
 	}
 
-	// Set up preferences editing screen.
+	// Set up settings screen.
 	PrefsInit();
 	
-	// Set up library browser screen.
-	std::sort(books.begin(),books.end(),&book_title_lessthan);
+	// Set up library screen.
 	browser_init();
-	mode = APP_MODE_BROWSER;
 
 	// Bring up displays.
 
 	InitScreens();
 	ts->PrintSplash(ts->screenleft);
+	mode = APP_MODE_BROWSER;
 	browser_draw();
 
 	// Resume reading from the last session.
@@ -160,18 +159,27 @@ int App::Run(void)
 	{
 		swiWaitForVBlank();
 		scanKeys();
+
 		switch (mode) {
+			case APP_MODE_BOOK:
+			HandleEventInBook();
+			break;
+
 			case APP_MODE_BROWSER:
 			browser_handleevent();
 			if (browser_view_dirty) browser_draw();
 			break;
-			case APP_MODE_BOOK:
-			HandleEventInBook();
+
+			case APP_MODE_QUIT:
+			prefs->Write();
+			return 0;
 			break;
+
 			case APP_MODE_PREFS:
 			PrefsHandleEvent();
 			if (prefs_view_dirty) PrefsDraw();
 			break;
+
 			case APP_MODE_PREFS_FONT:
 			case APP_MODE_PREFS_FONT_BOLD:
 			case APP_MODE_PREFS_FONT_ITALIC:
@@ -226,7 +234,8 @@ int App::FindBooks() {
 	return 0;
 }
 
-//! Just like libnds touchRead() but takes orientation into account.
+//! libnds touchRead() that takes orientation into account.
+//! TODO the coordspace is stil not userspace.
 touchPosition App::TouchRead() {
 	touchPosition touch;
 	touchRead(&touch);
@@ -241,6 +250,27 @@ touchPosition App::TouchRead() {
 		coord.py = 192 - touch.py;
 	}
 	return coord;
+}
+
+void App::ShowFontView(int app_mode)
+{
+	mode = app_mode;
+	font_view_dirty = true;
+	buttonprefs.Label("cancel");
+}
+
+void App::ShowLibraryView()
+{
+	mode = APP_MODE_BROWSER;
+	browser_view_dirty = true;
+	buttonprefs.Label("settings");
+}
+
+void App::ShowSettingsView()
+{
+	mode = APP_MODE_PREFS;
+	prefs_view_dirty = true;
+	buttonprefs.Label(" library");
 }
 
 void App::UpdateClock()
@@ -262,11 +292,11 @@ void App::UpdateClock()
 	ts->SetScreen(screen);
 }
 
-void App::SetOrientation(bool flipped)
+void App::SetOrientation(bool turned_right)
 {
 	s16 s;
 	s16 c;
-	if(flipped)
+	if(turned_right)
 	{
 		s = 1 << 8;
 		c = 0;
@@ -277,6 +307,7 @@ void App::SetOrientation(bool flipped)
 		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
 		ts->screenleft = (u16*)BG_BMP_RAM(0);
 		orientation = true;
+		// TODO put this in user coords
 		key.down = KEY_UP;
 		key.up = KEY_DOWN;
 		key.left = KEY_RIGHT;
@@ -295,6 +326,7 @@ void App::SetOrientation(bool flipped)
 		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
 		ts->screenleft = (u16*)BG_BMP_RAM(0);
 		orientation = false;
+		// TODO put this in user coords
 		key.down = KEY_DOWN;
 		key.up = KEY_UP;
 		key.left = KEY_LEFT;
@@ -310,36 +342,6 @@ void App::SetOrientation(bool flipped)
 	REG_BG3PB_SUB = -s;
 	REG_BG3PC_SUB = s;
 	REG_BG3PD_SUB = c;
-}
-
-void App::Log(const char *msg)
-{
-	Log("%s",msg);
-}
-
-void App::Log(const char *format, const int value)
-{
-	// std::stringstream ss;
-	// ss << value << std::endl;
-	// Log(format, ss.str().c_str());
-}
-
-void App::Log(const char *format, const char *msg)
-{
-	// if(console)
-	// {
-	// 	char s[1024];
-	// 	sprintf(s,format,msg);
-	// 	iprintf(s);
-	// }
-	// FILE *logfile = fopen(LOGFILEPATH,"a");
-	// fprintf(logfile,format,msg);
-	// fclose(logfile);
-}
-
-void App::Log(const std::string msg)
-{
-	Log("%s",msg.c_str());
 }
 
 void App::InitScreens()

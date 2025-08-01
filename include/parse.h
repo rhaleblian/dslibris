@@ -1,5 +1,4 @@
-#ifndef _parse_h
-#define _parse_h
+#pragma once
 
 #include <expat.h>
 #include "book.h"
@@ -68,5 +67,3 @@ bool iswhitespace(u8 c);
 
 void parse_init(parsedata_t *data);
 void parse_printerror(XML_Parser p);
-
-#endif

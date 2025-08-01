@@ -182,19 +182,11 @@ u8 Book::Open() {
 		fclose(fp);
 		Restore();
 	} else {
-		if(format == FORMAT_XHTML) {
-			app->PrintStatus("opening XHTML...\n");
-				err = Parse(true);
-		}
-		else if(format == FORMAT_EPUB) {
-			app->PrintStatus("opening EPUB...\n");
-			std::string path;
-			path.append(GetFolderName());
-			path.append("/");
-			path.append(GetFileName());
-			err = epub(this,path,false);
-		} else
-			err = 255;
+		std::string path;
+		path.append(GetFolderName());
+		path.append("/");
+		path.append(GetFileName());
+		err = epub(this,path,false);
 		if (app->cache) Cache();
 		fclose(fp);
 	}
