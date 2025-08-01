@@ -62,7 +62,7 @@ void App::HandleEventInBook()
 	}
 	else if (keys & KEY_START)
 	{
-		mode = APP_MODE_QUIT;
+		// mode = APP_MODE_QUIT;
 	}
 	else if (keys & KEY_TOUCH)
 	{
