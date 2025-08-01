@@ -106,7 +106,7 @@ void App::FontHandleEvent()
 	}
 	else if (keys & KEY_START)
 	{
-		mode = APP_MODE_QUIT;
+		// mode = APP_MODE_QUIT;
 	}
 }
 
