@@ -722,8 +722,7 @@ void Text::PrintSplash(u16 *screen)
 
 	SetScreen(screen);
 	drawstack(screen);
-	SetPen(display.width-44, display.height-200);
-	PrintString(VERSION);
+	app->PrintStatus(VERSION);
 
 	// pop
 	SetInvert(i);
