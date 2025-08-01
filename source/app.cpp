@@ -117,7 +117,7 @@ int App::Run(void)
 
 	if (ts->Init() != ok)
 		halt("[FAIL] typesetter\n");
-	
+
 	// Traverse the book directory and construct library.
 
 	if (FindBooks() != ok)
@@ -146,13 +146,14 @@ int App::Run(void)
 	// Bring up displays.
 
 	InitScreens();
+
 	ts->PrintSplash(ts->screenleft);
 	mode = APP_MODE_BROWSER;
 	browser_draw();
 
 	// Resume reading from the last session.
 	
-	if(reopen && bookcurrent) if (OpenBook()) browser_draw();
+	// if(reopen && bookcurrent) if (OpenBook()) browser_draw();
 
 	keysSetRepeat(60,2);
 	while (pmMainLoop())

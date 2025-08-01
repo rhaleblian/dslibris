@@ -87,7 +87,7 @@ void Button::Draw(u16 *screen, bool highlight) {
 
 	ts->SetScreen(screen);
 	ts->SetInvert(false);
-	ts->SetStyle(text.style);
+	// ts->SetStyle(text.style);
 
 	u16 bgcolor = RGB15(31,31,31)|BIT(15);
 	for (y=ul.y;y<lr.y;y++) {

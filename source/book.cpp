@@ -1,11 +1,12 @@
 #include "book.h"
+
+#include <stdio.h>
+#include <errno.h>
+#include <sys/param.h>
 #include "main.h"
 #include "parse.h"
 #include "epub.h"
 #include "app.h"
-#include <stdio.h>
-#include <errno.h>
-#include <sys/param.h>
 
 extern App *app;
 extern bool parseFontBold;
@@ -186,11 +187,13 @@ u8 Book::Open() {
 		path.append(GetFolderName());
 		path.append("/");
 		path.append(GetFileName());
+		app->ts->SetStyle(TEXT_STYLE_REGULAR);
 		err = epub(this,path,false);
+		// TODO toss this.
 		if (app->cache) Cache();
 		fclose(fp);
 	}
-	if(!err)
+	if (!err)
 		if(position > (int)pages.size()) position = pages.size()-1;
 
 	return (u8)err;
@@ -279,6 +282,7 @@ u8 Book::Parse(bool fulltext)
 	return(rc);
 }
 
+// TODO toss this
 void Book::Restore()
 {
 	FILE *fp = fopen("/cache.dat", "r");
@@ -305,5 +309,4 @@ void Book::Close()
 	    ++it;
 	}
 	pages.clear();	
-	//pages.erase(pages.begin(), pages.end());
 }

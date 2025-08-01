@@ -156,8 +156,6 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 		len_total += len;
 	} while (len);
 
-	printf("yo\n");
-
 	XML_ParserFree(p);
 	delete [] filebuf;
 	return(rc);

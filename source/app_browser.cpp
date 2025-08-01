@@ -173,7 +173,6 @@ void App::browser_draw(void)
 {
 	// save state.
 	bool invert = ts->GetInvert();
-	u8 size = ts->GetPixelSize();
  	u16 *screen = ts->GetScreen();
 	int style = ts->GetStyle();
 	
@@ -196,7 +195,6 @@ void App::browser_draw(void)
 
 	// restore state.
 	ts->SetInvert(invert);
-	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
 	ts->SetStyle(style);
 

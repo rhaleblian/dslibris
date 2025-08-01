@@ -96,8 +96,10 @@ void App::HandleEventInBook()
 		// TODO why?
 		if(orientation) lcdSwap();
 		mode = APP_MODE_BROWSER;
+		ts->SetStyle(TEXT_STYLE_BROWSER);
 		ts->PrintSplash(ts->screenleft);
-		browser_draw();
+		ShowLibraryView();
+		// browser_draw();
 		prefs->Write();
 	}
 	else if (keys & (key.right | key.left))
@@ -189,10 +191,6 @@ u8 App::OpenBook(void)
 	if(!bookselected) return 254;
 	PrintStatus("opening book ...");
 
-	// const char *filename = bookselected->GetFileName();
-	// const char *c; 	// will point to the file's extension.
-	// for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-	
 	if(bookcurrent) bookcurrent->Close();
 	if (int err = bookselected->Open())
 	{
@@ -203,6 +201,7 @@ u8 App::OpenBook(void)
 	}
 	bookcurrent = bookselected;
 	if(mode == APP_MODE_BROWSER) {
+		// TODO why is this here?
 		if(orientation) lcdSwap();
 		mode = APP_MODE_BOOK;
 	}

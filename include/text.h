@@ -28,17 +28,15 @@
 #define TEXT_STYLE_BROWSER (u8)4
 #define TEXT_STYLE_SPLASH (u8)5
 
-#define CACHESIZE 512
-#define PIXELSIZE 12
-
 class App;
 int asciiart();
 const char* ErrorString(u8);
 
-typedef struct TextFaceRec_ {
+// Record used as FTC_FaceID
+typedef struct FaceIDRec_ {
 	char file_path[128];
 	int face_index;
-} TextFaceRec, *TextFace;
+} FaceIDRec, *FaceID;
 
 typedef struct TextCache_ {
 	FTC_Manager manager;
@@ -106,8 +104,8 @@ class Text {
 	u8   GetAdvance(u32 ucs, u8 style);
 	u8   GetCharCode(const char* txt, u32* code);
 	u8   GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels);
-	FT_Face GetFace() { return face; }
-	FT_Face GetFace(u8 style) { return faces[style]; }
+	FT_Face GetFace();
+	FT_Face GetFace(u8 style);
 	std::string GetFontFile(u8 style);
 	std::string GetFontName(u8 style);
 	bool GetFontName(std::string &s);
@@ -159,11 +157,9 @@ class Text {
 	
 	// B: FreeType cache subsystem
 	TextCache cache;
-	TextFaceRec face_id;
-	FTC_SBitRec sbit;
+	FaceIDRec face_ids[8];
 	FTC_ImageTypeRec imagetype;
-	FT_Int charmap_index;
-	
+
 	std::map<u8, FT_Face> faces;
 	std::map<u8, std::string> filenames;
 
@@ -205,6 +201,7 @@ class Text {
 	u8   GetAdvance(u32 ucs, FT_Face face);
 	u8   GetStringWidth(const char *txt, FT_Face face);
 	FT_Error InitFreeTypeCache();
+	void InitializeFaceID(u8 style);
 	int InitHomemadeCache();
 	void PrintChar(u32 ucs, FT_Face face);
 	void PrintString(const char *string, FT_Face face);
