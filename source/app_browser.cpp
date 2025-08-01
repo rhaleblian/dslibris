@@ -67,7 +67,7 @@ void App::browser_handleevent()
 
 	else if (keys & KEY_START)
 	{
-		// exit game.
+		// Exit game.
 		mode = APP_MODE_QUIT;
 	}
 

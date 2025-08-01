@@ -62,6 +62,7 @@ void App::HandleEventInBook()
 	}
 	else if (keys & KEY_START)
 	{
+		// Exit game.
 		mode = APP_MODE_QUIT;
 	}
 	else if (keys & KEY_TOUCH)
