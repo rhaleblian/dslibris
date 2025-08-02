@@ -243,10 +243,9 @@ void App::FontButton()
 	}
 
 	// Re-read fonts.
+	// TODO remove, redundant.
 	ts->Init();
 
-	mode = APP_MODE_PREFS;
-	prefs_view_dirty = true;
-
 	prefs->Write();
+	ShowSettingsView();
 }
