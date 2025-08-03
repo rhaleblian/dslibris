@@ -95,9 +95,8 @@ void App::HandleEventInBook()
 		bookcurrent = NULL;
 		// TODO why?
 		if(orientation) lcdSwap();
-		mode = APP_MODE_BROWSER;
 		ts->PrintSplash(ts->screenleft);
-		browser_draw();
+		ShowLibraryView();
 		prefs->Write();
 	}
 	else if (keys & (key.right | key.left))

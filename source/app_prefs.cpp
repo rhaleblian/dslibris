@@ -87,14 +87,14 @@ void App::PrefsHandleEvent()
 	{
 		if(prefsSelected < PREFS_BUTTON_COUNT - 1) {
 			prefsSelected++;
-			PrefsDraw();
+			prefs_view_dirty = true;
 		}
 	}
 	else if (keys & (key.right | key.r))
 	{
 		if(prefsSelected > 0) {
 			prefsSelected--;
-			PrefsDraw();
+			prefs_view_dirty = true;
 		}
 	}
 	else if (prefsSelected == PREFS_BUTTON_FONTSIZE && (keys & key.up))
@@ -129,6 +129,7 @@ void App::PrefsHandleTouch() {
 	
 	if (buttonprefs.EnclosesPoint(coord.py, coord.px)) {
 		ShowLibraryView();
+		
 		return;
 	}
 
@@ -169,8 +170,6 @@ void App::PrefsIncreasePixelSize()
 	if (ts->pixelsize < 24) {
 		ts->pixelsize++;
 		PrefsRefreshButton(PREFS_BUTTON_FONTSIZE);
-		PrefsDraw();
-		bookcurrent = NULL;
 		prefs->Write();
 	}
 }
@@ -180,8 +179,6 @@ void App::PrefsDecreasePixelSize()
 	if (ts->pixelsize > 4) {
 		ts->pixelsize--;
 		PrefsRefreshButton(PREFS_BUTTON_FONTSIZE);
-		PrefsDraw();
-		bookcurrent = NULL;
 		prefs->Write();
 	}
 }
@@ -191,8 +188,6 @@ void App::PrefsIncreaseParaspacing()
 	if (paraspacing < 2) {
 		paraspacing++;
 		PrefsRefreshButton(PREFS_BUTTON_PARASPACING);
-		PrefsDraw();
-		bookcurrent = NULL;
 		prefs->Write();
 	}
 }
@@ -202,8 +197,6 @@ void App::PrefsDecreaseParaspacing()
 	if (paraspacing > 0) {
 		paraspacing--;
 		PrefsRefreshButton(PREFS_BUTTON_PARASPACING);
-		PrefsDraw();
-		bookcurrent = NULL;
 		prefs->Write();
 	}
 }
@@ -212,7 +205,6 @@ void App::PrefsFlipOrientation()
 {
 	SetOrientation(!orientation);
 	PrefsRefreshButton(PREFS_BUTTON_ORIENTATION);
-	PrefsDraw();
 	prefs->Write();
 }
 
@@ -253,6 +245,7 @@ void App::PrefsRefreshButton(int index) {
 			);
 		break;
 	}
+	prefs_view_dirty = true;
 }
 
 void App::PrefsHandlePress()

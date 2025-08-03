@@ -113,12 +113,6 @@ int App::Run(void)
 {
 	const int ok = 0;
 
-	// Apply settings.
-
-	if (prefs->Read() == ok) 
-		prefs->Apply();
-	prefs->Write();
-
 	// Start up typesetter.
 
 	if (ts->Init() != ok)
@@ -136,25 +130,32 @@ int App::Run(void)
 		halt("[FAIL] no book directory\n");
 	if (bookcount == 0)
 		halt("[FAIL] no books\n");
+
+	std::sort(books.begin(),books.end(),&book_title_lessthan);
+	
+	prefs->Read();
 	for(auto &book : books)
 	{
 		book->Index();
 		book->GetBookmarks()->sort();
 	}
-	std::sort(books.begin(),books.end(),&book_title_lessthan);
 
 	// Set up menus.
-
-	PrintStatus("got here");
 
 	PrefsInit();
 	browser_init();
 	browser_view_dirty = true;
 
-	// Resume reading from the last session.
-	
-//	if(reopen && bookcurrent) if (OpenBook()) browser_draw();
+	PrintStatus(VERSION);
 
+	// Resume reading from the last session.
+
+	// char msg[32]; sprintf(msg, "%d\n", bookcurrent); halt(msg);
+	if(reopen && bookcurrent) {
+		bookselected = bookcurrent;
+		OpenBook();
+	}
+	
 	keysSetRepeat(60,2);
 	while (pmMainLoop())
 	{
@@ -169,7 +170,6 @@ int App::Run(void)
 			case APP_MODE_BROWSER:
 			browser_handleevent();
 			if (browser_view_dirty) browser_draw();
-			// halt("got here");
 			break;
 
 			case APP_MODE_QUIT:
