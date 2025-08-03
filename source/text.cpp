@@ -50,7 +50,7 @@ Text::Text()
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
 	filenames[TEXT_STYLE_BOLDITALIC] = FONTBOLDITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
-	filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
+	// filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	offscreen = new u16[display.width * display.height];
@@ -382,13 +382,14 @@ u8 Text::GetStringWidth(const char *txt, FT_Face face)
 
 u8 Text::GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels) {
 	u8 n = 0;
+	u32 ucs = 0;
 	u8 width = 0;
-	const char *c;
-	for(c = txt; c != NULL; c++)
+	for(const char *c = txt; *c != 0 && n <= strlen(txt);)
 	{
-		u32 ucs = 0;
-		GetCharCode(c, &ucs);
-		width += GetAdvance(ucs, GetFace(style));
+		c += GetCharCode(c, &ucs);
+		// char msg[16]; sprintf(msg, "%ld %d\n", ucs, n); app->PrintStatus(msg);
+		if (ucs == 0) continue;
+		width += GetAdvance(ucs, faces[style]);
 		if (width > pixels) return n;
 		n++;
 	}
@@ -416,7 +417,6 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 
 	} else if (utf8[0] > 0xef) { // rare
 		return 4;
-
 	}
 	return 0;
 }
@@ -485,10 +485,11 @@ void Text::SetPixelSize(u8 size)
 	}
 	else
 	{
-		for (auto iter = faces.begin(); iter != faces.end(); iter++)
+		for (auto& it : faces)
 		{
-			FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
-			ClearCache(face);
+			if (it.first == TEXT_STYLE_BROWSER) continue;
+			FT_Set_Pixel_Sizes(it.second, 0, pixelsize);
+			ClearCache(it.second);
 		}
 	}
 }
@@ -717,16 +718,10 @@ void Text::PrintSplash(u16 *screen)
 {
 	// push
 	auto s = GetScreen();
-	auto z = GetPixelSize();
-	auto i = GetInvert();
 
 	SetScreen(screen);
 	drawstack(screen);
-	app->PrintStatus(VERSION);
-
 	// pop
-	SetInvert(i);
-	SetPixelSize(z);
 	SetScreen(s);
 }
 

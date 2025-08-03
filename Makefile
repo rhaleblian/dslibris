@@ -32,10 +32,6 @@ ARCH	:=	-march=armv5te -mtune=arm946e-s -mthumb
 
 CFLAGS	:= -g -Wall -O2 -ffunction-sections -fdata-sections\
 	$(ARCH) $(INCLUDE) -DARM9
-
-# debugging symbols
-CFLAGS	+=	-g
-
 # freetype
 CFLAGS  +=	-I$(PWD)/portlibs/nds/include/freetype2
 # zlib minizip

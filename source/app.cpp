@@ -113,46 +113,47 @@ int App::Run(void)
 {
 	const int ok = 0;
 
+	// Apply settings.
+
+	if (prefs->Read() == ok) 
+		prefs->Apply();
+	prefs->Write();
+
 	// Start up typesetter.
 
 	if (ts->Init() != ok)
 		halt("[FAIL] typesetter\n");
-	
-	// Traverse the book directory and construct library.
+
+	// Start up screens.
+
+	InitScreens();
+	ts->SetStyle(TEXT_STYLE_BROWSER);
+	ts->PrintSplash(ts->screenleft);
+
+	// Construct library.
 
 	if (FindBooks() != ok)
 		halt("[FAIL] no book directory\n");
 	if (bookcount == 0)
 		halt("[FAIL] no books\n");
+	for(auto &book : books)
+	{
+		book->Index();
+		book->GetBookmarks()->sort();
+	}
 	std::sort(books.begin(),books.end(),&book_title_lessthan);
 
-	// Read and apply preferences.
+	// Set up menus.
 
-	prefs->Read();
-	prefs->Apply();
+	PrintStatus("got here");
 
-	// Sort bookmarks for each book.
-	for(u8 i = 0; i < bookcount; i++)
-	{
-		books[i]->GetBookmarks()->sort();
-	}
-
-	// Set up settings screen.
 	PrefsInit();
-	
-	// Set up library screen.
 	browser_init();
-
-	// Bring up displays.
-
-	InitScreens();
-	ts->PrintSplash(ts->screenleft);
-	mode = APP_MODE_BROWSER;
-	browser_draw();
+	browser_view_dirty = true;
 
 	// Resume reading from the last session.
 	
-	if(reopen && bookcurrent) if (OpenBook()) browser_draw();
+//	if(reopen && bookcurrent) if (OpenBook()) browser_draw();
 
 	keysSetRepeat(60,2);
 	while (pmMainLoop())
@@ -168,6 +169,7 @@ int App::Run(void)
 			case APP_MODE_BROWSER:
 			browser_handleevent();
 			if (browser_view_dirty) browser_draw();
+			// halt("got here");
 			break;
 
 			case APP_MODE_QUIT:
@@ -227,7 +229,6 @@ int App::FindBooks() {
 			book->format = FORMAT_EPUB;
 			books.push_back(book);
 			bookcount++;
-			book->Index();
 		}
 	}
 	closedir(dp);
@@ -252,25 +253,28 @@ touchPosition App::TouchRead() {
 	return coord;
 }
 
-void App::ShowFontView(int app_mode)
+void App::ShowFontView(int app_font_mode)
 {
-	mode = app_mode;
-	font_view_dirty = true;
+	mode = app_font_mode;
 	buttonprefs.Label("cancel");
+	ts->SetScreen(ts->screenright);
+	font_view_dirty = true;
 }
 
 void App::ShowLibraryView()
 {
 	mode = APP_MODE_BROWSER;
-	browser_view_dirty = true;
 	buttonprefs.Label("settings");
+	ts->SetScreen(ts->screenright);
+	browser_view_dirty = true;
 }
 
 void App::ShowSettingsView()
 {
 	mode = APP_MODE_PREFS;
-	prefs_view_dirty = true;
 	buttonprefs.Label(" library");
+	ts->SetScreen(ts->screenright);
+	prefs_view_dirty = true;
 }
 
 void App::UpdateClock()
