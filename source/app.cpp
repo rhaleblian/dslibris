@@ -131,14 +131,12 @@ int App::Run(void)
 	if (bookcount == 0)
 		halt("[FAIL] no books\n");
 
-	std::sort(books.begin(),books.end(),&book_title_lessthan);
+	for (auto& book : books) book->Index();
+	std::sort(books.begin(), books.end(), &book_title_lessthan);
 	
 	prefs->Read();
-	for(auto &book : books)
-	{
-		book->Index();
-		book->GetBookmarks()->sort();
-	}
+	for(auto &book : books) book->GetBookmarks()->sort();
+	prefs->Apply();
 
 	// Set up menus.
 

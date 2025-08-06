@@ -14,6 +14,7 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
+            "miDebuggerPath": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gdb",
             "MIMode": "gdb",
             "targetArchitecture": "arm",
             "setupCommands": [
@@ -22,10 +23,10 @@
                 //     "text": "-enable-pretty-printing",
                 //     "ignoreFailures": true
                 // },
-                // {
-                //     "description": "Remote debug DeSmuME",
-                //     "text": "--init-commands=etc/gdb-init-commands"
-                // }
+                {
+                    "description": "Remote debug",
+                    "text": "target remote localhost:3333"
+                }
             ]
         }
     ]

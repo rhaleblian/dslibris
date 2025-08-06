@@ -50,7 +50,7 @@ Text::Text()
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
 	filenames[TEXT_STYLE_BOLDITALIC] = FONTBOLDITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
-	// filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
+
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	offscreen = new u16[display.width * display.height];
@@ -64,7 +64,7 @@ Text::Text()
 	usebgcolor = false;
 	invert = false;
 	justify = false;
-	linespacing = 0;
+	linespacing = 1;
 	ftc = false;
 	initialized = false;
 	imagetype.face_id = (FTC_FaceID)&face_id;
@@ -396,29 +396,46 @@ u8 Text::GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels) {
 	return n;
 }
 
-u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
-	//! Given a UTF-8 encoding, fill in the Unicode/UCS code point.
-	//! Return the bytelength of the encoding, for advancing
-	//! to the next character; 0 if encoding could not be translated.
+u8 Text::GetCharCode(const char* utf8_char, u32* ucs) {
+	//! Given UTF-8 bytes in \utf_char, fill \ucs with the 4-byte codepoint.
+	//!
+	//! \return the byte length of the encoding, for advancing
+	//! to the next character.
 	
-	// TODO - handle 4 byte encodings.
+    const unsigned char* bytes = reinterpret_cast<const unsigned char*>(utf8_char);
+    u32 codepoint = 0;
+	u8 bytelength = 0;
 
-	if (utf8[0] < 0x80) { // ASCII
-		*ucs = utf8[0];
-		return 1;
-
-	} else if (utf8[0] > 0xc1 && utf8[0] < 0xe0) { // latin
-		*ucs = ((utf8[0]-192)*64) + (utf8[1]-128);
-		return 2;
-
-	} else if (utf8[0] > 0xdf && utf8[0] < 0xf0) { // asian
-		*ucs = (utf8[0]-224)*4096 + (utf8[1]-128)*64 + (utf8[2]-128);
-		return 3;
-
-	} else if (utf8[0] > 0xef) { // rare
-		return 4;
+    if ((bytes[0] & 0x80) == 0x00) {
+        // 1-byte sequence: 0xxxxxxx
+        codepoint = bytes[0];
+		bytelength = 1;
+    } else if ((bytes[0] & 0xE0) == 0xC0) {
+        // 2-byte sequence: 110xxxxx 10xxxxxx
+        codepoint = ((bytes[0] & 0x1F) << 6) |
+                    (bytes[1] & 0x3F);
+		bytelength = 2;
+    } else if ((bytes[0] & 0xF0) == 0xE0) {
+        // 3-byte sequence: 1110xxxx 10xxxxxx 10xxxxxx
+        codepoint = ((bytes[0] & 0x0F) << 12) |
+                    ((bytes[1] & 0x3F) << 6) |
+                    (bytes[2] & 0x3F);
+		bytelength = 3;
+    } else if ((bytes[0] & 0xF8) == 0xF0) {
+        // 4-byte sequence: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        codepoint = ((bytes[0] & 0x07) << 18) |
+                    ((bytes[1] & 0x3F) << 12) |
+                    ((bytes[2] & 0x3F) << 6) |
+                    (bytes[3] & 0x3F);
+		bytelength = 4;
+    } else {
+		halt("inconvertible UTF-8", 120);
+		codepoint = bytes[0];
+		bytelength = 1;
 	}
-	return 0;
+
+	*ucs = codepoint;
+    return bytelength;
 }
 
 std::string Text::GetFontName(u8 style) {

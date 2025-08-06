@@ -412,8 +412,8 @@ void title_end_hndl(void *userdata, const char *el)
 void linefeed(parsedata_t *p) {
 	Text *ts = app->ts;
 	p->buf[p->buflen++] = '\n';
-	p->pen.x = MARGINLEFT;
-	p->pen.y += ts->GetHeight() + ts->linespacing;
+	p->pen.x = ts->margin.left;
+	p->pen.y += ts->GetHeight() * ts->linespacing;
 	p->linebegan = false;
 }
 
@@ -472,6 +472,7 @@ void start_hndl(void *data, const char *el, const char **attr)
 	else if (!strcmp(el,"p")) {
 		app->parse_push(p,TAG_P);
 		if (!blankline(p)) {
+			// TODO why was this suppressed?
 			// for(int i=0;i<app->paraspacing;i++)
 			// {
 			// 	linefeed(p);

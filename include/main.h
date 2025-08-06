@@ -45,7 +45,6 @@
 #define FONTITALICFILE "LiberationSerif-Italic.ttf"
 #define FONTBOLDITALICFILE "LiberationSerif-BoldItalic.ttf"
 #define FONTBROWSERFILE "LiberationSans-Regular.ttf"
-#define FONTSPLASHFILE "LiberationSans-Regular.ttf"
 
 int halt(int vblanks = -1);
 int halt(const char *msg, int vblanks = -1);

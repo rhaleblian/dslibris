@@ -47,10 +47,9 @@ void epub_data_init(epub_data_t *d)
 
 void epub_data_delete(epub_data_t *d)
 {
-	std::vector<std::string*>::iterator it;
 	d->manifest.clear();
 	d->spine.clear();
-	while(d->ctx.back()) d->ctx.pop_back();
+	d->ctx.clear();
 }
 
 void epub_container_start(void *data, const char *el, const char **attr)
@@ -155,8 +154,6 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 		}
 		len_total += len;
 	} while (len);
-
-	printf("yo\n");
 
 	XML_ParserFree(p);
 	delete [] filebuf;
