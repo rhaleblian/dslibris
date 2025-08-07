@@ -97,7 +97,7 @@ class Text {
 	Text();
 	Text(class App *parent) { app = parent; }
 	~Text();
-	int  Init();
+	FT_Error Init();
 	void InitPen(void);
 	void Begin();
 	void End();
@@ -205,7 +205,7 @@ class Text {
 	u8   GetAdvance(u32 ucs, FT_Face face);
 	u8   GetStringWidth(const char *txt, FT_Face face);
 	FT_Error InitFreeTypeCache();
-	int InitHomemadeCache();
+	FT_Error InitHomemadeCache();
 	void PrintChar(u32 ucs, FT_Face face);
 	void PrintString(const char *string, FT_Face face);
 	void ReportFace(FT_Face face);

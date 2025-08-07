@@ -65,8 +65,9 @@ Text::Text()
 	invert = false;
 	justify = false;
 	linespacing = 0;
+
+	// FreeType caching sub-system, currently unused.
 	ftc = false;
-	initialized = false;
 	imagetype.face_id = (FTC_FaceID)&face_id;
 	imagetype.flags = FT_LOAD_DEFAULT; 
 	imagetype.height = pixelsize;
@@ -124,8 +125,6 @@ TextFaceRequester(    FTC_FaceID   face_id,
 FT_Error Text::InitFreeTypeCache(void) {
 	//! Use FreeType's cache manager. borken!
 
-	auto error = FT_Init_FreeType(&library);
-	if(error) return error;
 	error = FTC_Manager_New(library,0,0,0,
 		&TextFaceRequester,NULL,&cache.manager);
 	if(error) return error;
@@ -141,56 +140,49 @@ FT_Error Text::InitFreeTypeCache(void) {
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
 	if(error) return error;
 
-	initialized = true;
-	return 0;
+	return error;
 }
 
 FT_Error Text::CreateFace(int style) {
-	// TODO check for leakage
+	//! Creates a FreeType face,
+	//! selects a charmap and pixel size,
+	//! creates an empty cache for glyphs,
+	//! and assigns this to style \style.
+
 	std::string path = app->fontdir + "/" + filenames[style];
 	error = FT_New_Face(library, path.c_str(), 0, &face);
 	if (!error) {
 		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
+		FT_Set_Pixel_Sizes(face, 0, pixelsize);
+		textCache.insert(std::make_pair(face, new Cache()));
+		if (faces[style]) FT_Done_Face(faces[style]);
 		faces[style] = face;
 	}
 	return error;
 }
 
-int Text::InitHomemadeCache(void) {
+FT_Error Text::InitHomemadeCache(void) {
 	//! Use our own cheesey glyph cache.
-	FT_Error err;
 
-	err = FT_Init_FreeType(&library);
-	if (err) return err;
+	error = CreateFace(TEXT_STYLE_BROWSER);
+	if (error) halt("no browser font");
+
+	error = CreateFace(TEXT_STYLE_REGULAR);
+	if (error) halt("no regular font");
+	error = CreateFace(TEXT_STYLE_ITALIC);
+		if (error) halt("no italic font");
+	error = CreateFace(TEXT_STYLE_BOLD);
+	if (error) halt("no bold font");
+	error = CreateFace(TEXT_STYLE_BOLDITALIC);
+	if (error) halt("no bold italic font");
 	
-	err = CreateFace(TEXT_STYLE_BROWSER);
-	err = CreateFace(TEXT_STYLE_SPLASH);
-	err = CreateFace(TEXT_STYLE_REGULAR);
-
-	err = CreateFace(TEXT_STYLE_ITALIC);
-	if (err)
-		faces[TEXT_STYLE_ITALIC] = faces[TEXT_STYLE_REGULAR];
-
-	err = CreateFace(TEXT_STYLE_BOLD);
-	if (err)
-		faces[TEXT_STYLE_BOLD] = faces[TEXT_STYLE_REGULAR];
-
-	err = CreateFace(TEXT_STYLE_BOLDITALIC);
-	if (err)
-		faces[TEXT_STYLE_BOLDITALIC] = faces[TEXT_STYLE_REGULAR];
-	
-	std::map<u8, FT_Face>::iterator iter;
-	for (iter = faces.begin(); iter != faces.end(); iter++) {
-		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
-		textCache.insert(std::make_pair(iter->second, new Cache()));
-	}
-
-	initialized = true;
-	return 0;
+	return error;
 }
 
-int Text::Init()
+FT_Error Text::Init()
 {
+	error = FT_Init_FreeType(&library);
+	if (error) return error;
 	if(ftc)
 		return InitFreeTypeCache();
 	else
@@ -284,7 +276,7 @@ int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit, FTC_Node *anode)
 
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags)
 {
-	return GetGlyph(ucs, flags, face);
+	return GetGlyph(ucs, flags, style);
 }
 
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, u8 style)
@@ -294,21 +286,25 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, u8 style)
 
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 {
-	if(ftc) return NULL;
+	if(ftc) halt("coding error 1");
+	if (!textCache[face]) halt("no cache");
 
-	std::map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
-	if (iter != textCache[face]->cacheMap.end()) {
-		stats_hits++;
-		hit = true;
-		return iter->second;
+	if (textCache[face])
+	{
+		std::map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
+		if (iter != textCache[face]->cacheMap.end()) {
+			// Cache hit.
+			stats_hits++;
+			hit = true;
+			return iter->second;
+		}
+		// Cache miss-and-add.
+		hit = false;
+		stats_misses++;
+		int i = CacheGlyph(ucs, face);
+		if (i >= 0)
+			return textCache[face]->cacheMap[ucs];
 	}
-	
-	hit = false;
-	stats_misses++;
-
-	int i = CacheGlyph(ucs, face);
-	if (i >= 0)
-		return textCache[face]->cacheMap[ucs];
 
 	FT_Load_Char(face, ucs, flags);
 	return face->glyph;
@@ -328,12 +324,15 @@ void Text::ClearCache(u8 style)
 
 void Text::ClearCache(FT_Face face)
 {
-	for(std::map<u16, FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.begin();
-		iter != textCache[face]->cacheMap.end();
-		iter++) {
-		delete iter->second;
-	}
-	textCache[face]->cacheMap.clear();
+	// for (auto& face : textCache)
+		// for (auto glyph : face.second->cacheMap)
+		// 	if (glyph.second)
+		// for(std::map<u16, FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.begin();
+	// 	iter != textCache[face]->cacheMap.end();
+	// 	iter++) {
+	// 	delete iter->second;
+	// }
+	// textCache[face]->cacheMap.clear();
 }
 
 void Text::ClearScreen()
@@ -422,10 +421,11 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 }
 
 std::string Text::GetFontName(u8 style) {
-	return
-		std::string(faces[style]->family_name)
-		+ " "
-		+ std::string(faces[style]->style_name);
+	// return
+	// 	std::string(faces[style]->family_name)
+	// 	+ " "
+	// 	+ std::string(faces[style]->style_name);
+	return std::string(filenames[style]);
 }
 
 u8 Text::GetHeight() {
@@ -527,12 +527,13 @@ u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 	}
 	else
 	{
-		// Also caches this glyph.
-		return GetGlyph(ucs, FT_LOAD_DEFAULT, face)->advance.x >> 6;
-
 		// auto gindex = FT_Get_Char_Index(face, ucs);
 		// FT_Load_Glyph(face, gindex, FT_LOAD_DEFAULT);
 		// return face->glyph->advance.x >> 16;
+
+		// Also caches this glyph.
+		// TODO not always desired.
+		return GetGlyph(ucs, FT_LOAD_DEFAULT, face)->advance.x >> 6;
 	}
 }
 
