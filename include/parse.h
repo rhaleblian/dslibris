@@ -49,10 +49,6 @@ typedef struct {
 //! Expat callbacks for parsing XHTML.
 
 void default_hndl(void *data, const char *s, int len);
-void start_hndl(void *data, const char *el, const char **attr);
-void char_hndl(void *data, const char *txt, int txtlen);
-void end_hndl(void *data, const char *el);
-void proc_hndl(void *data, const char *target, const char *pidata);
 int unknown_hndl(void *encodingHandlerData,
 					const XML_Char *name,
 					XML_Encoding *info);

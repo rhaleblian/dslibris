@@ -11,6 +11,8 @@ extern App *app;
 extern bool parseFontBold;
 extern bool parseFontItalic;
 
+namespace xml::book::metadata {
+
 std::string title;
 
 void start(void *userdata, const char *el, const char **attr)
@@ -42,6 +44,340 @@ void end(void *userdata, const char *el)
 	if(!strcmp(el,"title")) data->book->SetTitle(title.c_str());
 	if(!strcmp(el,"head")) data->status = 1; // done.
 	app->parse_pop(data);
+}
+
+}
+
+namespace xml::book {
+
+void linefeed(parsedata_t *p) {
+	p->buf[p->buflen++] = '\n';
+	p->pen.x = MARGINLEFT;
+	p->pen.y += app->ts->GetHeight() + app->ts->linespacing;
+	p->linebegan = false;
+}
+
+bool blankline(parsedata_t *p) {
+	// Was the preceding text a blank line?
+	if (p->buflen < 3) return true;
+	return (p->buf[p->buflen-1] == '\n') && (p->buf[p->buflen-2] == '\n');
+}
+
+void instruction(void *data, const char *target, const char *pidata)
+{
+}
+
+void start(void *data, const char *el, const char **attr)
+{
+	//! Expat callback, when starting an element.
+
+	parsedata_t *p = (parsedata_t*)data;
+
+	if (!strcmp(el,"html")) app->parse_push(p,TAG_HTML);
+	else if (!strcmp(el,"body")) app->parse_push(p,TAG_BODY);
+	else if (!strcmp(el,"div")) app->parse_push(p,TAG_DIV);
+	else if (!strcmp(el,"dt")) app->parse_push(p,TAG_DT);
+	else if (!strcmp(el,"h1")) {
+		app->parse_push(p,TAG_H1);
+		bool lf = !blankline(p);
+		p->buf[p->buflen] = TEXT_BOLD_ON;
+		p->buflen++;
+		p->pos++;
+		p->bold = true;
+		if (lf) linefeed(p);
+	}
+	else if (!strcmp(el,"h2")) {
+		app->parse_push(p,TAG_H2);
+		bool lf = !blankline(p);
+		p->buf[p->buflen] = TEXT_BOLD_ON;
+		p->buflen++;
+		p->pos++;
+		p->bold = true;
+		if (lf) linefeed(p);		
+	}
+	else if (!strcmp(el,"h3")) {
+		app->parse_push(p,TAG_H3);
+		linefeed(p);
+	}
+	else if (!strcmp(el,"h4")) {
+		app->parse_push(p,TAG_H4);
+		if (!blankline(p)) linefeed(p);
+	}
+	else if (!strcmp(el,"h5")) {
+		app->parse_push(p,TAG_H5);
+		if (!blankline(p)) linefeed(p);
+	}
+	else if (!strcmp(el,"h6")) {
+		app->parse_push(p,TAG_H6);
+		if (!blankline(p)) linefeed(p);
+	}
+	else if (!strcmp(el,"head")) app->parse_push(p,TAG_HEAD);
+	else if (!strcmp(el,"ol")) app->parse_push(p,TAG_OL);
+	else if (!strcmp(el,"p")) {
+		app->parse_push(p,TAG_P);
+		if (!blankline(p)) {
+			// for(int i=0;i<app->paraspacing;i++)
+			// {
+			// 	linefeed(p);
+			// }
+			// for(int i=0;i<app->paraindent;i++)
+			// {
+			// 	p->buf[p->buflen++] = ' ';
+			// 	p->pen.x += ts->GetAdvance(' ');
+			// }
+			linefeed(p);
+		}
+	}
+	else if (!strcmp(el,"pre")) app->parse_push(p,TAG_PRE);
+	else if (!strcmp(el,"script")) app->parse_push(p,TAG_SCRIPT);
+	else if (!strcmp(el,"style")) app->parse_push(p,TAG_STYLE);
+	else if (!strcmp(el,"title")) app->parse_push(p,TAG_TITLE);
+	else if (!strcmp(el,"td")) app->parse_push(p,TAG_TD);
+	else if (!strcmp(el,"ul")) app->parse_push(p,TAG_UL);
+	else if (!strcmp(el,"strong") || !strcmp(el, "b")) {
+		app->parse_push(p,TAG_STRONG);
+		p->buf[p->buflen] = TEXT_BOLD_ON;
+		p->buflen++;
+		p->pos++;
+		p->bold = true;
+	}
+	else if (!strcmp(el,"em") || !strcmp(el, "i")) {
+		app->parse_push(p,TAG_EM);
+		p->buf[p->buflen] = TEXT_ITALIC_ON;
+		p->buflen++;
+		p->italic = true;
+	}
+	else app->parse_push(p,TAG_UNKNOWN);
+}
+
+void chardata(void *data, const XML_Char *txt, int txtlen)
+{
+	//! reflow text on the fly, into page data structure.
+	
+	parsedata_t *p = (parsedata_t *)data;
+	//if (p->pagecount > 3) return;
+	if (app->parse_in(p,TAG_TITLE)) return;
+	if (app->parse_in(p,TAG_SCRIPT)) return;
+	if (app->parse_in(p,TAG_STYLE)) return;
+
+	Text *ts = app->ts;
+	int lineheight = ts->GetHeight();
+	int linespacing = ts->linespacing;
+	int spaceadvance = ts->GetAdvance((u16)' ');
+
+	if (p->buflen == 0)
+	{
+		/** starting a new page. **/
+		p->pen.x = ts->margin.left;
+		p->pen.y = ts->margin.top + lineheight;
+		p->linebegan = false;
+	}
+
+	u8 advance=0;
+	int i=0, j=0;
+	while (i<txtlen)
+	{
+		if (txt[i] == '\r')
+		{
+			i++;
+			continue;
+		}
+
+		if (iswhitespace(txt[i]))
+		{
+			if(app->parse_in(p,TAG_PRE))
+			{
+				p->buf[p->buflen++] = txt[i];
+				if(txt[i] == '\n')
+				{
+					p->pen.x = ts->margin.left;
+					p->pen.y += (lineheight + linespacing);
+				}
+				else {
+					p->pen.x += spaceadvance;
+				}
+			}
+			else if(p->linebegan && p->buflen
+				&& !iswhitespace(p->buf[p->buflen-1]))
+			{
+				p->buf[p->buflen++] = ' ';
+				p->pen.x += spaceadvance;				
+			}
+			i++;
+		}
+		else
+		{
+			p->linebegan = true;
+			advance = 0;
+			u8 bytes = 1;
+			for (j=i;(j<txtlen) && (!iswhitespace(txt[j]));j+=bytes)
+			{
+				/** set type until the end of the next word.
+				    account for UTF-8 characters when advancing. **/
+				u32 code = txt[j];
+				bytes = 1;
+				if (code >> 7) {
+					// FIXME the performance bottleneck					
+					bytes = ts->GetCharCode((char*)&(txt[j]),&code);
+				}
+
+				advance += ts->GetAdvance(code);
+				if(advance > ts->display.width - ts->margin.right - ts->margin.left)
+				{
+					// here's a line-long word, need to break it now.
+					break;
+				}
+			}
+		}
+
+		if ((p->pen.x + advance) > (ts->display.width - ts->margin.right))
+		{
+			// we overran the margin, insert a break.
+			p->buf[p->buflen++] = '\n';
+			p->pen.x = ts->margin.left;
+			p->pen.y += (lineheight + linespacing);
+			p->linebegan = false;
+		}
+
+		if (p->pen.y > (ts->display.height - ts->margin.bottom))
+		{
+			// reached bottom of screen.
+			if(p->screen == 1)
+			{
+				// page full.
+				// put chars into current page.
+				Page *page = p->book->AppendPage();
+				page->SetBuffer(p->buf, p->buflen);
+				page->start = p->pos;
+				p->pos += p->buflen;
+				page->end = p->pos;
+				p->pagecount++;
+
+				// make a new page.
+				p->buflen = 0;
+				if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
+				if (p->bold) p->buf[p->buflen++] = TEXT_BOLD_ON;
+				p->screen = 0;
+			}
+			else 
+				// move to right screen.
+				p->screen = 1;
+
+			p->pen.x = ts->margin.left;
+			p->pen.y = ts->margin.top + lineheight;
+		}
+
+		/** append this word to the page.
+			chars stay UTF-8 until they are rendered. **/
+
+		for (;i<j;i++)
+		{
+			if (iswhitespace(txt[i]))
+			{
+				if (p->linebegan)
+				{
+					p->buf[p->buflen] = ' ';
+					p->buflen++;
+				}
+			}
+			else
+			{
+				p->linebegan = true;
+				p->buf[p->buflen] = txt[i];
+				p->buflen++;
+			}
+		}
+		p->pen.x += advance;
+		advance = 0;
+	}
+}  /* End char_hndl */
+
+void end(void *data, const char *el)
+{
+	parsedata_t *p = (parsedata_t *)data;
+	Text *ts = app->ts;	
+	
+	if (!strcmp(el,"body")) {
+		// Save off our last page.
+		Page *page = p->book->AppendPage();
+		page->SetBuffer(p->buf,p->buflen);
+		p->buflen = 0;
+		// Retain styles across the page.
+		if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
+		if (p->bold) p->buf[p->buflen++] = TEXT_BOLD_ON;
+		app->parse_pop(p);
+		return;
+	}
+	
+	if (!strcmp(el,"br")) {
+		linefeed(p);
+	} else if (!strcmp(el,"p")) {
+		linefeed(p);
+		linefeed(p);
+	} else if(!strcmp(el,"div")) {
+	} else if (!strcmp(el, "strong") || !strcmp(el, "b")) {
+		p->buf[p->buflen] = TEXT_BOLD_OFF;
+		p->buflen++;
+		p->bold = false;
+	} else if (!strcmp(el, "em") || !strcmp(el, "i")) {
+		p->buf[p->buflen] = TEXT_ITALIC_OFF;
+		p->buflen++;
+		p->italic = false;
+	} else if(!strcmp(el,"h1")) {
+		p->buf[p->buflen] = TEXT_BOLD_OFF;
+		p->buflen++;
+		p->bold = false;
+		linefeed(p);
+		linefeed(p);
+	} else if (!strcmp(el,"h2")) {
+		p->buf[p->buflen] = TEXT_BOLD_OFF;
+		p->buflen++;
+		p->bold = false;
+		linefeed(p);
+	} else if (
+		   !strcmp(el,"h3")
+		|| !strcmp(el,"h4")
+		|| !strcmp(el,"h5")
+		|| !strcmp(el,"h6")
+		|| !strcmp(el,"hr")
+		|| !strcmp(el,"pre")
+	) {
+		linefeed(p);
+		linefeed(p);
+	} else if (
+		   !strcmp(el, "li")
+		|| !strcmp(el, "ul")
+		|| !strcmp(el, "ol")
+	) {
+		linefeed(p);
+	}
+
+	app->parse_pop(p);
+
+	if (p->pen.y > (ts->display.height - ts->margin.bottom))
+	{
+		if (p->screen == 1)
+		{
+			// End of right screen; end of page.
+			// Copy in buffered char data into a new page.
+			Page *page = p->book->AppendPage();
+			page->SetBuffer(p->buf, p->buflen);
+			p->buflen = 0;
+			if (p->italic) p->buf[p->buflen++] = TEXT_ITALIC_ON;
+			if (p->bold )p->buf[p->buflen++] = TEXT_BOLD_ON;
+			p->screen = 0;
+		}
+		else
+			// End of left screen; same page, next screen.
+			p->screen = 1;
+		p->pen.x = ts->margin.left;
+		p->pen.y = ts->margin.top + ts->GetHeight();
+		p->linebegan = false;
+	}
+
+	app->parse_pop(p);
+}
+
 }
 
 Book::Book()
@@ -278,16 +614,16 @@ u8 Book::Parse(bool fulltext)
 	XML_ParserReset(p,NULL);
 	XML_SetUserData(p, &parsedata);
 	XML_SetDefaultHandler(p, default_hndl);
-	XML_SetProcessingInstructionHandler(p, proc_hndl);
+	XML_SetProcessingInstructionHandler(p, xml::book::instruction);
 	if(fulltext)
 	{
-		XML_SetElementHandler(p, start_hndl, end_hndl);
-		XML_SetCharacterDataHandler(p, char_hndl);
+		XML_SetElementHandler(p, xml::book::start, xml::book::end);
+		XML_SetCharacterDataHandler(p, xml::book::chardata);
 	}
 	else
 	{
-		XML_SetElementHandler(p, start, end);
-		XML_SetCharacterDataHandler(p, chardata);
+		XML_SetElementHandler(p, xml::book::metadata::start, xml::book::metadata::end);
+		XML_SetCharacterDataHandler(p, xml::book::metadata::chardata);
 	}
 	
 	enum XML_Status status;

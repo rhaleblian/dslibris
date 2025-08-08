@@ -8,6 +8,19 @@
 
 typedef enum {FORMAT_UNDEF, FORMAT_XHTML, FORMAT_EPUB} format_t;
 
+namespace xml::book {
+	void start(void *data, const char *el, const char **attr);
+	void chardata(void *data, const char *txt, int txtlen);
+	void end(void *data, const char *el);
+	void instruction(void *data, const char *target, const char *pidata);
+}
+
+namespace xml::book::metadata {
+	void start(void *userdata, const char *el, const char **attr);
+	void chardata(void *userdata, const char *txt, int txtlen);
+	void end(void *userdata, const char *el);
+}
+
 //! Encapsulates metadata and Page vector for a single book.
 
 //! Bookmarks are in here too.

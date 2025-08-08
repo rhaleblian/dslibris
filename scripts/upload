@@ -1,2 +1,7 @@
 #!/usr/bin/env bash
-echo "bin\nput dslibris.nds nds/dslibris.nds" | ftp anon@192.168.1.231 5000
+cat > /tmp/$$ <<EOF
+bin
+put dslibris.nds nds/dslibris.nds
+EOF
+cat /tmp/$$ | ftp anon@192.168.1.231 5000
+rm /tmp/$$

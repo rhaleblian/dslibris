@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include "book.h"
 #include "main.h"
 #include "parse.h"
 #include "expat.h"
@@ -139,10 +140,10 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 		parse_init(&pd);
 		pd.book = epd->book;
 		XML_SetUserData(p, &pd);
-		XML_SetElementHandler(p, start_hndl, end_hndl);
-		XML_SetCharacterDataHandler(p, char_hndl);
+		XML_SetElementHandler(p, xml::book::start, xml::book::end);
+		XML_SetCharacterDataHandler(p, xml::book::chardata);
 		XML_SetDefaultHandler(p, default_hndl);
-		XML_SetProcessingInstructionHandler(p, proc_hndl);
+		XML_SetProcessingInstructionHandler(p, xml::book::instruction);
 	}
 	size_t len, len_total=0;
 	enum XML_Status status;
