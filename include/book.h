@@ -54,7 +54,7 @@ public:
 	u8   Index();
 	void IndexHTML();
 	u8   Open();
-	u8   Parse(bool fulltext);
+	u8   Parse(bool fulltext=true);
 	int  ParseHTML();
 	void Restore();
 };

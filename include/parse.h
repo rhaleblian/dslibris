@@ -59,10 +59,6 @@ int unknown_hndl(void *encodingHandlerData,
 void prefs_start_hndl(void *data, const char *el, const char **attr);
 extern void prefs_end_hndl(void *data, const char *name);
 
-void title_start_hndl(void *data, const char *el, const char **attr);
-void title_char_hndl(void *data, const char *txt, int txtlen);
-void title_end_hndl(void *data, const char *el);
-
 bool iswhitespace(u8 c);
 
 void parse_init(parsedata_t *data);

@@ -11,6 +11,39 @@ extern App *app;
 extern bool parseFontBold;
 extern bool parseFontItalic;
 
+std::string title;
+
+void start(void *userdata, const char *el, const char **attr)
+{
+	//! Expat callback, when entering an element.
+	//! For finding book title only.
+
+	if(!strcmp(el,"title"))
+	{
+		app->parse_push((parsedata_t *)userdata,TAG_TITLE);
+	}
+}
+
+void chardata(void *userdata, const char *txt, int txtlen)
+{
+	//! Expat callback, when in char data for element.
+	//! For finding book title only.
+
+	if (!app->parse_in((parsedata_t*)userdata,TAG_TITLE)) return;
+	title = txt;
+}
+
+void end(void *userdata, const char *el)
+{
+	//! Expat callback, when exiting an element.
+	//! For finding book title only.
+
+	parsedata_t *data = (parsedata_t*)userdata;
+	if(!strcmp(el,"title")) data->book->SetTitle(title.c_str());
+	if(!strcmp(el,"head")) data->status = 1; // done.
+	app->parse_pop(data);
+}
+
 Book::Book()
 {
 	foldername.clear();
@@ -253,8 +286,8 @@ u8 Book::Parse(bool fulltext)
 	}
 	else
 	{
-		XML_SetElementHandler(p, title_start_hndl, title_end_hndl);
-		XML_SetCharacterDataHandler(p, title_char_hndl);
+		XML_SetElementHandler(p, start, end);
+		XML_SetCharacterDataHandler(p, chardata);
 	}
 	
 	enum XML_Status status;

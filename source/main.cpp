@@ -360,53 +360,6 @@ void default_hndl(void *data, const XML_Char *s, int len)
 	}
 }
 
-static char title[32];
-
-void title_start_hndl(void *userdata, const char *el, const char **attr)
-{
-	//! Expat callback, when entering an element.
-	//! For finding book title only.
-
-	if(!strcmp(el,"title"))
-	{
-		app->parse_push((parsedata_t *)userdata,TAG_TITLE);
-		strcpy(title,"");
-	}
-}
-
-void title_char_hndl(void *userdata, const char *txt, int txtlen)
-{
-	//! Expat callback, when in char data for element.
-	//! For finding book title only.
-	if(strlen(title) > 27) return;
-	if (!app->parse_in((parsedata_t*)userdata,TAG_TITLE)) return;
-
-	for(u8 t=0;t<txtlen;t++)
-	{
-		if(iswhitespace(txt[t])) 
-		{
-			if(strlen(title)) strncat(title," ",2);
-		}
-		else strncat(title,txt+t,1);
-
-		if (strlen(title) > 27)
-		{
-			strcat(title+27, "...");
-			break;
-		}
-	}
-}
-
-void title_end_hndl(void *userdata, const char *el)
-{
-	//! Expat callback, when exiting an element.
-	//! For finding book title only.
-	parsedata_t *data = (parsedata_t*)userdata;
-	if(!strcmp(el,"title")) data->book->SetTitle(title);
-	if(!strcmp(el,"head")) data->status = 1; // done.
-	app->parse_pop(data);
-}
-
 // Expat callbacks for parsing full text follow. //
 
 void linefeed(parsedata_t *p) {
