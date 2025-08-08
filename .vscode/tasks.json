@@ -16,6 +16,20 @@
             "problemMatcher": []
         },
 		{
+            "label": "Upload",
+            "type": "shell",
+            "isBackground": false,
+            "command": "bash",
+            "args": [
+                "./scripts/upload"
+            ],
+            "presentation": {
+                "clear": true,
+                "reveal": "always"
+            },
+            "problemMatcher": []
+        },
+		{
 			"type": "cppbuild",
 			"label": "C/C++: arm-none-eabi-gcc build active file",
 			"command": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc",
