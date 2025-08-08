@@ -33,7 +33,7 @@ ARCH	:=	-march=armv5te -mtune=arm946e-s -mthumb
 CFLAGS	:= -g -Wall -O2 -ffunction-sections -fdata-sections\
 	$(ARCH) $(INCLUDE) -DARM9
 # freetype
-CFLAGS  +=	-I/opt/nds/freetype-2.4.8/include/freetype2
+CFLAGS  +=	-I/opt/nds/freetype/include/freetype2
 # zlib minizip
 CFLAGS  +=	-I$(DEVKITPRO)/portlibs/nds/include/minizip -DIOAPI_NO_64
 
@@ -51,7 +51,7 @@ LIBS	:= -lfat -lnds9 -lexpat -lz -lbz2 -lpng -lfreetype
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS) /opt/nds/freetype-2.4.8 $(DEVKITPRO)/portlibs/nds
+LIBDIRS	:=	$(LIBNDS) /opt/nds/freetype $(DEVKITPRO)/portlibs/nds
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
