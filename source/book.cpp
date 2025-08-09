@@ -619,10 +619,13 @@ u8 Book::Open()
 	path.append(GetFolderName());
 	path.append("/");
 	path.append(GetFileName());
+	// Page layout is a function of the current style.
+	app->ts->SetStyle(TEXT_STYLE_REGULAR);
 	u8 err = epub(this,path,false);
 	if (!err)
 		if(position > (int)pages.size()) position = pages.size()-1;
-	return (u8)err;
+	app->ts->SetStyle(TEXT_STYLE_BROWSER);
+	return err;
 }
 
 u8 Book::Index()

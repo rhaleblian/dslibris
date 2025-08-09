@@ -26,10 +26,8 @@
 #define TEXT_STYLE_ITALIC (u8)2
 #define TEXT_STYLE_BOLDITALIC (u8)3
 #define TEXT_STYLE_BROWSER (u8)4
-#define TEXT_STYLE_SPLASH (u8)5
 
 #define CACHESIZE 512
-#define PIXELSIZE 12
 
 class App;
 int asciiart();
@@ -102,12 +100,12 @@ class Text {
 	void Begin();
 	void End();
 	
-	u8   GetAdvance(u32 ucs);
-	u8   GetAdvance(u32 ucs, u8 style);
+	inline u8 GetAdvance(u32 ucs) { return GetAdvance(ucs, GetFace(style)); };
+	inline u8 GetAdvance(u32 ucs, u8 astyle) { return GetAdvance(ucs, GetFace(astyle)); };
 	u8   GetCharCode(const char* txt, u32* code);
 	u8   GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels);
-	FT_Face GetFace() { return face; }
-	FT_Face GetFace(u8 style) { return faces[style]; }
+	FT_Face GetFace() { return faces[style]; }
+	FT_Face GetFace(u8 astyle) { return faces[astyle]; }
 	std::string GetFontFile(u8 style);
 	std::string GetFontName(u8 style);
 	bool GetFontName(std::string &s);
@@ -126,10 +124,10 @@ class Text {
 	void SetInvert(bool invert);
 	void SetPen(u16 x, u16 y);
 	void SetPixelSize(u8 size);
-	bool SetFace(u8 style);
+	inline void SetFace(u8 astyle) { style = astyle; };
 	void SetFontFile(const char *path, u8 style);
 	void SetScreen(u16 *s);
-	inline void SetStyle(int astyle) { style = astyle; face = faces[style]; }
+	inline void SetStyle(int astyle) { style = astyle; }
 	
 	void ClearCache();
 	void ClearCache(u8 style);
@@ -167,10 +165,8 @@ class Text {
 	std::map<u8, FT_Face> faces;
 	std::map<u8, std::string> filenames;
 
-	//! Current style, as TEXT_FONT_STYLE.
+	//! Current style, as in TEXT_STYLE_*.
 	int style;
-	//! Current face.
-	FT_Face face;
 	//! Current draw position.
 	FT_Vector pen;
 	//! Draw light text on dark?
@@ -179,8 +175,6 @@ class Text {
 	u32 codeprev;
 	//! Was the last glyph lookup a cache hit?
 	bool hit;
-	//! Has Init() run?
-	bool initialized;
 
 	//! It would fully justify, if it worked.
 	bool justify;
@@ -192,20 +186,22 @@ class Text {
 	//! Total glyph cache misses.
 	int stats_misses;
 
-	int CacheGlyph(u32 ucs);
-	int CacheGlyph(u32 ucs, u8 style);
+	inline int CacheGlyph(u32 ucs) { return CacheGlyph(ucs, style); }
+	inline int CacheGlyph(u32 ucs, u8 style) { return CacheGlyph(ucs, GetFace(style)); }
 	int CacheGlyph(u32 ucs, FT_Face face);
 	void ClearCache(FT_Face face);
 	FT_Error CreateFace(int style);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags);
-	FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 style);
+	inline FT_GlyphSlot GetGlyph(u32 ucs, int flags) { return GetGlyph(ucs, flags, GetFace(style)); };
+	inline FT_GlyphSlot GetGlyph(u32 ucs, int flags, u8 astyle) { return GetGlyph(ucs, flags, GetFace(astyle)); };
 	FT_GlyphSlot GetGlyph(u32 ucs, int flags, FT_Face face);
 	FT_Error GetGlyphBitmap(u32 ucs, FTC_SBit *asbit, FTC_Node *anode=NULL);
 	FT_UInt GetGlyphIndex(u32 ucs);
 	u8   GetAdvance(u32 ucs, FT_Face face);
 	u8   GetStringWidth(const char *txt, FT_Face face);
+
+	int InitCache();
 	FT_Error InitFreeTypeCache();
-	int InitHomemadeCache();
+
 	void PrintChar(u32 ucs, FT_Face face);
 	void PrintString(const char *string, FT_Face face);
 	void ReportFace(FT_Face face);
