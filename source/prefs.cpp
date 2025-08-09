@@ -1,6 +1,7 @@
 #include "prefs.h"
 
 #include <stdio.h>
+#include <sys/param.h>
 #include <vector>
 #include "sys/stat.h"
 #include "sys/time.h"
@@ -10,6 +11,179 @@
 #include "book.h"
 
 #define PARSEBUFSIZE 1024*64
+
+namespace xml::prefs {
+
+void start(	void *data,
+	const XML_Char *name,
+	const XML_Char **attr)
+{
+	parsedata_t* p = (parsedata_t*)data;
+	App *app = p->app;
+	int position = 0; //! Page position in book.
+	char filename[MAXPATHLEN];
+	bool current = FALSE;
+	int i;
+	
+	if (!strcmp(name,"library"))
+	{
+		for(i=0;attr[i];i+=2)
+			if(!strcmp(attr[i],"modtime"))
+			   app->prefs->modtime = atoi(attr[i+1]);
+	}
+	// FIXME this will never run
+	else if (!strcmp(name,"library"))
+	{
+		for(i=0;attr[i];i+=2) {
+			if(!strcmp(attr[i],"folder"))
+				app->bookdir = std::string(attr[i+1]);
+		}
+	}
+	else if (!strcmp(name,"screen"))
+	{
+		for(i=0;attr[i];i+=2)
+		{
+			if(!strcmp(attr[i],"brightness"))
+			{
+				app->brightness = atoi(attr[i+1]);
+				app->brightness = app->brightness % 4;
+			}
+			else if(!strcmp(attr[i],"invert"))
+			{
+				
+				app->invert = atoi(attr[i+1]);
+				app->ts->SetInvert(atoi(attr[i+1]));
+			}
+			else if(!strcmp(attr[i],"flip"))
+			{
+				app->orientation = atoi(attr[i+1]);
+			}
+		}
+	}
+	else if (!strcmp(name,"paragraph"))
+	{
+		for(i=0;attr[i];i+=2)
+		{
+			if(!strcmp(attr[i],"spacing")) app->paraspacing = atoi(attr[i+1]);
+			if(!strcmp(attr[i],"indent")) app->paraindent = atoi(attr[i+1]);
+		}
+	}
+	else if (!strcmp(name,"font"))
+	{
+		for(i=0;attr[i];i+=2)
+		{
+			if(!strcmp(attr[i],"size"))
+				app->ts->pixelsize = atoi(attr[i+1]);
+			else if(!strcmp(attr[i],"normal"))
+				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_REGULAR);
+			else if(!strcmp(attr[i],"bold"))
+				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_BOLD);
+			else if(!strcmp(attr[i],"italic"))
+				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_ITALIC);
+			else if(!strcmp(attr[i],"bolditalic"))
+				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_BOLDITALIC);
+			else if (!strcmp(attr[i], "path")) {
+				if (strlen(attr[i+1]))
+					app->fontdir = std::string(attr[i+1]);
+			}
+		}
+	}
+	else if (!strcmp(name, "books"))
+	{
+		for (i = 0; attr[i]; i+=2) {
+			if (!strcmp(attr[i], "reopen"))
+				// For prefs where reopen was a string,
+				// reopen will get turned off.
+				app->reopen = atoi(attr[i+1]);
+			else if (!strcmp(attr[i], "path")) {
+				if (strlen(attr[i+1]))
+					app->bookdir = std::string(attr[i+1]);
+			}
+        }
+	}
+	else if (!strcmp(name, "book"))
+	{
+		strcpy(filename,"");
+		current = FALSE;
+		position = 0;
+		for (i = 0; attr[i]; i+=2) {
+			if (!strcmp(attr[i], "file"))
+				strcpy(filename, attr[i+1]);
+			if (!strcmp(attr[i], "page"))
+				position = atoi(attr[i+1]);
+			if (!strcmp(attr[i], "current"))
+			{
+				// Should warn if multiple books are current...
+				// the last current book will win.
+				if(atoi(attr[i+1])) current = TRUE;
+			}
+        }
+		
+		// Find the book index for this library entry
+		// and set context for later bookmarks.
+		std::vector<Book*>::iterator it;
+		for(it = app->books.begin(); it < app->books.end(); it++)
+		{
+			const char *bookname = (*it)->GetFileName();
+			if(!strcmp(bookname, filename))
+			{
+				// bookmark tags will refer to this.
+				p->book = *it;
+								
+				if (current)
+				{
+					// Set this book as current.
+					app->bookcurrent = *it;
+					app->bookselected = *it;
+				}
+				if (position)
+					// Set current page in this book.
+					(*it)->SetPosition(position - 1);
+
+				break;
+			}
+		}
+	}
+	else if (!strcmp(name, "bookmark"))
+	{
+		for (i = 0; attr[i]; i+=2) {
+			if (!strcmp(attr[i], "page"))
+				position = atoi(attr[i+1]);
+		}
+		
+		if (p->book)
+		{
+			p->book->GetBookmarks()->push_back(position - 1);
+		}
+	}
+	else if (!strcmp(name,"margin"))
+	{
+		for (i=0;attr[i];i+=2)
+		{
+			if (!strcmp(attr[i],"left")) app->ts->margin.left = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"right")) app->ts->margin.right = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"top")) app->ts->margin.top = atoi(attr[i+1]);
+			if (!strcmp(attr[i],"bottom")) app->ts->margin.bottom = atoi(attr[i+1]);
+		}
+	}
+	else if (!strcmp(name,"option"))
+	{
+		for (i=0;attr[i];i+=2)
+		{
+			if (!strcmp(attr[i],"swapshoulder")) 
+				p->prefs->swapshoulder = atoi(attr[i+1]);
+		}
+	}
+}
+
+void end(void *data, const char *name)
+{
+	//! Exit element callback for the prefs file.
+	parsedata_t *p = (parsedata_t*)data;
+	if (!strcmp(name,"book")) p->book = NULL;
+}
+
+}
 
 Prefs::Prefs(App *_app) { app = _app; Init(); }
 Prefs::~Prefs() {}
@@ -24,14 +198,16 @@ int Prefs::Read()
 	{ err = 255; return err; }
 
 	parsedata_t pdata;
-	app->parse_init(&pdata);
+	parse_init(&pdata);
 	pdata.prefs = this;
+	pdata.app = app;
+	pdata.ts = app->ts;
 
 	XML_Parser p = XML_ParserCreate(NULL);
 	if(!p) { fclose(fp); err = 254; return err; }
-	XML_SetUnknownEncodingHandler(p,unknown_hndl,NULL);
-	XML_SetStartElementHandler(p, prefs_start_hndl);
-	XML_SetEndElementHandler(p, prefs_end_hndl);
+	XML_SetUnknownEncodingHandler(p, xml::book::unknown,NULL);
+	XML_SetStartElementHandler(p, xml::prefs::start);
+	XML_SetEndElementHandler(p, xml::prefs::end);
 	XML_SetUserData(p, (void *)&pdata);
 	while (true)
 	{

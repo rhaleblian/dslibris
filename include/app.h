@@ -141,13 +141,8 @@ class App {
 	void SetProgress(int amount);
 	touchPosition TouchRead();
 	void UpdateClock();
-
-	bool parse_in(parsedata_t *data, context_t context);
-	void parse_init(parsedata_t *data);
-	context_t parse_pop(parsedata_t *data);
 	void parse_error(XML_ParserStruct *ps);
-	void parse_push(parsedata_t *data, context_t context);
-	
+
 	// app_book.cpp
 	void CloseBook();
 	int  GetBookIndex(Book*);

@@ -43,7 +43,7 @@ void epub_data_init(epub_data_t *d)
 	d->title = "";
 	d->creator = "";
 	d->metadataonly = false;
-	d->book = NULL;
+	d->book = nullptr;
 }
 
 void epub_data_delete(epub_data_t *d)
@@ -136,15 +136,19 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 		XML_SetElementHandler(p, epub_rootfile_start, epub_rootfile_end);
 		XML_SetCharacterDataHandler(p, epub_rootfile_char);
 	}
-	else {
+	else if(epd->type == PARSE_CONTENT) {
 		parse_init(&pd);
 		pd.book = epd->book;
+		pd.app = pd.book->GetApp();
+		pd.ts = pd.app->ts;
+		pd.prefs = pd.app->prefs;
 		XML_SetUserData(p, &pd);
 		XML_SetElementHandler(p, xml::book::start, xml::book::end);
 		XML_SetCharacterDataHandler(p, xml::book::chardata);
-		XML_SetDefaultHandler(p, default_hndl);
+		XML_SetDefaultHandler(p, xml::book::fallback);
 		XML_SetProcessingInstructionHandler(p, xml::book::instruction);
-	}
+	} else return 0;
+
 	size_t len, len_total=0;
 	enum XML_Status status;
 	do {
@@ -156,8 +160,6 @@ int epub_parse_currentfile(unzFile uf, epub_data_t *epd)
 		}
 		len_total += len;
 	} while (len);
-
-	printf("yo\n");
 
 	XML_ParserFree(p);
 	delete [] filebuf;
@@ -179,6 +181,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 	if (rc != UNZ_OK) return rc;
 	rc = unzOpenCurrentFile(uf);
 	epub_data_init(&parsedata);
+	parsedata.book = book;
 	parsedata.type = PARSE_CONTAINER;
 	rc = epub_parse_currentfile(uf, &parsedata);
 	rc = unzCloseCurrentFile(uf);
@@ -197,6 +200,7 @@ int epub(Book *book, std::string name, bool metadataonly)
 	{
 		rc = unzOpenCurrentFile(uf);
 		epub_data_init(&parsedata);
+		parsedata.book = book;
 		parsedata.type = PARSE_ROOTFILE;
 		epub_parse_currentfile(uf, &parsedata);
 		rc = unzCloseCurrentFile(uf);

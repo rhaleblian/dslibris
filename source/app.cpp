@@ -132,7 +132,7 @@ int App::Run(void)
 		halt("[FAIL] no books\n");
 
 	std::sort(books.begin(),books.end(),&book_title_lessthan);
-	
+
 	prefs->Read();
 	for(auto &book : books)
 	{
@@ -155,7 +155,7 @@ int App::Run(void)
 		bookselected = bookcurrent;
 		OpenBook();
 	}
-	
+
 	keysSetRepeat(60,2);
 	while (pmMainLoop())
 	{
@@ -222,7 +222,7 @@ int App::FindBooks() {
 		     c--);
 		if (!strcmp(".epub",c))
 		{
-			Book *book = new Book();
+			Book *book = new Book(this);
 			book->SetFolderName(bookdir.c_str());
 			book->SetFileName(filename);
 			book->SetTitle(filename);
