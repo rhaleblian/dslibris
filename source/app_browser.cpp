@@ -65,12 +65,6 @@ void App::browser_handleevent()
 		ShowSettingsView();
 	}
 
-	else if (keys & KEY_START)
-	{
-		// exit game.
-		// mode = APP_MODE_QUIT;
-	}
-
 	else if (keys & KEY_TOUCH)
 	{
 		touchPosition coord = TouchRead();

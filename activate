@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Source this file in shells to set up the shell's environment for devkitARM.
+
+. /opt/devkitpro/devkitarm.sh

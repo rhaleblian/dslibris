@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# activate your shell first:
+# . /opt/devkitpro/devkitarm.sh
+
+basename=freetype-2.4.8
+if [ $basename = "freetype-2.4.8" ]; then
+    tar xf $basename-dslibris.tar.gz
+else
+  # Before 2.7
+  # wget https://download.savannah.nongnu.org/releases/freetype/freetype_old/$basename.tar.gz
+  # 2.7+
+  wget https://download.savannah.nongnu.org/releases/freetype/$basename.tar.gz
+fi
+tar xf $basename.tar.gz
+cd $basename
+../configure-$basename && make -j4 && make install

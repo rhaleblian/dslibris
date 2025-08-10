@@ -1,7 +1,8 @@
 #pragma once
 
 #include <expat.h>
-#include "book.h"
+#include <nds.h>
+#include "text.h"
 
 #define PAGEBUFSIZE 2048
 
@@ -29,7 +30,9 @@ typedef enum {
 typedef struct {
 	context_t stack[32];
 	u8 stacksize;
-	Book *book;
+	class App *app;
+	class Text *ts;  //! Text renderer.
+	class Book *book;
 	class Prefs *prefs;
 	int screen;
 	FT_Vector pen;
@@ -46,24 +49,11 @@ typedef struct {
 	int pagecount;
 } parsedata_t;
 
-//! Expat callbacks for parsing XHTML.
-
-void default_hndl(void *data, const char *s, int len);
-void start_hndl(void *data, const char *el, const char **attr);
-void char_hndl(void *data, const char *txt, int txtlen);
-void end_hndl(void *data, const char *el);
-void proc_hndl(void *data, const char *target, const char *pidata);
-int unknown_hndl(void *encodingHandlerData,
-					const XML_Char *name,
-					XML_Encoding *info);
-void prefs_start_hndl(void *data, const char *el, const char **attr);
-extern void prefs_end_hndl(void *data, const char *name);
-
-void title_start_hndl(void *data, const char *el, const char **attr);
-void title_char_hndl(void *data, const char *txt, int txtlen);
-void title_end_hndl(void *data, const char *el);
-
 bool iswhitespace(u8 c);
 
+void parse_error(XML_ParserStruct *ps);
 void parse_init(parsedata_t *data);
+bool parse_in(parsedata_t *data, context_t context);
+context_t parse_pop(parsedata_t *data);
 void parse_printerror(XML_Parser p);
+void parse_push(parsedata_t *data, context_t context);

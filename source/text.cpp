@@ -34,6 +34,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "main.h"
 #include "version.h"
 
+#define PIXELSIZE 12
+
 extern char msg[];
 std::stringstream ss;
 
@@ -50,7 +52,7 @@ Text::Text()
 	filenames[TEXT_STYLE_ITALIC] = FONTITALICFILE;
 	filenames[TEXT_STYLE_BOLDITALIC] = FONTBOLDITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
-	// filenames[TEXT_STYLE_SPLASH] = FONTSPLASHFILE;
+
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	offscreen = new u16[display.width * display.height];
@@ -66,11 +68,6 @@ Text::Text()
 	justify = false;
 	linespacing = 0;
 	ftc = false;
-	initialized = false;
-	imagetype.face_id = (FTC_FaceID)&face_id;
-	imagetype.flags = FT_LOAD_DEFAULT; 
-	imagetype.height = pixelsize;
-	imagetype.width = 0;
 
 	// Rendering state.
 	hit = false;
@@ -78,10 +75,14 @@ Text::Text()
 	codeprev = 0;
 	bold = false;
 	italic = false;
-	face = NULL;
 	style = TEXT_STYLE_REGULAR;
 	pixelsize = PIXELSIZE;
 	screen = screenleft;
+
+	imagetype.face_id = (FTC_FaceID)&face_id;
+	imagetype.flags = FT_LOAD_DEFAULT; 
+	imagetype.height = pixelsize;
+	imagetype.width = 0;
 
 	// Statistics.
 	stats_hits = 0;
@@ -141,52 +142,51 @@ FT_Error Text::InitFreeTypeCache(void) {
 	error =	FTC_Manager_LookupFace(cache.manager, (FTC_FaceID)&face_id, &faces[TEXT_STYLE_REGULAR]);
 	if(error) return error;
 
-	initialized = true;
 	return 0;
 }
 
 FT_Error Text::CreateFace(int style) {
-	// TODO check for leakage
 	std::string path = app->fontdir + "/" + filenames[style];
-	error = FT_New_Face(library, path.c_str(), 0, &face);
-	if (!error) {
-		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-		faces[style] = face;
-	}
+	error = FT_New_Face(library, path.c_str(), 0, &faces[style]);
+	if (error) halt(path.c_str());
+	
+	error = FT_Select_Charmap(faces[style], FT_ENCODING_UNICODE);
+	if (error) halt("error selecting charmap");
+
+	auto size = pixelsize;
+	if (style == TEXT_STYLE_BROWSER) size = 12;
+
+#ifdef REQUEST_SIZE
+	// This may provide more accurate sizeing.
+	FT_Size_RequestRec request {
+		.type = FT_SIZE_REQUEST_TYPE_NOMINAL,
+		.width = size << 6,   // 26.6 points
+		.height = size << 6,  // 26.6 points
+		.horiResolution = 72 << 6, // 72 dpi
+		.vertResolution = 72 << 6  // 72 dpi
+	};
+	FT_Request_Size(face, &request);
+#else
+	error = FT_Set_Pixel_Sizes(faces[style], 0, size);
+	if (error) halt("error setting pixel size");
+#endif
+
+	textCache.insert(std::make_pair(faces[style], new Cache()));
+
 	return error;
 }
 
-int Text::InitHomemadeCache(void) {
+int Text::InitCache(void) {
 	//! Use our own cheesey glyph cache.
-	FT_Error err;
 
-	err = FT_Init_FreeType(&library);
-	if (err) return err;
-	
-	err = CreateFace(TEXT_STYLE_BROWSER);
-	err = CreateFace(TEXT_STYLE_SPLASH);
-	err = CreateFace(TEXT_STYLE_REGULAR);
+	FT_Init_FreeType(&library);	
+	error |= CreateFace(TEXT_STYLE_BROWSER);
+	error |= CreateFace(TEXT_STYLE_REGULAR);
+	error |= CreateFace(TEXT_STYLE_ITALIC);
+	error |= CreateFace(TEXT_STYLE_BOLD);
+	error |= CreateFace(TEXT_STYLE_BOLDITALIC);
 
-	err = CreateFace(TEXT_STYLE_ITALIC);
-	if (err)
-		faces[TEXT_STYLE_ITALIC] = faces[TEXT_STYLE_REGULAR];
-
-	err = CreateFace(TEXT_STYLE_BOLD);
-	if (err)
-		faces[TEXT_STYLE_BOLD] = faces[TEXT_STYLE_REGULAR];
-
-	err = CreateFace(TEXT_STYLE_BOLDITALIC);
-	if (err)
-		faces[TEXT_STYLE_BOLDITALIC] = faces[TEXT_STYLE_REGULAR];
-	
-	std::map<u8, FT_Face>::iterator iter;
-	for (iter = faces.begin(); iter != faces.end(); iter++) {
-		FT_Set_Pixel_Sizes(iter->second, 0, pixelsize);
-		textCache.insert(std::make_pair(iter->second, new Cache()));
-	}
-
-	initialized = true;
-	return 0;
+	return error;
 }
 
 int Text::Init()
@@ -194,7 +194,7 @@ int Text::Init()
 	if(ftc)
 		return InitFreeTypeCache();
 	else
-		return InitHomemadeCache();
+		return InitCache();
 }
 
 void Text::ReportFace(FT_Face face)
@@ -223,16 +223,6 @@ void Text::Begin()
 }
 
 void Text::End() {}
-
-int Text::CacheGlyph(u32 ucs)
-{
-	return CacheGlyph(ucs, style);
-}
-
-int Text::CacheGlyph(u32 ucs, u8 style)
-{
-	return CacheGlyph(ucs, GetFace(style));
-}
 
 int Text::CacheGlyph(u32 ucs, FT_Face face)
 {
@@ -282,19 +272,9 @@ int Text::GetGlyphBitmap(u32 ucs, FTC_SBit *sbit, FTC_Node *anode)
 		GetGlyphIndex(ucs),sbit,anode);
 }
 
-FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags)
-{
-	return GetGlyph(ucs, flags, face);
-}
-
-FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, u8 style)
-{
-	return GetGlyph(ucs, flags, GetFace(style));
-}
-
 FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 {
-	if(ftc) return NULL;
+	if (ftc) halt("error: GetGlyph() called with ftc enabled");
 
 	std::map<u16,FT_GlyphSlot>::iterator iter = textCache[face]->cacheMap.find(ucs);
 	if (iter != textCache[face]->cacheMap.end()) {
@@ -302,14 +282,15 @@ FT_GlyphSlot Text::GetGlyph(u32 ucs, int flags, FT_Face face)
 		hit = true;
 		return iter->second;
 	}
-	
+
+	// No cache hit, so load glyph.
 	hit = false;
 	stats_misses++;
-
 	int i = CacheGlyph(ucs, face);
 	if (i >= 0)
 		return textCache[face]->cacheMap[ucs];
 
+	// Cache is full, look up directly.
 	FT_Load_Char(face, ucs, flags);
 	return face->glyph;
 }
@@ -481,7 +462,6 @@ void Text::SetPixelSize(u8 size)
 	{
 		imagetype.height = pixelsize;
 		imagetype.width = pixelsize;
-		pixelsize = pixelsize;
 	}
 	else
 	{
@@ -499,41 +479,33 @@ void Text::SetScreen(u16 *inscreen)
 	screen = inscreen;
 }
 
-u8 Text::GetAdvance(u32 ucs) {
-	return GetAdvance(ucs, GetFace(style));
-}
-
-u8 Text::GetAdvance(u32 ucs, u8 astyle) {
-	return GetAdvance(ucs, GetFace(astyle));
-}
-
 u8 Text::GetAdvance(u32 ucs, FT_Face face) {
 	//! Return glyph advance in pixels.
-	//! All other flavours of GetAdvance() call this one.
-	
 
-	if (ftc) {
-		imagetype.flags = FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP;
+	if (ftc)
+	{
+		auto gindex = GetGlyphIndex(ucs);
 
-		// error = FTC_SBitCache_Lookup(cache.sbit,&imagetype,
-		// 	GetGlyphIndex(ucs),&sbit,NULL);
-		// return sbit->xadvance;
+		FTC_SBit sbit;
+		error = FTC_SBitCache_Lookup(cache.sbit, &imagetype, gindex, &sbit, NULL);
+		if (!error) return sbit->xadvance;
 
 		FT_Glyph glyph;
-		FTC_ImageType type = &imagetype;
-		error = FTC_ImageCache_Lookup(cache.image,type,GetGlyphIndex(ucs),&glyph,NULL);
-
-		return (glyph->advance).x;
+		error = FTC_ImageCache_Lookup(cache.image, &imagetype, gindex, &glyph, NULL);
+		if (!error) return (glyph->advance).x;
 	}
 	else
 	{
-		// Also caches this glyph.
+#ifdef ADVANCE_NO_CACHE
+		// Much slower, maybe less buggy.
+		auto gindex = FT_Get_Char_Index(face, ucs);
+		error = FT_Load_Glyph(face, gindex, FT_LOAD_DEFAULT);
+		if (!error) return face->glyph->advance.x >> 6;
+#else
 		return GetGlyph(ucs, FT_LOAD_DEFAULT, face)->advance.x >> 6;
-
-		// auto gindex = FT_Get_Char_Index(face, ucs);
-		// FT_Load_Glyph(face, gindex, FT_LOAD_DEFAULT);
-		// return face->glyph->advance.x >> 16;
+#endif
 	}
+	return 0;
 }
 
 int Text::GetStringAdvance(const char *s) {
@@ -735,11 +707,4 @@ void Text::SetFontFile(const char *path, u8 style)
 std::string Text::GetFontFile(u8 style)
 {
 	return filenames[style];
-}
-
-bool Text::SetFace(u8 astyle)
-{
-	style = astyle;
-	face = faces[style];
-	return true;
 }
