@@ -90,11 +90,10 @@ void App::browser_handleevent()
 				i++) {
 				if (buttons[i]->EnclosesPoint(coord.py, coord.px))
 				{
-					int b = GetBookIndex(bookselected);
-					buttons[b]->Draw(ts->screen, false);
-					bookselected = books[browserstart + i];
-					buttons[i]->Draw(ts->screen, true);
-					
+					// int b = GetBookIndex(bookselected);
+					// buttons[b]->Draw(ts->screen, false);
+					bookselected = books[i];
+					// buttons[i]->Draw(ts->screen, true);
 					OpenBook();
 					break;
 				}
