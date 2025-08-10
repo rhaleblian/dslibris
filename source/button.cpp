@@ -70,7 +70,7 @@ void Button::Resize(u16 x, u16 y) {
 void Button::Draw(u16 *screen, bool highlight) {
 	// push state
 	// int  save_pixelsize = ts->GetPixelSize();
-	bool save_invert = ts->GetInvert();
+	// bool save_invert = ts->GetInvert();
 	auto save_screen = ts->GetScreen();
 	auto save_style = ts->GetStyle();
 	auto save_usebgcolor = ts->usebgcolor;
@@ -86,7 +86,7 @@ void Button::Draw(u16 *screen, bool highlight) {
 	if (screen == nullptr) screen = ts->screen;
 
 	ts->SetScreen(screen);
-	ts->SetInvert(false);
+	// ts->SetInvert(false);
 	ts->SetStyle(text.style);
 
 	u16 bgcolor = RGB15(31,31,31)|BIT(15);
@@ -129,7 +129,7 @@ void Button::Draw(u16 *screen, bool highlight) {
 	}
 
 	// pop state
-	ts->SetInvert(save_invert);
+	// ts->SetInvert(save_invert);
 	// ts->SetPixelSize(save_pixelsize);
 	ts->SetScreen(save_screen);
 	ts->SetStyle(save_style);

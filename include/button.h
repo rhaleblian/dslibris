@@ -37,6 +37,7 @@ class Button {
 
 	Button();
 	Button(Text *typesetter);
+	inline void Init() { Init(ts); };
 	void Init(Text *typesetter);
 	inline int GetHeight() { return extent.y; };
 	inline const char* GetLabel() { return text1.c_str(); };

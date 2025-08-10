@@ -225,6 +225,5 @@ void App::PrefsHandlePress()
 	} else if (prefsSelected == PREFS_BUTTON_FONT_BOLDITALIC) {
 		mode = APP_MODE_PREFS_FONT_BOLDITALIC;
 	}
-	FontInit();
-	font_view_dirty = true;
+	ShowFontView(mode);
 }
