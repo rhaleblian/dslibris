@@ -12,16 +12,9 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 
-FontMenu::FontMenu(App* _app)
+FontMenu::FontMenu(App* _app) : Menu(_app)
 {
-	app = _app;
-	buttons.clear();
 	dir = app->fontdir;
-	dirty = true;
-	page = 0;
-	pagesize = 7;
-	selected = 0;
-
 	findFiles();
 	for (auto &filename : files) {
 		Button *b = new Button(app->ts);
@@ -137,36 +130,19 @@ void FontMenu::handleTouchInput() {
 
 void FontMenu::draw()
 {
-	auto ts = app->ts;
-
-	char msg[64]; sprintf(msg, "%d\n", buttons.size());
-	// save state.
-	// bool invert = ts->GetInvert();
-
-	u16* screen = ts->GetScreen();	
-	// ts->SetInvert(false);
-	ts->ClearScreen();
-
+	app->ts->ClearScreen();
 	for (u8 i = page * pagesize;
 		(i < buttons.size()) && (i < (page + 1) * pagesize);
 		i++)
 	{
-		buttons[i]->Draw(screen, i == selected);
+		buttons[i]->Draw(i == selected);
 	}
-
+	if(page > 0)
+		app->buttonprev.Draw();
 	app->buttonprefs.Label("cancel");
-	app->buttonprefs.Draw(screen, false);
-	if (buttons.size() > pagesize)
-	{
-		if(selected < buttons.size() - pagesize)
-			app->buttonnext.Draw(screen, false);
-		if(selected >= pagesize)
-			app->buttonprev.Draw(screen, false);
-	}
-
-	// restore state.
-	// ts->SetInvert(invert);
-
+	app->buttonprefs.Draw();
+	if(page < GetPageCount() - 1)
+		app->buttonnext.Draw();
 	dirty = false;
 }
 
