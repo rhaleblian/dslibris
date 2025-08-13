@@ -37,6 +37,7 @@ class Button {
 
 	Button();
 	Button(Text *typesetter);
+	inline void Init() { Init(ts); };
 	void Init(Text *typesetter);
 	inline int GetHeight() { return extent.y; };
 	inline const char* GetLabel() { return text1.c_str(); };
@@ -48,7 +49,10 @@ class Button {
 	//! label on second line, used for author in the library screen.
 	void SetLabel2(std::string s);
 	inline void SetStyle(int astyle) { style = astyle; };
-	void Draw(u16 *fb = nullptr, bool highlight = false);
+	void Draw(u16 *fb, bool highlight = false);
+	inline void Draw(bool highlight = false) {
+		Draw(ts->GetScreen(), highlight);
+	}
 	void Move(u16 x, u16 y);
 	void Resize(u16 x, u16 y);
 	bool EnclosesPoint(u16 x, u16 y);
