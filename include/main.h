@@ -23,7 +23,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "nds.h"
-#include "splash.h"
 
 #define MARGINLEFT 12
 #define MARGINRIGHT 12
@@ -48,8 +47,3 @@
 
 int halt(int vblanks = -1);
 int halt(const char *msg, int vblanks = -1);
-
-//! For drawing splash screen.
-int getSize(u8 *source, u16 *dest, u32 arg);
-u8 readByte(u8 *source);
-void drawstack(u16 *screen);

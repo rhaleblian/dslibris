@@ -42,7 +42,6 @@ https://github.com/rhaleblian/dslibris
 
 */
 
-
 #include <list>
 #include <sstream>
 #include <unistd.h>
@@ -52,10 +51,10 @@ https://github.com/rhaleblian/dslibris
 
 #include "book.h"
 #include "button.h"
-#include "prefs.h"
-#include "text.h"
 #include "main.h"
 #include "parse.h"
+#include "prefs.h"
+#include "text.h"
 
 #define APP_BROWSER_BUTTON_COUNT 7
 #define APP_URL "http://github.com/rhaleblian/dslibris"
@@ -95,6 +94,7 @@ public:
 	u8 brightness;   //! DISABLED. 4 levels for the Lite.
 	u8 mode; 	     //! Current mode (browser, prefs, book, font)
 	std::string fontdir;  //! Directory to search for font files
+	u16 splash[256 * 256];  //! Splash screen buffer
 	bool melonds;    //! Are we running in melonDS?
 
 	//! key functions are remappable to support screen flipping.
@@ -159,6 +159,7 @@ private:
 
 	int  FindBooks();
 	void InitScreens();
+	void LoadSplash();
 	void SetBrightness(u8 b);
 	void SetOrientation(bool flipped);
 	void ShowFontView(int app_mode);

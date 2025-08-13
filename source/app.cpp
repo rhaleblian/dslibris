@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "book.h"
 #include "button.h"
 #include "font.h"
+#include "splash.h"
 #include "text.h"
 #include "version.h"
 
@@ -118,7 +119,7 @@ int App::Run(void)
 
 	InitScreens();
 	ts->SetStyle(TEXT_STYLE_BROWSER);
-	ts->PrintSplash(ts->screenleft);
+	LoadSplash();
 
 	// Construct library.
 
@@ -146,7 +147,6 @@ int App::Run(void)
 
 	// Resume reading from the last session.
 
-	// char msg[32]; sprintf(msg, "%d\n", bookcurrent); halt(msg);
 	if(reopen && bookcurrent) {
 		bookselected = bookcurrent;
 		OpenBook();
@@ -186,6 +186,17 @@ int App::Run(void)
 			if (fontmenu->isDirty()) fontmenu->draw();
 			break;
 		}
+
+		ts->screenleft = (u16*)bgGetGfxPtr(ts->bg0);
+		ts->screenright = (u16*)bgGetGfxPtr(ts->bg1);
+
+		if (mode != APP_MODE_BOOK)
+		{
+			memcpy(ts->screenleft, splash, 256*256*sizeof(u16));
+		}
+
+		bgSetMapBase(ts->bg0, bgGetMapBase(ts->bg0) == 8 ? 0 : 8);
+		bgSetMapBase(ts->bg1, bgGetMapBase(ts->bg1) == 8 ? 0 : 8);
 	}
 	return 0;
 }
@@ -304,8 +315,8 @@ void App::SetOrientation(bool turned_right)
 		REG_BG3Y = 0 << 8;
 		REG_BG3X_SUB = 191 << 8;
 		REG_BG3Y_SUB = 0 << 8;
-		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenleft = (u16*)BG_BMP_RAM(0);
+		ts->screenright = (u16*)bgGetGfxPtr(ts->bg0) + 256 * 256;
+		ts->screenleft = (u16*)bgGetGfxPtr(ts->bg1) + 256 * 256;
 		orientation = true;
 		// TODO put this in user coords
 		key.down = KEY_UP;
@@ -323,8 +334,8 @@ void App::SetOrientation(bool turned_right)
 		REG_BG3Y = 255 << 8;
 		REG_BG3X_SUB = 0 << 8;
 		REG_BG3Y_SUB = 255 << 8;
-		ts->screenright = (u16*)BG_BMP_RAM_SUB(0);
-		ts->screenleft = (u16*)BG_BMP_RAM(0);
+		ts->screenright = (u16*)bgGetGfxPtr(ts->bg1) + 256 * 256;
+		ts->screenleft = (u16*)bgGetGfxPtr(ts->bg0) + 256 * 256;
 		orientation = false;
 		// TODO put this in user coords
 		key.down = KEY_DOWN;
@@ -348,10 +359,12 @@ void App::InitScreens()
 {
 	videoSetMode(MODE_5_2D);
 	vramSetBankA(VRAM_A_MAIN_BG);
-	bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	ts->bg0 = bgInit(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
+
 	videoSetModeSub(MODE_5_2D);
 	vramSetBankC(VRAM_C_SUB_BG);
-	bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0,0);
+	ts->bg1 = bgInitSub(3, BgType_Bmp16, BgSize_B16_256x256, 0, 0);
+
 	ts->SetScreen(ts->screenright);
 	ts->ClearScreen();
 	ts->SetScreen(ts->screenleft);
@@ -362,8 +375,19 @@ void App::InitScreens()
 	}
 }
 
+static int getSize(u8 *source, u16 *dest, u32 arg) {
+       return *(u32*)source;
+}
+
+static u8 readByte(u8 *source) { return *source; }
+
+void App::LoadSplash() {
+	TDecompressionStream decomp = {getSize, NULL, readByte};
+	swiDecompressLZSSVram((void*)splashBitmap, splash, 0, &decomp);
+}
+
 void App::PrintStatus(const char *msg)
-{
+ {
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
 	const int top = 240;

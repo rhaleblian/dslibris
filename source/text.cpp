@@ -39,10 +39,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 extern char msg[];
 std::stringstream ss;
 
-void Text::CopyScreen(u16 *src, u16 *dst) {
-	memcpy(src, dst, display.width * display.height * sizeof(u16));
-}
-
 Text::Text()
 {
 	display.height = PAGE_HEIGHT;
@@ -53,6 +49,8 @@ Text::Text()
 	filenames[TEXT_STYLE_BOLDITALIC] = FONTBOLDITALICFILE;
 	filenames[TEXT_STYLE_BROWSER] = FONTBROWSERFILE;
 
+	bg0 = 0;
+	bg1 = 0;
 	screenleft = (u16*)BG_BMP_RAM_SUB(0);
 	screenright = (u16*)BG_BMP_RAM(0);
 	offscreen = new u16[display.width * display.height];
@@ -248,6 +246,10 @@ int Text::CacheGlyph(u32 ucs, FT_Face face)
 	dst->advance = src->advance;
 	textCache[face]->cacheMap.insert(std::make_pair(ucs, dst));
 	return ucs;
+}
+
+void Text::CopyScreen(u16 *src, u16 *dst) {
+	memcpy(src, dst, display.width * display.height * sizeof(u16));
 }
 
 FT_UInt Text::GetGlyphIndex(u32 ucs)
@@ -694,7 +696,7 @@ void Text::PrintSplash(u16 *screen)
 	auto s = GetScreen();
 
 	SetScreen(screen);
-	drawstack(screen);
+	// drawstack(screen);
 	// pop
 	SetScreen(s);
 }

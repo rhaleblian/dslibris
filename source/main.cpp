@@ -86,14 +86,3 @@ void WriteBufferToCache(parsedata_t *pdata)
 	//		fwrite(pdata->buf, 1, pdata->buflen, pdata->cachefile);
 	//}
 }
-
-int getSize(u8 *source, u16 *dest, u32 arg) {
-       return *(u32*)source;
-}
-
-u8 readByte(u8 *source) { return *source; }
-
-void drawstack(u16 *screen) {
-       TDecompressionStream decomp = {getSize, NULL, readByte};
-       swiDecompressLZSSVram((void*)splashBitmap, screen, 0, &decomp);
-}

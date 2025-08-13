@@ -83,6 +83,7 @@ class Text {
 	u16 *screen, *screenleft, *screenright;
 	//! Offscreen buffer. Only used when OFFSCREEN defined.
 	u16 *offscreen;
+	u16 bg0, bg1;
 	struct {
 		int left, right, top, bottom;
 	} margin;
