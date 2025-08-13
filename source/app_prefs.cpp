@@ -113,11 +113,6 @@ void App::PrefsHandleEvent()
 	{
 		PrefsIncreaseParaspacing();
 	}
-	else if (keys & KEY_START)
-	{
-		// mode = APP_MODE_QUIT;
-		// prefs->Write();
-	}
 	else if (keys & KEY_TOUCH)
 	{
 		PrefsHandleTouch();
