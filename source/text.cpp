@@ -66,7 +66,7 @@ Text::Text()
 	usebgcolor = false;
 	invert = false;
 	justify = false;
-	linespacing = 0;
+	linespacing = 1;
 	ftc = false;
 
 	// Rendering state.
@@ -637,7 +637,7 @@ bool Text::PrintNewLine(void) {
 	//! Render a newline at the current position.
 	pen.x = margin.left;
 	int height = GetHeight();
-	int y = pen.y + height + linespacing;
+	int y = pen.y + height * linespacing;
 	if (y > (display.height - margin.bottom)) {
 		if (screen == screenleft)
 		{
@@ -650,7 +650,7 @@ bool Text::PrintNewLine(void) {
 	}
 	else
 	{
-		pen.y += height + linespacing;
+		pen.y += height * linespacing;
 		return true;
 	}
 }
