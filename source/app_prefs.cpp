@@ -31,6 +31,7 @@ void App::PrefsInit()
 		"italic font",
 		"bold italic font",
 		"font size",
+		"paragraph spacing",
 		"screen orientation"
 	};
 
@@ -140,6 +141,12 @@ void App::PrefsHandleTouch() {
 				} else {
 					PrefsDecreasePixelSize();
 				}
+			} else if (i == PREFS_BUTTON_PARASPACING) {
+				if (coord.py > 2 + 188 / 2) {
+					PrefsIncreaseParaspacing();
+				} else {
+					PrefsDecreaseParaspacing();
+				}
 			} else if (i == PREFS_BUTTON_ORIENTATION) {
 				PrefsFlipOrientation();
 			} else {
@@ -167,6 +174,24 @@ void App::PrefsDecreasePixelSize()
 	if (ts->pixelsize > 4) {
 		ts->pixelsize--;
 		PrefsRefreshButton(PREFS_BUTTON_FONTSIZE);
+		prefs->Write();
+	}
+}
+
+void App::PrefsIncreaseParaspacing()
+{
+	if (paraspacing < 2) {
+		paraspacing++;
+		PrefsRefreshButton(PREFS_BUTTON_PARASPACING);
+		prefs->Write();
+	}
+}
+
+void App::PrefsDecreaseParaspacing()
+{
+	if (paraspacing > 0) {
+		paraspacing--;
+		PrefsRefreshButton(PREFS_BUTTON_PARASPACING);
 		prefs->Write();
 	}
 }
@@ -202,6 +227,10 @@ void App::PrefsRefreshButton(int index) {
 		case PREFS_BUTTON_FONTSIZE:
 			sprintf(msg, "                        < %d >  ", ts->GetPixelSize());
 			prefsButtons[PREFS_BUTTON_FONTSIZE].SetLabel2(std::string(msg));
+			break;
+		case PREFS_BUTTON_PARASPACING:
+			sprintf(msg, "                         < %d >  ", paraspacing);
+			prefsButtons[PREFS_BUTTON_PARASPACING].SetLabel2(std::string(msg));
 			break;
 		case PREFS_BUTTON_ORIENTATION:
 			prefsButtons[PREFS_BUTTON_ORIENTATION].SetLabel2(
