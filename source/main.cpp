@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "text.h"
 #include "expat.h"
 #include "parse.h"
+#include "version.h"
 
 App *app;
 char msg[256];
@@ -59,6 +60,7 @@ int main(void)
 	defaultExceptionHandler();
 	// consoleDemoInit();
 	// consoleDebugInit(DebugDevice_NOCASH);
+	// fprintf(stderr, "dslibris %s\n", VERSION);
 
 	if (!fatInitDefault())
 		halt("[FAIL] filesystem\n");

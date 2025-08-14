@@ -11,8 +11,6 @@
             "program": "${workspaceFolder}/dslibris.elf",
             "targetArchitecture": "arm",
             "serverLaunchTimeout": 10000,
-            "preLaunchTask": "melonDS",
-            "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": true,

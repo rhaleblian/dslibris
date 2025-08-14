@@ -71,6 +71,7 @@ void start(void *data, const char *el, const char **attr)
 	//! Expat callback, when starting an element.
 
 	parsedata_t *p = (parsedata_t*)data;
+	auto app = p->app;
 
 	if (!strcmp(el,"html")) parse_push(p,TAG_HTML);
 	else if (!strcmp(el,"body")) parse_push(p,TAG_BODY);
@@ -115,16 +116,15 @@ void start(void *data, const char *el, const char **attr)
 	else if (!strcmp(el,"p")) {
 		parse_push(p,TAG_P);
 		if (!blankline(p)) {
-			// for(int i=0;i<paraspacing;i++)
-			// {
-			// 	linefeed(p);
-			// }
-			// for(int i=0;i<paraindent;i++)
-			// {
-			// 	p->buf[p->buflen++] = ' ';
-			// 	p->pen.x += ts->GetAdvance(' ');
-			// }
-			linefeed(p);
+			for(int i=0;i<p->app->paraspacing;i++)
+			{
+				linefeed(p);
+			}
+			for(int i=0;i<p->app->paraindent;i++)
+			{
+				p->buf[p->buflen++] = ' ';
+				p->pen.x += p->app->ts->GetAdvance(' ');
+			}
 		}
 	}
 	else if (!strcmp(el,"pre")) parse_push(p,TAG_PRE);
@@ -139,12 +139,26 @@ void start(void *data, const char *el, const char **attr)
 		p->buflen++;
 		p->pos++;
 		p->bold = true;
+		if (p->italic) {
+			app->ts->SetStyle(TEXT_STYLE_BOLDITALIC);
+		}
+		else 
+		{
+			app->ts->SetStyle(TEXT_STYLE_BOLD);
+		}
 	}
 	else if (!strcmp(el,"em") || !strcmp(el, "i")) {
 		parse_push(p,TAG_EM);
 		p->buf[p->buflen] = TEXT_ITALIC_ON;
 		p->buflen++;
 		p->italic = true;
+		if (p->bold) {
+			app->ts->SetStyle(TEXT_STYLE_BOLDITALIC);
+		}
+		else 
+		{
+			app->ts->SetStyle(TEXT_STYLE_ITALIC);
+		}
 	}
 	else parse_push(p,TAG_UNKNOWN);
 }
@@ -190,7 +204,7 @@ void chardata(void *data, const XML_Char *txt, int txtlen)
 				if(txt[i] == '\n')
 				{
 					p->pen.x = ts->margin.left;
-					p->pen.y += (lineheight + linespacing);
+					p->pen.y += (lineheight * linespacing);
 				}
 				else {
 					p->pen.x += spaceadvance;
@@ -234,7 +248,7 @@ void chardata(void *data, const XML_Char *txt, int txtlen)
 			// we overran the margin, insert a break.
 			p->buf[p->buflen++] = '\n';
 			p->pen.x = ts->margin.left;
-			p->pen.y += (lineheight + linespacing);
+			p->pen.y += (lineheight * linespacing);
 			p->linebegan = false;
 		}
 
@@ -318,10 +332,20 @@ void end(void *data, const char *el)
 		p->buf[p->buflen] = TEXT_BOLD_OFF;
 		p->buflen++;
 		p->bold = false;
+		if (p->italic) {
+			ts->SetStyle(TEXT_STYLE_ITALIC);
+		} else {
+			ts->SetStyle(TEXT_STYLE_REGULAR);
+		}
 	} else if (!strcmp(el, "em") || !strcmp(el, "i")) {
 		p->buf[p->buflen] = TEXT_ITALIC_OFF;
 		p->buflen++;
 		p->italic = false;
+		if (p->bold) {
+			ts->SetStyle(TEXT_STYLE_BOLD);
+		} else {
+			ts->SetStyle(TEXT_STYLE_REGULAR);
+		}
 	} else if(!strcmp(el,"h1")) {
 		p->buf[p->buflen] = TEXT_BOLD_OFF;
 		p->buflen++;
@@ -621,10 +645,10 @@ u8 Book::Open()
 	path.append(GetFileName());
 	// Page layout is a function of the current style.
 	app->ts->SetStyle(TEXT_STYLE_REGULAR);
+	app->ts->SetPixelSize(app->ts->pixelsize);
 	u8 err = epub(this,path,false);
 	if (!err)
 		if(position > (int)pages.size()) position = pages.size()-1;
-	app->ts->SetStyle(TEXT_STYLE_BROWSER);
 	return err;
 }
 

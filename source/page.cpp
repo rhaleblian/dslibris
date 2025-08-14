@@ -90,7 +90,7 @@ void Page::Draw(Text *ts)
 			// line break, page breaking if necessary
 			i++;
 			
-			if (ts->GetPenY() + ts->GetHeight() + ts->linespacing
+			if (ts->GetPenY() + ts->GetHeight() * ts->linespacing
 				> ts->display.height - ts->margin.bottom)
 			{
 				// Move to right page
