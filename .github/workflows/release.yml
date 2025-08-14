@@ -1,0 +1,28 @@
+name: Build
+
+on:
+  push:
+    branches: [ 0-docker ]
+   
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm
+    steps:
+    - uses: actions/checkout@v4
+    - name: make
+      run: make
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ncipollo/release-action@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        artifacts: "dslibris.nds"
+        name: test-release
