@@ -92,10 +92,12 @@ void App::HandleEventInBook()
 	{
 		// return to browser.
 		bookcurrent->Close();
-		bookcurrent = NULL;
+		bookcurrent = nullptr;
 		// TODO why?
 		if(orientation) lcdSwap();
+
 		ts->PrintSplash(ts->screenleft);
+		ts->SetStyle(TEXT_STYLE_BROWSER);
 		ShowLibraryView();
 		prefs->Write();
 	}
@@ -186,12 +188,7 @@ u8 App::OpenBook(void)
 	//! Attempt to open book indicated by bookselected.
 
 	if(!bookselected) return 254;
-	PrintStatus("opening book ...");
-
-	// const char *filename = bookselected->GetFileName();
-	// const char *c; 	// will point to the file's extension.
-	// for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-	
+	PrintStatus("opening book...");
 	if(bookcurrent) bookcurrent->Close();
 	if (int err = bookselected->Open())
 	{
@@ -205,11 +202,11 @@ u8 App::OpenBook(void)
 		if(orientation) lcdSwap();
 		mode = APP_MODE_BOOK;
 	}
+	PrintStatus("");
 	if(bookcurrent->GetPosition() >= bookcurrent->GetPageCount())
 		bookcurrent->SetPosition(0);
 	bookcurrent->GetPage()->Draw(ts);
 	prefs->Write();
-	PrintStatus("");
 	return 0;
 }
 
