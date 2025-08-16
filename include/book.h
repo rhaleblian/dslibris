@@ -1,12 +1,28 @@
 #pragma once
 
-#include "page.h"
-#include <nds.h>
 #include <string>
 #include <list>
+#include <nds.h>
 #include <vector>
+#include "app.h"
+#include "page.h"
 
 typedef enum {FORMAT_UNDEF, FORMAT_XHTML, FORMAT_EPUB} format_t;
+
+namespace xml::book {
+	void start(void *data, const char *el, const char **attr);
+	void chardata(void *data, const char *txt, int txtlen);
+	void end(void *data, const char *el);
+	void instruction(void *data, const char *target, const char *pidata);
+	int  unknown(void *encodingHandlerData, const XML_Char *name, XML_Encoding *info);
+	void fallback(void *data, const XML_Char *s, int len);
+}
+
+namespace xml::book::metadata {
+	void start(void *userdata, const char *el, const char **attr);
+	void chardata(void *userdata, const char *txt, int txtlen);
+	void end(void *userdata, const char *el);
+}
 
 //! Encapsulates metadata and Page vector for a single book.
 
@@ -21,10 +37,12 @@ class Book {
 	int position;  //! as page index.
 	std::list<u16> bookmarks;  //! as page indices.
 	std::vector<class Page*> pages;
+	App *app;  //! pointer to the App instance.
 public:
-	Book();
+	Book(App *app);
 	~Book();
 	format_t format;
+	inline App* GetApp() { return app; }
 	inline std::string GetAuthor() { return author; }
 	std::list<u16>* GetBookmarks(void);
 	int  GetNextBookmark(void);
@@ -54,7 +72,7 @@ public:
 	u8   Index();
 	void IndexHTML();
 	u8   Open();
-	u8   Parse(bool fulltext);
+	u8   Parse(bool fulltext=true);
 	int  ParseHTML();
 	void Restore();
 };

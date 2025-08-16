@@ -86,9 +86,7 @@ enum prefsbuttonindex {
 //! interaction loop, drawing everything but text, and logging.
 
 class App {
-
-	public:
-
+public:
 	App();
 	~App();
 
@@ -129,10 +127,8 @@ class App {
 	Button prefsButtons[PREFS_BUTTON_COUNT];
 	u8 prefsSelected;
 	
-	unsigned int fontSelected;
-	unsigned int fontPage;
-	std::vector<Button*>fontButtons;
-	
+	class FontMenu *fontmenu;  //! Font selection menu.
+
 	// app.cpp
 	void CycleBrightness();
 	void PrintStatus(const char *msg);
@@ -141,13 +137,8 @@ class App {
 	void SetProgress(int amount);
 	touchPosition TouchRead();
 	void UpdateClock();
-
-	bool parse_in(parsedata_t *data, context_t context);
-	void parse_init(parsedata_t *data);
-	context_t parse_pop(parsedata_t *data);
 	void parse_error(XML_ParserStruct *ps);
-	void parse_push(parsedata_t *data, context_t context);
-	
+
 	// app_book.cpp
 	void CloseBook();
 	int  GetBookIndex(Book*);
@@ -155,11 +146,15 @@ class App {
 	u8   OpenBook();
 	void ToggleBookmark();
 
-	private:
+	void PrefsRefreshButton(int index);
+	void PrefsRefreshButtonFont();
+	void PrefsRefreshButtonFontBold();
+	void PrefsRefreshButtonFontItalic();
+	void PrefsRefreshButtonFontBoldItalic();
+	void ShowSettingsView();
 
+private:
 	bool browser_view_dirty;
-	bool font_view_dirty;
-	bool font_view_initialized;
 	bool prefs_view_dirty;
 
 	int  FindBooks();
@@ -168,7 +163,6 @@ class App {
 	void SetOrientation(bool flipped);
 	void ShowFontView(int app_mode);
 	void ShowLibraryView();
-	void ShowSettingsView();
 
 	// app_Browser.cpp
 	void browser_draw();
@@ -176,17 +170,6 @@ class App {
 	void browser_init();
 	void browser_nextpage();
 	void browser_prevpage();
-
-	// app_font.cpp
-	void FontButton();
-	void FontDraw();
-	void FontInit();
-	void FontHandleEvent();
-	void FontHandleTouchEvent();
-	void FontNextPage();
-	void FontPreviousPage();
-	void FontSelectNext();
-	void FontSelectPrevious();
 
 	// app_prefs.cpp
 	void PrefsDraw();
@@ -199,9 +182,4 @@ class App {
 	void PrefsIncreaseParaspacing();
 	void PrefsDecreaseParaspacing();
 	void PrefsFlipOrientation();
-	void PrefsRefreshButton(int index);
-	void PrefsRefreshButtonFont();
-	void PrefsRefreshButtonFontBold();
-	void PrefsRefreshButtonFontItalic();
-	void PrefsRefreshButtonFontBoldItalic();
 };

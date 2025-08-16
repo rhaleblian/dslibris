@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "parse.h"
 #include "book.h"
 #include "button.h"
+#include "font.h"
 #include "text.h"
 #include "version.h"
 
@@ -78,20 +79,15 @@ App::App()
 	key.y = KEY_Y;
 
 	browser_view_dirty = false;
-	
-	font_view_dirty = false;
-	font_view_initialized = false;
 
 	prefs = new Prefs(this);
 	prefsSelected = -1;
 	prefs_view_dirty = false;
 
-	browser_view_dirty = false;
-	prefs_view_dirty = false;
-	font_view_dirty = false;
-
 	ts = new Text();
 	ts->app = this;
+
+	fontmenu = new FontMenu(this);
 }
 
 App::~App()
@@ -132,7 +128,7 @@ int App::Run(void)
 		halt("[FAIL] no books\n");
 
 	std::sort(books.begin(),books.end(),&book_title_lessthan);
-	
+
 	prefs->Read();
 	for(auto &book : books)
 	{
@@ -155,7 +151,7 @@ int App::Run(void)
 		bookselected = bookcurrent;
 		OpenBook();
 	}
-	
+
 	keysSetRepeat(60,2);
 	while (pmMainLoop())
 	{
@@ -186,8 +182,8 @@ int App::Run(void)
 			case APP_MODE_PREFS_FONT_BOLD:
 			case APP_MODE_PREFS_FONT_ITALIC:
 			case APP_MODE_PREFS_FONT_BOLDITALIC:
-			FontHandleEvent();
-			if (font_view_dirty) FontDraw();
+			fontmenu->handleInput();
+			if (fontmenu->isDirty()) fontmenu->draw();
 			break;
 		}
 	}
@@ -222,7 +218,7 @@ int App::FindBooks() {
 		     c--);
 		if (!strcmp(".epub",c))
 		{
-			Book *book = new Book();
+			Book *book = new Book(this);
 			book->SetFolderName(bookdir.c_str());
 			book->SetFileName(filename);
 			book->SetTitle(filename);
@@ -258,7 +254,7 @@ void App::ShowFontView(int app_font_mode)
 	mode = app_font_mode;
 	buttonprefs.Label("cancel");
 	ts->SetScreen(ts->screenright);
-	font_view_dirty = true;
+	fontmenu->setDirty();
 }
 
 void App::ShowLibraryView()
@@ -370,17 +366,14 @@ void App::PrintStatus(const char *msg)
 {
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
-	u8 pixelsize = ts->GetPixelSize();
 	const int top = 240;
-	ts->SetPixelSize(11);
 	ts->SetScreen(ts->screenleft);
 	ts->SetInvert(false);
 
 	ts->ClearRect(0,top,ts->display.width,ts->display.height);
-	ts->SetPen(10,top+10);
+	ts->SetPen(10,top+12);
 	ts->PrintString(msg);
 
-	ts->SetPixelSize(pixelsize);
 	ts->SetScreen(screen);
 	ts->SetInvert(invert);
 }

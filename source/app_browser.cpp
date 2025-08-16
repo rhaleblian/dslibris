@@ -60,15 +60,9 @@ void App::browser_handleevent()
 		}
 	}
 
-	else if (keys & KEY_SELECT)
+	else if (keys & (KEY_SELECT|KEY_Y))
 	{
 		ShowSettingsView();
-	}
-
-	else if (keys & KEY_START)
-	{
-		// exit game.
-		// mode = APP_MODE_QUIT;
 	}
 
 	else if (keys & KEY_TOUCH)
@@ -96,11 +90,10 @@ void App::browser_handleevent()
 				i++) {
 				if (buttons[i]->EnclosesPoint(coord.py, coord.px))
 				{
-					int b = GetBookIndex(bookselected);
-					buttons[b]->Draw(ts->screen, false);
-					bookselected = books[browserstart + i];
-					buttons[i]->Draw(ts->screen, true);
-					
+					// int b = GetBookIndex(bookselected);
+					// buttons[b]->Draw(ts->screen, false);
+					bookselected = books[i];
+					// buttons[i]->Draw(ts->screen, true);
 					OpenBook();
 					break;
 				}
@@ -173,7 +166,6 @@ void App::browser_draw(void)
 {
 	// save state.
 	bool invert = ts->GetInvert();
-	u8 size = ts->GetPixelSize();
  	u16 *screen = ts->GetScreen();
 	int style = ts->GetStyle();
 	
@@ -196,7 +188,6 @@ void App::browser_draw(void)
 
 	// restore state.
 	ts->SetInvert(invert);
-	ts->SetPixelSize(size);
 	ts->SetScreen(screen);
 	ts->SetStyle(style);
 
