@@ -56,13 +56,9 @@ void App::HandleEventInBook()
 		ts->SetInvert(!ts->GetInvert());
 		bookcurrent->GetPage()->Draw(ts);
 	}
-	else if (keys & KEY_Y)
+	else if (keys & (KEY_SELECT|KEY_Y))
 	{
 		ToggleBookmark();
-	}
-	else if (keys & KEY_START)
-	{
-		// mode = APP_MODE_QUIT;
 	}
 	else if (keys & KEY_TOUCH)
 	{
@@ -88,20 +84,21 @@ void App::HandleEventInBook()
 		}
 		prefs->Write();
 	}
-	else if (keys & KEY_SELECT)
+	else if (keys & KEY_START)
 	{
-		// return to browser.
 		bookcurrent->Close();
 		bookcurrent = nullptr;
+
 		// TODO why?
 		if(orientation) lcdSwap();
 
-		ts->PrintSplash(ts->screenleft);
+		// return to browser.
 		ts->SetStyle(TEXT_STYLE_BROWSER);
+		ts->PrintSplash(ts->screenleft);
 		ShowLibraryView();
 		prefs->Write();
 	}
-	else if (keys & (key.right | key.left))
+	else if (keys & (key.right|key.left))
 	{
 		// Navigate bookmarks.
 		std::list<u16>* bookmarks = bookcurrent->GetBookmarks();
@@ -122,7 +119,7 @@ void App::HandleEventInBook()
 		
 				bookcurrent->SetPosition(*i);
 			}
-			else // KEY_OTHER by process of elimination
+			else
 			{
 				std::list<u16>::reverse_iterator i;
 				for (i = bookmarks->rbegin(); i != bookmarks->rend(); i++) {
@@ -188,7 +185,8 @@ u8 App::OpenBook(void)
 	//! Attempt to open book indicated by bookselected.
 
 	if(!bookselected) return 254;
-	PrintStatus("opening book...");
+
+	PrintStatus("opening book ...");
 	if(bookcurrent) bookcurrent->Close();
 	if (int err = bookselected->Open())
 	{

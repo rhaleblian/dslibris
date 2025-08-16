@@ -60,7 +60,7 @@ void App::browser_handleevent()
 		}
 	}
 
-	else if (keys & KEY_SELECT)
+	else if (keys & (KEY_SELECT|KEY_Y))
 	{
 		ShowSettingsView();
 	}

@@ -79,7 +79,7 @@ void App::PrefsHandleEvent()
 	{
 		PrefsHandlePress();
 	}
-	else if (keys & (KEY_SELECT | KEY_B))
+	else if (keys & (KEY_SELECT|KEY_START|KEY_B|KEY_Y))
 	{
 		ShowLibraryView();
 	}
