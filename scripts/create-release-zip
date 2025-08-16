@@ -15,8 +15,7 @@ fi
 
 # This might apply for the most users,
 # as a safeguard when they forget to patch.
-dlditool etc/dldi/r4tf_v2.dldi 
+dlditool etc/dldi/r4tf_v2.dldi dslibris.nds
 
 zip ${zipfile} dslibris.nds
 (cd etc/filesystem/en; zip -r -u ../../../${zipfile} .)
-
