@@ -645,7 +645,6 @@ u8 Book::Open()
 	path.append(GetFileName());
 	// Page layout is a function of the current style.
 	app->ts->SetStyle(TEXT_STYLE_REGULAR);
-	app->ts->SetPixelSize(app->ts->pixelsize);
 	u8 err = epub(this,path,false);
 	if (!err)
 		if(position > (int)pages.size()) position = pages.size()-1;

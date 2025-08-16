@@ -79,7 +79,7 @@ void App::PrefsHandleEvent()
 	{
 		PrefsHandlePress();
 	}
-	else if (keys & (KEY_SELECT | KEY_B))
+	else if (keys & (KEY_SELECT|KEY_START|KEY_B|KEY_Y))
 	{
 		ShowLibraryView();
 	}
@@ -162,8 +162,8 @@ void App::PrefsHandleTouch() {
 
 void App::PrefsIncreasePixelSize()
 {
-	if (ts->pixelsize < 24) {
-		ts->pixelsize++;
+	if (ts->pixelsize < 18) {
+		ts->SetPixelSize(ts->pixelsize+1);
 		PrefsRefreshButton(PREFS_BUTTON_FONTSIZE);
 		prefs->Write();
 	}
@@ -171,8 +171,8 @@ void App::PrefsIncreasePixelSize()
 
 void App::PrefsDecreasePixelSize()
 {
-	if (ts->pixelsize > 4) {
-		ts->pixelsize--;
+	if (ts->pixelsize > 6) {
+		ts->SetPixelSize(ts->pixelsize-1);
 		PrefsRefreshButton(PREFS_BUTTON_FONTSIZE);
 		prefs->Write();
 	}

@@ -142,7 +142,7 @@ endif
 
 #----- Local rules beyond this point -- "Abandon hope...", etc --------------#
 
-.PHONY: abandonhope doc check distcheck distclean
+.PHONY: doc check distcheck distclean
 
 check:
 	true
@@ -156,5 +156,3 @@ distcheck:
 distclean: clean
 	- rm dslibris-*.zip
 	- rm test/*.img
-
-abandonhope: distclean

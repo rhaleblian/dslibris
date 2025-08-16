@@ -56,13 +56,9 @@ void App::HandleEventInBook()
 		ts->SetInvert(!ts->GetInvert());
 		bookcurrent->GetPage()->Draw(ts);
 	}
-	else if (keys & KEY_Y)
+	else if (keys & (KEY_SELECT|KEY_Y))
 	{
 		ToggleBookmark();
-	}
-	else if (keys & KEY_START)
-	{
-		// mode = APP_MODE_QUIT;
 	}
 	else if (keys & KEY_TOUCH)
 	{
@@ -88,18 +84,21 @@ void App::HandleEventInBook()
 		}
 		prefs->Write();
 	}
-	else if (keys & KEY_SELECT)
+	else if (keys & KEY_START)
 	{
-		// return to browser.
 		bookcurrent->Close();
-		bookcurrent = NULL;
+		bookcurrent = nullptr;
+
 		// TODO why?
 		if(orientation) lcdSwap();
+
+		// return to browser.
+		ts->SetStyle(TEXT_STYLE_BROWSER);
 		ts->PrintSplash(ts->screenleft);
 		ShowLibraryView();
 		prefs->Write();
 	}
-	else if (keys & (key.right | key.left))
+	else if (keys & (key.right|key.left))
 	{
 		// Navigate bookmarks.
 		std::list<u16>* bookmarks = bookcurrent->GetBookmarks();
@@ -120,7 +119,7 @@ void App::HandleEventInBook()
 		
 				bookcurrent->SetPosition(*i);
 			}
-			else // KEY_OTHER by process of elimination
+			else
 			{
 				std::list<u16>::reverse_iterator i;
 				for (i = bookmarks->rbegin(); i != bookmarks->rend(); i++) {
@@ -186,12 +185,8 @@ u8 App::OpenBook(void)
 	//! Attempt to open book indicated by bookselected.
 
 	if(!bookselected) return 254;
-	PrintStatus("opening book ...");
 
-	// const char *filename = bookselected->GetFileName();
-	// const char *c; 	// will point to the file's extension.
-	// for (c=filename;c!=filename+strlen(filename) && *c!='.';c++);
-	
+	PrintStatus("opening book ...");
 	if(bookcurrent) bookcurrent->Close();
 	if (int err = bookselected->Open())
 	{
@@ -205,11 +200,11 @@ u8 App::OpenBook(void)
 		if(orientation) lcdSwap();
 		mode = APP_MODE_BOOK;
 	}
+	PrintStatus("");
 	if(bookcurrent->GetPosition() >= bookcurrent->GetPageCount())
 		bookcurrent->SetPosition(0);
 	bookcurrent->GetPage()->Draw(ts);
 	prefs->Write();
-	PrintStatus("");
 	return 0;
 }
 

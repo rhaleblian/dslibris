@@ -368,7 +368,6 @@ u8 Text::GetCharCountInsideWidth(const char *txt, u8 style, u8 pixels) {
 	for(const char *c = txt; *c != 0 && n <= strlen(txt);)
 	{
 		c += GetCharCode(c, &ucs);
-		// char msg[16]; sprintf(msg, "%ld %d\n", ucs, n); app->PrintStatus(msg);
 		if (ucs == 0) continue;
 		width += GetAdvance(ucs, faces[style]);
 		if (width > pixels) return n;
@@ -382,8 +381,6 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 	//! Return the bytelength of the encoding, for advancing
 	//! to the next character; 0 if encoding could not be translated.
 	
-	// TODO - handle 4 byte encodings.
-
 	if (utf8[0] < 0x80) { // ASCII
 		*ucs = utf8[0];
 		return 1;
@@ -396,7 +393,11 @@ u8 Text::GetCharCode(const char *utf8, u32 *ucs) {
 		*ucs = (utf8[0]-224)*4096 + (utf8[1]-128)*64 + (utf8[2]-128);
 		return 3;
 
-	} else if (utf8[0] > 0xef) { // rare
+	} else if (utf8[0] > 0xef) {
+		*ucs = ((utf8[0] & 0x07) << 18) |
+			((utf8[1] & 0x3F) << 12) |
+			((utf8[2] & 0x3F) << 6) |
+			(utf8[3] & 0x3F);
 		return 4;
 	}
 	return 0;
@@ -467,6 +468,7 @@ void Text::SetPixelSize(u8 size)
 	{
 		for (auto& it : faces)
 		{
+			// UI font stays at 12.
 			if (it.first == TEXT_STYLE_BROWSER) continue;
 			FT_Set_Pixel_Sizes(it.second, 0, pixelsize);
 			ClearCache(it.second);

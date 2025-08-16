@@ -366,17 +366,14 @@ void App::PrintStatus(const char *msg)
 {
 	bool invert = ts->GetInvert();
 	u16* screen = ts->GetScreen();
-	u8 pixelsize = ts->GetPixelSize();
 	const int top = 240;
-	ts->SetPixelSize(11);
 	ts->SetScreen(ts->screenleft);
 	ts->SetInvert(false);
 
 	ts->ClearRect(0,top,ts->display.width,ts->display.height);
-	ts->SetPen(10,top+11);
+	ts->SetPen(10,top+12);
 	ts->PrintString(msg);
 
-	ts->SetPixelSize(pixelsize);
 	ts->SetScreen(screen);
 	ts->SetInvert(invert);
 }
