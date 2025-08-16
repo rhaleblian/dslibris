@@ -1,0 +1,2 @@
+Bold italic now renders correctly.
+Screen orienation control is now in the settings.
