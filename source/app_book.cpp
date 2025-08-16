@@ -92,13 +92,12 @@ void App::HandleEventInBook()
 	{
 		// return to browser.
 		bookcurrent->Close();
-		bookcurrent = NULL;
+		bookcurrent = nullptr;
 		// TODO why?
 		if(orientation) lcdSwap();
 
 		ts->PrintSplash(ts->screenleft);
 		ts->SetStyle(TEXT_STYLE_BROWSER);
-		ts->SetPixelSize(12);
 		ShowLibraryView();
 		prefs->Write();
 	}

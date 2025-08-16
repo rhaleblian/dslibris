@@ -467,6 +467,7 @@ void Text::SetPixelSize(u8 size)
 	{
 		for (auto& it : faces)
 		{
+			// UI font stays at 12.
 			if (it.first == TEXT_STYLE_BROWSER) continue;
 			FT_Set_Pixel_Sizes(it.second, 0, pixelsize);
 			ClearCache(it.second);
