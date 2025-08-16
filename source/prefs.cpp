@@ -31,7 +31,7 @@ void start(	void *data,
 			if(!strcmp(attr[i],"modtime"))
 			   app->prefs->modtime = atoi(attr[i+1]);
 	}
-	// FIXME this will never run
+	// TODO this will never run
 	else if (!strcmp(name,"library"))
 	{
 		for(i=0;attr[i];i+=2) {
@@ -50,7 +50,6 @@ void start(	void *data,
 			}
 			else if(!strcmp(attr[i],"invert"))
 			{
-				
 				app->invert = atoi(attr[i+1]);
 				app->ts->SetInvert(atoi(attr[i+1]));
 			}
@@ -73,7 +72,7 @@ void start(	void *data,
 		for(i=0;attr[i];i+=2)
 		{
 			if(!strcmp(attr[i],"size"))
-				app->ts->pixelsize = atoi(attr[i+1]);
+				app->ts->SetPixelSize(atoi(attr[i+1]));
 			else if(!strcmp(attr[i],"normal"))
 				app->ts->SetFontFile((char *)attr[i+1], TEXT_STYLE_REGULAR);
 			else if(!strcmp(attr[i],"bold"))
