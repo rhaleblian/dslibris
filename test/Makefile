@@ -3,8 +3,8 @@ en.img:
 	mformat -i $@
 	mmd -i $@ book
 	mmd -i $@ font
-	mcopy -i $@ en/Book/*.epub ::Book
-	mcopy -i $@ en/Font/*.ttf ::Font
+	mcopy -i $@ en/book/*.epub ::book
+	mcopy -i $@ en/font/*.ttf ::font
 	mcopy -i $@ melonds.txt ::melonds.txt
 
 	mdir -i $@
